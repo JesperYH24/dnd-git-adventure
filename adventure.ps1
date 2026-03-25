@@ -21,7 +21,7 @@ function Write-Scene {
         [string]$Text
     )
 
-    Write-TypeLine -Text $Text -Delay 35 -Color "Gray"
+    Write-TypeLine -Text $Text -Delay 35 -Color "DarkCyan"
 }
 
 function Write-Action {
@@ -163,6 +163,43 @@ function Invoke-MonsterAttack {
 
     Write-ColorLine ""
 }
+function Get-HeroHPColor {
+    param(
+        [int]$CurrentHP,
+        [int]$MaxHP
+    )
+
+    $hpPercent = ($CurrentHP / $MaxHP) * 100
+
+    if ($hpPercent -le 20) {
+        return "Red"
+    }
+    elseif ($hpPercent -le 60) {
+        return "Yellow"
+    }
+    else {
+        return "Green"
+    }
+}
+
+function Get-MonsterHPColor {
+    param(
+        [int]$CurrentHP,
+        [int]$MaxHP
+    )
+
+    $hpPercent = ($CurrentHP / $MaxHP) * 100
+
+    if ($hpPercent -le 25) {
+        return "Red"
+    }
+    elseif ($hpPercent -le 50) {
+        return "Yellow"
+    }
+    else {
+        return "DarkYellow"
+    }
+}
 function Show-Status {
     param(
         $Hero,
@@ -171,13 +208,16 @@ function Show-Status {
         $MonsterHP
     )
 
+    $heroColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
+    $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
+
     Write-ColorLine "Status:" "White"
     Start-Sleep -Milliseconds 1000
 
-    Write-ColorLine "$($Hero.Name): $HeroHP HP" "Green"
+    Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
     Start-Sleep -Milliseconds 1000
 
-    Write-ColorLine "$($Monster.definite): $MonsterHP HP" "DarkYellow"
+    Write-ColorLine "$($Monster.definite): $MonsterHP HP" $monsterColor
     Start-Sleep -Milliseconds 1000
 
     Write-ColorLine ""
