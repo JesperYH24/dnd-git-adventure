@@ -15,6 +15,9 @@ $monster = Get-Random $monsters
 $heroHP = $hero.HP
 $monsterHP = $monster.hp
 
+$heroDroppedWeapon = $false
+$monsterOffBalance = $false
+
 Write-Host "Hjälten $($hero.Name) går in i en mörk grotta..."
 Write-Host "$($hero.Name) är en $($hero.Class) med $heroHP HP."
 Write-Host "Något finns här inne..."
@@ -54,7 +57,8 @@ function Invoke-HeroAttack {
     param(
         $Hero,
         $Monster,
-        [ref]$MonsterHP
+        [ref]$MonsterHP,
+        [ref]$HeroDroppedWeapon
     )
 
     $heroRoll = Roll-Dice -Sides 20
@@ -66,6 +70,11 @@ function Invoke-HeroAttack {
         $MonsterHP.Value -= $heroDamage
         Write-Host "CRITICAL HIT!"
         Write-Host "$($Hero.Name) träffar $($Monster.definite) extra hårt och gör $heroDamage skada! ($($Hero.DamageMax) + $extraDamage)"
+    }
+    elseif ($heroRoll -eq 1) {
+        $HeroDroppedWeapon.Value = $true
+        Write-Host "CRITICAL FAIL!"
+        Write-Host "$($Hero.Name) fumblar, tappar vapnet och måste plocka upp det nästa runda!"
     }
     elseif ($heroRoll -ge 10) {
         $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
@@ -83,7 +92,8 @@ function Invoke-MonsterAttack {
     param(
         $Hero,
         $Monster,
-        [ref]$HeroHP
+        [ref]$HeroHP,
+        [ref]$MonsterOffBalance
     )
 
     $monsterRoll = Roll-Dice -Sides 20
@@ -95,6 +105,11 @@ function Invoke-MonsterAttack {
         $HeroHP.Value -= $monsterDamage
         Write-Host "CRITICAL HIT!"
         Write-Host "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
+    }
+    elseif ($monsterRoll -eq 1) {
+        $MonsterOffBalance.Value = $true
+        Write-Host "CRITICAL FAIL!"
+        Write-Host "$($Monster.definite) kastar sig fram alldeles för vilt, missar och måste samla sig nästa runda!"
     }
     elseif ($monsterRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
@@ -110,7 +125,7 @@ function Invoke-MonsterAttack {
 
 # Startfas innan vanliga rundor
 if ($heroStarts) {
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
 
     if ($monsterHP -le 0) {
         Write-Host "$($monster.definite) faller till marken. Du vann!"
@@ -118,7 +133,7 @@ if ($heroStarts) {
     }
 
     if ($heroBonusAttack) {
-        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
 
         if ($monsterHP -le 0) {
             Write-Host "$($monster.definite) faller till marken. Du vann!"
@@ -127,7 +142,7 @@ if ($heroStarts) {
     }
 }
 elseif ($monsterStarts) {
-    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP)
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
 
     if ($heroHP -le 0) {
         Write-Host "$($hero.Name) faller i striden..."
@@ -150,14 +165,14 @@ while ($heroHP -gt 0 -and $monsterHP -gt 0) {
     }
     elseif ($choice -eq "A") {
         Write-Host ""
-        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
 
         if ($monsterHP -le 0) {
             Write-Host "$($monster.definite) faller till marken. Du vann!"
             break
         }
 
-        Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP)
+        Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
 
         if ($heroHP -le 0) {
             Write-Host "$($hero.Name) faller i striden..."
