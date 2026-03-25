@@ -5,6 +5,12 @@ function Roll-Dice {
 
     return Get-Random -Minimum 1 -Maximum ($Sides + 1)
 }
+
 function Roll-Damage {
-    return Get-Random -Minimum 1 -Maximum 7
+    param(
+        [int]$Minimum = 1,
+        [int]$Maximum = 6
+    )
+
+    return Get-Random -Minimum $Minimum -Maximum ($Maximum + 1)
 }
