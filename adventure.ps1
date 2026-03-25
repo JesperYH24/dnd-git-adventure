@@ -45,13 +45,62 @@ function Write-ColorLine {
 $hero = Get-Hero
 
 $monsters = @(
-    @{ name = "skelett"; article = "Ett"; definite = "Skelettet"; hp = 10; damageMin = 1; damageMax = 4 },
-    @{ name = "goblin"; article = "En"; definite = "Goblinen"; hp = 8; damageMin = 1; damageMax = 6 },
-    @{ name = "zombie"; article = "En"; definite = "Zombien"; hp = 12; damageMin = 1; damageMax = 5 },
-    @{ name = "jätteråtta"; article = "En"; definite = "Jätteråttan"; hp = 7; damageMin = 1; damageMax = 3 }
+    @{ 
+        name = "skelett"
+        article = "Ett"
+        definite = "Skelettet"
+        hp = 10
+        damageMin = 1
+        damageMax = 4
+        isBoss = $false
+    },
+    @{ 
+        name = "goblin"
+        article = "En"
+        definite = "Goblinen"
+        hp = 8
+        damageMin = 1
+        damageMax = 6
+        isBoss = $false
+    },
+    @{ 
+        name = "zombie"
+        article = "En"
+        definite = "Zombien"
+        hp = 12
+        damageMin = 1
+        damageMax = 5
+        isBoss = $false
+    },
+    @{ 
+        name = "jätteråtta"
+        article = "En"
+        definite = "Jätteråttan"
+        hp = 7
+        damageMin = 1
+        damageMax = 3
+        isBoss = $false
+    },
+    @{ 
+        name = "uråldrig drake"
+        article = "En"
+        definite = "Den uråldriga draken"
+        hp = 50
+        damageMin = 8
+        damageMax = 12
+        isBoss = $true
+    }
 )
 
-$monster = Get-Random $monsters
+$forceBoss = Read-Host "Vill du tvinga boss? (y/n)"
+
+$forceBoss = ($forceBoss -eq "y")
+if ($forceBoss) {
+    $monster = $monsters | Where-Object { $_.isBoss } | Select-Object -First 1
+}
+else {
+    $monster = Get-Random $monsters
+}
 
 $heroHP = $hero.HP
 $monsterHP = $monster.hp
@@ -63,6 +112,15 @@ Write-Scene "Hjälten $($hero.Name) går in i en mörk grotta..."
 Write-Scene "$($hero.Name) är en $($hero.Class) med $heroHP HP."
 Write-Scene "Något finns här inne..."
 Write-ColorLine ""
+
+if ($monster.isBoss) {
+    Write-Scene "Luften blir plötsligt iskall..."
+    Start-Sleep -Milliseconds 1000
+    Write-Scene "Marken skakar under dina fötter..."
+    Start-Sleep -Milliseconds 1000
+    Write-Scene "Den uråldriga draken reser sig ur mörkret..."
+    Start-Sleep -Milliseconds 1000
+}
 
 # Upptäcktsfas
 $detectRoll = Roll-Dice -Sides 20
@@ -138,7 +196,8 @@ function Invoke-MonsterAttack {
     )
 
     $monsterRoll = Roll-Dice -Sides 20
-    Write-Action "$($Monster.definite) slår för attack: $monsterRoll" "DarkRed"
+    $monsterColor = if ($Monster.isBoss) { "Magenta" } else { "DarkRed" }
+        Write-Action "$($Monster.definite) slår för attack: $monsterRoll" $monsterColor
 
     if ($monsterRoll -eq 20) {
         $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
@@ -155,7 +214,8 @@ function Invoke-MonsterAttack {
     elseif ($monsterRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $HeroHP.Value -= $monsterDamage
-        Write-Action "$($Monster.definite) träffar och gör $monsterDamage skada!" "Yellow"
+        $damageColor = if ($Monster.isBoss) { "Red" } else { "Yellow" }
+        Write-Action "$($Monster.definite) träffar och gör $monsterDamage skada!" $damageColor
     }
     else {
         Write-Action "$($Monster.definite) missar!" "DarkGray"
@@ -209,7 +269,13 @@ function Show-Status {
     )
 
     $heroColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
+
+if ($Monster.isBoss) {
+    $monsterColor = "Magenta"
+}
+else {
     $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
+}
 
     Write-ColorLine "Status:" "Cyan"
     Start-Sleep -Milliseconds 1000
