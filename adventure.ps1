@@ -57,7 +57,7 @@ function Invoke-HeroAttack {
         [ref]$MonsterHP
     )
 
-    $heroRoll = 20
+    $heroRoll = Roll-Dice -Sides 20
     Write-Host "$($Hero.Name) slår för attack: $heroRoll"
 
     if ($heroRoll -eq 20) {
@@ -86,7 +86,7 @@ function Invoke-MonsterAttack {
         [ref]$HeroHP
     )
 
-    $monsterRoll = 20
+    $monsterRoll = Roll-Dice -Sides 20
     Write-Host "$($Monster.definite) slår för attack: $monsterRoll"
 
     if ($monsterRoll -eq 20) {
@@ -142,13 +142,13 @@ while ($heroHP -gt 0 -and $monsterHP -gt 0) {
     Write-Host "$($monster.definite): $monsterHP HP"
     Write-Host ""
 
-    $choice = Read-Host "Vad vill du göra? (attack/fly)"
+    $choice = Read-Host "Vad vill du göra? (A/R) - Attack eller Run"
 
-    if ($choice -eq "fly") {
+    if ($choice -eq "R") {
         Write-Host "$($hero.Name) flyr från $($monster.definite)!"
         break
     }
-    elseif ($choice -eq "attack") {
+    elseif ($choice -eq "A") {
         Write-Host ""
         Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
@@ -166,7 +166,7 @@ while ($heroHP -gt 0 -and $monsterHP -gt 0) {
     }
     else {
         Write-Host ""
-        Write-Host "Skriv attack eller fly."
+        Write-Host "Skriv A eller R"
         Write-Host ""
     }
 }
