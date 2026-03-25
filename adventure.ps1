@@ -57,10 +57,17 @@ function Invoke-HeroAttack {
         [ref]$MonsterHP
     )
 
-    $heroRoll = Roll-Dice -Sides 20
+    $heroRoll = 20
     Write-Host "$($Hero.Name) slår för attack: $heroRoll"
 
-    if ($heroRoll -ge 10) {
+    if ($heroRoll -eq 20) {
+        $extraDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
+        $heroDamage = $Hero.DamageMax + $extraDamage
+        $MonsterHP.Value -= $heroDamage
+        Write-Host "CRITICAL HIT!"
+        Write-Host "$($Hero.Name) träffar $($Monster.definite) extra hårt och gör $heroDamage skada! ($($Hero.DamageMax) + $extraDamage)"
+    }
+    elseif ($heroRoll -ge 10) {
         $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
         $MonsterHP.Value -= $heroDamage
         Write-Host "$($Hero.Name) träffar $($Monster.definite) och gör $heroDamage skada!"
@@ -79,10 +86,17 @@ function Invoke-MonsterAttack {
         [ref]$HeroHP
     )
 
-    $monsterRoll = Roll-Dice -Sides 20
+    $monsterRoll = 20
     Write-Host "$($Monster.definite) slår för attack: $monsterRoll"
 
-    if ($monsterRoll -ge 10) {
+    if ($monsterRoll -eq 20) {
+        $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
+        $monsterDamage = $Monster.damageMax + $extraDamage
+        $HeroHP.Value -= $monsterDamage
+        Write-Host "CRITICAL HIT!"
+        Write-Host "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
+    }
+    elseif ($monsterRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $HeroHP.Value -= $monsterDamage
         Write-Host "$($Monster.definite) träffar och gör $monsterDamage skada!"
