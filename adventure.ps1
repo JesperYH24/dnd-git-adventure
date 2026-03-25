@@ -74,7 +74,7 @@ function Invoke-HeroAttack {
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true
         Write-Host "CRITICAL FAIL!"
-        Write-Host "$($Hero.Name) fumblar, tappar vapnet och måste plocka upp det nästa runda!"
+        Write-Host "$($Hero.Name) fumblar, tappar vapnet och måste plocka upp det!"
     }
     elseif ($heroRoll -ge 10) {
         $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
@@ -109,7 +109,7 @@ function Invoke-MonsterAttack {
     elseif ($monsterRoll -eq 1) {
         $MonsterOffBalance.Value = $true
         Write-Host "CRITICAL FAIL!"
-        Write-Host "$($Monster.definite) kastar sig fram alldeles för vilt, missar och måste samla sig nästa runda!"
+        Write-Host "$($Monster.definite) kastar sig fram alldeles för vilt, missar och måste samla sig!"
     }
     elseif ($monsterRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
