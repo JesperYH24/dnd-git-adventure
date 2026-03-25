@@ -118,7 +118,7 @@ if ($monster.isBoss) {
     Start-Sleep -Milliseconds 1000
     Write-Scene "Marken skakar under dina fötter..."
     Start-Sleep -Milliseconds 1000
-    Write-Scene "Den uråldriga draken reser sig ur mörkret..."
+    Write-Scene "Något rör sig i mörkret..."
     Start-Sleep -Milliseconds 1000
 }
 
@@ -260,6 +260,24 @@ function Get-MonsterHPColor {
         return "DarkYellow"
     }
 }
+function Write-BlinkingLine {
+    param(
+        [string]$Text,
+        [string]$Color1 = "Red",
+        [string]$Color2 = "DarkRed",
+        [int]$Times = 3
+    )
+
+    for ($i = 0; $i -lt $Times; $i++) {
+        Write-Host "`r$Text" -ForegroundColor $Color1 -NoNewline
+        Start-Sleep -Milliseconds 150
+
+        Write-Host "`r$Text" -ForegroundColor $Color2 -NoNewline
+        Start-Sleep -Milliseconds 150
+    }
+
+    Write-Host "`r$Text" -ForegroundColor $Color1
+}
 function Show-Status {
     param(
         $Hero,
@@ -280,13 +298,25 @@ else {
     Write-ColorLine "Status:" "Cyan"
     Start-Sleep -Milliseconds 1000
 
+   # HERO HP
+if ($heroColor -eq "Red") {
+    Write-BlinkingLine "$($Hero.Name): $HeroHP HP"
+}
+else {
     Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
-    Start-Sleep -Milliseconds 1000
+}
 
+Start-Sleep -Milliseconds 1000
+
+# MONSTER HP
+if ($monsterColor -eq "Red") {
+    Write-BlinkingLine "$($Monster.definite): $MonsterHP HP"
+}
+else {
     Write-ColorLine "$($Monster.definite): $MonsterHP HP" $monsterColor
-    Start-Sleep -Milliseconds 1000
+}
 
-    Write-ColorLine ""
+Start-Sleep -Milliseconds 1000
 }
 
 # Startfas innan vanliga rundor
