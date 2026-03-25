@@ -163,6 +163,25 @@ function Invoke-MonsterAttack {
 
     Write-ColorLine ""
 }
+function Show-Status {
+    param(
+        $Hero,
+        $HeroHP,
+        $Monster,
+        $MonsterHP
+    )
+
+    Write-ColorLine "Status:" "White"
+    Start-Sleep -Milliseconds 1000
+
+    Write-ColorLine "$($Hero.Name): $HeroHP HP" "Green"
+    Start-Sleep -Milliseconds 1000
+
+    Write-ColorLine "$($Monster.definite): $MonsterHP HP" "DarkYellow"
+    Start-Sleep -Milliseconds 1000
+
+    Write-ColorLine ""
+}
 
 # Startfas innan vanliga rundor
 if ($heroStarts) {
@@ -193,12 +212,7 @@ elseif ($monsterStarts) {
 
 # Vanlig stridsloop
 while ($heroHP -gt 0 -and $monsterHP -gt 0) {
-    Write-ColorLine "Status:" "White"
-    Start-Sleep -Milliseconds 1000
-    Write-ColorLine "$($hero.Name): $heroHP HP" "Green"
-    Start-Sleep -Milliseconds 1000
-    Write-ColorLine "$($monster.definite): $monsterHP HP" "DarkYellow"
-    Write-ColorLine ""
+    Show-Status -Hero $hero -HeroHP $heroHP -Monster $monster -MonsterHP $monsterHP
 
     if ($heroDroppedWeapon) {
         Write-Scene "$($hero.Name) plockar upp sitt vapen och förlorar rundan!"
