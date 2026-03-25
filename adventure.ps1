@@ -4,10 +4,10 @@
 $hero = Get-Hero
 
 $monsters = @(
-    @{ name = "skelett"; article = "Ett"; definite = "Skelettet"; hp = 10; damageMin = 1; damageMax = 4 },
-    @{ name = "goblin"; article = "En"; definite = "Goblinen"; hp = 8; damageMin = 1; damageMax = 6 },
-    @{ name = "zombie"; article = "En"; definite = "Zombien"; hp = 12; damageMin = 1; damageMax = 5 },
-    @{ name = "jätteråtta"; article = "En"; definite = "Jätteråttan"; hp = 7; damageMin = 1; damageMax = 3 }
+    @{ name = "skelett"; article = "ett"; definite = "skelettet"; hp = 10; damageMin = 1; damageMax = 4 },
+    @{ name = "goblin"; article = "en"; definite = "goblinen"; hp = 8; damageMin = 1; damageMax = 6 },
+    @{ name = "zombie"; article = "en"; definite = "zombien"; hp = 12; damageMin = 1; damageMax = 5 },
+    @{ name = "jätteråtta"; article = "en"; definite = "jätteråttan"; hp = 7; damageMin = 1; damageMax = 3 }
 )
 
 $monster = Get-Random $monsters
@@ -17,61 +17,141 @@ $monsterHP = $monster.hp
 
 Write-Host "Hjälten $($hero.Name) går in i en mörk grotta..."
 Write-Host "$($hero.Name) är en $($hero.Class) med $heroHP HP."
-Write-Host "Plötsligt hoppar $($monster.article) $($monster.name) fram!"
+Write-Host "Något finns här inne..."
+Write-Host ""
+
+# Upptäcktsfas
+$detectRoll = Roll-Dice -Sides 20
+Write-Host "$($hero.Name) slår en d20 för att upptäcka fara: $detectRoll"
+Write-Host ""
+
+$heroStarts = $false
+$heroBonusAttack = $false
+$monsterStarts = $false
+
+if ($detectRoll -ge 15) {
+    Write-Host "$($hero.Name) upptäcker $($monster.definite) långt innan det hinner reagera!"
+    Write-Host "$($hero.Name) får två attacker direkt."
+    $heroStarts = $true
+    $heroBonusAttack = $true
+}
+elseif ($detectRoll -ge 8) {
+    Write-Host "$($hero.Name) och $($monster.definite) upptäcker varandra samtidigt!"
+    Write-Host "$($hero.Name) hinner ändå agera först."
+    $heroStarts = $true
+}
+else {
+    Write-Host "För sent! $($monster.definite) hoppar fram ur skuggorna!"
+    Write-Host "$($monster.definite) får attackera först."
+    $monsterStarts = $true
+}
+
+Write-Host ""
 Write-Host "$($monster.definite) har $monsterHP HP."
 Write-Host ""
 
+function Invoke-HeroAttack {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$MonsterHP
+    )
+
+    $heroRoll = Roll-Dice -Sides 20
+    Write-Host "$($Hero.Name) slår för attack: $heroRoll"
+
+    if ($heroRoll -ge 10) {
+        $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
+        $MonsterHP.Value -= $heroDamage
+        Write-Host "$($Hero.Name) träffar $($Monster.definite) och gör $heroDamage skada!"
+    }
+    else {
+        Write-Host "$($Hero.Name) missar attacken!"
+    }
+
+    Write-Host ""
+}
+
+function Invoke-MonsterAttack {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$HeroHP
+    )
+
+    $monsterRoll = Roll-Dice -Sides 20
+    Write-Host "$($Monster.definite) slår för attack: $monsterRoll"
+
+    if ($monsterRoll -ge 10) {
+        $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
+        $HeroHP.Value -= $monsterDamage
+        Write-Host "$($Monster.definite) träffar och gör $monsterDamage skada!"
+    }
+    else {
+        Write-Host "$($Monster.definite) missar!"
+    }
+
+    Write-Host ""
+}
+
+# Startfas innan vanliga rundor
+if ($heroStarts) {
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    if ($monsterHP -le 0) {
+        Write-Host "$($monster.definite) faller till marken. Du vann!"
+        return
+    }
+
+    if ($heroBonusAttack) {
+        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+        if ($monsterHP -le 0) {
+            Write-Host "$($monster.definite) faller till marken. Du vann!"
+            return
+        }
+    }
+}
+elseif ($monsterStarts) {
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP)
+
+    if ($heroHP -le 0) {
+        Write-Host "$($hero.Name) faller i striden..."
+        return
+    }
+}
+
+# Vanlig stridsloop
 while ($heroHP -gt 0 -and $monsterHP -gt 0) {
+    Write-Host "Status:"
+    Write-Host "$($hero.Name): $heroHP HP"
+    Write-Host "$($monster.definite): $monsterHP HP"
+    Write-Host ""
+
     $choice = Read-Host "Vad vill du göra? (attack/fly)"
 
     if ($choice -eq "fly") {
         Write-Host "$($hero.Name) flyr från $($monster.definite)!"
         break
     }
-
-    if ($choice -eq "attack") {
-        $heroRoll = Roll-Dice -Sides 20
+    elseif ($choice -eq "attack") {
         Write-Host ""
-        Write-Host "$($hero.Name) slår för attack: $heroRoll"
-
-        if ($heroRoll -ge 10) {
-            $heroDamage = Roll-Damage -Minimum $hero.DamageMin -Maximum $hero.DamageMax
-            $monsterHP -= $heroDamage
-            Write-Host "$($hero.Name) träffar $($monster.definite) och gör $heroDamage skada!"
-        }
-        else {
-            Write-Host "$($hero.Name) missar attacken!"
-        }
+        Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
         if ($monsterHP -le 0) {
             Write-Host "$($monster.definite) faller till marken. Du vann!"
             break
         }
 
-        $monsterRoll = Roll-Dice -Sides 20
-        Write-Host "$($monster.definite) slår för attack: $monsterRoll"
-
-        if ($monsterRoll -ge 10) {
-            $monsterDamage = Roll-Damage -Minimum $monster.damageMin -Maximum $monster.damageMax
-            $heroHP -= $monsterDamage
-            Write-Host "$($monster.definite) träffar och gör $monsterDamage skada!"
-        }
-        else {
-            Write-Host "$($monster.definite) missar!"
-        }
+        Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP)
 
         if ($heroHP -le 0) {
             Write-Host "$($hero.Name) faller i striden..."
             break
         }
-
-        Write-Host ""
-        Write-Host "Status:"
-        Write-Host "$($hero.Name): $heroHP HP"
-        Write-Host "$($monster.definite): $monsterHP HP"
-        Write-Host ""
     }
     else {
+        Write-Host ""
         Write-Host "Skriv attack eller fly."
         Write-Host ""
     }
