@@ -21,7 +21,7 @@ function Write-Scene {
         [string]$Text
     )
 
-    Write-TypeLine -Text $Text -Delay 35 -Color "DarkCyan"
+    Write-TypeLine -Text $Text -Delay 35 -Color "DarkMagenta"
 }
 
 function Write-Action {
@@ -138,7 +138,7 @@ function Invoke-MonsterAttack {
     )
 
     $monsterRoll = Roll-Dice -Sides 20
-    Write-Action "$($Monster.definite) slår för attack: $monsterRoll" "DarkCyan"
+    Write-Action "$($Monster.definite) slår för attack: $monsterRoll" "DarkRed"
 
     if ($monsterRoll -eq 20) {
         $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
@@ -211,7 +211,7 @@ function Show-Status {
     $heroColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
     $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
 
-    Write-ColorLine "Status:" "White"
+    Write-ColorLine "Status:" "Cyan"
     Start-Sleep -Milliseconds 1000
 
     Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
