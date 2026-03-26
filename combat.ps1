@@ -9,7 +9,7 @@ function Invoke-HeroAttack {
         [ref]$HeroDroppedWeapon
     )
 
-    $heroRoll = Roll-Dice -Sides 20
+    $heroRoll = 20
     Write-Action "$($Hero.Name) slår för attack: $heroRoll" "Cyan"
 
     if ($heroRoll -eq 20) {
@@ -39,38 +39,50 @@ function Invoke-HeroAttack {
 function Invoke-MonsterAttack {
     param(
         $Hero,
-        $Monster,
-        [ref]$HeroHP,
-        [ref]$MonsterOffBalance
+        $Monster
     )
 
-    $monsterRoll = Roll-Dice -Sides 20
-    $monsterColor = if ($Monster.isBoss) { "Magenta" } else { "DarkRed" }
-    Write-Action "$($Monster.definite) slår för attack: $monsterRoll" $monsterColor
+    $attackRoll = 20
+    Write-Scene "$($Monster.definite) slår för attack: $attackRoll"
 
-    if ($monsterRoll -eq 20) {
+    $result = [PSCustomObject]@{
+        Hit              = $false
+        Critical         = $false
+        CriticalFail     = $false
+        Damage           = 0
+        MonsterOffBalance = $false
+    }
+
+    if ($attackRoll -eq 20) {
+        Write-Scene "CRITICAL HIT!"
         $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $monsterDamage = $Monster.damageMax + $extraDamage
-        $HeroHP.Value -= $monsterDamage
-        Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)" "Yellow"
+
+        Write-Scene "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
+
+        $result.Hit = $true
+        $result.Critical = $true
+        $result.Damage = $monsterDamage
     }
-    elseif ($monsterRoll -eq 1) {
-        $MonsterOffBalance.Value = $true
-        Write-Action "CRITICAL FAIL!" "Magenta"
-        Write-Scene "$($Monster.definite) kastar sig fram alldeles för vilt, missar och måste samla sig nästa runda!"
+    elseif ($attackRoll -eq 1) {
+        Write-Scene "CRITICAL FAIL!"
+        Write-Scene "$($Monster.definite) snubblar till och tappar balansen!"
+        $result.CriticalFail = $true
+        $result.MonsterOffBalance = $true
     }
-    elseif ($monsterRoll -ge 10) {
+    elseif ($attackRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
-        $HeroHP.Value -= $monsterDamage
-        $damageColor = if ($Monster.isBoss) { "Red" } else { "Yellow" }
-        Write-Action "$($Monster.definite) träffar och gör $monsterDamage skada!" $damageColor
+        Write-Scene "$($Monster.definite) träffar och gör $monsterDamage skada!"
+
+        $result.Hit = $true
+        $result.Damage = $monsterDamage
     }
     else {
-        Write-Action "$($Monster.definite) missar!" "DarkGray"
+        Write-Scene "$($Monster.definite) missar!"
     }
 
     Write-ColorLine ""
+    return $result
 }
 
 function Show-Inventory {

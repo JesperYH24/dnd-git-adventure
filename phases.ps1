@@ -70,7 +70,7 @@ function Start-DetectionPhase {
         [ref]$MonsterStarts
     )
 
-    $detectRoll = Roll-Dice -Sides 20
+    $detectRoll = 5
     Write-Scene "$($Hero.Name) slår en d20 för att upptäcka fara: $detectRoll"
     Write-ColorLine ""
 
@@ -105,31 +105,36 @@ function Start-OpeningPhase {
         [bool]$MonsterStarts
     )
 
-    Write-ColorLine ""
-    Write-Scene "$($Monster.definite) har $($MonsterHP.Value) HP."
-    Write-ColorLine ""
-
     if ($HeroStarts) {
-        Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
+        $attacks = if ($HeroBonusAttack) { 2 } else { 1 }
 
-        if ($MonsterHP.Value -le 0) {
-    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-    Resolve-LootDrop -Hero $Hero -Monster $Monster
-    break
-}
+        for ($i = 1; $i -le $attacks; $i++) {
+            Write-Scene ""
+            Write-Scene "Öppningsattack $i av $attacks"
 
-        if ($HeroBonusAttack) {
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-    Resolve-LootDrop -Hero $Hero -Monster $Monster
-    break
-}
+                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+                Resolve-LootDrop -Hero $Hero -Monster $Monster
+                return $false
+            }
+
+            if ($HeroDroppedWeapon.Value) {
+                break
+            }
         }
     }
     elseif ($MonsterStarts) {
-        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+        $monsterAttackResult = Invoke-MonsterAttack -Hero $Hero -Monster $Monster
+
+        if ($monsterAttackResult.Hit) {
+            $HeroHP.Value -= $monsterAttackResult.Damage
+        }
+
+        if ($monsterAttackResult.MonsterOffBalance) {
+            $MonsterOffBalance.Value = $true
+        }
 
         if ($HeroHP.Value -le 0) {
             Write-Scene "$($Hero.Name) faller i striden..."
