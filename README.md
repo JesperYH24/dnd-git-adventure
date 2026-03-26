@@ -238,8 +238,7 @@ Projektet är uppdelat i tydliga ansvarsområden:
 
 Vid behov:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-
----
+```
 
 ### Framtida utveckling
 GameState som klass istället för hashtable
