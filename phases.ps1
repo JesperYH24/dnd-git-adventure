@@ -2,15 +2,21 @@ function Start-Intro {
     param(
         $Hero,
         $Monster,
-        [int]$HeroHP
+        [ref]$HeroHP
     )
 
     Write-Scene "Natten ligger tung över skogen."
-    Write-Scene "$($Hero.Name) är en $($Hero.Class) med $HeroHP HP."
     Write-Scene "$($Hero.Name) sitter vid sin lägerplats utanför en mörk grotta."
     Write-Scene "Elden knastrar svagt medan vinden drar mellan träden."
+    Write-Scene "$($Hero.Name) är en $($Hero.Class) med $($HeroHP.Value)/$($Hero.HP) HP."
     Write-Scene "Djupt där inne väntar fara..."
     Write-ColorLine ""
+
+    if ($Monster.isBoss) {
+        Write-Scene "Luften känns märkligt tung runt grottans öppning..."
+        Write-Scene "Något där inne känns större än vanligt."
+        Write-ColorLine ""
+    }
 
     $enterCave = $false
 
@@ -24,7 +30,7 @@ function Start-Intro {
 
         switch ($choice) {
             "1" {
-                Show-Inventory -Hero $Hero
+                Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP | Out-Null
             }
 
             "2" {

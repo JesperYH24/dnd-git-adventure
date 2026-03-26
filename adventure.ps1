@@ -2,7 +2,7 @@
 
 $game = Initialize-Game
 
-Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP $game.HeroHP
+Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP ([ref]$game.HeroHP)
 
 $heroStarts = $game.HeroStarts
 $heroBonusAttack = $game.HeroBonusAttack

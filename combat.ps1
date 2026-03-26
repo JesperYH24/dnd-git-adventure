@@ -132,6 +132,99 @@ function Resolve-LootDrop {
     Show-Inventory -Hero $Hero
 }
 
+function Use-InventoryItem {
+    param(
+        $Hero,
+        [ref]$HeroHP,
+        $Item
+    )
+
+    if ($Item.Type -eq "Consumable" -and $Item.Name -eq "Healing Potion") {
+        if ($HeroHP.Value -ge $Hero.HP) {
+            Write-Scene "$($Hero.Name) har redan full HP och kan inte använda $($Item.Name)."
+            return $false
+        }
+
+        $oldHP = $HeroHP.Value
+        $HeroHP.Value = [Math]::Min($HeroHP.Value + $Item.HealAmount, $Hero.HP)
+        $healed = $HeroHP.Value - $oldHP
+
+        Write-Scene "$($Hero.Name) dricker $($Item.Name) och återfår $healed HP!"
+        Write-Scene "$($Hero.Name) har nu $($HeroHP.Value)/$($Hero.HP) HP."
+
+        return $true
+    }
+
+    Write-Scene "$($Item.Name) kan inte användas just nu."
+    return $false
+}
+
+function Open-InventoryMenu {
+    param(
+        $Hero,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
+        Write-ColorLine ""
+        Write-ColorLine "===== INVENTORY =====" "Cyan"
+
+        if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
+            Write-ColorLine "Inventory är tomt." "DarkGray"
+            Write-ColorLine ""
+            Read-Host "Tryck Enter för att gå tillbaka"
+            return $false
+        }
+
+        for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
+            $item = $Hero.Inventory[$i]
+
+            if ($item.Type -eq "Consumable" -and $null -ne $item.HealAmount) {
+                Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)] (+$($item.HealAmount) HP)" "White"
+            }
+            else {
+                Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)]" "White"
+            }
+        }
+
+        Write-ColorLine "0. Tillbaka" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Välj itemnummer"
+
+        if ($choice -eq "0") {
+            return $false
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Skriv ett giltigt nummer." "DarkYellow"
+            continue
+        }
+
+        $index = [int]$choice - 1
+
+        if ($index -lt 0 -or $index -ge $Hero.Inventory.Count) {
+            Write-ColorLine "Det itemet finns inte." "DarkYellow"
+            continue
+        }
+
+        $selectedItem = $Hero.Inventory[$index]
+        $used = Use-InventoryItem -Hero $Hero -HeroHP $HeroHP -Item $selectedItem
+
+        if ($used) {
+            $newInventory = @()
+            for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
+                if ($i -ne $index) {
+                    $newInventory += $Hero.Inventory[$i]
+                }
+            }
+
+            $Hero.Inventory = $newInventory
+            return $true
+        }
+    }
+}
+
 function Start-CombatLoop {
     param(
         $Hero,
@@ -171,7 +264,24 @@ function Start-CombatLoop {
 
         if ($choice -eq "I") {
             Write-ColorLine ""
-            Show-Inventory -Hero $Hero
+            $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP
+
+            if ($usedItem) {
+                if (-not $MonsterOffBalance.Value) {
+                    Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+
+                    if ($HeroHP.Value -le 0) {
+                        Write-Scene "$($Hero.Name) faller i striden..."
+                        break
+                    }
+                }
+                else {
+                    Write-Scene "$($Monster.definite) försöker återfå balansen och kan inte attackera denna runda."
+                    $MonsterOffBalance.Value = $false
+                    Write-ColorLine ""
+                }
+            }
+
             continue
         }
         elseif ($choice -eq "R") {
