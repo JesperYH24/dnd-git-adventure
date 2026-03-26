@@ -1,10 +1,17 @@
 function Get-Hero {
-    return [PSCustomObject]@{
-        Name  = "Borzig"
+
+    $hero = @{
+        Name = "Borzig"
         Class = "Barbarian"
-        HP    = 20
-        STR   = 16
-        DamageMin = 1
-        DamageMax = 8
+        HP = 20
+
+        Inventory = @(
+            @{ Name = "Great Axe"; Type = "Weapon" }
+            @{ Name = "Helmet"; Type = "Armor" }
+            @{ Name = "Backpack"; Type = "Utility" }
+            @{ Name = "Healing Potion"; Type = "Consumable" }
+        )
     }
+
+    return $hero
 }

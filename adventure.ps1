@@ -4,12 +4,20 @@ $game = Initialize-Game
 
 Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP $game.HeroHP
 
+$heroStarts = $game.HeroStarts
+$heroBonusAttack = $game.HeroBonusAttack
+$monsterStarts = $game.MonsterStarts
+
 Start-DetectionPhase `
     -Hero $game.Hero `
     -Monster $game.Monster `
-    -HeroStarts ([ref]$game.HeroStarts) `
-    -HeroBonusAttack ([ref]$game.HeroBonusAttack) `
-    -MonsterStarts ([ref]$game.MonsterStarts)
+    -HeroStarts ([ref]$heroStarts) `
+    -HeroBonusAttack ([ref]$heroBonusAttack) `
+    -MonsterStarts ([ref]$monsterStarts)
+
+$game.HeroStarts = $heroStarts
+$game.HeroBonusAttack = $heroBonusAttack
+$game.MonsterStarts = $monsterStarts
 
 $continueCombat = Start-OpeningPhase `
     -Hero $game.Hero `

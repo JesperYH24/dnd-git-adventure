@@ -57,3 +57,14 @@ function Write-BlinkingLine {
 
     Write-Host "`r$Text" -ForegroundColor $Color1
 }
+
+function Show-Inventory {
+    param($hero)
+
+    Write-Host ""
+    Write-Host "Inventory:" -ForegroundColor Cyan
+
+    foreach ($item in $hero.Inventory) {
+        Write-Host "- $($item.Name)"
+    }
+}
