@@ -241,19 +241,19 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ## Framtida utveckling
-GameState som klass istället för hashtable
-inventory-system
-fler actions (defend, special attacks)
-potions/healing
-flera encounters
-leveling-system
-save/load
+- GameState som klass istället för hashtable
+- inventory-system
+- fler actions (defend, special attacks)
+- potions/healing
+- flera encounters
+- leveling-system
+- save/load
 
 ## Sammanfattning
 
 ### Projektet demonstrerar:
 
-modulär PowerShell-arkitektur
-separation av ansvar (Setup vs Gameplay)
-state-driven design
-enkel spel-loop med faser
+- modulär PowerShell-arkitektur
+- separation av ansvar (Setup vs Gameplay)
+- state-driven design
+- enkel spel-loop med faser
