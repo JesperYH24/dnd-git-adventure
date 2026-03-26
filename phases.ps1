@@ -5,8 +5,43 @@ function Start-Intro {
         [int]$HeroHP
     )
 
-    Write-Scene "Hjälten $($Hero.Name) går in i en mörk grotta..."
+    Write-Scene "Natten ligger tung över skogen."
     Write-Scene "$($Hero.Name) är en $($Hero.Class) med $HeroHP HP."
+    Write-Scene "$($Hero.Name) sitter vid sin lägerplats utanför en mörk grotta."
+    Write-Scene "Elden knastrar svagt medan vinden drar mellan träden."
+    Write-Scene "Djupt där inne väntar fara..."
+    Write-ColorLine ""
+
+    $enterCave = $false
+
+    while (-not $enterCave) {
+        Write-ColorLine "Vad vill du göra?" "Cyan"
+        Write-ColorLine "1. Kolla inventory" "White"
+        Write-ColorLine "2. Gå in i grottan" "White"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Välj"
+
+        switch ($choice) {
+            "1" {
+                Show-Inventory -Hero $Hero
+            }
+
+            "2" {
+                Write-Scene "$($Hero.Name) reser sig, greppar sitt vapen och går mot grottans öppning..."
+                Write-Scene "Mörkret sluter sig runt honom."
+                Write-ColorLine ""
+                $enterCave = $true
+            }
+
+            default {
+                Write-ColorLine "Ogiltigt val. Försök igen." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+
+    Write-Scene "$($Hero.Name) går in i den mörka grottan..."
     Write-Scene "Något finns här inne..."
     Write-ColorLine ""
 
