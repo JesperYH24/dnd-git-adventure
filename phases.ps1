@@ -72,17 +72,19 @@ function Start-OpeningPhase {
         Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
         if ($MonsterHP.Value -le 0) {
-            Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-            return $false
-        }
+    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+    Resolve-LootDrop -Hero $Hero -Monster $Monster
+    break
+}
 
         if ($HeroBonusAttack) {
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-                return $false
-            }
+    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+    Resolve-LootDrop -Hero $Hero -Monster $Monster
+    break
+}
         }
     }
     elseif ($MonsterStarts) {

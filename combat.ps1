@@ -73,6 +73,65 @@ function Invoke-MonsterAttack {
     Write-ColorLine ""
 }
 
+function Show-Inventory {
+    param($Hero)
+
+    Write-ColorLine ""
+    Write-ColorLine "===== INVENTORY =====" "Cyan"
+
+    if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
+        Write-ColorLine "Inventory är tomt." "DarkGray"
+        Write-ColorLine ""
+        return
+    }
+
+    for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
+        $item = $Hero.Inventory[$i]
+        Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)]" "White"
+    }
+
+    Write-ColorLine ""
+}
+
+function Resolve-LootDrop {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $loot = Get-MonsterLoot -Monster $Monster
+
+    if (-not $loot -or $loot.Count -eq 0) {
+        Write-Scene "$($Monster.definite) hade ingen loot."
+        return
+    }
+
+    Write-ColorLine ""
+    Write-ColorLine "===== LOOT =====" "Yellow"
+
+    foreach ($item in $loot) {
+        Write-ColorLine "- $($item.Name) [$($item.Type)]" "White"
+    }
+
+    Write-ColorLine ""
+
+    foreach ($item in $loot) {
+        $choice = (Read-Host "Vill du plocka upp '$($item.Name)'? (Y/N)").ToUpper()
+
+        if ($choice -eq "Y") {
+            $Hero.Inventory += $item
+            Write-Scene "$($Hero.Name) plockar upp $($item.Name)."
+        }
+        else {
+            Write-Scene "$($Hero.Name) lämnar kvar $($item.Name)."
+        }
+
+        Write-ColorLine ""
+    }
+
+    Show-Inventory -Hero $Hero
+}
+
 function Start-CombatLoop {
     param(
         $Hero,
@@ -118,10 +177,11 @@ function Start-CombatLoop {
             Write-ColorLine ""
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
-            if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-                break
-            }
+           if ($MonsterHP.Value -le 0) {
+    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+    Resolve-LootDrop -Hero $Hero -Monster $Monster
+    break
+}
 
             if (-not $MonsterOffBalance.Value) {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance

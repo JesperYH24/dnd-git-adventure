@@ -57,3 +57,50 @@ function Get-BossMonster {
     $monsters = Get-MonsterList
     return ($monsters | Where-Object { $_.isBoss } | Select-Object -First 1)
 }
+
+function Get-MonsterLoot {
+    param($Monster)
+
+    switch ($Monster.name) {
+        "skelett" {
+            return @(
+                [PSCustomObject]@{ Name = "Bone Coins"; Type = "Currency"; Value = 2 }
+                [PSCustomObject]@{ Name = "Rusty Sword"; Type = "Weapon"; Value = 5 }
+            )
+        }
+
+        "goblin" {
+            return @(
+                [PSCustomObject]@{ Name = "Gold Pouch"; Type = "Currency"; Value = 10 }
+                [PSCustomObject]@{ Name = "Dagger"; Type = "Weapon"; Value = 6 }
+                [PSCustomObject]@{ Name = "Small Healing Potion"; Type = "Consumable"; Value = 10 }
+            )
+        }
+
+        "zombie" {
+            return @(
+                [PSCustomObject]@{ Name = "Rotten Armor Scraps"; Type = "Armor"; Value = 3 }
+                [PSCustomObject]@{ Name = "Old Coin"; Type = "Currency"; Value = 2 }
+            )
+        }
+
+        "jätteråtta" {
+            return @(
+                [PSCustomObject]@{ Name = "Rat Tail"; Type = "Junk"; Value = 1 }
+            )
+        }
+
+        "uråldrig drake" {
+            return @(
+                [PSCustomObject]@{ Name = "Dragon Gold"; Type = "Currency"; Value = 100 }
+                [PSCustomObject]@{ Name = "Ancient Scale Armor"; Type = "Armor"; Value = 75 }
+                [PSCustomObject]@{ Name = "Flame Fang"; Type = "Weapon"; Value = 60 }
+                [PSCustomObject]@{ Name = "Greater Healing Potion"; Type = "Consumable"; Value = 25 }
+            )
+        }
+
+        default {
+            return @()
+        }
+    }
+}
