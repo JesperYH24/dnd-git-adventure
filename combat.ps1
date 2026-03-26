@@ -167,9 +167,14 @@ function Start-CombatLoop {
             continue
         }
 
-        $choice = (Read-Host "Vad vill du göra? (A/R) - Attack eller Run").ToUpper()
+        $choice = (Read-Host "Vad vill du göra? (A/I/R) - Attack, Inventory eller Run").ToUpper()
 
-        if ($choice -eq "R") {
+        if ($choice -eq "I") {
+            Write-ColorLine ""
+            Show-Inventory -Hero $Hero
+            continue
+        }
+        elseif ($choice -eq "R") {
             Write-Scene "$($Hero.Name) flyr från $($Monster.definite)!"
             break
         }
@@ -177,11 +182,11 @@ function Start-CombatLoop {
             Write-ColorLine ""
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
-           if ($MonsterHP.Value -le 0) {
-    Write-Scene "$($Monster.definite) faller till marken. Du vann!"
-    Resolve-LootDrop -Hero $Hero -Monster $Monster
-    break
-}
+            if ($MonsterHP.Value -le 0) {
+                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+                Resolve-LootDrop -Hero $Hero -Monster $Monster
+                break
+            }
 
             if (-not $MonsterOffBalance.Value) {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
@@ -199,7 +204,7 @@ function Start-CombatLoop {
         }
         else {
             Write-ColorLine ""
-            Write-ColorLine "Skriv A eller R" "DarkYellow"
+            Write-ColorLine "Skriv A, I eller R" "DarkYellow"
             Write-ColorLine ""
         }
     }
