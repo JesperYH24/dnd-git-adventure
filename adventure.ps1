@@ -1,54 +1,35 @@
-#======================
-#IMPORTS
-#======================
-. "$PSScriptRoot\roll.ps1"
-. "$PSScriptRoot\character.ps1"
-. "$PSScriptRoot\monsters.ps1"
-. "$PSScriptRoot\ui.ps1"
-. "$PSScriptRoot\status.ps1"
-. "$PSScriptRoot\combat.ps1"
-. "$PSScriptRoot\phases.ps1"
-#======================
-#SETUP
-#======================
-$hero = Get-Hero
+. "$PSScriptRoot\Setup.ps1"
 
-$forceBossInput = (Read-Host "Vill du tvinga boss? (y/n)").ToLower()
-$forceBoss = ($forceBossInput -eq "y")
+$game = Initialize-Game
 
-if ($forceBoss) {
-    $monster = Get-BossMonster
-}
-else {
-    $monster = Get-RandomMonster
-}
+Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP $game.HeroHP
 
-$heroHP = $hero.HP
+Start-DetectionPhase `
+    -Hero $game.Hero `
+    -Monster $game.Monster `
+    -HeroStarts ([ref]$game.HeroStarts) `
+    -HeroBonusAttack ([ref]$game.HeroBonusAttack) `
+    -MonsterStarts ([ref]$game.MonsterStarts)
 
-$monsterHP = $monster.hp
-
-$heroDroppedWeapon = $false
-$monsterOffBalance = $false
-$heroStarts = $false
-$heroBonusAttack = $false
-$monsterStarts = $false
-#======================
-#INTRO
-#======================
-Start-Intro -Hero $hero -Monster $monster -HeroHP $heroHP
-#======================
-#UPPTÄCKSFAS
-#======================
-Start-DetectionPhase -Hero $hero -Monster $monster -HeroStarts ([ref]$heroStarts) -HeroBonusAttack ([ref]$heroBonusAttack) -MonsterStarts ([ref]$monsterStarts)
-#======================
-#STARTFAS
-#======================
-$continueCombat = Start-OpeningPhase -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -HeroStarts $heroStarts -HeroBonusAttack $heroBonusAttack -MonsterStarts $monsterStarts
+$continueCombat = Start-OpeningPhase `
+    -Hero $game.Hero `
+    -Monster $game.Monster `
+    -HeroHP ([ref]$game.HeroHP) `
+    -MonsterHP ([ref]$game.MonsterHP) `
+    -HeroDroppedWeapon ([ref]$game.HeroDroppedWeapon) `
+    -MonsterOffBalance ([ref]$game.MonsterOffBalance) `
+    -HeroStarts $game.HeroStarts `
+    -HeroBonusAttack $game.HeroBonusAttack `
+    -MonsterStarts $game.MonsterStarts
 
 if (-not $continueCombat) {
     return
 }
-#======================
-# STRIDSLOOP (MAIN GAME LOOP)
-#======================
-Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+Start-CombatLoop `
+    -Hero $game.Hero `
+    -Monster $game.Monster `
+    -HeroHP ([ref]$game.HeroHP) `
+    -MonsterHP ([ref]$game.MonsterHP) `
+    -HeroDroppedWeapon ([ref]$game.HeroDroppedWeapon) `
+    -MonsterOffBalance ([ref]$game.MonsterOffBalance)
