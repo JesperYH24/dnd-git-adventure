@@ -240,7 +240,7 @@ Vid behov:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-### Framtida utveckling
+## Framtida utveckling
 GameState som klass istället för hashtable
 inventory-system
 fler actions (defend, special attacks)
@@ -249,9 +249,9 @@ flera encounters
 leveling-system
 save/load
 
-### Sammanfattning
+## Sammanfattning
 
-## Projektet demonstrerar:
+### Projektet demonstrerar:
 
 modulär PowerShell-arkitektur
 separation av ansvar (Setup vs Gameplay)
