@@ -109,8 +109,8 @@ function Start-OpeningPhase {
         $attacks = if ($HeroBonusAttack) { 2 } else { 1 }
 
         for ($i = 1; $i -le $attacks; $i++) {
-            Write-Scene ""
-            Write-Scene "Öppningsattack $i av $attacks"
+            Write-ColorLine ""
+            Write-Action "Öppningsattack $i av $attacks" "Cyan"
 
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 

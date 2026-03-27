@@ -47,30 +47,30 @@ function Invoke-MonsterAttack {
     )
 
     $attackRoll = Roll-Dice -Sides 20
-    Write-Scene "$($Monster.definite) slår för attack: $attackRoll"
+    Write-Action "$($Monster.definite) slår för attack: $attackRoll" "DarkCyan"
 
     if ($attackRoll -eq 20) {
-        Write-Scene "CRITICAL HIT!"
+        Write-Action "CRITICAL HIT!" "Red"
         $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $monsterDamage = $Monster.damageMax + $extraDamage
 
         $HeroHP.Value -= $monsterDamage
 
-        Write-Scene "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
+        Write-Action "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)" "Yellow"
     }
     elseif ($attackRoll -eq 1) {
-        Write-Scene "CRITICAL FAIL!"
-        Write-Scene "$($Monster.definite) snubblar till och tappar balansen!"
+        Write-Action "CRITICAL FAIL!" "Magenta"
+        Write-Action "$($Monster.definite) snubblar till och tappar balansen!" "DarkYellow"
         $MonsterOffBalance.Value = $true
     }
     elseif ($attackRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $HeroHP.Value -= $monsterDamage
 
-        Write-Scene "$($Monster.definite) träffar och gör $monsterDamage skada!"
+        Write-Action "$($Monster.definite) träffar och gör $monsterDamage skada!" "Yellow"
     }
     else {
-        Write-Scene "$($Monster.definite) missar!"
+        Write-Action "$($Monster.definite) missar!" "DarkGray"
     }
 
     if ($HeroHP.Value -lt 0) {
