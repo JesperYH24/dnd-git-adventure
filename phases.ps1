@@ -12,11 +12,11 @@ function Start-Intro {
     Write-ColorLine ""
 }
 
-function Show-QuestTracker {
+function Show-QuestLog {
     param($Quest)
 
     Write-ColorLine ""
-    Write-ColorLine "===== QUEST =====" "Yellow"
+    Write-ColorLine "===== QUEST LOG =====" "Yellow"
     Write-ColorLine $Quest.Name "White"
     Write-ColorLine $Quest.Description "Gray"
     Write-ColorLine "Objective: $($Quest.Objective)" "White"
@@ -31,11 +31,15 @@ function Start-CampfireMenu {
     )
 
     while ($true) {
+        Write-ColorLine ""
+        Write-ColorLine "===== CAMPFIRE =====" "Yellow"
+        Write-Scene "The campfire is a rare moment of safety. Borzig can gather his thoughts here."
+        Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Check inventory" "White"
         Write-ColorLine "2. Enter the cave" "White"
         Write-ColorLine "3. Head to town" "White"
-        Write-ColorLine "4. View quest" "White"
+        Write-ColorLine "4. Check quest log" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -59,7 +63,9 @@ function Start-CampfireMenu {
                     Write-Scene "The guards lower their spears and block the road."
                     if ($Game.Quest.SeenDragon) {
                         Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
-                        Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the gates finally open."
+                        Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
+                        Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
+                        Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
                         $Game.Quest.Completed = $true
                         $Game.GameWon = $true
                         return "EnterTown"
@@ -77,7 +83,7 @@ function Start-CampfireMenu {
             }
 
             "4" {
-                Show-QuestTracker -Quest $Game.Quest
+                Show-QuestLog -Quest $Game.Quest
             }
 
             default {
