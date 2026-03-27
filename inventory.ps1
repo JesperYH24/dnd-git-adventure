@@ -5,7 +5,7 @@ function Format-InventoryItemLine {
 
     if ($Item.Type -eq "Weapon") {
         $tags += "hit $($Item.AttackBonus)"
-        $tags += "dmg $($Item.DamageMin)-$($Item.DamageMax)"
+        $tags += "dmg $($Item.DamageDiceCount)d$($Item.DamageDiceSides)"
     }
     elseif ($Item.Type -eq "Armor") {
         $tags += "AC +$($Item.ArmorBonus)"

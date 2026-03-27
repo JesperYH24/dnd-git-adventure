@@ -59,12 +59,15 @@ function Start-CaveExploration {
                 }
                 "S" {
                     $equippedWeapon = Get-HeroWeaponProfile -Hero $Game.Hero
+                    $strengthModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "STR"
+                    $constitutionModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "CON"
                     Write-ColorLine ""
                     Write-ColorLine "Status:" "Cyan"
                     Write-ColorLine "$($Game.Hero.Name): $($HeroHP.Value)/$($Game.Hero.HP) HP" "Green"
                     Write-ColorLine "Level: $($Game.Hero.Level)" "White"
                     Write-ColorLine "Armor Class: $(Get-HeroArmorClass -Hero $Game.Hero)" "White"
-                    Write-ColorLine "Weapon: $($equippedWeapon.Name) (hit $($equippedWeapon.AttackBonus), damage $($equippedWeapon.DamageMin)-$($equippedWeapon.DamageMax))" "White"
+                    Write-ColorLine "Weapon: $($equippedWeapon.Name) (to hit +$($equippedWeapon.TotalAttackBonus), damage $(Get-WeaponDamageRollText -WeaponProfile $equippedWeapon) + $($equippedWeapon.DamageBonus), total $($equippedWeapon.TotalDamageMin)-$($equippedWeapon.TotalDamageMax))" "White"
+                    Write-ColorLine "STR $($Game.Hero.STR) ($strengthModifier.ToString('+0;-0;0')) | CON $($Game.Hero.CON) ($constitutionModifier.ToString('+0;-0;0'))" "DarkGray"
                     Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Game.Hero)/$(Get-InventoryCapacity -Hero $Game.Hero) slots" "White"
                     Write-ColorLine ""
                 }

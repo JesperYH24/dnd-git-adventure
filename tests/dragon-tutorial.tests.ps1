@@ -51,7 +51,7 @@ function Test-DeepChamberForcesRetreatWithoutCompletingQuest {
 
     Assert-Equal -Actual $result -Expected "Fled" -Message "First shadow sanctum entry should force a retreat."
     Assert-Equal -Actual $currentRoomId -Expected "underground_lake" -Message "The hero should be moved back to the previous room."
-    Assert-Equal -Actual $heroHP -Expected 20 -Message "The tutorial dragon encounter should not damage the hero."
+    Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "The tutorial dragon encounter should not damage the hero."
     Assert-True -Condition $game.Quest.SeenDragon -Message "The quest should record that Borzig has seen the dragon."
     Assert-Equal -Actual $game.Quest.Completed -Expected $false -Message "The quest should not complete until the hero reports back to town."
 }

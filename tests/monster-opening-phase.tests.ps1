@@ -30,7 +30,10 @@ function New-TestMonster {
         hp         = 10
         armorClass = 10
         attackBonus = 0
-        damageMin  = 2
+        damageDiceCount = 1
+        damageDiceSides = 4
+        damageBonus = 0
+        damageMin  = 1
         damageMax  = 4
         isBoss     = $false
     }
@@ -47,8 +50,12 @@ function Set-TestOutputStubs {
 function Test-MonsterOpeningPhaseCriticalHit {
     Set-TestOutputStubs
 
-    function global:Roll-Dice { param([int]$Sides = 20) return 20 }
-    function global:Roll-Damage { param([int]$Minimum = 1, [int]$Maximum = 6) return 3 }
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 20 }
+        return $Sides
+    }
 
     $hero = New-TestHero
     $monster = New-TestMonster
@@ -69,14 +76,18 @@ function Test-MonsterOpeningPhaseCriticalHit {
         -MonsterStarts $true
 
     Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after monster crits without lethal damage."
-    Assert-Equal -Actual $heroHP -Expected 13 -Message "Monster crit in opening phase should reduce hero HP by max damage plus extra damage."
+    Assert-Equal -Actual $heroHP -Expected 12 -Message "Monster crit in opening phase should roll damage dice twice and reduce hero HP accordingly."
 }
 
 function Test-MonsterOpeningPhaseNormalHit {
     Set-TestOutputStubs
 
-    function global:Roll-Dice { param([int]$Sides = 20) return 10 }
-    function global:Roll-Damage { param([int]$Minimum = 1, [int]$Maximum = 6) return 3 }
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 10 }
+        return $Sides
+    }
 
     $hero = New-TestHero
     $monster = New-TestMonster
@@ -97,7 +108,7 @@ function Test-MonsterOpeningPhaseNormalHit {
         -MonsterStarts $true
 
     Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after a normal monster hit in opening phase."
-    Assert-Equal -Actual $heroHP -Expected 17 -Message "Monster normal hit in opening phase should reduce hero HP by rolled damage."
+    Assert-Equal -Actual $heroHP -Expected 16 -Message "Monster normal hit in opening phase should reduce hero HP by rolled damage."
 }
 
 Test-MonsterOpeningPhaseCriticalHit

@@ -29,10 +29,43 @@ function Test-GreatAxeDamageProfile {
     $hero = Get-Hero
     $weapon = Get-HeroWeaponProfile -Hero $hero
 
-    Assert-Equal -Actual $weapon.DamageMax -Expected 12 -Message "Great Axe should have a max damage of 12."
+    Assert-Equal -Actual $weapon.DamageDiceCount -Expected 1 -Message "Great Axe should roll one damage die."
+    Assert-Equal -Actual $weapon.DamageDiceSides -Expected 12 -Message "Great Axe should use a d12 for damage."
+    Assert-Equal -Actual $weapon.TotalDamageMin -Expected 3 -Message "Great Axe minimum damage should allow a 1 on the die plus Strength modifier."
+    Assert-Equal -Actual $weapon.TotalDamageMax -Expected 14 -Message "Great Axe maximum damage should include the hero's Strength modifier."
+}
+
+function Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP {
+    $hero = Get-Hero
+    $weapon = Get-HeroWeaponProfile -Hero $hero
+
+    Assert-Equal -Actual $hero.STR -Expected 15 -Message "The barbarian should start with 15 Strength from point buy."
+    Assert-Equal -Actual $hero.DEX -Expected 14 -Message "The barbarian should start with 14 Dexterity from point buy."
+    Assert-Equal -Actual $hero.CON -Expected 15 -Message "The barbarian should start with 15 Constitution from point buy."
+    Assert-Equal -Actual $hero.INT -Expected 8 -Message "The barbarian should start with 8 Intelligence from point buy."
+    Assert-Equal -Actual $hero.WIS -Expected 10 -Message "The barbarian should start with 10 Wisdom from point buy."
+    Assert-Equal -Actual $hero.CHA -Expected 8 -Message "The barbarian should start with 8 Charisma from point buy."
+    Assert-Equal -Actual $hero.HP -Expected 14 -Message "A level 1 barbarian should start with max hit die plus Constitution modifier."
+    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 3 -Message "The hero's total attack bonus should include Strength, proficiency, and weapon modifier."
+}
+
+function Test-TutorialMonsterArmorClassStaysForgiving {
+    $monsters = Get-MonsterList | Where-Object { -not $_.isBoss }
+
+    $skeleton = $monsters | Where-Object { $_.name -eq "skeleton" } | Select-Object -First 1
+    $goblin = $monsters | Where-Object { $_.name -eq "goblin" } | Select-Object -First 1
+    $zombie = $monsters | Where-Object { $_.name -eq "zombie" } | Select-Object -First 1
+    $giantRat = $monsters | Where-Object { $_.name -eq "giant rat" } | Select-Object -First 1
+
+    Assert-Equal -Actual $skeleton.armorClass -Expected 11 -Message "Skeleton AC should stay approachable for the tutorial."
+    Assert-Equal -Actual $goblin.armorClass -Expected 12 -Message "Goblin AC should stay approachable for the tutorial."
+    Assert-Equal -Actual $zombie.armorClass -Expected 9 -Message "Zombie AC should stay low for the tutorial."
+    Assert-Equal -Actual $giantRat.armorClass -Expected 10 -Message "Giant rat AC should stay approachable for the tutorial."
 }
 
 Test-BetterArmorRaisesArmorClass
 Test-GreatAxeDamageProfile
+Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
+Test-TutorialMonsterArmorClassStaysForgiving
 
 Write-Host "Armor upgrade tests passed." -ForegroundColor Green

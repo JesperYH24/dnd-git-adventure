@@ -4,6 +4,63 @@ function Get-EquippedWeapon {
     return ($Hero.Inventory | Where-Object { $_.Type -eq "Weapon" -and $_.Equipped } | Select-Object -First 1)
 }
 
+function Get-AbilityModifier {
+    param([int]$Score)
+
+    return [Math]::Floor(($Score - 10) / 2)
+}
+
+function Get-HeroAbilityScore {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    $property = $Hero.PSObject.Properties[$Ability]
+
+    if ($null -eq $property) {
+        return 10
+    }
+
+    return [int]$property.Value
+}
+
+function Get-HeroAbilityModifier {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    $score = Get-HeroAbilityScore -Hero $Hero -Ability $Ability
+    return Get-AbilityModifier -Score $score
+}
+
+function Get-HeroProficiencyBonus {
+    param($Hero)
+
+    $level = 1
+
+    if ($null -ne $Hero.PSObject.Properties["Level"]) {
+        $level = [int]$Hero.Level
+    }
+
+    return [Math]::Floor((($level - 1) / 4)) + 2
+}
+
+function Get-HeroMaxHP {
+    param($Hero)
+
+    $hitDie = 12
+
+    if ($null -ne $Hero.PSObject.Properties["HitDie"]) {
+        $hitDie = [int]$Hero.HitDie
+    }
+
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+
+    return $hitDie + $constitutionModifier
+}
+
 function Get-EquippedArmor {
     param($Hero)
 
@@ -71,22 +128,61 @@ function Get-HeroWeaponProfile {
     param($Hero)
 
     $weapon = Get-EquippedWeapon -Hero $Hero
+    $strengthModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "STR"
+    $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
 
     if ($weapon) {
         return [PSCustomObject]@{
-            Name        = $weapon.Name
-            AttackBonus = [int]$weapon.AttackBonus
-            DamageMin   = [int]$weapon.DamageMin
-            DamageMax   = [int]$weapon.DamageMax
+            Name              = $weapon.Name
+            AttackBonus       = [int]$weapon.AttackBonus
+            TotalAttackBonus  = $proficiencyBonus + $strengthModifier + [int]$weapon.AttackBonus
+            DamageBonus       = $strengthModifier
+            DamageDiceCount   = [int]$weapon.DamageDiceCount
+            DamageDiceSides   = [int]$weapon.DamageDiceSides
+            DamageMin         = [int]$weapon.DamageMin
+            DamageMax         = [int]$weapon.DamageMax
+            TotalDamageMin    = [Math]::Max(1, [int]$weapon.DamageMin + $strengthModifier)
+            TotalDamageMax    = [Math]::Max(1, [int]$weapon.DamageMax + $strengthModifier)
         }
     }
 
     return [PSCustomObject]@{
-        Name        = "Bare Hands"
-        AttackBonus = 0
-        DamageMin   = 1
-        DamageMax   = 2
+        Name              = "Bare Hands"
+        AttackBonus       = 0
+        TotalAttackBonus  = $proficiencyBonus + $strengthModifier
+        DamageBonus       = $strengthModifier
+        DamageDiceCount   = 1
+        DamageDiceSides   = 2
+        DamageMin         = 1
+        DamageMax         = 2
+        TotalDamageMin    = [Math]::Max(1, 1 + $strengthModifier)
+        TotalDamageMax    = [Math]::Max(1, 2 + $strengthModifier)
     }
+}
+
+function Get-WeaponDamageRollText {
+    param($WeaponProfile)
+
+    return "$($WeaponProfile.DamageDiceCount)d$($WeaponProfile.DamageDiceSides)"
+}
+
+function Roll-WeaponDamage {
+    param(
+        $WeaponProfile,
+        [int]$DiceCount = 0
+    )
+
+    if ($DiceCount -le 0) {
+        $DiceCount = [int]$WeaponProfile.DamageDiceCount
+    }
+
+    $total = 0
+
+    for ($i = 0; $i -lt $DiceCount; $i++) {
+        $total += Roll-Dice -Sides $WeaponProfile.DamageDiceSides
+    }
+
+    return $total
 }
 
 function Set-EquippedItem {
@@ -146,19 +242,28 @@ function Can-DropItem {
 }
 
 function Get-Hero {
-    return [PSCustomObject]@{
+    $hero = [PSCustomObject]@{
         Name               = "Borzig"
         Class              = "Barbarian"
         Level              = 1
-        HP                 = 20
-        STR                = 16
+        HitDie             = 12
+        STR                = 15
+        DEX                = 14
+        CON                = 15
+        INT                = 8
+        WIS                = 10
+        CHA                = 8
         BaseArmorClass     = 10
         BaseInventorySlots = 4
         Inventory          = @(
-            (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus -1 -DamageMin 4 -DamageMax 12 -SlotCost 2 -Equipped $true)
+            (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus -1 -DamageDiceCount 1 -DamageDiceSides 12 -SlotCost 2 -Equipped $true)
             (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
             (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 4 -SlotCost 1 -Equipped $true)
             (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
         )
     }
+
+    $hero | Add-Member -NotePropertyName HP -NotePropertyValue (Get-HeroMaxHP -Hero $hero)
+
+    return $hero
 }

@@ -30,7 +30,10 @@ function New-TestMonster {
         hp        = 50
         armorClass = 16
         attackBonus = 0
-        damageMin = 8
+        damageDiceCount = 1
+        damageDiceSides = 12
+        damageBonus = 0
+        damageMin = 1
         damageMax = 12
         isBoss    = $true
     }
@@ -47,9 +50,13 @@ function Set-TestOutputStubs {
 function Test-OpeningPhaseStateSync {
     Set-TestOutputStubs
 
-    function global:Roll-Dice { param([int]$Sides = 20) return 18 }
-    function global:Roll-Damage { param([int]$Minimum = 1, [int]$Maximum = 6) return 11 }
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
 
+        if ($Sides -eq 20) { return 18 }
+        if ($Sides -eq 12) { return 11 }
+        return $Sides
+    }
     $game = @{
         Hero = New-TestHero
         Monster = New-TestMonster

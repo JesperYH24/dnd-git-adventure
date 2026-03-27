@@ -12,17 +12,18 @@ function Invoke-HeroAttack {
     $weapon = Get-HeroWeaponProfile -Hero $Hero
     $targetArmorClass = [int]$Monster.armorClass
     $heroRoll = Roll-Dice -Sides 20
-    $attackTotal = $heroRoll + $weapon.AttackBonus
+    $attackTotal = $heroRoll + $weapon.TotalAttackBonus
 
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
-        $extraDamage = Roll-Damage -Minimum $weapon.DamageMin -Maximum $weapon.DamageMax
-        $heroDamage = $weapon.DamageMax + $extraDamage
+        $firstDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
+        $secondDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
+        $heroDamage = [Math]::Max(1, $firstDamageRoll + $secondDamageRoll + $weapon.DamageBonus)
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamage)" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($firstDamageRoll + $secondDamageRoll + $($weapon.DamageBonus))" "Yellow"
     }
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true
@@ -30,10 +31,11 @@ function Invoke-HeroAttack {
         Write-Scene "$($Hero.Name) fumbles, drops the weapon, and must pick it up next turn!"
     }
     elseif ($attackTotal -ge $targetArmorClass) {
-        $heroDamage = Roll-Damage -Minimum $weapon.DamageMin -Maximum $weapon.DamageMax
+        $damageRoll = Roll-WeaponDamage -WeaponProfile $weapon
+        $heroDamage = [Math]::Max(1, $damageRoll + $weapon.DamageBonus)
         $MonsterHP.Value -= $heroDamage
 
-        Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage!" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus))" "Yellow"
     }
     else {
         Write-Action "$($Hero.Name) misses the attack!" "DarkGray"
@@ -57,17 +59,17 @@ function Invoke-MonsterAttack {
     $heroArmorClass = Get-HeroArmorClass -Hero $Hero
     $attackRoll = Roll-Dice -Sides 20
     $attackTotal = $attackRoll + [int]$Monster.attackBonus
-
     Write-Action "$($Monster.definite) attacks: roll $attackRoll, total $attackTotal vs AC $heroArmorClass" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
-        $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
-        $monsterDamage = $Monster.damageMax + $extraDamage
+        $firstDamageRoll = Roll-MonsterDamage -Monster $Monster
+        $secondDamageRoll = Roll-MonsterDamage -Monster $Monster
+        $monsterDamage = $firstDamageRoll + $secondDamageRoll
 
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($($Monster.damageMax) + $extraDamage)" "Yellow"
+        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($firstDamageRoll + $secondDamageRoll)" "Yellow"
     }
     elseif ($attackRoll -eq 1) {
         Write-Action "CRITICAL FAIL!" "Magenta"
@@ -75,7 +77,7 @@ function Invoke-MonsterAttack {
         $MonsterOffBalance.Value = $true
     }
     elseif ($attackTotal -ge $heroArmorClass) {
-        $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
+        $monsterDamage = Roll-MonsterDamage -Monster $Monster
         $HeroHP.Value -= $monsterDamage
 
         Write-Action "$($Monster.definite) hits for $monsterDamage damage!" "Yellow"

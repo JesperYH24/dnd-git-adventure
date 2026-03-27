@@ -3,21 +3,30 @@ function New-WeaponItem {
         [string]$Name,
         [int]$Value,
         [int]$AttackBonus,
-        [int]$DamageMin,
-        [int]$DamageMax,
+        [int]$DamageDiceCount = 1,
+        [int]$DamageDiceSides = 6,
+        [int]$DamageMin = 0,
+        [int]$DamageMax = 0,
         [int]$SlotCost = 1,
         [bool]$Equipped = $false
     )
 
+    if ($DamageMin -gt 0 -and $DamageMax -gt 0) {
+        $DamageDiceCount = 1
+        $DamageDiceSides = $DamageMax
+    }
+
     return [PSCustomObject]@{
-        Name        = $Name
-        Type        = "Weapon"
-        Value       = $Value
-        AttackBonus = $AttackBonus
-        DamageMin   = $DamageMin
-        DamageMax   = $DamageMax
-        SlotCost    = $SlotCost
-        Equipped    = $Equipped
+        Name            = $Name
+        Type            = "Weapon"
+        Value           = $Value
+        AttackBonus     = $AttackBonus
+        DamageDiceCount = $DamageDiceCount
+        DamageDiceSides = $DamageDiceSides
+        DamageMin       = $DamageDiceCount
+        DamageMax       = $DamageDiceCount * $DamageDiceSides
+        SlotCost        = $SlotCost
+        Equipped        = $Equipped
     }
 }
 
