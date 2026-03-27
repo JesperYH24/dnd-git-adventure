@@ -57,18 +57,170 @@ function Get-HeroProficiencyBonus {
     return [Math]::Floor((($level - 1) / 4)) + 2
 }
 
+function Get-XPThresholdForLevel {
+    param([int]$Level)
+
+    switch ($Level) {
+        1 { return 0 }
+        2 { return 300 }
+        3 { return 900 }
+        4 { return 2700 }
+        5 { return 6500 }
+        default { return 6500 + (($Level - 5) * 3000) }
+    }
+}
+
+function Get-HeroNextLevelXPThreshold {
+    param($Hero)
+
+    return Get-XPThresholdForLevel -Level ($Hero.Level + 1)
+}
+
+function Get-HeroAvailableLevelUps {
+    param($Hero)
+
+    $available = 0
+    $currentLevel = [int]$Hero.Level
+    $levelCap = $null
+
+    if ($null -ne $Hero.PSObject.Properties["LevelCap"]) {
+        $levelCap = [int]$Hero.LevelCap
+    }
+
+    while ($Hero.XP -ge (Get-XPThresholdForLevel -Level ($currentLevel + $available + 1))) {
+        if ($null -ne $levelCap -and ($currentLevel + $available) -ge $levelCap) {
+            break
+        }
+
+        $available += 1
+    }
+
+    return $available
+}
+
 function Get-HeroMaxHP {
     param($Hero)
 
     $hitDie = 12
+    $level = 1
 
     if ($null -ne $Hero.PSObject.Properties["HitDie"]) {
         $hitDie = [int]$Hero.HitDie
     }
 
-    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    if ($null -ne $Hero.PSObject.Properties["Level"]) {
+        $level = [int]$Hero.Level
+    }
 
-    return $hitDie + $constitutionModifier
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    $maxHP = $hitDie + $constitutionModifier
+
+    if ($level -le 1) {
+        return $maxHP
+    }
+
+    $levelUpGain = ([Math]::Floor($hitDie / 2) + 1) + $constitutionModifier
+
+    return $maxHP + (($level - 1) * $levelUpGain)
+}
+
+function Get-HeroLevelUpFixedHPGain {
+    param($Hero)
+
+    $hitDie = [int]$Hero.HitDie
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    return ([Math]::Floor($hitDie / 2) + 1) + $constitutionModifier
+}
+
+function Resolve-HeroLevelUpHPGain {
+    param(
+        $Hero,
+        [string]$Mode = ""
+    )
+
+    $hitDie = [int]$Hero.HitDie
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    $fixedGain = Get-HeroLevelUpFixedHPGain -Hero $Hero
+
+    while ([string]::IsNullOrWhiteSpace($Mode)) {
+        Write-SectionTitle -Text "Choose HP Increase" -Color "Yellow"
+        Write-ColorLine "F. Fixed increase: $fixedGain HP" "White"
+        Write-ColorLine "R. Roll $hitDie-sided hit die: 1d$hitDie + $constitutionModifier" "White"
+        Write-ColorLine ""
+        $Mode = (Read-Host "Choose HP gain (F/R)").ToUpper()
+
+        if ($Mode -notin @("F", "R")) {
+            Write-ColorLine "Choose F for fixed HP or R to roll." "DarkYellow"
+            Write-ColorLine ""
+            $Mode = ""
+        }
+    }
+
+    if ($Mode -eq "R") {
+        $roll = Roll-Dice -Sides $hitDie
+        $gain = [Math]::Max(1, $roll + $constitutionModifier)
+
+        return [PSCustomObject]@{
+            Mode = "R"
+            Roll = $roll
+            Gain = $gain
+        }
+    }
+
+    return [PSCustomObject]@{
+        Mode = "F"
+        Roll = $null
+        Gain = $fixedGain
+    }
+}
+
+function Grant-HeroXP {
+    param(
+        $Hero,
+        [int]$XP
+    )
+
+    if ($null -eq $Hero.PSObject.Properties["XP"]) {
+        $Hero | Add-Member -NotePropertyName XP -NotePropertyValue 0
+    }
+
+    $Hero.XP += $XP
+}
+
+function Resolve-HeroLongRestLevelUp {
+    param(
+        $Hero,
+        [ref]$HeroHP,
+        [string]$HPMode = ""
+    )
+
+    $availableLevelUps = Get-HeroAvailableLevelUps -Hero $Hero
+    $levelUpResults = @()
+
+    for ($i = 0; $i -lt $availableLevelUps; $i++) {
+        $oldMaxHP = $Hero.HP
+        $hpGainResult = Resolve-HeroLevelUpHPGain -Hero $Hero -Mode $HPMode
+        $Hero.Level += 1
+        $Hero.HP = $oldMaxHP + $hpGainResult.Gain
+        $levelUpResults += [PSCustomObject]@{
+            Level = $Hero.Level
+            Gain = $hpGainResult.Gain
+            Mode = $hpGainResult.Mode
+            Roll = $hpGainResult.Roll
+        }
+    }
+
+    if ($availableLevelUps -gt 0) {
+        $HeroHP.Value = $Hero.HP
+    }
+    else {
+        $HeroHP.Value = [Math]::Min($HeroHP.Value, $Hero.HP)
+    }
+
+    return [PSCustomObject]@{
+        LeveledUp = ($availableLevelUps -gt 0)
+        Results = $levelUpResults
+    }
 }
 
 function Get-EquippedArmor {
@@ -256,6 +408,8 @@ function Get-Hero {
         Name               = "Borzig"
         Class              = "Barbarian"
         Level              = 1
+        LevelCap           = 2
+        XP                 = 0
         HitDie             = 12
         STR                = 15
         DEX                = 14

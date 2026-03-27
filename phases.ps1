@@ -54,8 +54,32 @@ function Start-CampfireMenu {
                         Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
                         Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
                         Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
+                        $nextLevelXP = Get-HeroNextLevelXPThreshold -Hero $Game.Hero
+                        $remainingTutorialXP = [Math]::Max(0, $nextLevelXP - $Game.Hero.XP)
+
+                        if ($remainingTutorialXP -gt 0) {
+                            Grant-HeroXP -Hero $Game.Hero -XP $remainingTutorialXP
+                            Write-Scene "$($Game.Hero.Name) gains the final $remainingTutorialXP XP from completing the tutorial."
+                        }
+
+                        Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."
+                        $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP
                         $Game.Quest.Completed = $true
                         $Game.GameWon = $true
+                        if ($levelUpResult.LeveledUp) {
+                            $latestLevelUp = $levelUpResult.Results | Select-Object -Last 1
+                            Write-SectionTitle -Text "Level Up" -Color "Yellow"
+                            Write-EmphasisLine -Text "$($Game.Hero.Name) reaches level $($Game.Hero.Level)!" -Color "Yellow"
+                            Write-Scene "The tutorial has hardened him. His strength steadies, and his endurance grows."
+                            if ($latestLevelUp.Mode -eq "R") {
+                                Write-Scene "He gambles on the hit die and rolls a $($latestLevelUp.Roll), gaining $($latestLevelUp.Gain) HP."
+                            }
+                            else {
+                                Write-Scene "He takes the steady path and gains the fixed $($latestLevelUp.Gain) HP."
+                            }
+                            Write-Scene "Max HP rises to $($Game.Hero.HP), and he feels ready for the road ahead."
+                            Write-ColorLine ""
+                        }
                         Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
                         Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
                         Write-ColorLine ""
@@ -77,7 +101,7 @@ function Start-CampfireMenu {
             }
 
             "4" {
-                Show-QuestLog -Quest $Game.Quest
+                Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
             }
 
             default {

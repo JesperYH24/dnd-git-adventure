@@ -5,6 +5,7 @@ function Get-MonsterList {
             article = "A"
             definite = "The Skeleton"
             hp = 8
+            xp = 50
             armorClass = 11
             attackBonus = 0
             damageDiceCount = 1
@@ -20,6 +21,7 @@ function Get-MonsterList {
             article = "A"
             definite = "The Goblin"
             hp = 6
+            xp = 50
             armorClass = 12
             attackBonus = 1
             damageDiceCount = 1
@@ -35,6 +37,7 @@ function Get-MonsterList {
             article = "A"
             definite = "The Zombie"
             hp = 10
+            xp = 50
             armorClass = 9
             attackBonus = 0
             damageDiceCount = 1
@@ -50,6 +53,7 @@ function Get-MonsterList {
             article = "A"
             definite = "The Giant Rat"
             hp = 5
+            xp = 25
             armorClass = 10
             attackBonus = 1
             damageDiceCount = 1
@@ -65,6 +69,7 @@ function Get-MonsterList {
             article = "An"
             definite = "The Ancient Dragon"
             hp = 50
+            xp = 0
             armorClass = 16
             attackBonus = 4
             damageDiceCount = 2

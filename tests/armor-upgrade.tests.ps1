@@ -106,10 +106,59 @@ function Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength {
     Assert-True -Condition (-not $heroDroppedWeapon) -Message "A critical hit should not drop the hero's weapon."
 }
 
+function Test-TutorialXPLevelsHeroToTwo {
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+
+    Grant-HeroXP -Hero $hero -XP 300
+    Assert-Equal -Actual $hero.Level -Expected 1 -Message "The hero should still be level 1 until a long rest happens."
+    $levelUpReady = Get-HeroAvailableLevelUps -Hero $hero
+    $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $hero -HeroHP ([ref]$heroHP) -HPMode "F"
+
+    Assert-True -Condition $levelUpResult.LeveledUp -Message "The tutorial XP reward should level the hero up."
+    Assert-Equal -Actual $levelUpReady -Expected 1 -Message "The tutorial should make one level up available before the long rest."
+    Assert-Equal -Actual $hero.Level -Expected 2 -Message "Tutorial completion should raise the hero to level 2."
+    Assert-Equal -Actual $hero.XP -Expected 300 -Message "Tutorial completion should grant 300 XP."
+    Assert-Equal -Actual $hero.HP -Expected 23 -Message "A level 2 barbarian should gain average hit die plus Constitution modifier."
+    Assert-Equal -Actual $heroHP -Expected 23 -Message "Current HP should increase along with max HP on level up."
+}
+
+function Test-LevelUpCanUseRolledHPGain {
+    function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
+    function global:Write-Scene { param([string]$Text) }
+    function global:Write-Action { param([string]$Text, [string]$Color) }
+    function global:Write-ColorLine { param([string]$Text, [string]$Color) }
+    function global:Write-SectionTitle { param([string]$Text, [string]$Color) }
+    function global:Write-EmphasisLine { param([string]$Text, [string]$Color) }
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 12) { return 10 }
+        return 1
+    }
+
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+
+    Grant-HeroXP -Hero $hero -XP 300
+    Assert-Equal -Actual $hero.Level -Expected 1 -Message "The hero should not level before the long rest when rolling HP either."
+    $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $hero -HeroHP ([ref]$heroHP) -HPMode "R"
+
+    Assert-True -Condition $levelUpResult.LeveledUp -Message "Rolled HP mode should still level the hero up."
+    Assert-Equal -Actual $levelUpResult.Results.Count -Expected 1 -Message "The tutorial should only grant one level."
+    Assert-Equal -Actual $levelUpResult.Results[0].Mode -Expected "R" -Message "The level up should record that HP was rolled."
+    Assert-Equal -Actual $levelUpResult.Results[0].Roll -Expected 10 -Message "The rolled HP result should be captured."
+    Assert-Equal -Actual $levelUpResult.Results[0].Gain -Expected 12 -Message "Rolled HP gain should add Constitution modifier to the die roll."
+    Assert-Equal -Actual $hero.HP -Expected 26 -Message "A strong HP roll should raise max HP accordingly."
+    Assert-Equal -Actual $heroHP -Expected 26 -Message "Current HP should rise by the rolled HP gain."
+}
+
 Test-BetterArmorRaisesArmorClass
 Test-GreatAxeDamageProfile
 Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
 Test-TutorialMonsterArmorClassStaysForgiving
 Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength
+Test-TutorialXPLevelsHeroToTwo
+Test-LevelUpCanUseRolledHPGain
 
 Write-Host "Armor upgrade tests passed." -ForegroundColor Green

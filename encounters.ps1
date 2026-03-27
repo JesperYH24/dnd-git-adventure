@@ -79,6 +79,12 @@ function Resolve-RoomEncounter {
 
         if ($monsterHP -le 0) {
             Write-Scene "$($monster.definite) collapses to the ground. You win!"
+            Grant-HeroXP -Hero $Game.Hero -XP $monster.xp
+            Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP."
+            if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
+                Write-EmphasisLine -Text "$($Game.Hero.Name) feels stronger. A level up awaits after a long rest." -Color "Yellow"
+                Write-ColorLine ""
+            }
             Resolve-LootDrop -Hero $Game.Hero -Monster $monster -Room $Room
             $Room.EncounterResolved = $true
             return "Won"
@@ -103,6 +109,12 @@ function Resolve-RoomEncounter {
 
     if ($monsterHP -le 0) {
         Write-Scene "$($monster.definite) collapses to the ground. You win!"
+        Grant-HeroXP -Hero $Game.Hero -XP $monster.xp
+        Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP."
+        if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
+            Write-EmphasisLine -Text "$($Game.Hero.Name) feels stronger. A level up awaits after a long rest." -Color "Yellow"
+            Write-ColorLine ""
+        }
         Resolve-LootDrop -Hero $Game.Hero -Monster $monster -Room $Room
         return "Won"
     }
