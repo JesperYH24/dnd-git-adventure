@@ -17,9 +17,6 @@ function Initialize-Game {
     $hero = Get-Hero
     $heroHP = $hero.HP
 
-    $forceBossInput = (Read-Host "Force boss encounter? (y/n)").ToLower()
-    $forceBoss = ($forceBossInput -eq "y")
-
     $rooms = Get-CaveRooms
     $quest = [PSCustomObject]@{
         Name = "Scout the Cave"
@@ -38,7 +35,6 @@ function Initialize-Game {
         GameWon = $false
         HeroHP = $heroHP
         HeroDroppedWeapon = $false
-        ForceBoss = $forceBoss
     }
 
     return $state
