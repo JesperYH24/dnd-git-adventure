@@ -12,13 +12,17 @@ function Resolve-RoomEncounter {
     }
 
     if ($Room.BossRoom) {
+        Write-SectionTitle -Text "Boss Encounter" -Color "Red"
+        Write-EmphasisLine -Text "A colossal shadow rises above the hoard." -Color "DarkRed"
         Write-ColorLine ""
-        Write-ColorLine "===== ENCOUNTER =====" "Red"
-        Write-Scene "A vast silhouette rises above the treasure mound."
-        Write-Scene "The Ancient Dragon opens one blazing eye and the whole cavern shakes."
-        Write-Scene "One sweep of its claws tears the stone beside Borzig apart."
-        Write-Scene "This is no fight for a level 1 hero."
-        Write-Scene "Borzig must survive, escape, and warn the town."
+        Write-Scene "The heat in the chamber surges all at once."
+        Write-Scene "Gold shifts under something vast, ancient, and still half-hidden in smoke."
+        Write-Scene "Then one blazing eye opens, and the whole cavern seems to lean toward Borzig."
+        Write-ColorLine ""
+        Write-EmphasisLine -Text "Stone explodes beside him under a single lazy sweep of the beast's claws." -Color "Red"
+        Write-ColorLine ""
+        Write-Scene "This is not a battle for a level 1 hero."
+        Write-Scene "Borzig has one chance: survive, escape, and carry this warning back to town."
         Write-ColorLine ""
 
         $Game.Quest.SeenDragon = $true
@@ -27,7 +31,7 @@ function Resolve-RoomEncounter {
             $CurrentRoomId.Value = $Game.LastRoomId
         }
 
-        Write-Scene "$($Game.Hero.Name) stumbles back through the tunnels as the dragon's roar follows close behind."
+        Write-EmphasisLine -Text "$($Game.Hero.Name) stumbles back through the tunnels as the dragon's roar chases him into the dark." -Color "Yellow"
         return "Fled"
     }
 
@@ -45,8 +49,7 @@ function Resolve-RoomEncounter {
     $heroBonusAttack = $false
     $monsterStarts = $false
 
-    Write-ColorLine ""
-    Write-ColorLine "===== ENCOUNTER =====" "Red"
+    Write-SectionTitle -Text "Encounter" -Color "Red"
     Write-Scene "$($monster.article) $($monster.name) emerges from the darkness."
     Write-Scene "$($monster.definite) squares up against $($Game.Hero.Name)."
     Write-ColorLine ""
@@ -114,4 +117,3 @@ function Resolve-RoomEncounter {
 
     return "None"
 }
-

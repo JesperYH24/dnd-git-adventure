@@ -1,3 +1,61 @@
+function Get-ReadableTextWidth {
+    $defaultWidth = 88
+
+    try {
+        $windowWidth = $Host.UI.RawUI.WindowSize.Width
+
+        if ($windowWidth -gt 0) {
+            return [Math]::Max(40, [Math]::Min(88, $windowWidth - 8))
+        }
+    }
+    catch {
+    }
+
+    return $defaultWidth
+}
+
+function Split-DisplayText {
+    param(
+        [string]$Text,
+        [int]$Width = 0
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return @("")
+    }
+
+    if ($Width -le 0) {
+        $Width = Get-ReadableTextWidth
+    }
+
+    $words = $Text -split '\s+'
+    $lines = @()
+    $currentLine = ""
+
+    foreach ($word in $words) {
+        if ([string]::IsNullOrEmpty($currentLine)) {
+            $currentLine = $word
+            continue
+        }
+
+        $candidate = "$currentLine $word"
+
+        if ($candidate.Length -le $Width) {
+            $currentLine = $candidate
+        }
+        else {
+            $lines += $currentLine
+            $currentLine = $word
+        }
+    }
+
+    if (-not [string]::IsNullOrEmpty($currentLine)) {
+        $lines += $currentLine
+    }
+
+    return $lines
+}
+
 function Write-TypeLine {
     param(
         [string]$Text,
@@ -13,12 +71,41 @@ function Write-TypeLine {
     Write-Host ""
 }
 
+function Write-SectionTitle {
+    param(
+        [string]$Text,
+        [string]$Color = "Cyan"
+    )
+
+    $title = "  $($Text.ToUpper())  "
+    $borderWidth = [Math]::Max($title.Length, 26)
+    $border = "".PadLeft($borderWidth, "=")
+
+    Write-ColorLine "" $Color
+    Write-ColorLine $border $Color
+    Write-ColorLine $title $Color
+    Write-ColorLine $border $Color
+}
+
+function Write-EmphasisLine {
+    param(
+        [string]$Text,
+        [string]$Color = "Yellow"
+    )
+
+    foreach ($line in Split-DisplayText -Text $Text) {
+        Write-Host ("  " + $line) -ForegroundColor $Color
+    }
+}
+
 function Write-Scene {
     param(
         [string]$Text
     )
 
-    Write-TypeLine -Text $Text -Delay 35 -Color "DarkMagenta"
+    foreach ($line in Split-DisplayText -Text $Text) {
+        Write-TypeLine -Text ("  " + $line) -Delay 35 -Color "DarkMagenta"
+    }
 }
 
 function Write-Action {
@@ -27,7 +114,9 @@ function Write-Action {
         [string]$Color = "White"
     )
 
-    Write-TypeLine -Text $Text -Delay 16 -Color $Color
+    foreach ($line in Split-DisplayText -Text $Text) {
+        Write-TypeLine -Text ("  " + $line) -Delay 16 -Color $Color
+    }
 }
 
 function Write-ColorLine {

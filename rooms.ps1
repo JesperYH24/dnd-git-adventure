@@ -35,8 +35,7 @@ function Get-CaveRooms {
 function Show-Room {
     param($Room)
 
-    Write-ColorLine ""
-    Write-ColorLine "===== $($Room.Name.ToUpper()) =====" "Cyan"
+    Write-SectionTitle -Text $Room.Name -Color "Cyan"
     Write-Scene $Room.Description
 
     if ($Room.Loot.Count -gt 0) {
@@ -122,4 +121,3 @@ function Resolve-RoomLoot {
 
     $Room.Loot = $remainingLoot
 }
-
