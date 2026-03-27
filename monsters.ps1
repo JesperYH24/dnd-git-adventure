@@ -1,9 +1,9 @@
 function Get-MonsterList {
     @(
         @{ 
-            name = "skelett"
-            article = "Ett"
-            definite = "Skelettet"
+            name = "skeleton"
+            article = "A"
+            definite = "The Skeleton"
             hp = 10
             damageMin = 1
             damageMax = 4
@@ -11,8 +11,8 @@ function Get-MonsterList {
         },
         @{ 
             name = "goblin"
-            article = "En"
-            definite = "Goblinen"
+            article = "A"
+            definite = "The Goblin"
             hp = 8
             damageMin = 1
             damageMax = 6
@@ -20,26 +20,26 @@ function Get-MonsterList {
         },
         @{ 
             name = "zombie"
-            article = "En"
-            definite = "Zombien"
+            article = "A"
+            definite = "The Zombie"
             hp = 12
             damageMin = 1
             damageMax = 5
             isBoss = $false
         },
         @{ 
-            name = "jätteråtta"
-            article = "En"
-            definite = "Jätteråttan"
+            name = "giant rat"
+            article = "A"
+            definite = "The Giant Rat"
             hp = 7
             damageMin = 1
             damageMax = 3
             isBoss = $false
         },
         @{ 
-            name = "uråldrig drake"
-            article = "En"
-            definite = "Den uråldriga draken"
+            name = "ancient dragon"
+            article = "An"
+            definite = "The Ancient Dragon"
             hp = 50
             damageMin = 8
             damageMax = 12
@@ -62,7 +62,7 @@ function Get-MonsterLoot {
     param($Monster)
 
     switch ($Monster.name) {
-        "skelett" {
+        "skeleton" {
             return @(
                 [PSCustomObject]@{ Name = "Bone Coins"; Type = "Currency"; Value = 2 }
                 [PSCustomObject]@{ Name = "Rusty Sword"; Type = "Weapon"; Value = 5 }
@@ -84,13 +84,13 @@ function Get-MonsterLoot {
             )
         }
 
-        "jätteråtta" {
+        "giant rat" {
             return @(
                 [PSCustomObject]@{ Name = "Rat Tail"; Type = "Junk"; Value = 1 }
             )
         }
 
-        "uråldrig drake" {
+        "ancient dragon" {
             return @(
                 [PSCustomObject]@{ Name = "Dragon Gold"; Type = "Currency"; Value = 100 }
                 [PSCustomObject]@{ Name = "Ancient Scale Armor"; Type = "Armor"; Value = 75 }
