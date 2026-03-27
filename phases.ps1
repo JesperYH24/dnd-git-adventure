@@ -125,24 +125,34 @@ function Start-DetectionPhase {
         [ref]$MonsterStarts
     )
 
-    $detectRoll = Roll-Dice -Sides 20
-    Write-Scene "$($Hero.Name) rolls a d20 for initiative: $detectRoll"
+    $heroDexModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+    $monsterInitiativeBonus = 0
+
+    if ($null -ne $Monster.initiativeBonus) {
+        $monsterInitiativeBonus = [int]$Monster.initiativeBonus
+    }
+
+    $heroRoll = Roll-Dice -Sides 20
+    $monsterRoll = Roll-Dice -Sides 20
+    $heroTotal = $heroRoll + $heroDexModifier
+    $monsterTotal = $monsterRoll + $monsterInitiativeBonus
+
+    Write-Scene "$($Hero.Name) rolls initiative: $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+    Write-Scene "$($Monster.definite) rolls initiative: $monsterRoll $(Format-AbilityModifier -Modifier $monsterInitiativeBonus) = $monsterTotal"
     Write-ColorLine ""
 
-    if ($detectRoll -ge 15) {
-        Write-Scene "$($Hero.Name) seizes the initiative before $($Monster.definite) can react!"
+    if ($heroRoll -eq 20) {
+        Write-Scene "$($Hero.Name) seizes the moment with a perfect initiative roll!"
         Write-Scene "$($Hero.Name) gains two immediate attacks."
         $HeroStarts.Value = $true
         $HeroBonusAttack.Value = $true
     }
-    elseif ($detectRoll -ge 8) {
-        Write-Scene "$($Hero.Name) and $($Monster.definite) clash at the same moment!"
-        Write-Scene "$($Hero.Name) still manages to act first."
+    elseif ($heroTotal -ge $monsterTotal) {
+        Write-Scene "$($Hero.Name) moves first and catches $($Monster.definite) off guard."
         $HeroStarts.Value = $true
     }
     else {
-        Write-Scene "Too late! $($Monster.definite) lunges out of the shadows!"
-        Write-Scene "$($Monster.definite) attacks first."
+        Write-Scene "$($Monster.definite) is quicker on the draw and strikes first!"
         $MonsterStarts.Value = $true
     }
 }

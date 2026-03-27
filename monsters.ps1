@@ -8,6 +8,7 @@ function Get-MonsterList {
             xp = 50
             armorClass = 11
             attackBonus = 0
+            initiativeBonus = 0
             damageDiceCount = 1
             damageDiceSides = 4
             damageBonus = 0
@@ -24,6 +25,7 @@ function Get-MonsterList {
             xp = 50
             armorClass = 12
             attackBonus = 1
+            initiativeBonus = 2
             damageDiceCount = 1
             damageDiceSides = 6
             damageBonus = 0
@@ -40,6 +42,7 @@ function Get-MonsterList {
             xp = 50
             armorClass = 9
             attackBonus = 0
+            initiativeBonus = -1
             damageDiceCount = 1
             damageDiceSides = 4
             damageBonus = 1
@@ -56,6 +59,7 @@ function Get-MonsterList {
             xp = 25
             armorClass = 10
             attackBonus = 1
+            initiativeBonus = 2
             damageDiceCount = 1
             damageDiceSides = 4
             damageBonus = 0
@@ -72,6 +76,7 @@ function Get-MonsterList {
             xp = 0
             armorClass = 16
             attackBonus = 4
+            initiativeBonus = 0
             damageDiceCount = 2
             damageDiceSides = 6
             damageBonus = 4
