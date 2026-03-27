@@ -73,7 +73,7 @@ function Get-MonsterLoot {
             return @(
                 [PSCustomObject]@{ Name = "Gold Pouch"; Type = "Currency"; Value = 10 }
                 [PSCustomObject]@{ Name = "Dagger"; Type = "Weapon"; Value = 6 }
-                [PSCustomObject]@{ Name = "Small Healing Potion"; Type = "Consumable"; Value = 10 }
+                [PSCustomObject]@{ Name = "Small Healing Potion"; Type = "Consumable"; Value = 10; HealAmount = 4 }
             )
         }
 
@@ -95,7 +95,7 @@ function Get-MonsterLoot {
                 [PSCustomObject]@{ Name = "Dragon Gold"; Type = "Currency"; Value = 100 }
                 [PSCustomObject]@{ Name = "Ancient Scale Armor"; Type = "Armor"; Value = 75 }
                 [PSCustomObject]@{ Name = "Flame Fang"; Type = "Weapon"; Value = 60 }
-                [PSCustomObject]@{ Name = "Greater Healing Potion"; Type = "Consumable"; Value = 25 }
+                [PSCustomObject]@{ Name = "Greater Healing Potion"; Type = "Consumable"; Value = 25; HealAmount = 12 }
             )
         }
 

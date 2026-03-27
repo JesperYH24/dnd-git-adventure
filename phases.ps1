@@ -70,7 +70,7 @@ function Start-DetectionPhase {
         [ref]$MonsterStarts
     )
 
-    $detectRoll = 5
+    $detectRoll = Roll-Dice -Sides 20
     Write-Scene "$($Hero.Name) slår en d20 för att upptäcka fara: $detectRoll"
     Write-ColorLine ""
 
@@ -124,17 +124,16 @@ function Start-OpeningPhase {
                 break
             }
         }
+
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+
+        if ($HeroHP.Value -le 0) {
+            Write-Scene "$($Hero.Name) faller i striden..."
+            return $false
+        }
     }
     elseif ($MonsterStarts) {
-        $monsterAttackResult = Invoke-MonsterAttack -Hero $Hero -Monster $Monster
-
-        if ($monsterAttackResult.Hit) {
-            $HeroHP.Value -= $monsterAttackResult.Damage
-        }
-
-        if ($monsterAttackResult.MonsterOffBalance) {
-            $MonsterOffBalance.Value = $true
-        }
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
         if ($HeroHP.Value -le 0) {
             Write-Scene "$($Hero.Name) faller i striden..."

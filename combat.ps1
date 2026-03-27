@@ -9,13 +9,14 @@ function Invoke-HeroAttack {
         [ref]$HeroDroppedWeapon
     )
 
-    $heroRoll = 20
+    $heroRoll = Roll-Dice -Sides 20
     Write-Action "$($Hero.Name) slår för attack: $heroRoll" "Cyan"
 
     if ($heroRoll -eq 20) {
         $extraDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
         $heroDamage = $Hero.DamageMax + $extraDamage
         $MonsterHP.Value -= $heroDamage
+
         Write-Action "CRITICAL HIT!" "Red"
         Write-Action "$($Hero.Name) träffar $($Monster.definite) extra hårt och gör $heroDamage skada! ($($Hero.DamageMax) + $extraDamage)" "Yellow"
     }
@@ -27,6 +28,7 @@ function Invoke-HeroAttack {
     elseif ($heroRoll -ge 10) {
         $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
         $MonsterHP.Value -= $heroDamage
+
         Write-Action "$($Hero.Name) träffar $($Monster.definite) och gör $heroDamage skada!" "Yellow"
     }
     else {
@@ -39,50 +41,43 @@ function Invoke-HeroAttack {
 function Invoke-MonsterAttack {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        [ref]$HeroHP,
+        [ref]$MonsterOffBalance
     )
 
-    $attackRoll = 20
+    $attackRoll = Roll-Dice -Sides 20
     Write-Scene "$($Monster.definite) slår för attack: $attackRoll"
-
-    $result = [PSCustomObject]@{
-        Hit              = $false
-        Critical         = $false
-        CriticalFail     = $false
-        Damage           = 0
-        MonsterOffBalance = $false
-    }
 
     if ($attackRoll -eq 20) {
         Write-Scene "CRITICAL HIT!"
         $extraDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $monsterDamage = $Monster.damageMax + $extraDamage
 
-        Write-Scene "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
+        $HeroHP.Value -= $monsterDamage
 
-        $result.Hit = $true
-        $result.Critical = $true
-        $result.Damage = $monsterDamage
+        Write-Scene "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)"
     }
     elseif ($attackRoll -eq 1) {
         Write-Scene "CRITICAL FAIL!"
         Write-Scene "$($Monster.definite) snubblar till och tappar balansen!"
-        $result.CriticalFail = $true
-        $result.MonsterOffBalance = $true
+        $MonsterOffBalance.Value = $true
     }
     elseif ($attackRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
-        Write-Scene "$($Monster.definite) träffar och gör $monsterDamage skada!"
+        $HeroHP.Value -= $monsterDamage
 
-        $result.Hit = $true
-        $result.Damage = $monsterDamage
+        Write-Scene "$($Monster.definite) träffar och gör $monsterDamage skada!"
     }
     else {
         Write-Scene "$($Monster.definite) missar!"
     }
 
+    if ($HeroHP.Value -lt 0) {
+        $HeroHP.Value = 0
+    }
+
     Write-ColorLine ""
-    return $result
 }
 
 function Show-Inventory {
@@ -151,7 +146,7 @@ function Use-InventoryItem {
         $Item
     )
 
-    if ($Item.Type -eq "Consumable" -and $Item.Name -eq "Healing Potion") {
+    if ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
         if ($HeroHP.Value -ge $Hero.HP) {
             Write-Scene "$($Hero.Name) har redan full HP och kan inte använda $($Item.Name)."
             return $false
