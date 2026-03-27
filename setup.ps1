@@ -1,9 +1,14 @@
 . "$PSScriptRoot\roll.ps1"
+. "$PSScriptRoot\items.ps1"
 . "$PSScriptRoot\character.ps1"
 . "$PSScriptRoot\monsters.ps1"
 . "$PSScriptRoot\ui.ps1"
 . "$PSScriptRoot\status.ps1"
+. "$PSScriptRoot\inventory.ps1"
 . "$PSScriptRoot\combat.ps1"
+. "$PSScriptRoot\quests.ps1"
+. "$PSScriptRoot\rooms.ps1"
+. "$PSScriptRoot\encounters.ps1"
 . "$PSScriptRoot\phases.ps1"
 . "$PSScriptRoot\exploration.ps1"
 
@@ -19,7 +24,7 @@ function Initialize-Game {
     $quest = [PSCustomObject]@{
         Name = "Scout the Cave"
         Description = "Explore the cave outside the campfire and learn what threat lies within."
-        Objective = "Reach the Dragon Lair and return to town with your report."
+        Objective = "Reach the deepest chamber and return to town with your report."
         SeenDragon = $false
         Completed = $false
     }

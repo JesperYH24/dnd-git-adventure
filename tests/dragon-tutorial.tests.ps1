@@ -32,13 +32,13 @@ function Set-TestOutputStubs {
     function global:Read-Host { param([string]$Prompt) return "n" }
 }
 
-function Test-DragonLairForcesRetreatWithoutCompletingQuest {
+function Test-DeepChamberForcesRetreatWithoutCompletingQuest {
     Set-TestOutputStubs
 
     $game = Initialize-Game
     $heroHP = $game.HeroHP
     $heroDroppedWeapon = $game.HeroDroppedWeapon
-    $currentRoomId = "dragon_lair"
+    $currentRoomId = "shadow_sanctum"
     $game.LastRoomId = "underground_lake"
     $room = $game.Rooms[$currentRoomId]
 
@@ -49,13 +49,13 @@ function Test-DragonLairForcesRetreatWithoutCompletingQuest {
         -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -CurrentRoomId ([ref]$currentRoomId)
 
-    Assert-Equal -Actual $result -Expected "Fled" -Message "First dragon lair entry should force a retreat."
+    Assert-Equal -Actual $result -Expected "Fled" -Message "First shadow sanctum entry should force a retreat."
     Assert-Equal -Actual $currentRoomId -Expected "underground_lake" -Message "The hero should be moved back to the previous room."
     Assert-Equal -Actual $heroHP -Expected 20 -Message "The tutorial dragon encounter should not damage the hero."
     Assert-True -Condition $game.Quest.SeenDragon -Message "The quest should record that Borzig has seen the dragon."
     Assert-Equal -Actual $game.Quest.Completed -Expected $false -Message "The quest should not complete until the hero reports back to town."
 }
 
-Test-DragonLairForcesRetreatWithoutCompletingQuest
+Test-DeepChamberForcesRetreatWithoutCompletingQuest
 
 Write-Host "Dragon tutorial tests passed." -ForegroundColor Green
