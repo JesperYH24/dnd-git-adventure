@@ -9,30 +9,38 @@ function Invoke-HeroAttack {
         [ref]$HeroDroppedWeapon
     )
 
+    $weapon = Get-HeroWeaponProfile -Hero $Hero
+    $targetArmorClass = [int]$Monster.armorClass
     $heroRoll = Roll-Dice -Sides 20
-    Write-Action "$($Hero.Name) rolls to attack: $heroRoll" "Cyan"
+    $attackTotal = $heroRoll + $weapon.AttackBonus
+
+    Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
-        $extraDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
-        $heroDamage = $Hero.DamageMax + $extraDamage
+        $extraDamage = Roll-Damage -Minimum $weapon.DamageMin -Maximum $weapon.DamageMax
+        $heroDamage = $weapon.DamageMax + $extraDamage
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($Hero.DamageMax) + $extraDamage)" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamage)" "Yellow"
     }
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true
         Write-Action "CRITICAL FAIL!" "Magenta"
         Write-Scene "$($Hero.Name) fumbles, drops the weapon, and must pick it up next turn!"
     }
-    elseif ($heroRoll -ge 10) {
-        $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
+    elseif ($attackTotal -ge $targetArmorClass) {
+        $heroDamage = Roll-Damage -Minimum $weapon.DamageMin -Maximum $weapon.DamageMax
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage!" "Yellow"
     }
     else {
         Write-Action "$($Hero.Name) misses the attack!" "DarkGray"
+    }
+
+    if ($MonsterHP.Value -lt 0) {
+        $MonsterHP.Value = 0
     }
 
     Write-ColorLine ""
@@ -46,8 +54,11 @@ function Invoke-MonsterAttack {
         [ref]$MonsterOffBalance
     )
 
+    $heroArmorClass = Get-HeroArmorClass -Hero $Hero
     $attackRoll = Roll-Dice -Sides 20
-    Write-Action "$($Monster.definite) rolls to attack: $attackRoll" "DarkCyan"
+    $attackTotal = $attackRoll + [int]$Monster.attackBonus
+
+    Write-Action "$($Monster.definite) attacks: roll $attackRoll, total $attackTotal vs AC $heroArmorClass" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
@@ -63,7 +74,7 @@ function Invoke-MonsterAttack {
         Write-Action "$($Monster.definite) stumbles and loses its balance!" "DarkYellow"
         $MonsterOffBalance.Value = $true
     }
-    elseif ($attackRoll -ge 10) {
+    elseif ($attackTotal -ge $heroArmorClass) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $HeroHP.Value -= $monsterDamage
 
@@ -80,11 +91,40 @@ function Invoke-MonsterAttack {
     Write-ColorLine ""
 }
 
+function Format-InventoryItemLine {
+    param($Item)
+
+    $tags = @()
+
+    if ($Item.Type -eq "Weapon") {
+        $tags += "hit $($Item.AttackBonus)"
+        $tags += "dmg $($Item.DamageMin)-$($Item.DamageMax)"
+    }
+    elseif ($Item.Type -eq "Armor") {
+        $tags += "AC +$($Item.ArmorBonus)"
+    }
+    elseif ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
+        $tags += "+$($Item.HealAmount) HP"
+    }
+
+    $slotCost = Get-ItemSlotCost -Item $Item
+    $slotLabel = if ($slotCost -eq 1) { "slot" } else { "slots" }
+
+    $tags += "$slotCost $slotLabel"
+
+    if ($Item.Equipped -and $Item.Type -in @("Weapon", "Armor")) {
+        $tags += "equipped"
+    }
+
+    return "$($Item.Name) [$($Item.Type)] - $($tags -join ', ')"
+}
+
 function Show-Inventory {
     param($Hero)
 
     Write-ColorLine ""
     Write-ColorLine "===== INVENTORY =====" "Cyan"
+    Write-ColorLine "Slots: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero)" "DarkCyan"
 
     if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
         Write-ColorLine "Inventory is empty." "DarkGray"
@@ -94,7 +134,7 @@ function Show-Inventory {
 
     for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
         $item = $Hero.Inventory[$i]
-        Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)]" "White"
+        Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $item)" "White"
     }
 
     Write-ColorLine ""
@@ -103,7 +143,8 @@ function Show-Inventory {
 function Resolve-LootDrop {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        $Room
     )
 
     $loot = Get-MonsterLoot -Monster $Monster
@@ -117,7 +158,7 @@ function Resolve-LootDrop {
     Write-ColorLine "===== LOOT =====" "Yellow"
 
     foreach ($item in $loot) {
-        Write-ColorLine "- $($item.Name) [$($item.Type)]" "White"
+        Write-ColorLine "- $(Format-InventoryItemLine -Item $item)" "White"
     }
 
     Write-ColorLine ""
@@ -126,10 +167,17 @@ function Resolve-LootDrop {
         $choice = (Read-Host "Pick up '$($item.Name)'? (Y/N)").ToUpper()
 
         if ($choice -eq "Y") {
-            $Hero.Inventory += $item
-            Write-Scene "$($Hero.Name) picks up $($item.Name)."
+            if (Can-HeroCarryItem -Hero $Hero -Item $item) {
+                $Hero.Inventory += $item
+                Write-Scene "$($Hero.Name) picks up $($item.Name)."
+            }
+            else {
+                $Room.Loot += $item
+                Write-Scene "$($Hero.Name) has no room for $($item.Name), so it stays in the room."
+            }
         }
         else {
+            $Room.Loot += $item
             Write-Scene "$($Hero.Name) leaves $($item.Name) behind."
         }
 
@@ -166,32 +214,48 @@ function Use-InventoryItem {
     return $false
 }
 
+function Drop-InventoryItem {
+    param(
+        $Hero,
+        [int]$Index,
+        $Room
+    )
+
+    if (-not $Room) {
+        Write-Scene "There is nowhere safe to drop that right now."
+        return $false
+    }
+
+    $item = $Hero.Inventory[$Index]
+
+    if (-not (Can-DropItem -Hero $Hero -Item $item)) {
+        Write-Scene "You cannot drop $($item.Name); it would leave the rest of your gear without enough carrying space."
+        return $false
+    }
+
+    if ($null -ne $item.PSObject.Properties["Equipped"]) {
+        $item.Equipped = $false
+    }
+
+    $Room.Loot += $item
+    Remove-InventoryItemAt -Hero $Hero -Index $Index
+    Write-Scene "$($Hero.Name) leaves $($item.Name) in $($Room.Name)."
+    return $true
+}
+
 function Open-InventoryMenu {
     param(
         $Hero,
-        [ref]$HeroHP
+        [ref]$HeroHP,
+        $Room = $null
     )
 
     while ($true) {
-        Write-ColorLine ""
-        Write-ColorLine "===== INVENTORY =====" "Cyan"
+        Show-Inventory -Hero $Hero
 
         if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
-            Write-ColorLine "Inventory is empty." "DarkGray"
-            Write-ColorLine ""
             Read-Host "Press Enter to go back"
             return $false
-        }
-
-        for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
-            $item = $Hero.Inventory[$i]
-
-            if ($item.Type -eq "Consumable" -and $null -ne $item.HealAmount) {
-                Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)] (+$($item.HealAmount) HP)" "White"
-            }
-            else {
-                Write-ColorLine "$($i + 1). $($item.Name) [$($item.Type)]" "White"
-            }
         }
 
         Write-ColorLine "0. Back" "DarkGray"
@@ -216,18 +280,52 @@ function Open-InventoryMenu {
         }
 
         $selectedItem = $Hero.Inventory[$index]
-        $used = Use-InventoryItem -Hero $Hero -HeroHP $HeroHP -Item $selectedItem
 
-        if ($used) {
-            $newInventory = @()
-            for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
-                if ($i -ne $index) {
-                    $newInventory += $Hero.Inventory[$i]
+        Write-ColorLine ""
+        Write-ColorLine "Selected: $(Format-InventoryItemLine -Item $selectedItem)" "Cyan"
+
+        if ($selectedItem.Type -eq "Consumable") {
+            Write-ColorLine "U. Use" "White"
+        }
+
+        if ($selectedItem.Type -eq "Weapon" -or $selectedItem.Type -eq "Armor") {
+            Write-ColorLine "E. Equip" "White"
+        }
+
+        Write-ColorLine "D. Drop" "White"
+        Write-ColorLine "B. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $action = (Read-Host "Choose action").ToUpper()
+
+        switch ($action) {
+            "U" {
+                $used = Use-InventoryItem -Hero $Hero -HeroHP $HeroHP -Item $selectedItem
+
+                if ($used) {
+                    Remove-InventoryItemAt -Hero $Hero -Index $index
+                    return $true
                 }
             }
-
-            $Hero.Inventory = $newInventory
-            return $true
+            "E" {
+                if ($selectedItem.Type -in @("Weapon", "Armor")) {
+                    Set-EquippedItem -Hero $Hero -Item $selectedItem
+                    Write-Scene "$($Hero.Name) equips $($selectedItem.Name)."
+                }
+                else {
+                    Write-Scene "$($selectedItem.Name) cannot be equipped."
+                }
+            }
+            "D" {
+                if (Drop-InventoryItem -Hero $Hero -Index $index -Room $Room) {
+                    return $false
+                }
+            }
+            "B" {
+            }
+            default {
+                Write-ColorLine "Choose one of the available actions." "DarkYellow"
+            }
         }
     }
 }
@@ -239,11 +337,19 @@ function Start-CombatLoop {
         [ref]$HeroHP,
         [ref]$MonsterHP,
         [ref]$HeroDroppedWeapon,
-        [ref]$MonsterOffBalance
+        [ref]$MonsterOffBalance,
+        [ref]$EncounterFled,
+        [bool]$SkipInitialStatus = $false
     )
 
+    $showStatus = -not $SkipInitialStatus
+
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
-        Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
+        if ($showStatus) {
+            Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
+        }
+
+        $showStatus = $true
 
         if ($HeroDroppedWeapon.Value) {
             Write-Scene "$($Hero.Name) picks up the weapon and loses the turn!"
@@ -293,6 +399,7 @@ function Start-CombatLoop {
         }
         elseif ($choice -eq "R") {
             Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
+            $EncounterFled.Value = $true
             break
         }
         elseif ($choice -eq "A") {
@@ -301,7 +408,6 @@ function Start-CombatLoop {
 
             if ($MonsterHP.Value -le 0) {
                 Write-Scene "$($Monster.definite) collapses to the ground. You win!"
-                Resolve-LootDrop -Hero $Hero -Monster $Monster
                 break
             }
 

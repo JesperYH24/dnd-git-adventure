@@ -27,7 +27,7 @@ function Write-Action {
         [string]$Color = "White"
     )
 
-    Write-TypeLine -Text $Text -Delay 10 -Color $Color
+    Write-TypeLine -Text $Text -Delay 16 -Color $Color
 }
 
 function Write-ColorLine {

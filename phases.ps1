@@ -1,7 +1,6 @@
 function Start-Intro {
     param(
         $Hero,
-        $Monster,
         [ref]$HeroHP
     )
 
@@ -11,12 +10,6 @@ function Start-Intro {
     Write-Scene "$($Hero.Name) is a $($Hero.Class) with $($HeroHP.Value)/$($Hero.HP) HP."
     Write-Scene "Somewhere in the depths, danger waits..."
     Write-ColorLine ""
-
-    if ($Monster.isBoss) {
-        Write-Scene "The air around the cave entrance feels strangely heavy..."
-        Write-Scene "Something inside feels larger than it should."
-        Write-ColorLine ""
-    }
 
     $enterCave = $false
 
@@ -51,14 +44,6 @@ function Start-Intro {
     Write-Scene "Something is waiting in here..."
     Write-ColorLine ""
 
-    if ($Monster.isBoss) {
-        Write-Scene "The air suddenly turns ice-cold..."
-        Start-Sleep -Milliseconds 1000
-        Write-Scene "The ground trembles beneath your feet..."
-        Start-Sleep -Milliseconds 1000
-        Write-Scene "Something moves in the darkness..."
-        Start-Sleep -Milliseconds 1000
-    }
 }
 
 function Start-DetectionPhase {
@@ -71,17 +56,17 @@ function Start-DetectionPhase {
     )
 
     $detectRoll = Roll-Dice -Sides 20
-    Write-Scene "$($Hero.Name) rolls a d20 to sense danger: $detectRoll"
+    Write-Scene "$($Hero.Name) rolls a d20 for initiative: $detectRoll"
     Write-ColorLine ""
 
     if ($detectRoll -ge 15) {
-        Write-Scene "$($Hero.Name) spots $($Monster.definite) long before it can react!"
+        Write-Scene "$($Hero.Name) seizes the initiative before $($Monster.definite) can react!"
         Write-Scene "$($Hero.Name) gains two immediate attacks."
         $HeroStarts.Value = $true
         $HeroBonusAttack.Value = $true
     }
     elseif ($detectRoll -ge 8) {
-        Write-Scene "$($Hero.Name) and $($Monster.definite) spot each other at the same time!"
+        Write-Scene "$($Hero.Name) and $($Monster.definite) clash at the same moment!"
         Write-Scene "$($Hero.Name) still manages to act first."
         $HeroStarts.Value = $true
     }
@@ -115,8 +100,6 @@ function Start-OpeningPhase {
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) collapses to the ground. You win!"
-                Resolve-LootDrop -Hero $Hero -Monster $Monster
                 return $false
             }
 

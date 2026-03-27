@@ -45,34 +45,36 @@ function Show-Status {
     )
 
     $heroColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
+    $weapon = Get-HeroWeaponProfile -Hero $Hero
+    $heroArmorClass = Get-HeroArmorClass -Hero $Hero
 
-if ($Monster.isBoss) {
-    $monsterColor = "Magenta"
-}
-else {
-    $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
-}
+    if ($Monster.isBoss) {
+        $monsterColor = "Magenta"
+    }
+    else {
+        $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
+    }
 
     Write-ColorLine "Status:" "Cyan"
-    Start-Sleep -Milliseconds 1000
+    Start-Sleep -Milliseconds 750
 
-   # HERO HP
-if ($heroColor -eq "Red") {
-    Write-BlinkingLine "$($Hero.Name): $HeroHP HP"
-}
-else {
-    Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
-}
+    if ($heroColor -eq "Red") {
+        Write-BlinkingLine "$($Hero.Name): $HeroHP HP"
+    }
+    else {
+        Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
+    }
 
-Start-Sleep -Milliseconds 1000
+    Write-ColorLine "AC: $heroArmorClass | Weapon: $($weapon.Name) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
+    Start-Sleep -Milliseconds 750
 
-# MONSTER HP
-if ($monsterColor -eq "Red") {
-    Write-BlinkingLine "$($Monster.definite): $MonsterHP HP"
-}
-else {
-    Write-ColorLine "$($Monster.definite): $MonsterHP HP" $monsterColor
-}
+    if ($monsterColor -eq "Red") {
+        Write-BlinkingLine "$($Monster.definite): $MonsterHP HP"
+    }
+    else {
+        Write-ColorLine "$($Monster.definite): $MonsterHP HP" $monsterColor
+    }
 
-Start-Sleep -Milliseconds 1000
+    Write-ColorLine "Monster AC: $($Monster.armorClass) | Attack bonus: $($Monster.attackBonus)" "White"
+    Start-Sleep -Milliseconds 750
 }

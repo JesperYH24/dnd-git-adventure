@@ -14,12 +14,12 @@ function Assert-Equal {
 
 function New-TestHero {
     return [PSCustomObject]@{
-        Name      = "Test Hero"
-        Class     = "Tester"
-        HP        = 20
-        DamageMin = 1
-        DamageMax = 8
-        Inventory = @()
+        Name               = "Test Hero"
+        Class              = "Tester"
+        HP                 = 20
+        BaseArmorClass     = 10
+        BaseInventorySlots = 4
+        Inventory          = @()
     }
 }
 
@@ -28,6 +28,8 @@ function New-TestMonster {
         name      = "testmonster"
         definite  = "Test Dragon"
         hp        = 50
+        armorClass = 16
+        attackBonus = 0
         damageMin = 8
         damageMax = 12
         isBoss    = $true
