@@ -17,13 +17,12 @@ function Invoke-HeroAttack {
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
-        $firstDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
-        $secondDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
-        $heroDamage = [Math]::Max(1, $firstDamageRoll + $secondDamageRoll + $weapon.DamageBonus)
+        $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
+        $heroDamage = [Math]::Max(1, $weapon.DamageMax + $extraDamageRoll + $weapon.DamageBonus)
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($firstDamageRoll + $secondDamageRoll + $($weapon.DamageBonus))" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus))" "Yellow"
     }
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true

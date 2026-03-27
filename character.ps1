@@ -35,6 +35,16 @@ function Get-HeroAbilityModifier {
     return Get-AbilityModifier -Score $score
 }
 
+function Format-AbilityModifier {
+    param([int]$Modifier)
+
+    if ($Modifier -ge 0) {
+        return "(+$Modifier)"
+    }
+
+    return "($Modifier)"
+}
+
 function Get-HeroProficiencyBonus {
     param($Hero)
 

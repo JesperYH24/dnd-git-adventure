@@ -12,6 +12,17 @@ function Assert-Equal {
     }
 }
 
+function Assert-True {
+    param(
+        [bool]$Condition,
+        [string]$Message
+    )
+
+    if (-not $Condition) {
+        throw $Message
+    }
+}
+
 function Test-BetterArmorRaisesArmorClass {
     $hero = Get-Hero
     $startingArmorClass = Get-HeroArmorClass -Hero $hero
@@ -63,9 +74,42 @@ function Test-TutorialMonsterArmorClassStaysForgiving {
     Assert-Equal -Actual $giantRat.armorClass -Expected 10 -Message "Giant rat AC should stay approachable for the tutorial."
 }
 
+function Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength {
+    function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
+    function global:Write-Scene { param([string]$Text) }
+    function global:Write-Action { param([string]$Text, [string]$Color) }
+    function global:Write-ColorLine { param([string]$Text, [string]$Color) }
+
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 20 }
+        if ($Sides -eq 12) { return 7 }
+        return 1
+    }
+
+    $hero = Get-Hero
+    $monster = @{
+        name = "training dummy"
+        definite = "The Training Dummy"
+        hp = 30
+        armorClass = 10
+        attackBonus = 0
+        isBoss = $false
+    }
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+
+    Assert-Equal -Actual $monsterHP -Expected 9 -Message "Hero crit should deal max weapon die plus a new die roll plus Strength modifier."
+    Assert-True -Condition (-not $heroDroppedWeapon) -Message "A critical hit should not drop the hero's weapon."
+}
+
 Test-BetterArmorRaisesArmorClass
 Test-GreatAxeDamageProfile
 Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
 Test-TutorialMonsterArmorClassStaysForgiving
+Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength
 
 Write-Host "Armor upgrade tests passed." -ForegroundColor Green
