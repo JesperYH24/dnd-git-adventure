@@ -39,7 +39,7 @@ function Test-DeepChamberForcesRetreatWithoutCompletingQuest {
     $heroHP = $game.HeroHP
     $heroDroppedWeapon = $game.HeroDroppedWeapon
     $currentRoomId = "shadow_sanctum"
-    $game.LastRoomId = "underground_lake"
+    $game.LastRoomId = "ashen_threshold"
     $room = $game.Rooms[$currentRoomId]
 
     $result = Resolve-RoomEncounter `
@@ -50,7 +50,7 @@ function Test-DeepChamberForcesRetreatWithoutCompletingQuest {
         -CurrentRoomId ([ref]$currentRoomId)
 
     Assert-Equal -Actual $result -Expected "Fled" -Message "First shadow sanctum entry should force a retreat."
-    Assert-Equal -Actual $currentRoomId -Expected "underground_lake" -Message "The hero should be moved back to the previous room."
+    Assert-Equal -Actual $currentRoomId -Expected "ashen_threshold" -Message "The hero should be moved back to the previous room."
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "The tutorial dragon encounter should not damage the hero."
     Assert-True -Condition $game.Quest.SeenDragon -Message "The quest should record that Borzig has seen the dragon."
     Assert-Equal -Actual $game.Quest.Completed -Expected $false -Message "The quest should not complete until the hero reports back to town."

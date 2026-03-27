@@ -26,9 +26,10 @@ function Get-CaveRooms {
         entrance = (New-Room -Id "entrance" -Name "Cave Entrance" -Description "A cold draft spills through the cracked stone archway. Faint torchlight flickers deeper inside." -Exits @{ north = "echo_hall"; east = "fungal_nest" } -EncounterChance 20)
         echo_hall = (New-Room -Id "echo_hall" -Name "Echo Hall" -Description "Each footstep bounces back from the damp walls. Broken bones crunch beneath your boots." -Exits @{ south = "entrance"; east = "collapsed_crossing" } -EncounterChance 70)
         fungal_nest = (New-Room -Id "fungal_nest" -Name "Fungal Nest" -Description "Pale mushrooms pulse with a sickly glow, painting the chamber in ghostly green." -Exits @{ west = "entrance"; north = "underground_lake" } -EncounterChance 75)
-        collapsed_crossing = (New-Room -Id "collapsed_crossing" -Name "Collapsed Crossing" -Description "A ruined bridge spans a black chasm. The old path continues through loose rubble." -Exits @{ west = "echo_hall"; north = "shadow_sanctum" } -EncounterChance 65)
-        underground_lake = (New-Room -Id "underground_lake" -Name "Underground Lake" -Description "Black water laps against the stone. Something moves beneath the surface before falling still." -Exits @{ south = "fungal_nest"; east = "shadow_sanctum" } -EncounterChance 70)
-        shadow_sanctum = (New-Room -Id "shadow_sanctum" -Name "Shadow Sanctum" -Description "Heat rolls through the cavern. Gold glints beneath ash, and a massive shadow shifts in the dark." -Exits @{ south = "collapsed_crossing"; west = "underground_lake" } -EncounterChance 100 -BossRoom $true)
+        collapsed_crossing = (New-Room -Id "collapsed_crossing" -Name "Collapsed Crossing" -Description "A ruined bridge spans a black chasm. The old path continues through loose rubble." -Exits @{ west = "echo_hall"; east = "ashen_threshold" } -EncounterChance 65)
+        underground_lake = (New-Room -Id "underground_lake" -Name "Underground Lake" -Description "Black water laps against the stone. Something moves beneath the surface before falling still." -Exits @{ south = "fungal_nest"; north = "ashen_threshold" } -EncounterChance 70)
+        ashen_threshold = (New-Room -Id "ashen_threshold" -Name "Ashen Threshold" -Description "Soot clings to the stone here, and the air tastes of smoke. Two tunnel paths converge before a final scorched passage ahead." -Exits @{ west = "collapsed_crossing"; south = "underground_lake"; east = "shadow_sanctum" } -EncounterChance 45)
+        shadow_sanctum = (New-Room -Id "shadow_sanctum" -Name "Shadow Sanctum" -Description "Heat rolls through the cavern. Gold glints beneath ash, and a massive shadow shifts in the dark." -Exits @{ west = "ashen_threshold" } -EncounterChance 100 -BossRoom $true)
     }
 }
 
