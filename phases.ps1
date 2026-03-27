@@ -56,6 +56,9 @@ function Start-CampfireMenu {
                         Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
                         $Game.Quest.Completed = $true
                         $Game.GameWon = $true
+                        Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
+                        Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
+                        Write-ColorLine ""
                         return "EnterTown"
                     }
                     Write-Scene "'No entry,' one of them says. 'Not until you report what is inside that cave.'"
@@ -67,6 +70,9 @@ function Start-CampfireMenu {
                 Write-Scene "The guards recognize the urgency in Borzig's face and let him through."
                 Write-Scene "$($Game.Hero.Name) returns to town with hard-earned knowledge from the cave."
                 $Game.GameWon = $true
+                Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
+                Write-EmphasisLine -Text "Borzig returns in triumph and the tutorial adventure is complete." -Color "Green"
+                Write-ColorLine ""
                 return "EnterTown"
             }
 

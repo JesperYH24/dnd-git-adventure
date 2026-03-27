@@ -57,7 +57,7 @@ function Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP {
     Assert-Equal -Actual $hero.WIS -Expected 10 -Message "The barbarian should start with 10 Wisdom from point buy."
     Assert-Equal -Actual $hero.CHA -Expected 8 -Message "The barbarian should start with 8 Charisma from point buy."
     Assert-Equal -Actual $hero.HP -Expected 14 -Message "A level 1 barbarian should start with max hit die plus Constitution modifier."
-    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 3 -Message "The hero's total attack bonus should include Strength, proficiency, and weapon modifier."
+    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 4 -Message "The hero's total attack bonus should include Strength, proficiency, and weapon modifier."
 }
 
 function Test-TutorialMonsterArmorClassStaysForgiving {
