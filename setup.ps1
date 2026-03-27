@@ -16,9 +16,17 @@ function Initialize-Game {
     $forceBoss = ($forceBossInput -eq "y")
 
     $rooms = Get-CaveRooms
+    $quest = [PSCustomObject]@{
+        Name = "Scout the Cave"
+        Description = "Explore the cave outside the campfire and learn what threat lies within."
+        Objective = "Reach the Dragon Lair and return to town with your report."
+        SeenDragon = $false
+        Completed = $false
+    }
 
     $state = @{
         Hero = $hero
+        Quest = $quest
         Rooms = $rooms
         CurrentRoomId = "entrance"
         LastRoomId = $null

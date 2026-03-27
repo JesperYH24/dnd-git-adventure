@@ -72,7 +72,9 @@ function Show-RoomActions {
     Write-ColorLine "I. Open inventory" "White"
     Write-ColorLine "L. Check room loot" "White"
     Write-ColorLine "S. View status" "White"
-    Write-ColorLine "Q. Leave the cave" "White"
+    if ($Room.Id -eq "entrance") {
+        Write-ColorLine "Q. Leave the cave" "White"
+    }
     Write-ColorLine ""
 
     return $exitMap
@@ -130,12 +132,28 @@ function Resolve-RoomEncounter {
         [ref]$CurrentRoomId
     )
 
-    if ($Room.BossRoom -and $Room.EncounterResolved) {
+    if ($Room.BossRoom -and ($Room.EncounterResolved -or $Game.Quest.SeenDragon)) {
         return "None"
     }
 
     if ($Room.BossRoom) {
-        $monster = Get-BossMonster
+        Write-ColorLine ""
+        Write-ColorLine "===== ENCOUNTER =====" "Red"
+        Write-Scene "A vast silhouette rises above the treasure mound."
+        Write-Scene "The Ancient Dragon opens one blazing eye and the whole cavern shakes."
+        Write-Scene "One sweep of its claws tears the stone beside Borzig apart."
+        Write-Scene "This is no fight for a level 1 hero."
+        Write-Scene "Borzig must survive, escape, and warn the town."
+        Write-ColorLine ""
+
+        $Game.Quest.SeenDragon = $true
+
+        if ($Game.LastRoomId) {
+            $CurrentRoomId.Value = $Game.LastRoomId
+        }
+
+        Write-Scene "$($Game.Hero.Name) stumbles back through the tunnels as the dragon's roar follows close behind."
+        return "Fled"
     }
     else {
         $spawnRoll = Roll-Dice -Sides 100
@@ -301,14 +319,20 @@ function Start-CaveExploration {
                     Write-ColorLine ""
                     Write-ColorLine "Status:" "Cyan"
                     Write-ColorLine "$($Game.Hero.Name): $($HeroHP.Value)/$($Game.Hero.HP) HP" "Green"
+                    Write-ColorLine "Level: $($Game.Hero.Level)" "White"
                     Write-ColorLine "Armor Class: $(Get-HeroArmorClass -Hero $Game.Hero)" "White"
                     Write-ColorLine "Weapon: $($equippedWeapon.Name) (hit $($equippedWeapon.AttackBonus), damage $($equippedWeapon.DamageMin)-$($equippedWeapon.DamageMax))" "White"
                     Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Game.Hero)/$(Get-InventoryCapacity -Hero $Game.Hero) slots" "White"
                     Write-ColorLine ""
                 }
                 "Q" {
-                    Write-Scene "$($Game.Hero.Name) leaves the cave behind for now."
-                    return
+                    if ($room.Id -eq "entrance") {
+                        Write-Scene "$($Game.Hero.Name) leaves the cave and returns to the campfire."
+                        return
+                    }
+
+                    Write-Scene "$($Game.Hero.Name) cannot leave the cave from here."
+                    Write-Scene "The safest path out leads back to the Cave Entrance."
                 }
                 default {
                     Write-ColorLine "Choose one of the listed actions." "DarkYellow"

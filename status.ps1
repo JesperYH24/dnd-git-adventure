@@ -65,7 +65,7 @@ function Show-Status {
         Write-ColorLine "$($Hero.Name): $HeroHP HP" $heroColor
     }
 
-    Write-ColorLine "AC: $heroArmorClass | Weapon: $($weapon.Name) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
+    Write-ColorLine "Level: $($Hero.Level) | AC: $heroArmorClass | Weapon: $($weapon.Name) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
     Start-Sleep -Milliseconds 750
 
     if ($monsterColor -eq "Red") {

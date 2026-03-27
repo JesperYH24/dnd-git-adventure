@@ -237,6 +237,7 @@ function Get-Hero {
     return [PSCustomObject]@{
         Name               = "Borzig"
         Class              = "Barbarian"
+        Level              = 1
         HP                 = 20
         STR                = 16
         BaseArmorClass     = 10

@@ -407,7 +407,6 @@ function Start-CombatLoop {
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) collapses to the ground. You win!"
                 break
             }
 

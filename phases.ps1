@@ -7,30 +7,77 @@ function Start-Intro {
     Write-Scene "Night hangs heavy over the forest."
     Write-Scene "$($Hero.Name) sits by the campfire outside a dark cave."
     Write-Scene "The fire crackles softly while the wind slips through the trees."
-    Write-Scene "$($Hero.Name) is a $($Hero.Class) with $($HeroHP.Value)/$($Hero.HP) HP."
+    Write-Scene "$($Hero.Name) is a level $($Hero.Level) $($Hero.Class) with $($HeroHP.Value)/$($Hero.HP) HP."
     Write-Scene "Somewhere in the depths, danger waits..."
     Write-ColorLine ""
+}
 
-    $enterCave = $false
+function Show-QuestTracker {
+    param($Quest)
 
-    while (-not $enterCave) {
+    Write-ColorLine ""
+    Write-ColorLine "===== QUEST =====" "Yellow"
+    Write-ColorLine $Quest.Name "White"
+    Write-ColorLine $Quest.Description "Gray"
+    Write-ColorLine "Objective: $($Quest.Objective)" "White"
+    Write-ColorLine "Status: $(if ($Quest.Completed) { 'Complete' } else { 'Active' })" "Cyan"
+    Write-ColorLine ""
+}
+
+function Start-CampfireMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Check inventory" "White"
         Write-ColorLine "2. Enter the cave" "White"
+        Write-ColorLine "3. Head to town" "White"
+        Write-ColorLine "4. View quest" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
 
         switch ($choice) {
             "1" {
-                Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP | Out-Null
+                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
 
             "2" {
-                Write-Scene "$($Hero.Name) rises, grips the weapon, and walks toward the cave entrance..."
+                Write-Scene "$($Game.Hero.Name) rises, grips the weapon, and walks toward the cave entrance..."
                 Write-Scene "Darkness closes in around him."
                 Write-ColorLine ""
-                $enterCave = $true
+                return "EnterCave"
+            }
+
+            "3" {
+                Write-Scene "$($Game.Hero.Name) follows the old road back toward the town gates."
+
+                if (-not $Game.Quest.Completed) {
+                    Write-Scene "The guards lower their spears and block the road."
+                    if ($Game.Quest.SeenDragon) {
+                        Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
+                        Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the gates finally open."
+                        $Game.Quest.Completed = $true
+                        $Game.GameWon = $true
+                        return "EnterTown"
+                    }
+                    Write-Scene "'No entry,' one of them says. 'Not until you report what is inside that cave.'"
+                    Write-Scene "$($Game.Hero.Name) has no choice but to return to the campfire and face the cave."
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Write-Scene "The guards recognize the urgency in Borzig's face and let him through."
+                Write-Scene "$($Game.Hero.Name) returns to town with hard-earned knowledge from the cave."
+                $Game.GameWon = $true
+                return "EnterTown"
+            }
+
+            "4" {
+                Show-QuestTracker -Quest $Game.Quest
             }
 
             default {
@@ -40,10 +87,9 @@ function Start-Intro {
         }
     }
 
-    Write-Scene "$($Hero.Name) steps into the dark cave..."
+    Write-Scene "$($Game.Hero.Name) steps into the dark cave..."
     Write-Scene "Something is waiting in here..."
     Write-ColorLine ""
-
 }
 
 function Start-DetectionPhase {
