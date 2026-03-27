@@ -10,7 +10,7 @@ function Invoke-HeroAttack {
     )
 
     $heroRoll = Roll-Dice -Sides 20
-    Write-Action "$($Hero.Name) slår för attack: $heroRoll" "Cyan"
+    Write-Action "$($Hero.Name) rolls to attack: $heroRoll" "Cyan"
 
     if ($heroRoll -eq 20) {
         $extraDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
@@ -18,21 +18,21 @@ function Invoke-HeroAttack {
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) träffar $($Monster.definite) extra hårt och gör $heroDamage skada! ($($Hero.DamageMax) + $extraDamage)" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($Hero.DamageMax) + $extraDamage)" "Yellow"
     }
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true
         Write-Action "CRITICAL FAIL!" "Magenta"
-        Write-Scene "$($Hero.Name) fumblar, tappar vapnet och måste plocka upp det nästa runda!"
+        Write-Scene "$($Hero.Name) fumbles, drops the weapon, and must pick it up next turn!"
     }
     elseif ($heroRoll -ge 10) {
         $heroDamage = Roll-Damage -Minimum $Hero.DamageMin -Maximum $Hero.DamageMax
         $MonsterHP.Value -= $heroDamage
 
-        Write-Action "$($Hero.Name) träffar $($Monster.definite) och gör $heroDamage skada!" "Yellow"
+        Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage!" "Yellow"
     }
     else {
-        Write-Action "$($Hero.Name) missar attacken!" "DarkGray"
+        Write-Action "$($Hero.Name) misses the attack!" "DarkGray"
     }
 
     Write-ColorLine ""
@@ -47,7 +47,7 @@ function Invoke-MonsterAttack {
     )
 
     $attackRoll = Roll-Dice -Sides 20
-    Write-Action "$($Monster.definite) slår för attack: $attackRoll" "DarkCyan"
+    Write-Action "$($Monster.definite) rolls to attack: $attackRoll" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
@@ -56,21 +56,21 @@ function Invoke-MonsterAttack {
 
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) träffar extra hårt och gör $monsterDamage skada! ($($Monster.damageMax) + $extraDamage)" "Yellow"
+        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($($Monster.damageMax) + $extraDamage)" "Yellow"
     }
     elseif ($attackRoll -eq 1) {
         Write-Action "CRITICAL FAIL!" "Magenta"
-        Write-Action "$($Monster.definite) snubblar till och tappar balansen!" "DarkYellow"
+        Write-Action "$($Monster.definite) stumbles and loses its balance!" "DarkYellow"
         $MonsterOffBalance.Value = $true
     }
     elseif ($attackRoll -ge 10) {
         $monsterDamage = Roll-Damage -Minimum $Monster.damageMin -Maximum $Monster.damageMax
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) träffar och gör $monsterDamage skada!" "Yellow"
+        Write-Action "$($Monster.definite) hits for $monsterDamage damage!" "Yellow"
     }
     else {
-        Write-Action "$($Monster.definite) missar!" "DarkGray"
+        Write-Action "$($Monster.definite) misses!" "DarkGray"
     }
 
     if ($HeroHP.Value -lt 0) {
@@ -87,7 +87,7 @@ function Show-Inventory {
     Write-ColorLine "===== INVENTORY =====" "Cyan"
 
     if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
-        Write-ColorLine "Inventory är tomt." "DarkGray"
+        Write-ColorLine "Inventory is empty." "DarkGray"
         Write-ColorLine ""
         return
     }
@@ -109,7 +109,7 @@ function Resolve-LootDrop {
     $loot = Get-MonsterLoot -Monster $Monster
 
     if (-not $loot -or $loot.Count -eq 0) {
-        Write-Scene "$($Monster.definite) hade ingen loot."
+        Write-Scene "$($Monster.definite) carried no loot."
         return
     }
 
@@ -123,14 +123,14 @@ function Resolve-LootDrop {
     Write-ColorLine ""
 
     foreach ($item in $loot) {
-        $choice = (Read-Host "Vill du plocka upp '$($item.Name)'? (Y/N)").ToUpper()
+        $choice = (Read-Host "Pick up '$($item.Name)'? (Y/N)").ToUpper()
 
         if ($choice -eq "Y") {
             $Hero.Inventory += $item
-            Write-Scene "$($Hero.Name) plockar upp $($item.Name)."
+            Write-Scene "$($Hero.Name) picks up $($item.Name)."
         }
         else {
-            Write-Scene "$($Hero.Name) lämnar kvar $($item.Name)."
+            Write-Scene "$($Hero.Name) leaves $($item.Name) behind."
         }
 
         Write-ColorLine ""
@@ -148,7 +148,7 @@ function Use-InventoryItem {
 
     if ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
         if ($HeroHP.Value -ge $Hero.HP) {
-            Write-Scene "$($Hero.Name) har redan full HP och kan inte använda $($Item.Name)."
+            Write-Scene "$($Hero.Name) is already at full HP and cannot use $($Item.Name)."
             return $false
         }
 
@@ -156,13 +156,13 @@ function Use-InventoryItem {
         $HeroHP.Value = [Math]::Min($HeroHP.Value + $Item.HealAmount, $Hero.HP)
         $healed = $HeroHP.Value - $oldHP
 
-        Write-Scene "$($Hero.Name) dricker $($Item.Name) och återfår $healed HP!"
-        Write-Scene "$($Hero.Name) har nu $($HeroHP.Value)/$($Hero.HP) HP."
+        Write-Scene "$($Hero.Name) drinks $($Item.Name) and recovers $healed HP!"
+        Write-Scene "$($Hero.Name) now has $($HeroHP.Value)/$($Hero.HP) HP."
 
         return $true
     }
 
-    Write-Scene "$($Item.Name) kan inte användas just nu."
+    Write-Scene "$($Item.Name) cannot be used right now."
     return $false
 }
 
@@ -177,9 +177,9 @@ function Open-InventoryMenu {
         Write-ColorLine "===== INVENTORY =====" "Cyan"
 
         if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
-            Write-ColorLine "Inventory är tomt." "DarkGray"
+            Write-ColorLine "Inventory is empty." "DarkGray"
             Write-ColorLine ""
-            Read-Host "Tryck Enter för att gå tillbaka"
+            Read-Host "Press Enter to go back"
             return $false
         }
 
@@ -194,24 +194,24 @@ function Open-InventoryMenu {
             }
         }
 
-        Write-ColorLine "0. Tillbaka" "DarkGray"
+        Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Välj itemnummer"
+        $choice = Read-Host "Choose item number"
 
         if ($choice -eq "0") {
             return $false
         }
 
         if ($choice -notmatch '^\d+$') {
-            Write-ColorLine "Skriv ett giltigt nummer." "DarkYellow"
+            Write-ColorLine "Enter a valid number." "DarkYellow"
             continue
         }
 
         $index = [int]$choice - 1
 
         if ($index -lt 0 -or $index -ge $Hero.Inventory.Count) {
-            Write-ColorLine "Det itemet finns inte." "DarkYellow"
+            Write-ColorLine "That item does not exist." "DarkYellow"
             continue
         }
 
@@ -246,7 +246,7 @@ function Start-CombatLoop {
         Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
 
         if ($HeroDroppedWeapon.Value) {
-            Write-Scene "$($Hero.Name) plockar upp sitt vapen och förlorar rundan!"
+            Write-Scene "$($Hero.Name) picks up the weapon and loses the turn!"
             $HeroDroppedWeapon.Value = $false
             Write-ColorLine ""
 
@@ -254,12 +254,12 @@ function Start-CombatLoop {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
                 if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) faller i striden..."
+                    Write-Scene "$($Hero.Name) falls in battle..."
                     break
                 }
             }
             else {
-                Write-Scene "$($Monster.definite) försöker återfå balansen och kan inte attackera denna runda."
+                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
                 $MonsterOffBalance.Value = $false
                 Write-ColorLine ""
             }
@@ -267,7 +267,7 @@ function Start-CombatLoop {
             continue
         }
 
-        $choice = (Read-Host "Vad vill du göra? (A/I/R) - Attack, Inventory eller Run").ToUpper()
+        $choice = (Read-Host "What do you want to do? (A/I/R) - Attack, Inventory or Run").ToUpper()
 
         if ($choice -eq "I") {
             Write-ColorLine ""
@@ -278,12 +278,12 @@ function Start-CombatLoop {
                     Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
                     if ($HeroHP.Value -le 0) {
-                        Write-Scene "$($Hero.Name) faller i striden..."
+                        Write-Scene "$($Hero.Name) falls in battle..."
                         break
                     }
                 }
                 else {
-                    Write-Scene "$($Monster.definite) försöker återfå balansen och kan inte attackera denna runda."
+                    Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
                     $MonsterOffBalance.Value = $false
                     Write-ColorLine ""
                 }
@@ -292,7 +292,7 @@ function Start-CombatLoop {
             continue
         }
         elseif ($choice -eq "R") {
-            Write-Scene "$($Hero.Name) flyr från $($Monster.definite)!"
+            Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
             break
         }
         elseif ($choice -eq "A") {
@@ -300,7 +300,7 @@ function Start-CombatLoop {
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+                Write-Scene "$($Monster.definite) collapses to the ground. You win!"
                 Resolve-LootDrop -Hero $Hero -Monster $Monster
                 break
             }
@@ -309,19 +309,19 @@ function Start-CombatLoop {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
                 if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) faller i striden..."
+                    Write-Scene "$($Hero.Name) falls in battle..."
                     break
                 }
             }
             else {
-                Write-Scene "$($Monster.definite) försöker återfå balansen och kan inte attackera denna runda."
+                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
                 $MonsterOffBalance.Value = $false
                 Write-ColorLine ""
             }
         }
         else {
             Write-ColorLine ""
-            Write-ColorLine "Skriv A, I eller R" "DarkYellow"
+            Write-ColorLine "Type A, I or R" "DarkYellow"
             Write-ColorLine ""
         }
     }

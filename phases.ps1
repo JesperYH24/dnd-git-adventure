@@ -5,28 +5,28 @@ function Start-Intro {
         [ref]$HeroHP
     )
 
-    Write-Scene "Natten ligger tung över skogen."
-    Write-Scene "$($Hero.Name) sitter vid sin lägerplats utanför en mörk grotta."
-    Write-Scene "Elden knastrar svagt medan vinden drar mellan träden."
-    Write-Scene "$($Hero.Name) är en $($Hero.Class) med $($HeroHP.Value)/$($Hero.HP) HP."
-    Write-Scene "Djupt där inne väntar fara..."
+    Write-Scene "Night hangs heavy over the forest."
+    Write-Scene "$($Hero.Name) sits by the campfire outside a dark cave."
+    Write-Scene "The fire crackles softly while the wind slips through the trees."
+    Write-Scene "$($Hero.Name) is a $($Hero.Class) with $($HeroHP.Value)/$($Hero.HP) HP."
+    Write-Scene "Somewhere in the depths, danger waits..."
     Write-ColorLine ""
 
     if ($Monster.isBoss) {
-        Write-Scene "Luften känns märkligt tung runt grottans öppning..."
-        Write-Scene "Något där inne känns större än vanligt."
+        Write-Scene "The air around the cave entrance feels strangely heavy..."
+        Write-Scene "Something inside feels larger than it should."
         Write-ColorLine ""
     }
 
     $enterCave = $false
 
     while (-not $enterCave) {
-        Write-ColorLine "Vad vill du göra?" "Cyan"
-        Write-ColorLine "1. Kolla inventory" "White"
-        Write-ColorLine "2. Gå in i grottan" "White"
+        Write-ColorLine "What do you want to do?" "Cyan"
+        Write-ColorLine "1. Check inventory" "White"
+        Write-ColorLine "2. Enter the cave" "White"
         Write-ColorLine ""
 
-        $choice = Read-Host "Välj"
+        $choice = Read-Host "Choose"
 
         switch ($choice) {
             "1" {
@@ -34,29 +34,29 @@ function Start-Intro {
             }
 
             "2" {
-                Write-Scene "$($Hero.Name) reser sig, greppar sitt vapen och går mot grottans öppning..."
-                Write-Scene "Mörkret sluter sig runt honom."
+                Write-Scene "$($Hero.Name) rises, grips the weapon, and walks toward the cave entrance..."
+                Write-Scene "Darkness closes in around him."
                 Write-ColorLine ""
                 $enterCave = $true
             }
 
             default {
-                Write-ColorLine "Ogiltigt val. Försök igen." "Red"
+                Write-ColorLine "Invalid choice. Try again." "Red"
                 Write-ColorLine ""
             }
         }
     }
 
-    Write-Scene "$($Hero.Name) går in i den mörka grottan..."
-    Write-Scene "Något finns här inne..."
+    Write-Scene "$($Hero.Name) steps into the dark cave..."
+    Write-Scene "Something is waiting in here..."
     Write-ColorLine ""
 
     if ($Monster.isBoss) {
-        Write-Scene "Luften blir plötsligt iskall..."
+        Write-Scene "The air suddenly turns ice-cold..."
         Start-Sleep -Milliseconds 1000
-        Write-Scene "Marken skakar under dina fötter..."
+        Write-Scene "The ground trembles beneath your feet..."
         Start-Sleep -Milliseconds 1000
-        Write-Scene "Något rör sig i mörkret..."
+        Write-Scene "Something moves in the darkness..."
         Start-Sleep -Milliseconds 1000
     }
 }
@@ -71,23 +71,23 @@ function Start-DetectionPhase {
     )
 
     $detectRoll = Roll-Dice -Sides 20
-    Write-Scene "$($Hero.Name) slår en d20 för att upptäcka fara: $detectRoll"
+    Write-Scene "$($Hero.Name) rolls a d20 to sense danger: $detectRoll"
     Write-ColorLine ""
 
     if ($detectRoll -ge 15) {
-        Write-Scene "$($Hero.Name) upptäcker $($Monster.definite) långt innan det hinner reagera!"
-        Write-Scene "$($Hero.Name) får två attacker direkt."
+        Write-Scene "$($Hero.Name) spots $($Monster.definite) long before it can react!"
+        Write-Scene "$($Hero.Name) gains two immediate attacks."
         $HeroStarts.Value = $true
         $HeroBonusAttack.Value = $true
     }
     elseif ($detectRoll -ge 8) {
-        Write-Scene "$($Hero.Name) och $($Monster.definite) upptäcker varandra samtidigt!"
-        Write-Scene "$($Hero.Name) hinner ändå agera först."
+        Write-Scene "$($Hero.Name) and $($Monster.definite) spot each other at the same time!"
+        Write-Scene "$($Hero.Name) still manages to act first."
         $HeroStarts.Value = $true
     }
     else {
-        Write-Scene "För sent! $($Monster.definite) hoppar fram ur skuggorna!"
-        Write-Scene "$($Monster.definite) får attackera först."
+        Write-Scene "Too late! $($Monster.definite) lunges out of the shadows!"
+        Write-Scene "$($Monster.definite) attacks first."
         $MonsterStarts.Value = $true
     }
 }
@@ -110,12 +110,12 @@ function Start-OpeningPhase {
 
         for ($i = 1; $i -le $attacks; $i++) {
             Write-ColorLine ""
-            Write-Action "Öppningsattack $i av $attacks" "Cyan"
+            Write-Action "Opening attack $i of $attacks" "Cyan"
 
             Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
 
             if ($MonsterHP.Value -le 0) {
-                Write-Scene "$($Monster.definite) faller till marken. Du vann!"
+                Write-Scene "$($Monster.definite) collapses to the ground. You win!"
                 Resolve-LootDrop -Hero $Hero -Monster $Monster
                 return $false
             }
@@ -128,7 +128,7 @@ function Start-OpeningPhase {
         Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
         if ($HeroHP.Value -le 0) {
-            Write-Scene "$($Hero.Name) faller i striden..."
+            Write-Scene "$($Hero.Name) falls in battle..."
             return $false
         }
     }
@@ -136,7 +136,7 @@ function Start-OpeningPhase {
         Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
         if ($HeroHP.Value -le 0) {
-            Write-Scene "$($Hero.Name) faller i striden..."
+            Write-Scene "$($Hero.Name) falls in battle..."
             return $false
         }
     }

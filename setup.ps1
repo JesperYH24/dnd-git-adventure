@@ -11,7 +11,7 @@ function Initialize-Game {
     $hero = Get-Hero
     $heroHP = $hero.HP
 
-    $forceBossInput = (Read-Host "Vill du tvinga boss? (y/n)").ToLower()
+    $forceBossInput = (Read-Host "Force boss encounter? (y/n)").ToLower()
     $forceBoss = ($forceBossInput -eq "y")
 
     if ($forceBoss) {
