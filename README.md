@@ -1,229 +1,216 @@
-@"
 # DnD Git Adventure
 
-Ett textbaserat stridsbaserat äventyr i PowerShell där spelaren styr hjälten Borzig genom ett encounter mot ett monster.
+A text-based combat adventure in PowerShell where the player controls the hero Borzig through an encounter with a monster.
 
 ---
 
-## Syfte
+## Purpose
 
-Projektet är byggt för att:
+This project is built to:
 
-- träna PowerShell och scripting
-- arbeta med modulär kod (flera .ps1-filer)
-- separera ansvar (Setup vs Gameplay)
-- implementera ett enkelt state-baserat spel
-- skapa ett stridssystem med tärningsmekanik
-
----
-
-## Hur spelet fungerar
-
-Spelet är uppdelat i två huvuddelar:
-
-### 1. Setup (Setup.ps1)
-
-När spelet startar:
-
-- alla script laddas in
-- hjälten skapas via `Get-Hero`
-- spelaren kan välja att tvinga fram en boss
-- ett monster väljs (random eller boss)
-- startvärden sätts (HP, flags etc)
-- ett GameState skapas (hashtable)
-
-GameState returneras till Adventure.ps1
+- practice PowerShell and scripting
+- work with modular code across multiple `.ps1` files
+- separate responsibilities clearly (`Setup` vs `Gameplay`)
+- implement a simple state-based game
+- create a combat system with dice mechanics
 
 ---
 
-### 2. Gameplay (Adventure.ps1)
+## How the game works
 
-Adventure.ps1 ansvarar för flödet:
+The game is divided into two main parts:
 
-1. Initiera spelet via `Initialize-Game`
-2. Starta intro
-3. Köra detection phase
-4. Köra opening phase
-5. Om båda lever → starta combat loop
+### 1. Setup (`Setup.ps1`)
+
+When the game starts:
+
+- all scripts are loaded
+- the hero is created through `Get-Hero`
+- the player can choose to force a boss encounter
+- a monster is selected (random or boss)
+- starting values are initialized (HP, flags, etc.)
+- a `GameState` hashtable is created
+
+The `GameState` is then returned to `Adventure.ps1`.
+
+---
+
+### 2. Gameplay (`Adventure.ps1`)
+
+`Adventure.ps1` is responsible for the game flow:
+
+1. Initialize the game with `Initialize-Game`
+2. Start the intro
+3. Run the detection phase
+4. Run the opening phase
+5. If both combatants survive, start the combat loop
 
 ---
 
 ## GameState
 
-Spelet använder en central hashtable som innehåller all data:
+The game uses a central hashtable that contains all game data:
 
-- Hero
-- Monster
-- HeroHP
-- MonsterHP
-- HeroDroppedWeapon
-- MonsterOffBalance
-- HeroStarts
-- HeroBonusAttack
-- MonsterStarts
+- `Hero`
+- `Monster`
+- `HeroHP`
+- `MonsterHP`
+- `HeroDroppedWeapon`
+- `MonsterOffBalance`
+- `HeroStarts`
+- `HeroBonusAttack`
+- `MonsterStarts`
 
-Den skickas mellan funktioner och uppdateras via `[ref]`.
+It is passed between functions and updated through `[ref]`.
 
 ---
 
-## Faser i spelet
+## Game phases
 
 ### Intro
-- Visar scenen
-- Presenter hjälten och monstret
+
+- shows the scene
+- introduces the hero and the monster
 
 ---
 
 ### Detection Phase
 
-Avgör initiativ via d20:
+Determines initiative with a d20 roll:
 
-- **15+** → hjälten får bonusattack
-- **8–14** → hjälten börjar
-- **1–7** → monstret börjar
+- **15+** -> the hero gets a bonus attack
+- **8-14** -> the hero starts
+- **1-7** -> the monster starts
 
 ---
 
 ### Opening Phase
 
-- Första attacken sker
-- Kan avgöra striden direkt
+- the first attack happens
+- the fight can be decided immediately
 
 ---
 
 ### Combat Loop
 
-Spelaren väljer varje runda:
+Each round, the player chooses:
 
 - **A** = Attack
+- **I** = Inventory
 - **R** = Run
 
-Loopen fortsätter tills:
+The loop continues until:
 
-- hjälten dör
-- monstret dör
-- spelaren flyr
+- the hero dies
+- the monster dies
+- the player flees
 
 ---
 
-## Stridssystem
+## Combat system
 
 ### Attack
 
-- d20 används för träff
-- **20** → Critical Hit
-- **1** → Critical Fail
-- **10+** → träff
-- annars miss
+- a d20 is used to hit
+- **20** -> Critical Hit
+- **1** -> Critical Fail
+- **10+** -> hit
+- otherwise -> miss
 
 ---
 
 ### Critical Hit
 
-- maxskada + extra skadeslag
+- maximum damage + an extra damage roll
 
 ---
 
 ### Critical Fail
 
-Hjälte:
-- tappar vapnet
-- måste plocka upp det nästa runda
+Hero:
+
+- drops the weapon
+- must pick it up next turn
 
 Monster:
-- blir ur balans
-- missar nästa attack
+
+- becomes off balance
+- misses the next attack
 
 ---
 
-## Statussystem
+## Status system
 
-Visar HP med färger:
+Displays HP with colors:
 
-### Hjälte
-- Grön = hög HP
-- Gul = medium
-- Röd = låg
+### Hero
+
+- Green = high HP
+- Yellow = medium HP
+- Red = low HP
 
 ### Monster
-- DarkYellow = hög HP
-- Gul = skadad
-- Röd = nära död
+
+- DarkYellow = high HP
+- Yellow = wounded
+- Red = near death
 - Magenta = boss
 
 ---
 
-## Kodstruktur
+## Code structure
 
-Projektet är uppdelat i tydliga ansvarsområden:
+The project is split into clear responsibility areas:
 
----
+### `Adventure.ps1` (Main)
 
-### Adventure.ps1 (Main)
+- loads `Setup.ps1`
+- starts the game
+- runs all phases
+- handles the overall game flow
 
-- laddar Setup.ps1
-- startar spelet
-- kör alla faser
-- hanterar spel-flödet
+### `Setup.ps1`
 
----
+- loads all scripts
+- creates the hero
+- chooses a monster
+- initializes the `GameState`
+- returns the starting game state
 
-### Setup.ps1
-
-- laddar alla scripts
-- skapar hjälte
-- väljer monster
-- initierar GameState
-- returnerar spelets startläge
-
----
-
-### character.ps1
+### `character.ps1`
 
 - `Get-Hero`
-- definierar spelarens stats
+- defines the player's stats
 
----
-
-### monsters.ps1
+### `monsters.ps1`
 
 - `Get-RandomMonster`
 - `Get-BossMonster`
-- innehåller alla monster
+- contains all monsters
 
----
+### `roll.ps1`
 
-### roll.ps1
+- handles dice rolls
+- used for attack and damage
 
-- hanterar tärningsslag
-- används för attack och skada
+### `ui.ps1`
 
----
+- handles all output
+- colors
+- text animation
 
-### ui.ps1
+### `status.ps1`
 
-- ansvarar för all output
-- färger
-- textanimationer
+- shows HP status
+- color coding
 
----
+### `combat.ps1`
 
-### status.ps1
-
-- visar HP-status
-- färgkodning
-
----
-
-### combat.ps1
-
-- attackfunktioner
-- critical hits/fails
+- attack functions
+- critical hits and fails
 - combat loop
 
----
-
-### phases.ps1
+### `phases.ps1`
 
 - `Start-Intro`
 - `Start-DetectionPhase`
@@ -231,29 +218,30 @@ Projektet är uppdelat i tydliga ansvarsområden:
 
 ---
 
-## Starta spelet
+## Run the game
 
 ```powershell
 .\Adventure.ps1
 
-Vid behov:
+If needed:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-## Framtida utveckling
-- GameState som klass istället för hashtable
-- inventory-system
-- fler actions (defend, special attacks)
-- potions/healing
-- flera encounters
-- leveling-system
-- save/load
+## Future development
 
-## Sammanfattning
+- `GameState` as a class instead of a hashtable
+- inventory system improvements
+- more actions (`defend`, special attacks)
+- potions and healing expansion
+- multiple encounters
+- leveling system
+- save/load support
 
-### Projektet demonstrerar:
+## Summary
 
-- modulär PowerShell-arkitektur
-- separation av ansvar (Setup vs Gameplay)
+### This project demonstrates:
+
+- modular PowerShell architecture
+- separation of responsibilities (`Setup` vs `Gameplay`)
 - state-driven design
-- enkel spel-loop med faser
+- a simple phase-based game loop
