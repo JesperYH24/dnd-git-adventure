@@ -135,6 +135,8 @@ function Start-OpeningPhase {
     elseif ($MonsterStarts) {
         Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
 
+        Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
+
         if ($HeroHP.Value -le 0) {
             Write-Scene "$($Hero.Name) falls in battle..."
             return $false
