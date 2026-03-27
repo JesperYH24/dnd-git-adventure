@@ -1,8 +1,12 @@
 . "$PSScriptRoot\Setup.ps1"
 
 $game = Initialize-Game
+$heroHP = $game.HeroHP
+$monsterHP = $game.MonsterHP
+$heroDroppedWeapon = $game.HeroDroppedWeapon
+$monsterOffBalance = $game.MonsterOffBalance
 
-Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP ([ref]$game.HeroHP)
+Start-Intro -Hero $game.Hero -Monster $game.Monster -HeroHP ([ref]$heroHP)
 
 $heroStarts = $game.HeroStarts
 $heroBonusAttack = $game.HeroBonusAttack
@@ -22,13 +26,18 @@ $game.MonsterStarts = $monsterStarts
 $continueCombat = Start-OpeningPhase `
     -Hero $game.Hero `
     -Monster $game.Monster `
-    -HeroHP ([ref]$game.HeroHP) `
-    -MonsterHP ([ref]$game.MonsterHP) `
-    -HeroDroppedWeapon ([ref]$game.HeroDroppedWeapon) `
-    -MonsterOffBalance ([ref]$game.MonsterOffBalance) `
+    -HeroHP ([ref]$heroHP) `
+    -MonsterHP ([ref]$monsterHP) `
+    -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+    -MonsterOffBalance ([ref]$monsterOffBalance) `
     -HeroStarts $game.HeroStarts `
     -HeroBonusAttack $game.HeroBonusAttack `
     -MonsterStarts $game.MonsterStarts
+
+$game.HeroHP = $heroHP
+$game.MonsterHP = $monsterHP
+$game.HeroDroppedWeapon = $heroDroppedWeapon
+$game.MonsterOffBalance = $monsterOffBalance
 
 if (-not $continueCombat) {
     return
@@ -37,7 +46,12 @@ if (-not $continueCombat) {
 Start-CombatLoop `
     -Hero $game.Hero `
     -Monster $game.Monster `
-    -HeroHP ([ref]$game.HeroHP) `
-    -MonsterHP ([ref]$game.MonsterHP) `
-    -HeroDroppedWeapon ([ref]$game.HeroDroppedWeapon) `
-    -MonsterOffBalance ([ref]$game.MonsterOffBalance)
+    -HeroHP ([ref]$heroHP) `
+    -MonsterHP ([ref]$monsterHP) `
+    -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+    -MonsterOffBalance ([ref]$monsterOffBalance)
+
+$game.HeroHP = $heroHP
+$game.MonsterHP = $monsterHP
+$game.HeroDroppedWeapon = $heroDroppedWeapon
+$game.MonsterOffBalance = $monsterOffBalance
