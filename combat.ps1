@@ -92,6 +92,81 @@ function Invoke-MonsterAttack {
     Write-ColorLine ""
 }
 
+function Resolve-DroppedWeaponTurn {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$HeroHP,
+        [ref]$HeroDroppedWeapon,
+        [ref]$MonsterOffBalance
+    )
+
+    $choice = "P"
+
+    if ($Hero.Class -eq "Barbarian") {
+        Write-ColorLine "What do you do?" "Cyan"
+        Write-ColorLine "P. Pick up the weapon and lose the turn" "White"
+        Write-ColorLine "G. Grapple with raw strength" "White"
+        Write-ColorLine ""
+
+        while ($true) {
+            $choice = (Read-Host "Choose (P/G)").ToUpper()
+
+            if ($choice -in @("P", "G")) {
+                break
+            }
+
+            Write-ColorLine "Choose P or G." "DarkYellow"
+            Write-ColorLine ""
+        }
+    }
+
+    if ($choice -eq "G") {
+        $heroStrengthModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "STR"
+        $monsterStrengthBonus = 0
+
+        if ($null -ne $Monster.strengthCheckBonus) {
+            $monsterStrengthBonus = [int]$Monster.strengthCheckBonus
+        }
+        elseif ($null -ne $Monster.attackBonus) {
+            $monsterStrengthBonus = [int]$Monster.attackBonus
+        }
+
+        $heroRoll = Roll-Dice -Sides 20
+        $monsterRoll = Roll-Dice -Sides 20
+        $heroTotal = $heroRoll + $heroStrengthModifier
+        $monsterTotal = $monsterRoll + $monsterStrengthBonus
+
+        Write-Action "$($Hero.Name) lunges for a grapple: roll $heroRoll, total $heroTotal" "Cyan"
+        Write-Action "$($Monster.definite) resists: roll $monsterRoll, total $monsterTotal" "DarkCyan"
+
+        if ($heroRoll -eq 20 -or ($monsterRoll -ne 20 -and $heroTotal -ge $monsterTotal)) {
+            Write-Action "$($Hero.Name) slams into $($Monster.definite), forces it off balance, and snatches the weapon back!" "Yellow"
+            $HeroDroppedWeapon.Value = $false
+            $MonsterOffBalance.Value = $true
+            Write-ColorLine ""
+            return
+        }
+
+        Write-Scene "$($Hero.Name) fails to overpower $($Monster.definite) and is left exposed!"
+        Write-ColorLine ""
+    }
+    else {
+        Write-Scene "$($Hero.Name) picks up the weapon and loses the turn!"
+        $HeroDroppedWeapon.Value = $false
+        Write-ColorLine ""
+    }
+
+    if (-not $MonsterOffBalance.Value) {
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+    }
+    else {
+        Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
+        $MonsterOffBalance.Value = $false
+        Write-ColorLine ""
+    }
+}
+
 function Start-CombatLoop {
     param(
         $Hero,
@@ -114,22 +189,11 @@ function Start-CombatLoop {
         $showStatus = $true
 
         if ($HeroDroppedWeapon.Value) {
-            Write-Scene "$($Hero.Name) picks up the weapon and loses the turn!"
-            $HeroDroppedWeapon.Value = $false
-            Write-ColorLine ""
+            Resolve-DroppedWeaponTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance
 
-            if (-not $MonsterOffBalance.Value) {
-                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
-
-                if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) falls in battle..."
-                    break
-                }
-            }
-            else {
-                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
-                $MonsterOffBalance.Value = $false
-                Write-ColorLine ""
+            if ($HeroHP.Value -le 0) {
+                Write-Scene "$($Hero.Name) falls in battle..."
+                break
             }
 
             continue
