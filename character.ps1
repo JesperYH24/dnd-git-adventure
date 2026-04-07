@@ -129,6 +129,17 @@ function Get-HeroCurrencyText {
     return "$($breakdown.Gold) GP, $($breakdown.Silver) SP, $($breakdown.Copper) CP"
 }
 
+function Convert-CopperToCurrencyText {
+    param([int]$Copper)
+
+    $gold = [Math]::Floor($Copper / 100)
+    $remainder = $Copper % 100
+    $silver = [Math]::Floor($remainder / 10)
+    $copperRemainder = $remainder % 10
+
+    return "$gold GP, $silver SP, $copperRemainder CP"
+}
+
 function Convert-CopperToCurrencyItem {
     param([int]$Copper)
 
@@ -166,6 +177,31 @@ function Add-HeroCurrency {
     }
 }
 
+function Spend-HeroCurrency {
+    param(
+        $Hero,
+        [int]$Copper
+    )
+
+    $currentCopper = [int]$Hero.CurrencyCopper
+
+    if ($Copper -gt $currentCopper) {
+        return [PSCustomObject]@{
+            Success = $false
+            SpentCopper = 0
+            RemainingCopper = $currentCopper
+        }
+    }
+
+    $Hero.CurrencyCopper -= $Copper
+
+    return [PSCustomObject]@{
+        Success = $true
+        SpentCopper = $Copper
+        RemainingCopper = [int]$Hero.CurrencyCopper
+    }
+}
+
 function Apply-HeroBuff {
     param(
         $Hero,
@@ -177,6 +213,12 @@ function Apply-HeroBuff {
         Type = $BuffType
         Name = $BuffName
     }
+}
+
+function Clear-HeroBuff {
+    param($Hero)
+
+    $Hero.ActiveBuff = $null
 }
 
 function Get-HeroHasInitiativeAdvantage {

@@ -65,7 +65,6 @@ function Start-CampfireMenu {
                         Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."
                         $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP
                         $Game.Quest.Completed = $true
-                        $Game.GameWon = $true
                         if ($levelUpResult.LeveledUp) {
                             $latestLevelUp = $levelUpResult.Results | Select-Object -Last 1
                             Write-SectionTitle -Text "Level Up" -Color "Yellow"
@@ -82,6 +81,7 @@ function Start-CampfireMenu {
                         }
                         Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
                         Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
+                        Write-Scene "Now the city opens around him, with shops, rumors, and new roads waiting beyond the tutorial."
                         Write-ColorLine ""
                         return "EnterTown"
                     }
@@ -93,9 +93,6 @@ function Start-CampfireMenu {
 
                 Write-Scene "The guards recognize the urgency in Borzig's face and let him through."
                 Write-Scene "$($Game.Hero.Name) returns to town with hard-earned knowledge from the cave."
-                $Game.GameWon = $true
-                Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
-                Write-EmphasisLine -Text "Borzig returns in triumph and the tutorial adventure is complete." -Color "Green"
                 Write-ColorLine ""
                 return "EnterTown"
             }

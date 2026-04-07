@@ -18,6 +18,9 @@ while ($heroHP -gt 0 -and -not $game.GameWon) {
             -HeroHP ([ref]$heroHP) `
             -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
     }
+    elseif ($campAction -eq "EnterTown") {
+        Start-TownMenu -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+    }
 }
 
 $game.HeroHP = $heroHP

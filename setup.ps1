@@ -7,6 +7,7 @@
 . "$PSScriptRoot\inventory.ps1"
 . "$PSScriptRoot\combat.ps1"
 . "$PSScriptRoot\quests.ps1"
+. "$PSScriptRoot\town.ps1"
 . "$PSScriptRoot\rooms.ps1"
 . "$PSScriptRoot\encounters.ps1"
 . "$PSScriptRoot\phases.ps1"
@@ -29,6 +30,10 @@ function Initialize-Game {
     $state = @{
         Hero = $hero
         Quest = $quest
+        Town = @{
+            StreetFlags = @{}
+            Discounts = @{}
+        }
         Rooms = $rooms
         CurrentRoomId = "entrance"
         LastRoomId = $null
