@@ -1,247 +1,163 @@
 # DnD Git Adventure
 
-A text-based combat adventure in PowerShell where the player controls the hero Borzig through an encounter with a monster.
+A text-based fantasy adventure in PowerShell where you play as Borzig, a level 1 barbarian exploring a dangerous cave, surviving a tutorial quest, and returning to town to recover, shop, and prepare for what comes next.
 
 ---
 
-## Purpose
+## Current features
 
-This project is built to:
-
-- practice PowerShell and scripting
-- work with modular code across multiple `.ps1` files
-- separate responsibilities clearly (`Setup` vs `Gameplay`)
-- implement a simple state-based game
-- create a combat system with dice mechanics
-
----
-
-## How the game works
-
-The game is divided into two main parts:
-
-### 1. Setup (`Setup.ps1`)
-
-When the game starts:
-
-- all scripts are loaded
-- the hero is created through `Get-Hero`
-- the player can choose to force a boss encounter
-- a monster is selected (random or boss)
-- starting values are initialized (HP, flags, etc.)
-- a `GameState` hashtable is created
-
-The `GameState` is then returned to `Adventure.ps1`.
+- DnD-inspired hero stats: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`
+- level 1 barbarian start with XP, level-up readiness, and long-rest leveling
+- turn-based combat with:
+  - initiative rolls
+  - critical hits and critical fails
+  - weapon damage dice
+  - armor class
+  - dropped-weapon recovery for the barbarian
+- cave exploration with connected rooms, backtracking, room loot, and encounters
+- tutorial boss warning flow
+- quest log with tutorial progression
+- inventory with slot limits, equipping, consumables, and dropped loot persistence
+- currency system with `CP`, `SP`, `GP` and a gold pouch
+- town hub with:
+  - street interactions
+  - market
+  - smithy
+  - apothecary
+  - small NPC rewards and discounts
 
 ---
 
-### 2. Gameplay (`Adventure.ps1`)
+## Start the game
 
-`Adventure.ps1` is responsible for the game flow:
+### Easiest way
 
-1. Initialize the game with `Initialize-Game`
-2. Start the intro
-3. Run the detection phase
-4. Run the opening phase
-5. If both combatants survive, start the combat loop
+Double-click:
 
----
+`Start DnD Adventure.cmd`
 
-## GameState
+This launcher:
 
-The game uses a central hashtable that contains all game data:
+- opens the game with PowerShell automatically
+- starts from the correct folder
+- keeps the window open if an error appears
 
-- `Hero`
-- `Monster`
-- `HeroHP`
-- `MonsterHP`
-- `HeroDroppedWeapon`
-- `MonsterOffBalance`
-- `HeroStarts`
-- `HeroBonusAttack`
-- `MonsterStarts`
+The project also includes a custom icon asset:
 
-It is passed between functions and updated through `[ref]`.
+`dnd-adventure.ico`
 
----
+You can use it for shortcuts or launcher customization.
 
-## Game phases
+### PowerShell
 
-### Intro
-
-- shows the scene
-- introduces the hero and the monster
-
----
-
-### Detection Phase
-
-Determines initiative with a d20 roll:
-
-- **15+** -> the hero gets a bonus attack
-- **8-14** -> the hero starts
-- **1-7** -> the monster starts
-
----
-
-### Opening Phase
-
-- the first attack happens
-- the fight can be decided immediately
-
----
-
-### Combat Loop
-
-Each round, the player chooses:
-
-- **A** = Attack
-- **I** = Inventory
-- **R** = Run
-
-The loop continues until:
-
-- the hero dies
-- the monster dies
-- the player flees
-
----
-
-## Combat system
-
-### Attack
-
-- a d20 is used to hit
-- **20** -> Critical Hit
-- **1** -> Critical Fail
-- **10+** -> hit
-- otherwise -> miss
-
----
-
-### Critical Hit
-
-- maximum damage + an extra damage roll
-
----
-
-### Critical Fail
-
-Hero:
-
-- drops the weapon
-- must pick it up next turn
-
-Monster:
-
-- becomes off balance
-- misses the next attack
-
----
-
-## Status system
-
-Displays HP with colors:
-
-### Hero
-
-- Green = high HP
-- Yellow = medium HP
-- Red = low HP
-
-### Monster
-
-- DarkYellow = high HP
-- Yellow = wounded
-- Red = near death
-- Magenta = boss
-
----
-
-## Code structure
-
-The project is split into clear responsibility areas:
-
-### `Adventure.ps1` (Main)
-
-- loads `Setup.ps1`
-- starts the game
-- runs all phases
-- handles the overall game flow
-
-### `Setup.ps1`
-
-- loads all scripts
-- creates the hero
-- chooses a monster
-- initializes the `GameState`
-- returns the starting game state
-
-### `character.ps1`
-
-- `Get-Hero`
-- defines the player's stats
-
-### `monsters.ps1`
-
-- `Get-RandomMonster`
-- `Get-BossMonster`
-- contains all monsters
-
-### `roll.ps1`
-
-- handles dice rolls
-- used for attack and damage
-
-### `ui.ps1`
-
-- handles all output
-- colors
-- text animation
-
-### `status.ps1`
-
-- shows HP status
-- color coding
-
-### `combat.ps1`
-
-- attack functions
-- critical hits and fails
-- combat loop
-
-### `phases.ps1`
-
-- `Start-Intro`
-- `Start-DetectionPhase`
-- `Start-OpeningPhase`
-
----
-
-## Run the game
+From the project folder:
 
 ```powershell
-.\Adventure.ps1
-
-If needed:
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\adventure.ps1
 ```
 
-## Future development
+If your execution policy blocks scripts:
 
-- `GameState` as a class instead of a hashtable
-- inventory system improvements
-- more actions (`defend`, special attacks)
-- potions and healing expansion
-- multiple encounters
-- leveling system
+```powershell
+powershell -ExecutionPolicy Bypass -File .\adventure.ps1
+```
+
+---
+
+## Game flow
+
+The current build is split into two major phases:
+
+### 1. Tutorial cave
+
+Borzig begins outside the cave at a campfire.
+
+From there the player can:
+
+- check inventory
+- enter the cave
+- head to town
+- read the quest log
+
+The city remains blocked until the tutorial quest is completed.
+
+### 2. Town
+
+After the warning is delivered, the game opens into a simple town hub where Borzig can:
+
+- walk the streets
+- talk to townsfolk
+- receive small rewards
+- unlock shop discounts
+- spend gold on weapons and potions
+
+---
+
+## Core scripts
+
+### Main flow
+
+- `adventure.ps1`
+- `setup.ps1`
+- `phases.ps1`
+
+### Combat and character systems
+
+- `character.ps1`
+- `combat.ps1`
+- `monsters.ps1`
+- `roll.ps1`
+- `status.ps1`
+
+### Exploration and world
+
+- `exploration.ps1`
+- `rooms.ps1`
+- `encounters.ps1`
+- `town.ps1`
+- `quests.ps1`
+
+### Items and inventory
+
+- `items.ps1`
+- `inventory.ps1`
+
+### Presentation
+
+- `ui.ps1`
+- `dnd-adventure.ico`
+- `Start DnD Adventure.cmd`
+
+---
+
+## Testing
+
+The project includes focused PowerShell test scripts in:
+
+`tests\`
+
+Examples:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\town-shop.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
+```
+
+---
+
+## Notes
+
+- the game is currently built around a tutorial arc and a first town hub
+- some systems are intentionally lightweight for now so they can be expanded later
+- armor and utility progression will likely need another balance pass before larger content drops
+
+---
+
+## Next possible steps
+
+- more city districts and NPC quest lines
+- additional caves or wilderness zones
+- short rests and secured rooms
+- stronger town economy and more shop inventory
+- class features beyond level 2
 - save/load support
-
-## Summary
-
-### This project demonstrates:
-
-- modular PowerShell architecture
-- separation of responsibilities (`Setup` vs `Gameplay`)
-- state-driven design
-- a simple phase-based game loop
