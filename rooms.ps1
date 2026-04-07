@@ -104,7 +104,19 @@ function Resolve-RoomLoot {
         $choice = (Read-Host "Pick up '$($item.Name)'? (Y/N)").ToUpper()
 
         if ($choice -eq "Y") {
-            if (Can-HeroCarryItem -Hero $Hero -Item $item) {
+            if ($item.Type -eq "Currency") {
+                $currencyResult = Add-HeroCurrency -Hero $Hero -Denomination $item.Denomination -Amount $item.Amount
+
+                if ($currencyResult.StoredCopper -gt 0) {
+                    Write-Scene "$($Hero.Name) stores the coins in the gold pouch."
+                }
+
+                if ($currencyResult.LeftoverCopper -gt 0) {
+                    Write-Scene "The gold pouch is full, so some currency remains behind."
+                    $remainingLoot += $currencyResult.LeftoverItem
+                }
+            }
+            elseif (Can-HeroCarryItem -Hero $Hero -Item $item) {
                 $Hero.Inventory += $item
                 Write-Scene "$($Hero.Name) picks up $($item.Name)."
             }

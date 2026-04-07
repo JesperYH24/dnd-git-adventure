@@ -33,6 +33,7 @@ function Initialize-Game {
         CurrentRoomId = "entrance"
         LastRoomId = $null
         GameWon = $false
+        ShadowSanctumRewardTaken = $false
         HeroHP = $heroHP
         HeroDroppedWeapon = $false
     }

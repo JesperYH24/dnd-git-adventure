@@ -76,6 +76,123 @@ function Get-HeroNextLevelXPThreshold {
     return Get-XPThresholdForLevel -Level ($Hero.Level + 1)
 }
 
+function Convert-CurrencyToCopper {
+    param(
+        [string]$Denomination,
+        [int]$Amount
+    )
+
+    switch ($Denomination.ToUpper()) {
+        "CP" { return $Amount }
+        "SP" { return $Amount * 10 }
+        "GP" { return $Amount * 100 }
+        default { return 0 }
+    }
+}
+
+function Get-HeroGoldPouchCapacityCopper {
+    param($Hero)
+
+    if ($null -ne $Hero.PSObject.Properties["GoldPouchCapacityGP"]) {
+        return [int]$Hero.GoldPouchCapacityGP * 100
+    }
+
+    return 0
+}
+
+function Get-HeroCurrencyBreakdown {
+    param($Hero)
+
+    $totalCopper = 0
+
+    if ($null -ne $Hero.PSObject.Properties["CurrencyCopper"]) {
+        $totalCopper = [int]$Hero.CurrencyCopper
+    }
+
+    $gold = [Math]::Floor($totalCopper / 100)
+    $remainder = $totalCopper % 100
+    $silver = [Math]::Floor($remainder / 10)
+    $copper = $remainder % 10
+
+    return [PSCustomObject]@{
+        Gold = $gold
+        Silver = $silver
+        Copper = $copper
+        TotalCopper = $totalCopper
+    }
+}
+
+function Get-HeroCurrencyText {
+    param($Hero)
+
+    $breakdown = Get-HeroCurrencyBreakdown -Hero $Hero
+    return "$($breakdown.Gold) GP, $($breakdown.Silver) SP, $($breakdown.Copper) CP"
+}
+
+function Convert-CopperToCurrencyItem {
+    param([int]$Copper)
+
+    if ($Copper -ge 100 -and ($Copper % 100) -eq 0) {
+        return New-CurrencyItem -Name "Gold Coins" -Denomination "GP" -Amount ($Copper / 100)
+    }
+
+    if ($Copper -ge 10 -and ($Copper % 10) -eq 0) {
+        return New-CurrencyItem -Name "Silver Coins" -Denomination "SP" -Amount ($Copper / 10)
+    }
+
+    return New-CurrencyItem -Name "Copper Coins" -Denomination "CP" -Amount $Copper
+}
+
+function Add-HeroCurrency {
+    param(
+        $Hero,
+        [string]$Denomination,
+        [int]$Amount
+    )
+
+    $addedCopper = Convert-CurrencyToCopper -Denomination $Denomination -Amount $Amount
+    $capacityCopper = Get-HeroGoldPouchCapacityCopper -Hero $Hero
+    $currentCopper = [int]$Hero.CurrencyCopper
+    $spaceLeft = [Math]::Max(0, $capacityCopper - $currentCopper)
+    $storedCopper = [Math]::Min($addedCopper, $spaceLeft)
+    $leftoverCopper = $addedCopper - $storedCopper
+
+    $Hero.CurrencyCopper += $storedCopper
+
+    return [PSCustomObject]@{
+        StoredCopper = $storedCopper
+        LeftoverCopper = $leftoverCopper
+        LeftoverItem = if ($leftoverCopper -gt 0) { Convert-CopperToCurrencyItem -Copper $leftoverCopper } else { $null }
+    }
+}
+
+function Apply-HeroBuff {
+    param(
+        $Hero,
+        [string]$BuffType,
+        [string]$BuffName
+    )
+
+    $Hero.ActiveBuff = [PSCustomObject]@{
+        Type = $BuffType
+        Name = $BuffName
+    }
+}
+
+function Get-HeroHasInitiativeAdvantage {
+    param($Hero)
+
+    if ($null -eq $Hero.PSObject.Properties["ActiveBuff"]) {
+        return $false
+    }
+
+    if ($null -eq $Hero.ActiveBuff) {
+        return $false
+    }
+
+    return $Hero.ActiveBuff.Type -eq "Haste"
+}
+
 function Get-HeroAvailableLevelUps {
     param($Hero)
 
@@ -410,6 +527,9 @@ function Get-Hero {
         Level              = 1
         LevelCap           = 2
         XP                 = 0
+        GoldPouchCapacityGP = 100
+        CurrencyCopper     = 0
+        ActiveBuff         = $null
         HitDie             = 12
         STR                = 15
         DEX                = 14

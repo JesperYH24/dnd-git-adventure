@@ -171,14 +171,14 @@ function Get-MonsterLoot {
     switch ($Monster.name) {
         "skeleton" {
             return @(
-                [PSCustomObject]@{ Name = "Bone Coins"; Type = "Currency"; Value = 2; SlotCost = 1 }
+                (New-CurrencyItem -Name "Bone Coins" -Denomination "CP" -Amount 2 -Value 2)
                 (New-WeaponItem -Name "Rusty Sword" -Value 5 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -SlotCost 2)
             )
         }
 
         "goblin" {
             return @(
-                [PSCustomObject]@{ Name = "Gold Pouch"; Type = "Currency"; Value = 10; SlotCost = 1 }
+                (New-CurrencyItem -Name "Goblin Coins" -Denomination "SP" -Amount 1 -Value 10)
                 (New-WeaponItem -Name "Dagger" -Value 6 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -SlotCost 1)
                 (New-ConsumableItem -Name "Small Healing Potion" -Value 10 -HealAmount 4 -SlotCost 1)
             )
@@ -187,7 +187,7 @@ function Get-MonsterLoot {
         "zombie" {
             return @(
                 (New-ArmorItem -Name "Rotten Armor Scraps" -Value 3 -ArmorBonus 1 -SlotCost 2)
-                [PSCustomObject]@{ Name = "Old Coin"; Type = "Currency"; Value = 2; SlotCost = 1 }
+                (New-CurrencyItem -Name "Old Coin" -Denomination "CP" -Amount 2 -Value 2)
             )
         }
 
@@ -199,7 +199,7 @@ function Get-MonsterLoot {
 
         "ancient dragon" {
             return @(
-                [PSCustomObject]@{ Name = "Dragon Gold"; Type = "Currency"; Value = 100; SlotCost = 2 }
+                (New-CurrencyItem -Name "Dragon Gold" -Denomination "GP" -Amount 100 -Value 10000)
                 (New-ArmorItem -Name "Ancient Scale Armor" -Value 75 -ArmorBonus 5 -SlotCost 3)
                 (New-WeaponItem -Name "Flame Fang" -Value 60 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 10 -SlotCost 2)
                 (New-ConsumableItem -Name "Greater Healing Potion" -Value 25 -HealAmount 12 -SlotCost 1)

@@ -73,6 +73,7 @@ function Start-CaveExploration {
                     Write-ColorLine "Weapon: $($equippedWeapon.Name) (to hit +$($equippedWeapon.TotalAttackBonus), damage $(Get-WeaponDamageRollText -WeaponProfile $equippedWeapon) + $($equippedWeapon.DamageBonus), total $($equippedWeapon.TotalDamageMin)-$($equippedWeapon.TotalDamageMax))" "White"
                     Write-ColorLine "STR $($Game.Hero.STR) $(Format-AbilityModifier -Modifier $strengthModifier) | DEX $($Game.Hero.DEX) $(Format-AbilityModifier -Modifier $dexterityModifier) | CON $($Game.Hero.CON) $(Format-AbilityModifier -Modifier $constitutionModifier)" "DarkGray"
                     Write-ColorLine "INT $($Game.Hero.INT) $(Format-AbilityModifier -Modifier $intelligenceModifier) | WIS $($Game.Hero.WIS) $(Format-AbilityModifier -Modifier $wisdomModifier) | CHA $($Game.Hero.CHA) $(Format-AbilityModifier -Modifier $charismaModifier)" "DarkGray"
+                    Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero) | Active Buff: $(if ($null -ne $Game.Hero.ActiveBuff) { $Game.Hero.ActiveBuff.Name } else { 'None' })" "DarkYellow"
                     Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Game.Hero)/$(Get-InventoryCapacity -Hero $Game.Hero) slots" "White"
                     Write-ColorLine ""
                 }

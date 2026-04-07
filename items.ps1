@@ -54,15 +54,39 @@ function New-ConsumableItem {
         [string]$Name,
         [int]$Value,
         [int]$HealAmount,
+        [string]$BuffType = "",
+        [string]$BuffName = "",
+        [bool]$InitiativeAdvantage = $false,
         [int]$SlotCost = 1
     )
 
     return [PSCustomObject]@{
-        Name       = $Name
-        Type       = "Consumable"
-        Value      = $Value
-        HealAmount = $HealAmount
-        SlotCost   = $SlotCost
+        Name                 = $Name
+        Type                 = "Consumable"
+        Value                = $Value
+        HealAmount           = $HealAmount
+        BuffType             = $BuffType
+        BuffName             = $BuffName
+        InitiativeAdvantage  = $InitiativeAdvantage
+        SlotCost             = $SlotCost
+    }
+}
+
+function New-CurrencyItem {
+    param(
+        [string]$Name,
+        [string]$Denomination,
+        [int]$Amount,
+        [int]$Value = 0
+    )
+
+    return [PSCustomObject]@{
+        Name         = $Name
+        Type         = "Currency"
+        Denomination = $Denomination
+        Amount       = $Amount
+        Value        = $Value
+        SlotCost     = 0
     }
 }
 

@@ -24,12 +24,26 @@ function Assert-True {
 }
 
 function Set-TestOutputStubs {
+    $script:readHostResponses = @("1")
+    $script:readHostIndex = 0
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
     function global:Write-Scene { param([string]$Text) }
     function global:Write-Action { param([string]$Text, [string]$Color) }
     function global:Write-ColorLine { param([string]$Text, [string]$Color) }
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
-    function global:Read-Host { param([string]$Prompt) return "n" }
+    function global:Write-SectionTitle { param([string]$Text, [string]$Color) }
+    function global:Write-EmphasisLine { param([string]$Text, [string]$Color) }
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:readHostIndex -lt $script:readHostResponses.Count) {
+            $response = $script:readHostResponses[$script:readHostIndex]
+            $script:readHostIndex += 1
+            return $response
+        }
+
+        return "1"
+    }
 }
 
 function Test-DeepChamberForcesRetreatWithoutCompletingQuest {

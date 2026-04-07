@@ -1,3 +1,39 @@
+function Resolve-ShadowSanctumReward {
+    param($Game)
+
+    if ($Game.ShadowSanctumRewardTaken) {
+        return
+    }
+
+    Write-SectionTitle -Text "Ancient Temptation" -Color "Yellow"
+    Write-Scene "Near the edge of the hoard, two prizes catch $($Game.Hero.Name)'s eye before the true horror fully stirs."
+    Write-ColorLine "1. Take 100 GP" "White"
+    Write-ColorLine "2. Drink a Potion of Haste" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose your prize"
+
+        if ($choice -eq "1") {
+            Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100 | Out-Null
+            Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs 100 GP into the gold pouch." -Color "Yellow"
+            break
+        }
+
+        if ($choice -eq "2") {
+            Apply-HeroBuff -Hero $Game.Hero -BuffType "Haste" -BuffName "Potion of Haste"
+            Write-EmphasisLine -Text "$($Game.Hero.Name) downs the Potion of Haste and feels the world sharpen around him." -Color "Yellow"
+            break
+        }
+
+        Write-ColorLine "Choose 1 or 2." "DarkYellow"
+        Write-ColorLine ""
+    }
+
+    $Game.ShadowSanctumRewardTaken = $true
+    Write-ColorLine ""
+}
+
 function Resolve-RoomEncounter {
     param(
         $Game,
@@ -12,6 +48,7 @@ function Resolve-RoomEncounter {
     }
 
     if ($Room.BossRoom) {
+        Resolve-ShadowSanctumReward -Game $Game
         Write-SectionTitle -Text "Boss Encounter" -Color "Red"
         Write-EmphasisLine -Text "A colossal shadow rises above the hoard." -Color "DarkRed"
         Write-ColorLine ""

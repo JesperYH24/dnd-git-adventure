@@ -132,12 +132,26 @@ function Start-DetectionPhase {
         $monsterInitiativeBonus = [int]$Monster.initiativeBonus
     }
 
-    $heroRoll = Roll-Dice -Sides 20
+    $heroHasAdvantage = Get-HeroHasInitiativeAdvantage -Hero $Hero
+    $heroFirstRoll = Roll-Dice -Sides 20
+    $heroRoll = $heroFirstRoll
+    $heroSecondRoll = $null
+
+    if ($heroHasAdvantage) {
+        $heroSecondRoll = Roll-Dice -Sides 20
+        $heroRoll = [Math]::Max($heroFirstRoll, $heroSecondRoll)
+    }
+
     $monsterRoll = Roll-Dice -Sides 20
     $heroTotal = $heroRoll + $heroDexModifier
     $monsterTotal = $monsterRoll + $monsterInitiativeBonus
 
-    Write-Scene "$($Hero.Name) rolls initiative: $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+    if ($heroHasAdvantage) {
+        Write-Scene "$($Hero.Name) rolls initiative with advantage: $heroFirstRoll and $heroSecondRoll, taking $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+    }
+    else {
+        Write-Scene "$($Hero.Name) rolls initiative: $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+    }
     Write-Scene "$($Monster.definite) rolls initiative: $monsterRoll $(Format-AbilityModifier -Modifier $monsterInitiativeBonus) = $monsterTotal"
     Write-ColorLine ""
 
