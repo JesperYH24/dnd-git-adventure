@@ -7,24 +7,30 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a level 1
 ## Current features
 
 - DnD-inspired hero stats: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`
-- level 1 barbarian start with XP, level-up readiness, and long-rest leveling
+- level 1 barbarian start with XP, level-up readiness, and long-rest leveling to level 2
 - turn-based combat with:
   - initiative rolls
   - critical hits and critical fails
   - weapon damage dice
   - armor class
+  - `Block` and `Focus`
   - dropped-weapon recovery for the barbarian
 - cave exploration with connected rooms, backtracking, room loot, and encounters
-- tutorial boss warning flow
-- quest log with tutorial progression
+- tutorial boss warning flow with a Shadow Sanctum reward choice
+- quest log with tutorial progression, XP tracking, and accepted town quests
 - inventory with slot limits, equipping, consumables, and dropped loot persistence
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - town hub with:
+  - first-night inn choice after the tutorial
+  - inn storage
   - street interactions
+  - quest board
+  - guard station
   - market
   - smithy
   - apothecary
-  - small NPC rewards and discounts
+  - fighting ring
+  - small NPC rewards, information hooks, and discounts
 
 ---
 
@@ -105,11 +111,15 @@ The city remains blocked until the tutorial quest is completed.
 After the warning is delivered, the game opens into a simple town hub where Borzig can:
 
 - choose an inn for the first night in the city
+- stash gear in inn storage
 - walk the streets
 - talk to townsfolk
 - receive small rewards
 - unlock shop discounts
+- accept town quests
+- visit the fighting ring
 - spend gold on weapons and potions
+- sell gear to free up slots
 
 ---
 
@@ -169,15 +179,18 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 - the game is currently built around a tutorial arc and a first town hub
 - some systems are intentionally lightweight for now so they can be expanded later
-- armor and utility progression will likely need another balance pass before larger content drops
+- several town information hooks are already in place as setup for later quest branches and reward modifiers
 
 ---
 
 ## Next possible steps
 
-- more city districts and NPC quest lines
+- actual playable follow-up quests from the quest board, guard station, and quest giver
+- more city districts and stronger NPC quest lines
 - additional caves or wilderness zones
 - short rests and secured rooms
-- stronger town economy and more shop inventory
+- more shop inventory, armor progression, and trader variety
 - class features beyond level 2
+- deeper inn events, shady city routes, and economic info payoffs
+- resistances, elemental effects, and broader enemy mechanics
 - save/load support
