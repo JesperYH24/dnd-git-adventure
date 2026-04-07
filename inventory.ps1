@@ -6,6 +6,7 @@ function Format-InventoryItemLine {
     if ($Item.Type -eq "Weapon") {
         $tags += "hit $($Item.AttackBonus)"
         $tags += "dmg $($Item.DamageDiceCount)d$($Item.DamageDiceSides)"
+        $tags += (Get-WeaponRequirementText -Weapon $Item)
     }
     elseif ($Item.Type -eq "Armor") {
         $tags += "AC +$($Item.ArmorBonus)"
@@ -242,8 +243,14 @@ function Open-InventoryMenu {
             }
             "E" {
                 if ($selectedItem.Type -in @("Weapon", "Armor")) {
-                    Set-EquippedItem -Hero $Hero -Item $selectedItem
-                    Write-Scene "$($Hero.Name) equips $($selectedItem.Name)."
+                    $equipResult = Set-EquippedItem -Hero $Hero -Item $selectedItem
+
+                    if ($equipResult.Success) {
+                        Write-Scene "$($Hero.Name) equips $($selectedItem.Name)."
+                    }
+                    else {
+                        Write-Scene $equipResult.Message
+                    }
                 }
                 else {
                     Write-Scene "$($selectedItem.Name) cannot be equipped."

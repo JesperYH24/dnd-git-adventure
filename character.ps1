@@ -445,6 +445,70 @@ function Get-HeroArmorClass {
     return $Hero.BaseArmorClass + $armorBonus
 }
 
+function Get-WeaponRequirementText {
+    param($Weapon)
+
+    $parts = @()
+
+    if ($null -ne $Weapon.PSObject.Properties["Handedness"] -and -not [string]::IsNullOrWhiteSpace($Weapon.Handedness)) {
+        $parts += $Weapon.Handedness
+    }
+
+    if ($null -ne $Weapon.PSObject.Properties["Light"] -and $Weapon.Light) {
+        $parts += "Light"
+    }
+
+    if ($null -ne $Weapon.PSObject.Properties["RequiredSTR"] -and [int]$Weapon.RequiredSTR -gt 0) {
+        $parts += "STR $($Weapon.RequiredSTR)"
+    }
+
+    if ($null -ne $Weapon.PSObject.Properties["RequiredDEX"] -and [int]$Weapon.RequiredDEX -gt 0) {
+        $parts += "DEX $($Weapon.RequiredDEX)"
+    }
+
+    if ($parts.Count -eq 0) {
+        return "No restrictions"
+    }
+
+    return ($parts -join ", ")
+}
+
+function Can-HeroUseWeapon {
+    param(
+        $Hero,
+        $Weapon
+    )
+
+    if ($Weapon.Type -ne "Weapon") {
+        return [PSCustomObject]@{
+            CanUse = $false
+            Message = "$($Weapon.Name) is not a weapon."
+        }
+    }
+
+    $heroStrength = Get-HeroAbilityScore -Hero $Hero -Ability "STR"
+    $heroDexterity = Get-HeroAbilityScore -Hero $Hero -Ability "DEX"
+
+    if ($null -ne $Weapon.PSObject.Properties["RequiredSTR"] -and [int]$Weapon.RequiredSTR -gt 0 -and $heroStrength -lt [int]$Weapon.RequiredSTR) {
+        return [PSCustomObject]@{
+            CanUse = $false
+            Message = "$($Hero.Name) lacks the strength to wield $($Weapon.Name)."
+        }
+    }
+
+    if ($null -ne $Weapon.PSObject.Properties["RequiredDEX"] -and [int]$Weapon.RequiredDEX -gt 0 -and $heroDexterity -lt [int]$Weapon.RequiredDEX) {
+        return [PSCustomObject]@{
+            CanUse = $false
+            Message = "$($Hero.Name) lacks the dexterity to wield $($Weapon.Name)."
+        }
+    }
+
+    return [PSCustomObject]@{
+        CanUse = $true
+        Message = ""
+    }
+}
+
 function Get-HeroWeaponProfile {
     param($Hero)
 
@@ -462,8 +526,11 @@ function Get-HeroWeaponProfile {
             DamageDiceSides   = [int]$weapon.DamageDiceSides
             DamageMin         = [int]$weapon.DamageMin
             DamageMax         = [int]$weapon.DamageMax
+            BonusDamageDiceCount = [int]$weapon.BonusDamageDiceCount
+            BonusDamageDiceSides = [int]$weapon.BonusDamageDiceSides
+            BonusDamageType  = $weapon.BonusDamageType
             TotalDamageMin    = [Math]::Max(1, [int]$weapon.DamageMin + $strengthModifier)
-            TotalDamageMax    = [Math]::Max(1, [int]$weapon.DamageMax + $strengthModifier)
+            TotalDamageMax    = [Math]::Max(1, [int]$weapon.DamageMax + $strengthModifier + ([int]$weapon.BonusDamageDiceCount * [int]$weapon.BonusDamageDiceSides))
         }
     }
 
@@ -476,6 +543,9 @@ function Get-HeroWeaponProfile {
         DamageDiceSides   = 2
         DamageMin         = 1
         DamageMax         = 2
+        BonusDamageDiceCount = 0
+        BonusDamageDiceSides = 0
+        BonusDamageType  = ""
         TotalDamageMin    = [Math]::Max(1, 1 + $strengthModifier)
         TotalDamageMax    = [Math]::Max(1, 2 + $strengthModifier)
     }
@@ -484,7 +554,19 @@ function Get-HeroWeaponProfile {
 function Get-WeaponDamageRollText {
     param($WeaponProfile)
 
-    return "$($WeaponProfile.DamageDiceCount)d$($WeaponProfile.DamageDiceSides)"
+    $text = "$($WeaponProfile.DamageDiceCount)d$($WeaponProfile.DamageDiceSides)"
+
+    if ($null -ne $WeaponProfile.PSObject.Properties["BonusDamageDiceCount"] -and [int]$WeaponProfile.BonusDamageDiceCount -gt 0) {
+        $bonusText = "$($WeaponProfile.BonusDamageDiceCount)d$($WeaponProfile.BonusDamageDiceSides)"
+
+        if (-not [string]::IsNullOrWhiteSpace($WeaponProfile.BonusDamageType)) {
+            $bonusText = "$bonusText $($WeaponProfile.BonusDamageType.ToLower())"
+        }
+
+        $text = "$text + $bonusText"
+    }
+
+    return $text
 }
 
 function Roll-WeaponDamage {
@@ -506,6 +588,29 @@ function Roll-WeaponDamage {
     return $total
 }
 
+function Roll-WeaponBonusDamage {
+    param($WeaponProfile)
+
+    if ($null -eq $WeaponProfile.PSObject.Properties["BonusDamageDiceCount"]) {
+        return 0
+    }
+
+    $diceCount = [int]$WeaponProfile.BonusDamageDiceCount
+    $diceSides = [int]$WeaponProfile.BonusDamageDiceSides
+
+    if ($diceCount -le 0 -or $diceSides -le 0) {
+        return 0
+    }
+
+    $total = 0
+
+    for ($i = 0; $i -lt $diceCount; $i++) {
+        $total += Roll-Dice -Sides $diceSides
+    }
+
+    return $total
+}
+
 function Set-EquippedItem {
     param(
         $Hero,
@@ -513,6 +618,16 @@ function Set-EquippedItem {
     )
 
     if ($Item.Type -eq "Weapon") {
+        $weaponCheck = Can-HeroUseWeapon -Hero $Hero -Weapon $Item
+
+        if (-not $weaponCheck.CanUse) {
+            return [PSCustomObject]@{
+                Success = $false
+                CanUse = $false
+                Message = $weaponCheck.Message
+            }
+        }
+
         foreach ($inventoryItem in $Hero.Inventory) {
             if ($inventoryItem.Type -eq "Weapon") {
                 $inventoryItem.Equipped = $false
@@ -520,11 +635,23 @@ function Set-EquippedItem {
         }
 
         $Item.Equipped = $true
-        return
+        return [PSCustomObject]@{
+            Success = $true
+            Message = ""
+        }
     }
 
     if ($Item.Type -eq "Armor") {
         $Item.Equipped = $true
+        return [PSCustomObject]@{
+            Success = $true
+            Message = ""
+        }
+    }
+
+    return [PSCustomObject]@{
+        Success = $false
+        Message = "$($Item.Name) cannot be equipped."
     }
 }
 
@@ -582,7 +709,7 @@ function Get-Hero {
         BaseArmorClass     = 10
         BaseInventorySlots = 4
         Inventory          = @(
-            (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -SlotCost 2 -Equipped $true)
+            (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
             (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
             (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 4 -SlotCost 1 -Equipped $true)
             (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)

@@ -7,6 +7,13 @@ function New-WeaponItem {
         [int]$DamageDiceSides = 6,
         [int]$DamageMin = 0,
         [int]$DamageMax = 0,
+        [string]$Handedness = "One-Handed",
+        [bool]$Light = $false,
+        [int]$RequiredSTR = 0,
+        [int]$RequiredDEX = 0,
+        [int]$BonusDamageDiceCount = 0,
+        [int]$BonusDamageDiceSides = 0,
+        [string]$BonusDamageType = "",
         [int]$SlotCost = 1,
         [bool]$Equipped = $false
     )
@@ -25,6 +32,13 @@ function New-WeaponItem {
         DamageDiceSides = $DamageDiceSides
         DamageMin       = $DamageDiceCount
         DamageMax       = $DamageDiceCount * $DamageDiceSides
+        Handedness      = $Handedness
+        Light           = $Light
+        RequiredSTR     = $RequiredSTR
+        RequiredDEX     = $RequiredDEX
+        BonusDamageDiceCount = $BonusDamageDiceCount
+        BonusDamageDiceSides = $BonusDamageDiceSides
+        BonusDamageType = $BonusDamageType
         SlotCost        = $SlotCost
         Equipped        = $Equipped
     }

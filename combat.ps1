@@ -18,11 +18,17 @@ function Invoke-HeroAttack {
 
     if ($heroRoll -eq 20) {
         $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
-        $heroDamage = [Math]::Max(1, $weapon.DamageMax + $extraDamageRoll + $weapon.DamageBonus)
+        $bonusDamageRoll = Roll-WeaponBonusDamage -WeaponProfile $weapon
+        $heroDamage = [Math]::Max(1, $weapon.DamageMax + $extraDamageRoll + $weapon.DamageBonus + $bonusDamageRoll)
         $MonsterHP.Value -= $heroDamage
 
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus))" "Yellow"
+        if ($bonusDamageRoll -gt 0 -and -not [string]::IsNullOrWhiteSpace($weapon.BonusDamageType)) {
+            Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus) + $bonusDamageRoll $($weapon.BonusDamageType.ToLower()))" "Yellow"
+        }
+        else {
+            Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus))" "Yellow"
+        }
     }
     elseif ($heroRoll -eq 1) {
         $HeroDroppedWeapon.Value = $true
@@ -31,10 +37,16 @@ function Invoke-HeroAttack {
     }
     elseif ($attackTotal -ge $targetArmorClass) {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $weapon
-        $heroDamage = [Math]::Max(1, $damageRoll + $weapon.DamageBonus)
+        $bonusDamageRoll = Roll-WeaponBonusDamage -WeaponProfile $weapon
+        $heroDamage = [Math]::Max(1, $damageRoll + $weapon.DamageBonus + $bonusDamageRoll)
         $MonsterHP.Value -= $heroDamage
 
-        Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus))" "Yellow"
+        if ($bonusDamageRoll -gt 0 -and -not [string]::IsNullOrWhiteSpace($weapon.BonusDamageType)) {
+            Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus) + $bonusDamageRoll $($weapon.BonusDamageType.ToLower()))" "Yellow"
+        }
+        else {
+            Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus))" "Yellow"
+        }
     }
     else {
         Write-Action "$($Hero.Name) misses the attack!" "DarkGray"
