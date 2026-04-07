@@ -33,6 +33,8 @@ function Initialize-Game {
         Town = @{
             StreetFlags = @{}
             Discounts = @{}
+            ChapterOneComplete = $false
+            ActiveInn = $null
         }
         Rooms = $rooms
         CurrentRoomId = "entrance"

@@ -61,8 +61,23 @@ function Test-TownDiscountLowersShopPrice {
     Assert-Equal -Actual $hero.CurrencyCopper -Expected 60 -Message "Discounted purchases should spend the lowered price."
 }
 
+function Test-InnStayChargesGoldAndHealsHero {
+    $game = Initialize-Game
+    $heroHP = 3
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn
+
+    Assert-Equal -Actual $result -Expected $true -Message "The hero should be able to pay for an inn stay."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 300 -Message "Inn cost should be deducted from the gold pouch."
+    Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Inn stay should restore the hero to full HP."
+    Assert-Equal -Actual $game.Town.ChapterOneComplete -Expected $true -Message "The first successful inn stay should complete chapter one."
+}
+
 Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
+Test-InnStayChargesGoldAndHealsHero
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

@@ -16,6 +16,41 @@ function New-TownOffer {
     }
 }
 
+function Get-TownInns {
+    return @(
+        [PSCustomObject]@{
+            Id = "bent_nail"
+            Name = "The Bent Nail"
+            Keeper = "Marta One-Eye"
+            PriceCopper = 80
+            Quality = "Rough"
+            Description = "Crooked shutters, patched blankets, and the smell of old smoke. Cheap, sturdy, and honest."
+            KeeperText = "Marta squints across the counter. 'You pay little, you complain little, and you leave my floor cleaner than you found it.'"
+            RestText = "The mattress sags, the walls creak, and someone snores through half the night, but Borzig still gets real shelter and a locked door."
+        }
+        [PSCustomObject]@{
+            Id = "lantern_rest"
+            Name = "The Lantern Rest"
+            Keeper = "Oren Vale"
+            PriceCopper = 200
+            Quality = "Comfortable"
+            Description = "Warm stew, clean sheets, and polished wood. It is the kind of inn built for traders and mercenaries with coin to spare."
+            KeeperText = "Oren smooths his apron and bows his head. 'A fair bed, a hot meal, and no questions you don't want asked. That's what your coin buys here.'"
+            RestText = "The room is calm, warm, and properly kept. Borzig sleeps deeply for the first time since the cave."
+        }
+        [PSCustomObject]@{
+            Id = "silver_kettle"
+            Name = "The Silver Kettle"
+            Keeper = "Madam Seraphine"
+            PriceCopper = 450
+            Quality = "Refined"
+            Description = "Soft carpets, spiced wine, and silver lamp-caps. Every detail announces comfort for those wealthy enough to expect it."
+            KeeperText = "Madam Seraphine studies Borzig like a noble curiosity. 'If you are to recover under my roof, darling, you will do so in dignity.'"
+            RestText = "Fresh linen, a copper bath, and silence thick as velvet leave Borzig feeling almost unreal by morning."
+        }
+    )
+}
+
 function Set-TownOfferDiscount {
     param(
         $Game,
@@ -273,6 +308,143 @@ function Start-TownStreetScene {
     }
 }
 
+function Resolve-InnStay {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        $Inn
+    )
+
+    $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $Inn.PriceCopper
+
+    if (-not $spendResult.Success) {
+        Write-Scene "$($Game.Hero.Name) cannot afford a room at $($Inn.Name)."
+        Write-ColorLine ""
+        return $false
+    }
+
+    $Game.Town.ActiveInn = $Inn
+    Clear-HeroBuff -Hero $Game.Hero
+    $HeroHP.Value = $Game.Hero.HP
+
+    Write-SectionTitle -Text $Inn.Name -Color "Yellow"
+    Write-Scene $Inn.KeeperText
+    Write-EmphasisLine -Text "$($Game.Hero.Name) pays $(Convert-CopperToCurrencyText -Copper $Inn.PriceCopper) for a $($Inn.Quality.ToLower()) room." -Color "Yellow"
+    Write-Scene $Inn.RestText
+    Write-Scene "A full night's rest restores Borzig to full health, and any lingering combat tonic fades with the morning."
+    Write-ColorLine ""
+
+    if (-not $Game.Town.ChapterOneComplete) {
+        $Game.Town.ChapterOneComplete = $true
+        Write-SectionTitle -Text "Chapter One Complete" -Color "Green"
+        Write-EmphasisLine -Text "Borzig survives the cave, reaches the city, and earns his first true night behind safe walls." -Color "Green"
+        Write-Scene "The tutorial ends not at a lonely campfire, but in a rented room above the noise of a living city."
+        Write-ColorLine ""
+    }
+
+    return $true
+}
+
+function Start-InnMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $inn = $Game.Town.ActiveInn
+
+    while ($true) {
+        Write-ColorLine ""
+        Write-ColorLine "===== INN ROOM =====" "Yellow"
+        Write-Scene "Borzig's room at $($inn.Name) is modestly lit, closed off from the street below, and blessedly still."
+        Write-ColorLine "Inn: $($inn.Name) | Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
+        Write-ColorLine ""
+        Write-ColorLine "What do you want to do?" "Cyan"
+        Write-ColorLine "1. Rest for the night and end the adventure for now" "White"
+        Write-ColorLine "2. Check inventory" "White"
+        Write-ColorLine "3. Check quest log" "White"
+        Write-ColorLine "4. Return to the city streets" "White"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene "$($Game.Hero.Name) bars the door, sets down the weight of the day, and lets sleep finally claim him."
+                $Game.GameWon = $true
+                return "EndGame"
+            }
+            "2" {
+                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
+            }
+            "3" {
+                Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
+            }
+            "4" {
+                return "BackToTown"
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-InnSelectionMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $inns = Get-TownInns
+
+    while ($true) {
+        Write-SectionTitle -Text "Find Lodging" -Color "Yellow"
+        Write-Scene "Night settles over the city, and Borzig must choose what kind of roof he wants over his head."
+        Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
+        Write-ColorLine ""
+
+        for ($i = 0; $i -lt $inns.Count; $i++) {
+            $inn = $inns[$i]
+            Write-ColorLine "$($i + 1). $($inn.Name) - $(Convert-CopperToCurrencyText -Copper $inn.PriceCopper)" "White"
+            Write-ColorLine "   Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkGray"
+            Write-ColorLine "   $($inn.Description)" "DarkGray"
+        }
+
+        Write-ColorLine ""
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return "BackToTown"
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Choose a listed number." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $index = [int]$choice - 1
+
+        if ($index -lt 0 -or $index -ge $inns.Count) {
+            Write-ColorLine "That inn is not available." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $selectedInn = $inns[$index]
+        $staySucceeded = Resolve-InnStay -Game $Game -HeroHP $HeroHP -Inn $selectedInn
+
+        if ($staySucceeded) {
+            return "Stayed"
+        }
+    }
+}
+
 function Start-TownMenu {
     param(
         $Game,
@@ -292,7 +464,7 @@ function Start-TownMenu {
         Write-ColorLine "4. Visit the apothecary" "White"
         Write-ColorLine "5. Check inventory" "White"
         Write-ColorLine "6. Check quest log" "White"
-        Write-ColorLine "7. Head back to the campfire" "White"
+        Write-ColorLine "7. Find lodging for the night" "White"
         Write-ColorLine "8. End the adventure for now" "White"
         Write-ColorLine ""
 
@@ -318,9 +490,11 @@ function Start-TownMenu {
                 Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
             }
             "7" {
-                Write-Scene "$($Game.Hero.Name) leaves the city behind for now and returns to the camp outside the cave."
-                Write-ColorLine ""
-                return "LeaveTown"
+                $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
+
+                if ($innResult -eq "Stayed") {
+                    Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+                }
             }
             "8" {
                 Write-Scene "$($Game.Hero.Name) finds a quiet corner of the city and lets the day finally come to an end."
