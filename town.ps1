@@ -459,6 +459,183 @@ function Start-InnStorageMenu {
     }
 }
 
+function Get-HeroTownPersona {
+    param($Hero)
+
+    $className = ""
+
+    if ($null -ne $Hero.PSObject.Properties["Class"]) {
+        $className = [string]$Hero.Class
+    }
+
+    $strength = Get-HeroAbilityScore -Hero $Hero -Ability "STR"
+    $dexterity = Get-HeroAbilityScore -Hero $Hero -Ability "DEX"
+    $constitution = Get-HeroAbilityScore -Hero $Hero -Ability "CON"
+    $charisma = Get-HeroAbilityScore -Hero $Hero -Ability "CHA"
+
+    $isBardLike = $className -match "Bard"
+    $isKnightLike = $className -match "Knight|Paladin"
+    $isBarbarian = $className -eq "Barbarian"
+    $isStrong = $strength -ge 15
+    $isQuick = $dexterity -ge 14
+    $isTough = $constitution -ge 15
+    $isCharming = $charisma -ge 14
+
+    return [PSCustomObject]@{
+        IsBarbarian = $isBarbarian
+        IsBardLike = $isBardLike
+        IsKnightLike = $isKnightLike
+        IsStrong = $isStrong
+        IsQuick = $isQuick
+        IsTough = $isTough
+        IsCharming = $isCharming
+    }
+}
+
+function Get-InnKeeperGreeting {
+    param(
+        $Inn,
+        $Hero
+    )
+
+    $persona = Get-HeroTownPersona -Hero $Hero
+
+    switch ($Inn.Id) {
+        "bent_nail" {
+            if ($persona.IsBarbarian -or $persona.IsStrong) {
+                return "Marta squints up at Borzig's shoulders and grunts. 'You look like the kind who breaks furniture instead of rules. Pay first and keep the trouble pointed away from my bar.'"
+            }
+
+            if ($persona.IsBardLike -or $persona.IsCharming) {
+                return "Marta gives Borzig a narrow look. 'Pretty words do not buy a bed here. Coin does. If you've got both, keep the words short and the purse visible.'"
+            }
+
+            if ($persona.IsKnightLike) {
+                return "Marta eyes Borzig's posture like it belongs in a cleaner room. 'You'll not fix this place by standing straighter, soldier. Pay, sleep, and mind your temper.'"
+            }
+
+            return $Inn.KeeperText
+        }
+        "lantern_rest" {
+            if ($persona.IsBardLike -or $persona.IsCharming) {
+                return "Oren's smile comes easier as he sizes Borzig up. 'A good room, a better meal, and company willing to listen if you speak like you mean it. That is what the Lantern Rest is for.'"
+            }
+
+            if ($persona.IsKnightLike) {
+                return "Oren dips his head with almost formal respect. 'Discipline is welcome here, and so is coin. You'll find both the sheets and the service in proper order.'"
+            }
+
+            if ($persona.IsBarbarian -or $persona.IsStrong) {
+                return "Oren measures Borzig with a practiced host's calm. 'We've had caravan guards rougher than you and merchants softer. Leave both at the door and we'll get along well enough.'"
+            }
+
+            return $Inn.KeeperText
+        }
+        "silver_kettle" {
+            if ($persona.IsBardLike -or $persona.IsCharming) {
+                return "Madam Seraphine's expression warms at once. 'Ah, there you are. Someone in this city still understands the value of presentation. Recover here, and do try not to make the rest of them look drab.'"
+            }
+
+            if ($persona.IsKnightLike) {
+                return "Madam Seraphine inclines her head as if greeting a lesser noble. 'Bearing, restraint, and decent posture. At last, a guest who understands the difference between paying for comfort and merely occupying it.'"
+            }
+
+            if ($persona.IsBarbarian -or $persona.IsStrong) {
+                return "Madam Seraphine studies Borzig like a wolf invited into a ballroom. 'Strength has its uses, darling, but under my roof it will wear boots clean enough not to offend the carpets.'"
+            }
+
+            return $Inn.KeeperText
+        }
+        default {
+            return $Inn.KeeperText
+        }
+    }
+}
+
+function Get-WidowEliraIntro {
+    param($Hero)
+
+    $persona = Get-HeroTownPersona -Hero $Hero
+
+    if ($persona.IsBardLike -or $persona.IsCharming) {
+        return "Widow Elira reaches for Borzig's hand with watery eyes. 'The city said you carried yourself gently, and now I see why. Your warning brought my son home before sunset.'"
+    }
+
+    if ($persona.IsKnightLike) {
+        return "Widow Elira bows her head before speaking. 'You carry yourself like someone who still believes duty matters. Your warning brought my son home before sunset.'"
+    }
+
+    if ($persona.IsBarbarian -or $persona.IsStrong) {
+        return "Widow Elira grips Borzig's wrist with surprising strength. 'I feared a hard man would bring only hard news, but your warning brought my son home before sunset.'"
+    }
+
+    return "Widow Elira grips Borzig's wrist with surprising strength. 'My son was on the road when the dragon panic started. Your warning brought him home before sunset.'"
+}
+
+function Get-HadrikIntro {
+    param($Hero)
+
+    $persona = Get-HeroTownPersona -Hero $Hero
+
+    if ($persona.IsBarbarian -or $persona.IsStrong) {
+        return "Hadrik wipes soot from his brow and grins at Borzig's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly.'"
+    }
+
+    if ($persona.IsBardLike -or $persona.IsCharming) {
+        return "Hadrik wipes soot from his brow and gives Borzig a curious look. 'You do not look like the forge's usual customer, but anyone who comes back from a dragon's shadow deserves a fair word with Rurik.'"
+    }
+
+    if ($persona.IsKnightLike) {
+        return "Hadrik straightens a little before speaking. 'Master Rurik says a disciplined arm is worth twice the steel in it. Walk in there like that and he'll treat you seriously.'"
+    }
+
+    return "Hadrik wipes soot from his brow and jerks a thumb toward the smithy. 'Master Rurik respects anyone who walks back from a dragon's shadow alive.'"
+}
+
+function Get-BelorIntro {
+    param($Hero)
+
+    $persona = Get-HeroTownPersona -Hero $Hero
+
+    if ($persona.IsKnightLike) {
+        return "Watchman Belor gives Borzig the kind of look guards save for people they might one day salute. 'If the cave held one ancient thing, do not assume it held only one.'"
+    }
+
+    if ($persona.IsBardLike -or $persona.IsCharming) {
+        return "Watchman Belor studies Borzig a moment longer than most guards bother to. 'You speak well enough to be listened to. Use that well if the cave's trouble spreads further.'"
+    }
+
+    if ($persona.IsBarbarian -or $persona.IsStrong) {
+        return "Watchman Belor watches the gate with tired eyes. 'You look like the sort they send where words fail. If the cave held one ancient thing, do not assume it held only one.'"
+    }
+
+    return "Watchman Belor watches the gate with tired eyes. 'If the cave held one ancient thing, do not assume it held only one.'"
+}
+
+function Get-RingMasterGreeting {
+    param($Hero)
+
+    $persona = Get-HeroTownPersona -Hero $Hero
+
+    if ($persona.IsStrong -and $persona.IsTough) {
+        return "Ringmaster Dorr looks Borzig over and bares his teeth in approval. 'Good. Real shoulders, real lungs, real scars. The crowd knows what to do with that.'"
+    }
+
+    if ($persona.IsQuick) {
+        return "Ringmaster Dorr watches Borzig's footwork before he says a word. 'Fast feet survive longer than loud mouths in my pit. Keep them moving and the crowd might remember you.'"
+    }
+
+    if ($persona.IsBardLike -or $persona.IsCharming) {
+        return "Ringmaster Dorr snorts at first, then catches the way Borzig holds the room. 'If you can fight half as well as you carry yourself, the bettors will love you.'"
+    }
+
+    if ($persona.IsKnightLike) {
+        return "Ringmaster Dorr folds his arms. 'You carry yourself like a drill yard, not a pit. Fine. Show me that discipline still works once the sand starts flying.'"
+    }
+
+    return "Ringmaster Dorr drums thick fingers on the rail. 'Weapons stay out. Pride stays in. If you want the purse, earn it with your hands.'"
+}
+
 function Resolve-WidowEliraChoice {
     param(
         $Game,
@@ -541,7 +718,7 @@ function Start-TownStreetScene {
 
         switch ($choice) {
             "1" {
-                Write-Scene "Widow Elira grips Borzig's wrist with surprising strength. 'My son was on the road when the dragon panic started. Your warning brought him home before sunset.'"
+                Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
                 Write-ColorLine "1. Tell her no thanks are needed." "White"
                 Write-ColorLine "2. Accept her gratitude with respect." "White"
                 Write-ColorLine ""
@@ -551,7 +728,7 @@ function Start-TownStreetScene {
                 Write-ColorLine ""
             }
             "2" {
-                Write-Scene "Hadrik wipes soot from his brow and jerks a thumb toward the smithy. 'Master Rurik respects anyone who walks back from a dragon's shadow alive.'"
+                Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
                 Write-ColorLine "1. Ask if the forge has anything worth carrying into the wilds." "White"
                 Write-ColorLine "2. Shrug him off and keep walking." "White"
                 Write-ColorLine ""
@@ -561,7 +738,7 @@ function Start-TownStreetScene {
                 Write-ColorLine ""
             }
             "3" {
-                Write-Scene "Watchman Belor watches the gate with tired eyes. 'If the cave held one ancient thing, do not assume it held only one.'"
+                Write-Scene (Get-BelorIntro -Hero $Game.Hero)
                 Write-ColorLine "1. Ask where a capable fighter can find decent work." "White"
                 Write-ColorLine "2. Thank him and move on." "White"
                 Write-ColorLine ""
@@ -1028,6 +1205,7 @@ function Start-FightingRing {
     Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
     Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
+    Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
     if ($Game.Hero.UnarmedTrainingLevel -gt 0) {
@@ -1468,7 +1646,7 @@ function Resolve-InnStay {
     $Game.Town.MustChooseFirstInn = $false
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
-    Write-Scene $Inn.KeeperText
+    Write-Scene (Get-InnKeeperGreeting -Inn $Inn -Hero $Game.Hero)
     Write-EmphasisLine -Text "$($Game.Hero.Name) pays $(Convert-CopperToCurrencyText -Copper $Inn.PriceCopper) for a $($Inn.Quality.ToLower()) room." -Color "Yellow"
     Resolve-InnEvent -Game $Game -HeroHP $HeroHP -Inn $Inn -EventRoll $EventRoll
     Clear-HeroBuff -Hero $Game.Hero
@@ -1527,6 +1705,7 @@ function Start-InnkeeperMenu {
     while ($true) {
         Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
         Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
+        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero)
         Write-ColorLine ""
         Write-ColorLine "1. Keep the room" "White"
         Write-ColorLine "2. Cancel the booking" "White"

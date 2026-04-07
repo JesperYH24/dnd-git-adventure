@@ -215,6 +215,35 @@ function Test-SilverKettleEconomicInfoSetsFutureHook {
     Assert-Equal -Actual $game.Town.QuestPayoutBonusCopper -Expected 20 -Message "Silver Kettle information should prime a future quest payout bonus."
 }
 
+function Test-InnkeeperGreetingChangesWithHeroStyle {
+    $barbarian = Get-Hero
+    $bard = Get-Hero
+    $bard.Class = "Bard"
+    $bard.CHA = 16
+    $silverKettle = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    $barbarianGreeting = Get-InnKeeperGreeting -Inn $silverKettle -Hero $barbarian
+    $bardGreeting = Get-InnKeeperGreeting -Inn $silverKettle -Hero $bard
+
+    Assert-True -Condition ($barbarianGreeting -like "*wolf invited into a ballroom*") -Message "Silver Kettle should greet a barbarian with a rougher tone."
+    Assert-True -Condition ($bardGreeting -like "*understands the value of presentation*") -Message "Silver Kettle should greet a bard more warmly."
+}
+
+function Test-RingMasterRespectsPhysicalProwess {
+    $barbarian = Get-Hero
+    $rogueLikeHero = Get-Hero
+    $rogueLikeHero.Class = "Rogue"
+    $rogueLikeHero.STR = 10
+    $rogueLikeHero.DEX = 16
+    $rogueLikeHero.CON = 12
+
+    $barbarianGreeting = Get-RingMasterGreeting -Hero $barbarian
+    $rogueGreeting = Get-RingMasterGreeting -Hero $rogueLikeHero
+
+    Assert-True -Condition ($barbarianGreeting -like "*Real shoulders, real lungs, real scars*") -Message "The ring master should admire strong and hardy heroes."
+    Assert-True -Condition ($rogueGreeting -like "*Fast feet survive longer*") -Message "The ring master should notice quick fighters differently."
+}
+
 Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
@@ -230,5 +259,7 @@ Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-ShopMentionsStashOrSellWhenFull
 Test-BentNailShadyInfoIsRemembered
 Test-SilverKettleEconomicInfoSetsFutureHook
+Test-InnkeeperGreetingChangesWithHeroStyle
+Test-RingMasterRespectsPhysicalProwess
 
 Write-Host "Town shop tests passed." -ForegroundColor Green
