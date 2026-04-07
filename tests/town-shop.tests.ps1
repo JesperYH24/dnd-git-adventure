@@ -67,7 +67,7 @@ function Test-InnStayChargesGoldAndHealsHero {
     $game.Hero.CurrencyCopper = 500
     $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
 
-    $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn
+    $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99
 
     Assert-Equal -Actual $result -Expected $true -Message "The hero should be able to pay for an inn stay."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 300 -Message "Inn cost should be deducted from the gold pouch."
@@ -75,9 +75,47 @@ function Test-InnStayChargesGoldAndHealsHero {
     Assert-Equal -Actual $game.Town.ChapterOneComplete -Expected $true -Message "The first successful inn stay should complete chapter one."
 }
 
+function Test-StreetChoicesAreRemembered {
+    $game = Initialize-Game
+
+    $first = Resolve-HadrikChoice -Game $game -Choice "2"
+    $second = Resolve-HadrikChoice -Game $game -Choice "1"
+
+    Assert-True -Condition ($first -like "*Your loss*") -Message "The first declined smith conversation should store the refusal."
+    Assert-True -Condition ($second -like "*Already told you*") -Message "The second smith conversation should not grant a late discount."
+    Assert-True -Condition (-not [bool]$game.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Declining the first time should permanently forfeit the smith discount."
+}
+
+function Test-TownQuestCanBeAcceptedOnce {
+    $game = Initialize-Game
+
+    $first = Accept-TownQuest -Game $game -QuestId "guard_night_watch"
+    $second = Accept-TownQuest -Game $game -QuestId "guard_night_watch"
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
+
+    Assert-Equal -Actual $first.Success -Expected $true -Message "A new town quest should be accepted the first time."
+    Assert-Equal -Actual $second.Success -Expected $false -Message "The same town quest should not be accepted twice."
+    Assert-Equal -Actual $quest.Accepted -Expected $true -Message "Accepted quests should stay marked in the quest log."
+}
+
+function Test-RingTrainingUnlocksUnarmedBonus {
+    $game = Initialize-Game
+    $before = Get-HeroUnarmedProfile -Hero $game.Hero
+
+    $training = Grant-RingTraining -Hero $game.Hero -Wins 3
+    $after = Get-HeroUnarmedProfile -Hero $game.Hero
+
+    Assert-Equal -Actual $training.Unlocked -Expected $true -Message "Three total ring wins should unlock the first unarmed training tier."
+    Assert-Equal -Actual $after.TotalAttackBonus -Expected ($before.TotalAttackBonus + 1) -Message "Unarmed training should raise hit chance by 1."
+    Assert-Equal -Actual $after.DamageBonus -Expected ($before.DamageBonus + 1) -Message "Unarmed training should raise bare-hand damage by 1."
+}
+
 Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
 Test-InnStayChargesGoldAndHealsHero
+Test-StreetChoicesAreRemembered
+Test-TownQuestCanBeAcceptedOnce
+Test-RingTrainingUnlocksUnarmedBonus
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

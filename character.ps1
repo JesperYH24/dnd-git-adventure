@@ -445,6 +445,53 @@ function Get-HeroArmorClass {
     return $Hero.BaseArmorClass + $armorBonus
 }
 
+function Get-HeroBrawlAbility {
+    param($Hero)
+
+    if ($Hero.Class -eq "Barbarian") {
+        return "STR"
+    }
+
+    $strengthModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "STR"
+    $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+
+    if ($dexterityModifier -gt $strengthModifier) {
+        return "DEX"
+    }
+
+    return "STR"
+}
+
+function Get-HeroUnarmedProfile {
+    param($Hero)
+
+    $ability = Get-HeroBrawlAbility -Hero $Hero
+    $abilityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $ability
+    $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
+    $trainingBonus = 0
+
+    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+        $trainingBonus = [int]$Hero.UnarmedTrainingLevel
+    }
+
+    return [PSCustomObject]@{
+        Name                 = "Bare Hands"
+        Ability              = $ability
+        AttackBonus          = 0
+        TotalAttackBonus     = $proficiencyBonus + $abilityModifier + $trainingBonus
+        DamageBonus          = $abilityModifier + $trainingBonus
+        DamageDiceCount      = 1
+        DamageDiceSides      = 4
+        DamageMin            = 1
+        DamageMax            = 4
+        BonusDamageDiceCount = 0
+        BonusDamageDiceSides = 0
+        BonusDamageType      = ""
+        TotalDamageMin       = [Math]::Max(1, 1 + $abilityModifier + $trainingBonus)
+        TotalDamageMax       = [Math]::Max(1, 4 + $abilityModifier + $trainingBonus)
+    }
+}
+
 function Get-WeaponRequirementText {
     param($Weapon)
 
@@ -534,21 +581,7 @@ function Get-HeroWeaponProfile {
         }
     }
 
-    return [PSCustomObject]@{
-        Name              = "Bare Hands"
-        AttackBonus       = 0
-        TotalAttackBonus  = $proficiencyBonus + $strengthModifier
-        DamageBonus       = $strengthModifier
-        DamageDiceCount   = 1
-        DamageDiceSides   = 2
-        DamageMin         = 1
-        DamageMax         = 2
-        BonusDamageDiceCount = 0
-        BonusDamageDiceSides = 0
-        BonusDamageType  = ""
-        TotalDamageMin    = [Math]::Max(1, 1 + $strengthModifier)
-        TotalDamageMax    = [Math]::Max(1, 2 + $strengthModifier)
-    }
+    return Get-HeroUnarmedProfile -Hero $Hero
 }
 
 function Get-WeaponDamageRollText {
@@ -699,6 +732,9 @@ function Get-Hero {
         GoldPouchCapacityGP = 150
         CurrencyCopper     = 0
         ActiveBuff         = $null
+        UnarmedTrainingLevel = 0
+        RingWinsTotal      = 0
+        RingVisits         = 0
         HitDie             = 12
         STR                = 15
         DEX                = 14

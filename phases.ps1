@@ -98,7 +98,7 @@ function Start-CampfireMenu {
             }
 
             "4" {
-                Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
+                Show-QuestLog -Game $Game -Hero $Game.Hero
             }
 
             default {

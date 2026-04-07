@@ -35,6 +35,12 @@ function Initialize-Game {
             Discounts = @{}
             ChapterOneComplete = $false
             ActiveInn = $null
+            Quests = (Initialize-TownQuests)
+            Relationships = @{}
+            InnFlags = @{}
+            Ring = @{
+                Visits = 0
+            }
         }
         Rooms = $rooms
         CurrentRoomId = "entrance"

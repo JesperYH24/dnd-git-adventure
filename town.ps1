@@ -213,16 +213,73 @@ function Show-TownShop {
         }
 
         $result = Try-BuyTownOffer -Game $Game -Hero $Hero -Offer $Offers[$index]
-
-        if ($result.Success) {
-            Write-Scene $result.Message
-        }
-        else {
-            Write-Scene $result.Message
-        }
-
+        Write-Scene $result.Message
         Write-ColorLine ""
     }
+}
+
+function Resolve-WidowEliraChoice {
+    param(
+        $Game,
+        [string]$Choice
+    )
+
+    if ($Game.Town.StreetFlags["WidowEliraResolved"]) {
+        return "Elira folds Borzig's hand between both of hers. 'You made your answer already, hero. I remember kindness when I see it.'"
+    }
+
+    $Game.Town.StreetFlags["WidowEliraResolved"] = $true
+
+    if ($Choice -eq "2") {
+        Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 4 | Out-Null
+        $Game.Town.StreetFlags["WidowGiftClaimed"] = $true
+        return "Elira presses a tiny cloth purse into Borzig's palm before he can object. Borzig receives 4 SP from the widow's grateful gift."
+    }
+
+    $Game.Town.StreetFlags["WidowGiftDeclined"] = $true
+    return "Elira nods anyway. 'Then take my blessing instead. The city owes you more than coin.'"
+}
+
+function Resolve-HadrikChoice {
+    param(
+        $Game,
+        [string]$Choice
+    )
+
+    if ($Game.Town.StreetFlags["HadrikResolved"]) {
+        return "Hadrik jerks a thumb toward the forge. 'Already told you what I know. Rurik won't hear a better word from me.'"
+    }
+
+    $Game.Town.StreetFlags["HadrikResolved"] = $true
+
+    if ($Choice -eq "1") {
+        $Game.Town.StreetFlags["SmithyDiscountUnlocked"] = $true
+        Set-TownOfferDiscount -Game $Game -OfferId "smithy_greataxe" -DiscountCopper 60
+        return "Hadrik lowers his voice. 'Tell Rurik I sent you. He'll shave the price on the Steel Great Axe.' A 6 SP discount is now available on the Steel Great Axe at the smithy."
+    }
+
+    $Game.Town.StreetFlags["SmithyDiscountDeclined"] = $true
+    return "Hadrik snorts and turns back to his bellows. 'Your loss. Good steel does not wait forever.'"
+}
+
+function Resolve-BelorChoice {
+    param(
+        $Game,
+        [string]$Choice
+    )
+
+    if ($Game.Town.StreetFlags["BelorResolved"]) {
+        return "Belor gives Borzig a short nod. 'Told you what mattered. The rest is on you.'"
+    }
+
+    $Game.Town.StreetFlags["BelorResolved"] = $true
+
+    if ($Choice -eq "1") {
+        $Game.Town.Relationships["Belor"] = "Trusting"
+        return "Belor leans in and points across the square. 'The guard station pays steady coin for ugly work. If you want honest jobs, start there.'"
+    }
+
+    return "Belor shrugs. 'Fine. Then keep your head down and buy healing before the city empties the shelves.'"
 }
 
 function Start-TownStreetScene {
@@ -231,7 +288,7 @@ function Start-TownStreetScene {
     while ($true) {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
         Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
-        Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to sell him on the next danger."
+        Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
         Write-ColorLine ""
         Write-ColorLine "1. Speak with Widow Elira" "White"
         Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
@@ -249,22 +306,7 @@ function Start-TownStreetScene {
                 Write-ColorLine ""
 
                 $widowChoice = Read-Host "Choose"
-
-                if ($widowChoice -eq "2") {
-                    if (-not $Game.Town.StreetFlags["WidowGiftClaimed"]) {
-                        $Game.Town.StreetFlags["WidowGiftClaimed"] = $true
-                        Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 4 | Out-Null
-                        Write-Scene "Elira presses a tiny cloth purse into Borzig's palm before he can object."
-                        Write-EmphasisLine -Text "Borzig receives 4 SP from the widow's grateful gift." -Color "Yellow"
-                    }
-                    else {
-                        Write-Scene "Elira smiles sadly. 'I already gave what little I could, hero. May it still help.'"
-                    }
-                }
-                else {
-                    Write-Scene "Elira nods anyway. 'Then take my blessing instead. The city owes you more than coin.'"
-                }
-
+                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice $widowChoice)
                 Write-ColorLine ""
             }
             "2" {
@@ -274,27 +316,17 @@ function Start-TownStreetScene {
                 Write-ColorLine ""
 
                 $smithChoice = Read-Host "Choose"
-
-                if ($smithChoice -eq "1") {
-                    if (-not $Game.Town.StreetFlags["SmithyDiscountUnlocked"]) {
-                        $Game.Town.StreetFlags["SmithyDiscountUnlocked"] = $true
-                        Set-TownOfferDiscount -Game $Game -OfferId "smithy_greataxe" -DiscountCopper 60
-                        Write-Scene "Hadrik lowers his voice. 'Tell Rurik I sent you. He'll shave the price on the Steel Great Axe.'"
-                        Write-EmphasisLine -Text "A 6 SP discount is now available on the Steel Great Axe at the smithy." -Color "Yellow"
-                    }
-                    else {
-                        Write-Scene "Hadrik grins. 'Go on then. Rurik already knows to treat you fair.'"
-                    }
-                }
-                else {
-                    Write-Scene "Hadrik snorts and turns back to his bellows. 'Your loss. Good steel does not wait forever.'"
-                }
-
+                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice $smithChoice)
                 Write-ColorLine ""
             }
             "3" {
                 Write-Scene "Watchman Belor watches the gate with tired eyes. 'If the cave held one ancient thing, do not assume it held only one.'"
-                Write-Scene "'Buy healing while you can. Panic makes fools brave and merchants rich.'"
+                Write-ColorLine "1. Ask where a capable fighter can find decent work." "White"
+                Write-ColorLine "2. Thank him and move on." "White"
+                Write-ColorLine ""
+
+                $guardChoice = Read-Host "Choose"
+                Write-Scene (Resolve-BelorChoice -Game $Game -Choice $guardChoice)
                 Write-ColorLine ""
             }
             "0" {
@@ -308,11 +340,494 @@ function Start-TownStreetScene {
     }
 }
 
+function Show-TownQuestSource {
+    param(
+        [string]$Title,
+        [string]$IntroText,
+        [string]$Source,
+        $Game
+    )
+
+    while ($true) {
+        $quests = Get-TownQuestList -Game $Game -Source $Source
+        Write-SectionTitle -Text $Title -Color "Yellow"
+        Write-Scene $IntroText
+        Write-ColorLine ""
+
+        for ($i = 0; $i -lt $quests.Count; $i++) {
+            $quest = $quests[$i]
+            $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
+            Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
+            Write-ColorLine "   $($quest.Description)" "DarkGray"
+            Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
+        }
+
+        Write-ColorLine ""
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Choose a listed number." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $index = [int]$choice - 1
+
+        if ($index -lt 0 -or $index -ge $quests.Count) {
+            Write-ColorLine "That quest is not listed." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $questResult = Accept-TownQuest -Game $Game -QuestId $quests[$index].Id
+        Write-Scene $questResult.Message
+        Write-ColorLine ""
+    }
+}
+
+function Start-QuestHubMenu {
+    param($Game)
+
+    while ($true) {
+        Write-SectionTitle -Text "Seek Work" -Color "Yellow"
+        Write-Scene "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems."
+        Write-ColorLine ""
+        Write-ColorLine "1. Check the quest board" "White"
+        Write-ColorLine "2. Visit the guard station" "White"
+        Write-ColorLine "3. Speak with the quest giver's clerk" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Show-TownQuestSource -Title "Quest Board" -IntroText "Pinned notices flap in the night wind. Most offer coin, some offer trouble, and all of them want someone else to solve a problem." -Source "Quest Board" -Game $Game
+            }
+            "2" {
+                Show-TownQuestSource -Title "Guard Station" -IntroText "The watch hall smells of lamp oil, damp cloaks, and sleepless men. Steady work hangs here, though rarely easy work." -Source "Guard Station" -Game $Game
+            }
+            "3" {
+                Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Get-RingOpponents {
+    return @(
+        [PSCustomObject]@{
+            Name = "Dockhand Vero"
+            Definite = "Dockhand Vero"
+            ArmorClass = 11
+            HP = 8
+            AttackBonus = 2
+            DamageDiceSides = 4
+            DamageBonus = 1
+            Intro = "A square-shouldered dockhand cracks his knuckles and grins through a split lip."
+        }
+        [PSCustomObject]@{
+            Name = "Pit Runner Sella"
+            Definite = "Pit Runner Sella"
+            ArmorClass = 12
+            HP = 10
+            AttackBonus = 3
+            DamageDiceSides = 4
+            DamageBonus = 1
+            Intro = "Sella circles lightly on her feet, measuring Borzig with the patience of someone used to tiring out bigger foes."
+        }
+        [PSCustomObject]@{
+            Name = "Ironjaw Marn"
+            Definite = "Ironjaw Marn"
+            ArmorClass = 13
+            HP = 12
+            AttackBonus = 4
+            DamageDiceSides = 4
+            DamageBonus = 2
+            Intro = "Ironjaw Marn steps into the lantern light to a chorus of shouts. The crowd knows him, and that alone is warning enough."
+        }
+    )
+}
+
+function Get-RingRewardCopper {
+    param([int]$Wins)
+
+    switch ($Wins) {
+        1 { return 100 }
+        2 { return 220 }
+        3 { return 350 }
+        default { return 0 }
+    }
+}
+
+function Grant-RingTraining {
+    param(
+        $Hero,
+        [int]$Wins
+    )
+
+    $Hero.RingWinsTotal += $Wins
+    $unlocked = $false
+
+    if ($Hero.UnarmedTrainingLevel -lt 1 -and $Hero.RingWinsTotal -ge 3) {
+        $Hero.UnarmedTrainingLevel = 1
+        $unlocked = $true
+    }
+
+    return [PSCustomObject]@{
+        Unlocked = $unlocked
+        TotalWins = $Hero.RingWinsTotal
+    }
+}
+
+function Invoke-HeroBrawlAttack {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$OpponentHP
+    )
+
+    $profile = Get-HeroUnarmedProfile -Hero $Hero
+    $roll = Roll-Dice -Sides 20
+    $total = $roll + $profile.TotalAttackBonus
+    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total vs AC $($Opponent.ArmorClass)" "Cyan"
+
+    if ($roll -eq 20) {
+        $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
+        $damage = [Math]::Max(1, $profile.DamageMax + $extraRoll + $profile.DamageBonus)
+        $OpponentHP.Value -= $damage
+        Write-Action "CRITICAL HIT!" "Red"
+        Write-Action "$($Hero.Name) lands a brutal hook for $damage damage! ($($profile.DamageMax) + $extraRoll + $($profile.DamageBonus))" "Yellow"
+    }
+    elseif ($roll -eq 1) {
+        Write-Action "$($Hero.Name) overcommits and stumbles wide." "DarkGray"
+    }
+    elseif ($total -ge $Opponent.ArmorClass) {
+        $damageRoll = Roll-WeaponDamage -WeaponProfile $profile
+        $damage = [Math]::Max(1, $damageRoll + $profile.DamageBonus)
+        $OpponentHP.Value -= $damage
+        Write-Action "$($Hero.Name) hits for $damage damage! ($damageRoll + $($profile.DamageBonus))" "Yellow"
+    }
+    else {
+        Write-Action "$($Hero.Name) misses!" "DarkGray"
+    }
+
+    if ($OpponentHP.Value -lt 0) {
+        $OpponentHP.Value = 0
+    }
+
+    Write-ColorLine ""
+}
+
+function Invoke-OpponentBrawlAttack {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$HeroHP
+    )
+
+    $heroArmorClass = 10 + [Math]::Max((Get-HeroAbilityModifier -Hero $Hero -Ability "STR"), (Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"))
+    $roll = Roll-Dice -Sides 20
+    $total = $roll + $Opponent.AttackBonus
+
+    Write-Action "$($Opponent.Definite) throws a punch: roll $roll, total $total vs AC $heroArmorClass" "DarkCyan"
+
+    if ($roll -eq 20) {
+        $firstDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
+        $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
+        $damage = $firstDamage + $secondDamage + $Opponent.DamageBonus
+        $HeroHP.Value -= $damage
+        Write-Action "CRITICAL HIT!" "Red"
+        Write-Action "$($Opponent.Definite) crashes through Borzig's guard for $damage damage! ($firstDamage + $secondDamage + $($Opponent.DamageBonus))" "Yellow"
+    }
+    elseif ($roll -eq 1) {
+        Write-Action "$($Opponent.Definite) slips and loses the angle." "DarkGray"
+    }
+    elseif ($total -ge $heroArmorClass) {
+        $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
+        $damage = $damageRoll + $Opponent.DamageBonus
+        $HeroHP.Value -= $damage
+        Write-Action "$($Opponent.Definite) hits for $damage damage! ($damageRoll + $($Opponent.DamageBonus))" "Yellow"
+    }
+    else {
+        Write-Action "$($Opponent.Definite) misses!" "DarkGray"
+    }
+
+    if ($HeroHP.Value -lt 0) {
+        $HeroHP.Value = 0
+    }
+
+    Write-ColorLine ""
+}
+
+function Start-BrawlLoop {
+    param(
+        $Hero,
+        $Opponent,
+        [string]$Title = "Brawl"
+    )
+
+    $heroBrawlHP = $Hero.HP
+    $opponentHP = $Opponent.HP
+
+    Write-SectionTitle -Text $Title -Color "Yellow"
+    Write-Scene $Opponent.Intro
+    Write-ColorLine ""
+
+    while ($heroBrawlHP -gt 0 -and $opponentHP -gt 0) {
+        Write-ColorLine "Borzig: $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
+        Write-ColorLine "P. Punch" "White"
+        Write-ColorLine "C. Concede" "White"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        if ($choice -eq "C") {
+            Write-Scene "$($Hero.Name) raises a hand and backs out before the beating gets worse."
+            return $false
+        }
+
+        if ($choice -ne "P") {
+            Write-ColorLine "Choose P or C." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP)
+
+        if ($opponentHP -le 0) {
+            Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
+            return $true
+        }
+
+        Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP)
+
+        if ($heroBrawlHP -le 0) {
+            Write-Scene "$($Hero.Name) is forced down and the referee calls the bout."
+            return $false
+        }
+    }
+
+    return $false
+}
+
+function Start-FightingRing {
+    param($Game)
+
+    $entryFee = 100
+    Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
+    Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
+    Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
+    Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
+    Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
+    Write-ColorLine ""
+    Write-ColorLine "1. Enter the ring" "White"
+    Write-ColorLine "0. Back" "DarkGray"
+    Write-ColorLine ""
+
+    $choice = Read-Host "Choose"
+
+    if ($choice -ne "1") {
+        return
+    }
+
+    $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $entryFee
+
+    if (-not $spendResult.Success) {
+        Write-Scene "$($Game.Hero.Name) does not have enough coin to register for the ring."
+        Write-ColorLine ""
+        return
+    }
+
+    $Game.Hero.RingVisits += 1
+    $Game.Town.Ring.Visits += 1
+
+    $wins = 0
+
+    foreach ($opponent in (Get-RingOpponents)) {
+        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title "Ring Round $($wins + 1)"
+
+        if (-not $wonBout) {
+            break
+        }
+
+        $wins += 1
+        Write-Scene "The crowd roars as Borzig survives another round."
+        Write-ColorLine ""
+    }
+
+    $rewardCopper = Get-RingRewardCopper -Wins $wins
+
+    if ($rewardCopper -gt 0) {
+        Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null
+        Write-EmphasisLine -Text "Borzig leaves the pit with $(Convert-CopperToCurrencyText -Copper $rewardCopper) in prize money." -Color "Yellow"
+    }
+    else {
+        Write-Scene "Borzig leaves the ring with bruises, noise in his ears, and no prize money."
+    }
+
+    if ($wins -gt 0) {
+        $trainingResult = Grant-RingTraining -Hero $Game.Hero -Wins $wins
+
+        if ($trainingResult.Unlocked) {
+            Write-SectionTitle -Text "Skill Gained" -Color "Green"
+            Write-EmphasisLine -Text "Pit-Fighter Basics unlocked: Borzig gains +1 to hit and +1 damage with bare hands." -Color "Green"
+        }
+    }
+
+    Write-ColorLine ""
+}
+
+function Resolve-InnEvent {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        $Inn,
+        [int]$EventRoll = 0
+    )
+
+    if ($EventRoll -le 0) {
+        $EventRoll = Roll-Dice -Sides 100
+    }
+
+    switch ($Inn.Id) {
+        "bent_nail" {
+            if ($EventRoll -le 35) {
+                Write-Scene "A drunken carter mistakes Borzig's silence for mockery, and the common room suddenly wants a fight."
+                $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+                    Name = "Ropearm Jerek"
+                    Definite = "Ropearm Jerek"
+                    ArmorClass = 11
+                    HP = 8
+                    AttackBonus = 2
+                    DamageDiceSides = 4
+                    DamageBonus = 1
+                    Intro = "Ropearm Jerek barrels in with dockside confidence and absolutely no plan beyond throwing hands."
+                }) -Title "Bent Nail Brawl"
+
+                if ($wonBrawl) {
+                    Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 3 | Out-Null
+                    Write-Scene "Marta barks the room quiet and tosses Borzig 3 SP from the pile of side bets."
+                }
+                else {
+                    Write-Scene "Marta hauls the loser out by the collar and tells both fools to sleep it off."
+                }
+
+                return
+            }
+
+            if ($EventRoll -le 65) {
+                if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
+                    $Game.Town.InnFlags["BentNailShadyRumor"] = $true
+                    Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys. Borzig learns where the city's shadier business tends to gather."
+                }
+                else {
+                    Write-Scene "The same hard-eyed smugglers are here again, still talking low and watching everyone."
+                }
+
+                return
+            }
+        }
+        "lantern_rest" {
+            if ($EventRoll -le 15) {
+                Write-Scene "A mercenary with too much ale and too much pride takes offense when Borzig refuses to trade boasts."
+                $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+                    Name = "Mercenary Pell"
+                    Definite = "Mercenary Pell"
+                    ArmorClass = 12
+                    HP = 9
+                    AttackBonus = 3
+                    DamageDiceSides = 4
+                    DamageBonus = 1
+                    Intro = "Mercenary Pell steps clear of the tables, shoulders loose, chin tucked, and smile mean."
+                }) -Title "Lantern Rest Scuffle"
+
+                if ($wonBrawl) {
+                    Write-Scene "The room settles fast once Pell hits the boards. Oren sends Borzig's stew up free of charge."
+                }
+                else {
+                    Write-Scene "Oren breaks it up before it turns ugly and quietly warns Borzig that not every paying guest deserves patience."
+                }
+
+                return
+            }
+
+            if ($EventRoll -le 55) {
+                if (-not $Game.Town.InnFlags["LanternMerchantDiscount"]) {
+                    $Game.Town.InnFlags["LanternMerchantDiscount"] = $true
+                    Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
+                    Write-Scene "A caravan factor shares road gossip over supper, then tells the market to give Borzig a better rate on basic healing supplies."
+                }
+                else {
+                    Write-Scene "Travelers trade the latest road rumors across the room, but nothing sharper than that reaches Borzig tonight."
+                }
+
+                return
+            }
+        }
+        "silver_kettle" {
+            if ($EventRoll -le 10) {
+                Write-Scene "A silk-draped bravo mistakes Borzig's plain clothes for weakness and ends up demanding satisfaction with bare hands."
+                $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+                    Name = "House Duelist Corven"
+                    Definite = "House Duelist Corven"
+                    ArmorClass = 13
+                    HP = 10
+                    AttackBonus = 4
+                    DamageDiceSides = 4
+                    DamageBonus = 2
+                    Intro = "Corven rolls his shoulders beneath embroidered sleeves, moving like someone used to applause."
+                }) -Title "Silver Kettle Altercation"
+
+                if ($wonBrawl) {
+                    Write-Scene "Even the shocked nobles have to admit the result. Madam Seraphine has the mess erased before dawn."
+                }
+                else {
+                    Write-Scene "The house guards end it the instant Borzig is outmatched, which is still kinder than most cheap inns manage."
+                }
+
+                return
+            }
+
+            if ($EventRoll -le 70) {
+                if (-not $Game.Town.InnFlags["SilverKettleContact"]) {
+                    $Game.Town.InnFlags["SilverKettleContact"] = $true
+                    $Game.Town.Relationships["MagistrateClerk"] = "Introduced"
+                    Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
+                    Write-Scene "Between candlelight and quiet music, a magistrate's clerk takes notice of Borzig and offers a proper introduction to more respectable circles."
+                }
+                else {
+                    Write-Scene "The upper tables continue their soft, expensive gossip. Borzig is watched now with recognition instead of suspicion."
+                }
+
+                return
+            }
+        }
+    }
+
+    Write-Scene "The evening passes without incident, leaving only food, quiet, and the luxury of not being hunted."
+}
+
 function Resolve-InnStay {
     param(
         $Game,
         [ref]$HeroHP,
-        $Inn
+        $Inn,
+        [int]$EventRoll = 0
     )
 
     $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $Inn.PriceCopper
@@ -324,12 +839,13 @@ function Resolve-InnStay {
     }
 
     $Game.Town.ActiveInn = $Inn
-    Clear-HeroBuff -Hero $Game.Hero
-    $HeroHP.Value = $Game.Hero.HP
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
     Write-Scene $Inn.KeeperText
     Write-EmphasisLine -Text "$($Game.Hero.Name) pays $(Convert-CopperToCurrencyText -Copper $Inn.PriceCopper) for a $($Inn.Quality.ToLower()) room." -Color "Yellow"
+    Resolve-InnEvent -Game $Game -HeroHP $HeroHP -Inn $Inn -EventRoll $EventRoll
+    Clear-HeroBuff -Hero $Game.Hero
+    $HeroHP.Value = $Game.Hero.HP
     Write-Scene $Inn.RestText
     Write-Scene "A full night's rest restores Borzig to full health, and any lingering combat tonic fades with the morning."
     Write-ColorLine ""
@@ -378,7 +894,7 @@ function Start-InnMenu {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
             "3" {
-                Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
+                Show-QuestLog -Game $Game -Hero $Game.Hero
             }
             "4" {
                 return "BackToTown"
@@ -462,10 +978,12 @@ function Start-TownMenu {
         Write-ColorLine "2. Browse the market" "White"
         Write-ColorLine "3. Visit the smithy" "White"
         Write-ColorLine "4. Visit the apothecary" "White"
-        Write-ColorLine "5. Check inventory" "White"
-        Write-ColorLine "6. Check quest log" "White"
-        Write-ColorLine "7. Find lodging for the night" "White"
-        Write-ColorLine "8. End the adventure for now" "White"
+        Write-ColorLine "5. Seek work" "White"
+        Write-ColorLine "6. Visit the fighting ring" "White"
+        Write-ColorLine "7. Check inventory" "White"
+        Write-ColorLine "8. Check quest log" "White"
+        Write-ColorLine "9. Find lodging for the night" "White"
+        Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -484,19 +1002,25 @@ function Start-TownMenu {
                 Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers)
             }
             "5" {
-                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
+                Start-QuestHubMenu -Game $Game
             }
             "6" {
-                Show-QuestLog -Quest $Game.Quest -Hero $Game.Hero
+                Start-FightingRing -Game $Game
             }
             "7" {
+                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
+            }
+            "8" {
+                Show-QuestLog -Game $Game -Hero $Game.Hero
+            }
+            "9" {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
                 if ($innResult -eq "Stayed") {
                     Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
                 }
             }
-            "8" {
+            "0" {
                 Write-Scene "$($Game.Hero.Name) finds a quiet corner of the city and lets the day finally come to an end."
                 $Game.GameWon = $true
                 return "EndGame"
