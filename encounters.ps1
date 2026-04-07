@@ -15,8 +15,19 @@ function Resolve-ShadowSanctumReward {
         $choice = Read-Host "Choose your prize"
 
         if ($choice -eq "1") {
-            Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100 | Out-Null
-            Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs 100 GP into the gold pouch." -Color "Yellow"
+            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100
+
+            if ($currencyResult.StoredCopper -gt 0) {
+                Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs as much of the 100 GP as possible into the gold pouch." -Color "Yellow"
+            }
+
+            if ($currencyResult.LeftoverCopper -gt 0) {
+                $leftoverItem = $currencyResult.LeftoverItem
+                $ashenThreshold = $Game.Rooms["ashen_threshold"]
+                $ashenThreshold.Loot += $leftoverItem
+                Write-Scene "The gold pouch cannot hold the full reward, so the remaining coins are left behind near the sanctum approach."
+            }
+
             break
         }
 

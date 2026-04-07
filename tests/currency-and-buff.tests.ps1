@@ -84,7 +84,37 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "The monster should not start if haste lets the hero win initiative."
 }
 
+function Test-ShadowSanctumGoldOverflowStaysInRoom {
+    Set-TestOutputStubs
+
+    $script:readHostResponses = @("1")
+    $script:readHostIndex = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:readHostIndex -lt $script:readHostResponses.Count) {
+            $response = $script:readHostResponses[$script:readHostIndex]
+            $script:readHostIndex += 1
+            return $response
+        }
+
+        return "1"
+    }
+
+    $game = Initialize-Game
+    $game.Hero.CurrencyCopper = 14900
+
+    Resolve-ShadowSanctumReward -Game $game
+
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 15000 -Message "The gold pouch should only fill to its capacity."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot.Count -Expected 1 -Message "Overflowing sanctum gold should remain in the cave as loot."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Type -Expected "Currency" -Message "The leftover sanctum reward should still be currency."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Denomination -Expected "GP" -Message "The leftover sanctum reward should keep its gold denomination."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 99 -Message "Overflowing sanctum gold should leave the correct amount behind."
+}
+
 Test-GoldPouchCapsAtOneHundredFiftyGP
 Test-HasteBuffGrantsInitiativeAdvantage
+Test-ShadowSanctumGoldOverflowStaysInRoom
 
 Write-Host "Currency and buff tests passed." -ForegroundColor Green
