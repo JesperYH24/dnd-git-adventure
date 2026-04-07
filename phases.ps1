@@ -48,6 +48,7 @@ function Complete-TutorialAndEnterTown {
 
     $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP -HPMode $levelUpMode
     $Game.Quest.Completed = $true
+    $Game.Town.MustChooseFirstInn = $true
 
     if ($levelUpResult.LeveledUp) {
         $latestLevelUp = $levelUpResult.Results | Select-Object -Last 1

@@ -35,6 +35,7 @@ function Initialize-Game {
             Discounts = @{}
             ChapterOneComplete = $false
             ActiveInn = $null
+            MustChooseFirstInn = $false
             Quests = (Initialize-TownQuests)
             Relationships = @{}
             InnFlags = @{}

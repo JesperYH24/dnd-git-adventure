@@ -10,6 +10,11 @@ $game.HeroDroppedWeapon = $heroDroppedWeapon
 Start-Intro -Hero $game.Hero -HeroHP ([ref]$heroHP)
 
 while ($heroHP -gt 0 -and -not $game.GameWon) {
+    if ($game.Quest.Completed) {
+        Start-TownMenu -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+        continue
+    }
+
     $campAction = Start-CampfireMenu -Game $game -HeroHP ([ref]$heroHP)
 
     if ($campAction -eq "EnterCave") {

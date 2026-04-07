@@ -744,6 +744,7 @@ function Get-Hero {
         CHA                = 8
         BaseArmorClass     = 10
         BaseInventorySlots = 4
+        StashedInventory   = @()
         Inventory          = @(
             (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
             (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)

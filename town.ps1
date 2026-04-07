@@ -51,6 +51,17 @@ function Get-TownInns {
     )
 }
 
+function Get-InnRepeatRestText {
+    param($Inn)
+
+    switch ($Inn.Id) {
+        "bent_nail" { return "The room is rough but serviceable, and by now Borzig knows exactly which floorboards groan before sunrise." }
+        "lantern_rest" { return "The room is calm, warm, and properly kept. Borzig settles in like a paying regular instead of a desperate traveler." }
+        "silver_kettle" { return "Fresh linen, quiet service, and practiced comfort make the night feel expensive in all the ways Madam Seraphine intended." }
+        default { return "The room offers shelter, privacy, and a night without interruption." }
+    }
+}
+
 function Set-TownOfferDiscount {
     param(
         $Game,
@@ -136,7 +147,7 @@ function Try-BuyTownOffer {
     if (-not (Can-HeroCarryItem -Hero $Hero -Item $item)) {
         return [PSCustomObject]@{
             Success = $false
-            Message = "$($Hero.Name) does not have enough room for $($item.Name)."
+            Message = "$($Hero.Name) does not have enough room for $($item.Name). Visit the inn to stash gear or sell equipment to make space."
         }
     }
 
@@ -179,6 +190,7 @@ function Show-TownShop {
         Write-SectionTitle -Text $Title -Color "Yellow"
         Write-Scene $IntroText
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Hero)" "DarkYellow"
+        Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "DarkCyan"
         Write-ColorLine ""
 
         for ($i = 0; $i -lt $Offers.Count; $i++) {
@@ -189,10 +201,16 @@ function Show-TownShop {
         }
 
         Write-ColorLine ""
+        Write-ColorLine "S. Sell gear" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose"
+        $choice = (Read-Host "Choose").ToUpper()
+
+        if ($choice -eq "S") {
+            Open-TownSellMenu -Hero $Hero
+            continue
+        }
 
         if ($choice -eq "0") {
             return
@@ -215,6 +233,229 @@ function Show-TownShop {
         $result = Try-BuyTownOffer -Game $Game -Hero $Hero -Offer $Offers[$index]
         Write-Scene $result.Message
         Write-ColorLine ""
+    }
+}
+
+function Open-TownSellMenu {
+    param($Hero)
+
+    while ($true) {
+        Write-SectionTitle -Text "Sell Gear" -Color "Yellow"
+        Write-Scene "A trader eyes Borzig's spare equipment and starts naming prices before the dust has settled."
+        Write-ColorLine ""
+
+        $sellableItems = @()
+
+        for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
+            $item = $Hero.Inventory[$i]
+
+            if ($item.Type -ne "Currency") {
+                $sellableItems += [PSCustomObject]@{
+                    InventoryIndex = $i
+                    Item = $item
+                }
+            }
+        }
+
+        if ($sellableItems.Count -eq 0) {
+            Write-ColorLine "Borzig has nothing worth selling." "DarkGray"
+            Write-ColorLine ""
+            return
+        }
+
+        for ($i = 0; $i -lt $sellableItems.Count; $i++) {
+            $entry = $sellableItems[$i]
+            $saleValue = [Math]::Max(1, [Math]::Floor(([int]$entry.Item.Value) / 2))
+            Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $entry.Item) - sells for $(Convert-CopperToCurrencyText -Copper $saleValue)" "White"
+        }
+
+        Write-ColorLine ""
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Choose a listed number." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $selected = [int]$choice - 1
+
+        if ($selected -lt 0 -or $selected -ge $sellableItems.Count) {
+            Write-ColorLine "That item is not available." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $entry = $sellableItems[$selected]
+        $item = $entry.Item
+        $saleValue = [Math]::Max(1, [Math]::Floor(([int]$item.Value) / 2))
+
+        if ($null -ne $item.PSObject.Properties["Equipped"]) {
+            $item.Equipped = $false
+        }
+
+        Add-HeroCurrency -Hero $Hero -Denomination "CP" -Amount $saleValue | Out-Null
+        Remove-InventoryItemAt -Hero $Hero -Index $entry.InventoryIndex
+        Write-Scene "$($Hero.Name) sells $($item.Name) for $(Convert-CopperToCurrencyText -Copper $saleValue)."
+        Write-ColorLine ""
+    }
+}
+
+function Show-HeroStash {
+    param($Hero)
+
+    Write-SectionTitle -Text "Inn Storage" -Color "Yellow"
+
+    if (-not $Hero.StashedInventory -or $Hero.StashedInventory.Count -eq 0) {
+        Write-ColorLine "Nothing is stored here yet." "DarkGray"
+        Write-ColorLine ""
+        return
+    }
+
+    for ($i = 0; $i -lt $Hero.StashedInventory.Count; $i++) {
+        Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $Hero.StashedInventory[$i])" "White"
+    }
+
+    Write-ColorLine ""
+}
+
+function Move-InventoryItemToStash {
+    param(
+        $Hero,
+        [int]$InventoryIndex
+    )
+
+    $item = $Hero.Inventory[$InventoryIndex]
+
+    if ($null -ne $item.PSObject.Properties["Equipped"]) {
+        $item.Equipped = $false
+    }
+
+    $Hero.StashedInventory += $item
+    Remove-InventoryItemAt -Hero $Hero -Index $InventoryIndex
+    Write-Scene "$($Hero.Name) leaves $($item.Name) in the inn chest."
+}
+
+function Retrieve-StashedItem {
+    param(
+        $Hero,
+        [int]$StashIndex
+    )
+
+    $item = $Hero.StashedInventory[$StashIndex]
+
+    if (-not (Can-HeroCarryItem -Hero $Hero -Item $item)) {
+        Write-Scene "$($Hero.Name) does not have enough room to carry $($item.Name) right now."
+        return $false
+    }
+
+    $Hero.Inventory += $item
+    $Hero.StashedInventory = @(
+        for ($i = 0; $i -lt $Hero.StashedInventory.Count; $i++) {
+            if ($i -ne $StashIndex) {
+                $Hero.StashedInventory[$i]
+            }
+        }
+    )
+    Write-Scene "$($Hero.Name) takes $($item.Name) back from storage."
+    return $true
+}
+
+function Start-InnStorageMenu {
+    param($Hero)
+
+    while ($true) {
+        Write-SectionTitle -Text "Manage Storage" -Color "Yellow"
+        Write-Scene "A lockbox and a travel chest sit under the bed, ready to hold whatever Borzig does not want to carry through the city."
+        Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "DarkCyan"
+        Write-ColorLine ""
+        Write-ColorLine "1. Store gear from inventory" "White"
+        Write-ColorLine "2. Retrieve stored gear" "White"
+        Write-ColorLine "3. View stored gear" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Show-Inventory -Hero $Hero
+
+                if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
+                    continue
+                }
+
+                $itemChoice = Read-Host "Store which item number (0 to cancel)"
+
+                if ($itemChoice -eq "0") {
+                    continue
+                }
+
+                if ($itemChoice -notmatch '^\d+$') {
+                    Write-ColorLine "Choose a listed number." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                $index = [int]$itemChoice - 1
+
+                if ($index -lt 0 -or $index -ge $Hero.Inventory.Count) {
+                    Write-ColorLine "That item is not available." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Move-InventoryItemToStash -Hero $Hero -InventoryIndex $index
+                Write-ColorLine ""
+            }
+            "2" {
+                Show-HeroStash -Hero $Hero
+
+                if (-not $Hero.StashedInventory -or $Hero.StashedInventory.Count -eq 0) {
+                    continue
+                }
+
+                $itemChoice = Read-Host "Retrieve which item number (0 to cancel)"
+
+                if ($itemChoice -eq "0") {
+                    continue
+                }
+
+                if ($itemChoice -notmatch '^\d+$') {
+                    Write-ColorLine "Choose a listed number." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                $index = [int]$itemChoice - 1
+
+                if ($index -lt 0 -or $index -ge $Hero.StashedInventory.Count) {
+                    Write-ColorLine "That item is not available." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Retrieve-StashedItem -Hero $Hero -StashIndex $index | Out-Null
+                Write-ColorLine ""
+            }
+            "3" {
+                Show-HeroStash -Hero $Hero
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
     }
 }
 
@@ -783,11 +1024,19 @@ function Start-FightingRing {
     param($Game)
 
     $entryFee = 100
+    $trainingGoal = 10
     Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
     Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
+    if ($Game.Hero.UnarmedTrainingLevel -gt 0) {
+        Write-ColorLine "Pit-Fighter Basics: unlocked" "DarkYellow"
+    }
+    else {
+        $progressWins = [Math]::Min($Game.Hero.RingWinsTotal, $trainingGoal)
+        Write-ColorLine "Pit-Fighter Basics progress: $progressWins/$trainingGoal wins" "DarkYellow"
+    }
     Write-ColorLine ""
     Write-ColorLine "1. Enter the ring" "White"
     Write-ColorLine "0. Back" "DarkGray"
@@ -1000,6 +1249,7 @@ function Resolve-InnStay {
     }
 
     $Game.Town.ActiveInn = $Inn
+    $Game.Town.MustChooseFirstInn = $false
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
     Write-Scene $Inn.KeeperText
@@ -1008,7 +1258,12 @@ function Resolve-InnStay {
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
     $Game.Town.Ring.FoughtToday = $false
-    Write-Scene $Inn.RestText
+    if (-not $Game.Town.ChapterOneComplete) {
+        Write-Scene $Inn.RestText
+    }
+    else {
+        Write-Scene (Get-InnRepeatRestText -Inn $Inn)
+    }
     Write-Scene "A full night's rest restores Borzig to full health, and any lingering combat tonic fades with the morning."
     Write-ColorLine ""
 
@@ -1041,7 +1296,8 @@ function Start-InnMenu {
         Write-ColorLine "1. Rest for the night and end the adventure for now" "White"
         Write-ColorLine "2. Check inventory" "White"
         Write-ColorLine "3. Check quest log" "White"
-        Write-ColorLine "4. Return to the city streets" "White"
+        Write-ColorLine "4. Manage stored gear" "White"
+        Write-ColorLine "5. Return to the city streets" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1059,6 +1315,9 @@ function Start-InnMenu {
                 Show-QuestLog -Game $Game -Hero $Game.Hero
             }
             "4" {
+                Start-InnStorageMenu -Hero $Game.Hero
+            }
+            "5" {
                 return "BackToTown"
             }
             default {
@@ -1130,10 +1389,24 @@ function Start-TownMenu {
     )
 
     while ($true) {
+        if ($Game.Town.MustChooseFirstInn -and -not $Game.Town.ChapterOneComplete) {
+            Write-SectionTitle -Text "Night Falls" -Color "Yellow"
+            Write-Scene "The city can wait until morning. Borzig needs a roof, a locked door, and one real night's sleep before the next chapter begins."
+            Write-ColorLine ""
+
+            $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
+
+            if ($innResult -eq "Stayed") {
+                Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+            }
+
+            continue
+        }
+
         Write-ColorLine ""
         Write-ColorLine "===== TOWN =====" "Yellow"
-        Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city settling after panic."
-        Write-Scene "For the first time since the cave, he can breathe without darkness pressing in from every side."
+        Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
+        Write-Scene "The city no longer feels like refuge alone. It feels like a place where the next chapter might actually begin."
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Walk the streets" "White"
@@ -1142,13 +1415,14 @@ function Start-TownMenu {
         Write-ColorLine "4. Visit the apothecary" "White"
         Write-ColorLine "5. Seek work" "White"
         Write-ColorLine "6. Visit the fighting ring" "White"
-        Write-ColorLine "7. Check inventory" "White"
-        Write-ColorLine "8. Check quest log" "White"
-        Write-ColorLine "9. Find lodging for the night" "White"
+        Write-ColorLine "7. Visit your room" "White"
+        Write-ColorLine "8. Check inventory" "White"
+        Write-ColorLine "9. Check quest log" "White"
+        Write-ColorLine "L. Find lodging for the night" "White"
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose"
+        $choice = (Read-Host "Choose").ToUpper()
 
         switch ($choice) {
             "1" {
@@ -1170,12 +1444,21 @@ function Start-TownMenu {
                 Start-FightingRing -Game $Game
             }
             "7" {
-                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
+                if ($null -ne $Game.Town.ActiveInn) {
+                    Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+                }
+                else {
+                    Write-Scene "Borzig has not taken a room yet."
+                    Write-ColorLine ""
+                }
             }
             "8" {
-                Show-QuestLog -Game $Game -Hero $Game.Hero
+                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
             "9" {
+                Show-QuestLog -Game $Game -Hero $Game.Hero
+            }
+            "L" {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
                 if ($innResult -eq "Stayed") {
