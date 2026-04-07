@@ -125,7 +125,7 @@ function Show-QuestLog {
 
     $mainQuest = $Quest
 
-    if ($null -ne $Game -and $null -ne $Game.PSObject.Properties["Quest"]) {
+    if ($null -ne $Game -and (($Game -is [hashtable] -and $Game.ContainsKey("Quest")) -or $null -ne $Game.PSObject.Properties["Quest"])) {
         $mainQuest = $Game.Quest
     }
 
