@@ -160,7 +160,6 @@ function Show-QuestLog {
 
     if ($null -ne $Game -and $null -ne $Game.Town -and $null -ne $Game.Town.Quests) {
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
-        $availableQuests = @($Game.Town.Quests | Where-Object { -not $_.Accepted -and -not $_.Completed })
         $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
 
         if ($acceptedQuests.Count -gt 0) {
@@ -170,16 +169,6 @@ function Show-QuestLog {
             foreach ($townQuest in $acceptedQuests) {
                 Write-ColorLine "- $($townQuest.Name) [$($townQuest.Source)]" "White"
                 Write-ColorLine "  Objective: $($townQuest.Objective)" "DarkGray"
-                Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
-            }
-        }
-
-        if ($availableQuests.Count -gt 0) {
-            Write-ColorLine ""
-            Write-ColorLine "Available Work" "Yellow"
-
-            foreach ($townQuest in $availableQuests) {
-                Write-ColorLine "- $($townQuest.Name) [$($townQuest.Source)]" "White"
                 Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
             }
         }

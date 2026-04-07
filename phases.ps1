@@ -12,6 +12,65 @@ function Start-Intro {
     Write-ColorLine ""
 }
 
+function Complete-TutorialAndEnterTown {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [bool]$DebugSkip = $false
+    )
+
+    if ($DebugSkip) {
+        Write-SectionTitle -Text "Tutorial Skip" -Color "Yellow"
+        Write-Scene "A hidden shortcut pulls Borzig past the early trial and straight toward the city's next chapter."
+        Write-Scene "The cave's warning is treated as known, and the road to town opens for testing."
+        Write-ColorLine ""
+        $Game.Quest.SeenDragon = $true
+    }
+
+    Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
+    Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
+    Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
+    Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
+    $nextLevelXP = Get-HeroNextLevelXPThreshold -Hero $Game.Hero
+    $remainingTutorialXP = [Math]::Max(0, $nextLevelXP - $Game.Hero.XP)
+
+    if ($remainingTutorialXP -gt 0) {
+        Grant-HeroXP -Hero $Game.Hero -XP $remainingTutorialXP
+        Write-Scene "$($Game.Hero.Name) gains the final $remainingTutorialXP XP from completing the tutorial."
+    }
+
+    Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."
+    $levelUpMode = ""
+
+    if ($DebugSkip) {
+        $levelUpMode = "F"
+    }
+
+    $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP -HPMode $levelUpMode
+    $Game.Quest.Completed = $true
+
+    if ($levelUpResult.LeveledUp) {
+        $latestLevelUp = $levelUpResult.Results | Select-Object -Last 1
+        Write-SectionTitle -Text "Level Up" -Color "Yellow"
+        Write-EmphasisLine -Text "$($Game.Hero.Name) reaches level $($Game.Hero.Level)!" -Color "Yellow"
+        Write-Scene "The tutorial has hardened him. His strength steadies, and his endurance grows."
+        if ($latestLevelUp.Mode -eq "R") {
+            Write-Scene "He gambles on the hit die and rolls a $($latestLevelUp.Roll), gaining $($latestLevelUp.Gain) HP."
+        }
+        else {
+            Write-Scene "He takes the steady path and gains the fixed $($latestLevelUp.Gain) HP."
+        }
+        Write-Scene "Max HP rises to $($Game.Hero.HP), and he feels ready for the road ahead."
+        Write-ColorLine ""
+    }
+
+    Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
+    Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
+    Write-Scene "Now the city opens around him, with shops, rumors, and new roads waiting beyond the tutorial."
+    Write-ColorLine ""
+    return "EnterTown"
+}
+
 function Start-CampfireMenu {
     param(
         $Game,
@@ -31,6 +90,11 @@ function Start-CampfireMenu {
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
+        $hiddenChoice = $choice.ToUpper()
+
+        if ($hiddenChoice -eq "SKIP" -or $hiddenChoice -eq "SKIPTUTORIAL") {
+            return (Complete-TutorialAndEnterTown -Game $Game -HeroHP $HeroHP -DebugSkip $true)
+        }
 
         switch ($choice) {
             "1" {
@@ -50,40 +114,7 @@ function Start-CampfireMenu {
                 if (-not $Game.Quest.Completed) {
                     Write-Scene "The guards lower their spears and block the road."
                     if ($Game.Quest.SeenDragon) {
-                        Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
-                        Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
-                        Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
-                        Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
-                        $nextLevelXP = Get-HeroNextLevelXPThreshold -Hero $Game.Hero
-                        $remainingTutorialXP = [Math]::Max(0, $nextLevelXP - $Game.Hero.XP)
-
-                        if ($remainingTutorialXP -gt 0) {
-                            Grant-HeroXP -Hero $Game.Hero -XP $remainingTutorialXP
-                            Write-Scene "$($Game.Hero.Name) gains the final $remainingTutorialXP XP from completing the tutorial."
-                        }
-
-                        Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."
-                        $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP
-                        $Game.Quest.Completed = $true
-                        if ($levelUpResult.LeveledUp) {
-                            $latestLevelUp = $levelUpResult.Results | Select-Object -Last 1
-                            Write-SectionTitle -Text "Level Up" -Color "Yellow"
-                            Write-EmphasisLine -Text "$($Game.Hero.Name) reaches level $($Game.Hero.Level)!" -Color "Yellow"
-                            Write-Scene "The tutorial has hardened him. His strength steadies, and his endurance grows."
-                            if ($latestLevelUp.Mode -eq "R") {
-                                Write-Scene "He gambles on the hit die and rolls a $($latestLevelUp.Roll), gaining $($latestLevelUp.Gain) HP."
-                            }
-                            else {
-                                Write-Scene "He takes the steady path and gains the fixed $($latestLevelUp.Gain) HP."
-                            }
-                            Write-Scene "Max HP rises to $($Game.Hero.HP), and he feels ready for the road ahead."
-                            Write-ColorLine ""
-                        }
-                        Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
-                        Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
-                        Write-Scene "Now the city opens around him, with shops, rumors, and new roads waiting beyond the tutorial."
-                        Write-ColorLine ""
-                        return "EnterTown"
+                        return (Complete-TutorialAndEnterTown -Game $Game -HeroHP $HeroHP)
                     }
                     Write-Scene "'No entry,' one of them says. 'Not until you report what is inside that cave.'"
                     Write-Scene "$($Game.Hero.Name) has no choice but to return to the campfire and face the cave."
