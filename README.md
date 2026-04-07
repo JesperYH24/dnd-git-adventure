@@ -62,6 +62,25 @@ If your execution policy blocks scripts:
 powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 ```
 
+### Hidden test shortcut
+
+At the campfire menu you can type:
+
+`skip`
+
+or:
+
+`skiptutorial`
+
+This hidden shortcut:
+
+- completes the tutorial immediately
+- delivers Borzig to the city
+- applies the level 2 long-rest level up with fixed HP gain
+- restores him to full HP
+- always takes the `100 GP` Shadow Sanctum reward
+- never grants the haste reward
+
 ---
 
 ## Game flow
@@ -85,6 +104,7 @@ The city remains blocked until the tutorial quest is completed.
 
 After the warning is delivered, the game opens into a simple town hub where Borzig can:
 
+- choose an inn for the first night in the city
 - walk the streets
 - talk to townsfolk
 - receive small rewards

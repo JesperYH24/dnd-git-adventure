@@ -25,6 +25,18 @@ function Complete-TutorialAndEnterTown {
         Write-Scene "The cave's warning is treated as known, and the road to town opens for testing."
         Write-ColorLine ""
         $Game.Quest.SeenDragon = $true
+
+        if (-not $Game.ShadowSanctumRewardTaken) {
+            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100
+
+            if ($currencyResult.LeftoverCopper -gt 0 -and $null -ne $currencyResult.LeftoverItem) {
+                $ashenThreshold = $Game.Rooms["ashen_threshold"]
+                $ashenThreshold.Loot += $currencyResult.LeftoverItem
+            }
+
+            Clear-HeroBuff -Hero $Game.Hero
+            $Game.ShadowSanctumRewardTaken = $true
+        }
     }
 
     Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
