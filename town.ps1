@@ -1232,6 +1232,222 @@ function Resolve-InnEvent {
     Write-Scene "The evening passes without incident, leaving only food, quiet, and the luxury of not being hunted."
 }
 
+function Resolve-BentNailEveningChoice {
+    param(
+        $Game,
+        [string]$Choice,
+        [int]$RiskRoll = 0
+    )
+
+    if ($Choice -eq "1") {
+        if (-not $Game.Town.InnFlags["BentNailBrokerInfo"]) {
+            $Game.Town.InnFlags["BentNailBrokerInfo"] = $true
+            $Game.Town.Relationships["UnderstreetBroker"] = "Named"
+            Write-Scene "Borzig keeps his head down and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
+            Write-EmphasisLine -Text "Borzig gains understreet information that can be built into shady city quests later." -Color "Yellow"
+        }
+        else {
+            Write-Scene "The same smugglers are still talking around Borzig, but tonight they offer nothing sharper than what he already knows."
+        }
+
+        return
+    }
+
+    if ($Choice -eq "2") {
+        if ($RiskRoll -le 0) {
+            $RiskRoll = Roll-Dice -Sides 100
+        }
+
+        if ($RiskRoll -le 60) {
+            Write-Scene "The dice game turns sour almost immediately, and one ugly joke later the table wants fists instead of coins."
+            Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+                Name = "Dockside Bruiser Kel"
+                Definite = "Dockside Bruiser Kel"
+                ArmorClass = 11
+                HP = 8
+                AttackBonus = 2
+                DamageDiceSides = 4
+                DamageBonus = 1
+                GrappleBonus = 2
+                Intro = "Kel lunges up from the bench with knuckles already half-curled."
+            }) -Title "Bent Nail Dice Table" | Out-Null
+        }
+        else {
+            Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 2 | Out-Null
+            Write-Scene "For once the table laughs with Borzig instead of at him, and he walks away with 2 SP in easy winnings."
+        }
+
+        return
+    }
+
+    Write-Scene "Borzig keeps to the wall and lets the room talk around him."
+}
+
+function Resolve-LanternRestEveningChoice {
+    param(
+        $Game,
+        [string]$Choice,
+        [int]$RiskRoll = 0
+    )
+
+    if ($Choice -eq "1") {
+        if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
+            $Game.Town.InnFlags["LanternTradeAdvice"] = $true
+            Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
+            Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
+            Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
+        }
+        else {
+            Write-Scene "The merchant tables are good company, but their useful advice has already been spent once."
+        }
+
+        return
+    }
+
+    if ($Choice -eq "2") {
+        if (-not $Game.Town.InnFlags["LanternGuardRumor"]) {
+            $Game.Town.InnFlags["LanternGuardRumor"] = $true
+            $Game.Town.Relationships["NightCaptain"] = "Mentioned"
+            Write-Scene "Caravan guards swap route warnings with watchmen and mention a captain who pays well for reliable steel on dirty night work."
+            Write-EmphasisLine -Text "Borzig hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
+        }
+        else {
+            Write-Scene "The guards nod to Borzig like a familiar face now, but tonight they have no fresh work to whisper about."
+        }
+
+        return
+    }
+
+    if ($RiskRoll -le 0) {
+        $RiskRoll = Roll-Dice -Sides 100
+    }
+
+    if ($RiskRoll -le 25) {
+        Write-Scene "Too much ale and too many boasts sour the room, and a visiting sword hand decides Borzig looks like trouble worth testing."
+        Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+            Name = "Road Guard Hestin"
+            Definite = "Road Guard Hestin"
+            ArmorClass = 12
+            HP = 9
+            AttackBonus = 3
+            DamageDiceSides = 4
+            DamageBonus = 1
+            GrappleBonus = 3
+            Intro = "Hestin cracks his neck, grins once, and comes in straight-backed like a trained man trying to look relaxed."
+        }) -Title "Lantern Rest Dispute" | Out-Null
+    }
+    else {
+        Write-Scene "The common room stays loud but harmless, and Borzig comes away with nothing worse than a sore voice."
+    }
+}
+
+function Resolve-SilverKettleEveningChoice {
+    param(
+        $Game,
+        [string]$Choice,
+        [int]$RiskRoll = 0
+    )
+
+    if ($Choice -eq "1") {
+        if (-not $Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+            $Game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
+            $Game.Town.QuestPayoutBonusCopper = 20
+            Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
+            Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
+        }
+        else {
+            Write-Scene "The contract talk is still there if Borzig wants it, but the useful part has already been learned."
+        }
+
+        return
+    }
+
+    if ($Choice -eq "2") {
+        if (-not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
+            $Game.Town.InnFlags["SilverKettlePatronFavor"] = $true
+            $Game.Town.Relationships["MerchantPatron"] = "Favorable"
+            Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
+            Write-Scene "A wealthy patron takes to Borzig's plain honesty and leaves 5 SP with Madam Seraphine to cover his next meal and wine."
+            Write-EmphasisLine -Text "Borzig earns a small favor among the upper tables." -Color "Yellow"
+        }
+        else {
+            Write-Scene "The upper room remembers Borzig well enough now, and that alone opens more doors than a second introduction would."
+        }
+
+        return
+    }
+
+    if ($RiskRoll -le 0) {
+        $RiskRoll = Roll-Dice -Sides 100
+    }
+
+    if ($RiskRoll -le 10) {
+        Write-Scene "A silk-clad bravo mistakes Borzig's silence for contempt, and even this polished room cannot stop the old language of fists."
+        Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
+            Name = "Velvet-Hand Corin"
+            Definite = "Velvet-Hand Corin"
+            ArmorClass = 13
+            HP = 10
+            AttackBonus = 4
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 3
+            Intro = "Corin slips off his rings one by one and smiles like this happens often enough to bore him."
+        }) -Title "Silver Kettle Insult" | Out-Null
+    }
+    else {
+        Write-Scene "Borzig takes the evening in quiet comfort, and the room's easy courtesy leaves him feeling better received than expected."
+    }
+}
+
+function Start-InnEveningMenu {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+
+    while ($true) {
+        Write-SectionTitle -Text "Common Room" -Color "Yellow"
+
+        switch ($inn.Id) {
+            "bent_nail" {
+                Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
+                Write-ColorLine "2. Join a loud dice table" "White"
+            }
+            "lantern_rest" {
+                Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
+                Write-ColorLine "1. Share supper with the merchants" "White"
+                Write-ColorLine "2. Sit with the guards and caravan hands" "White"
+                Write-ColorLine "3. Join the room's drinking song" "White"
+            }
+            "silver_kettle" {
+                Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
+                Write-ColorLine "1. Listen to the contract talk over wine" "White"
+                Write-ColorLine "2. Make a polished introduction to the upper tables" "White"
+                Write-ColorLine "3. Stay visible and see who takes offense" "White"
+            }
+        }
+
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        switch ($inn.Id) {
+            "bent_nail" { Resolve-BentNailEveningChoice -Game $Game -Choice $choice }
+            "lantern_rest" { Resolve-LanternRestEveningChoice -Game $Game -Choice $choice }
+            "silver_kettle" { Resolve-SilverKettleEveningChoice -Game $Game -Choice $choice }
+        }
+
+        Write-ColorLine ""
+        return
+    }
+}
+
 function Resolve-InnStay {
     param(
         $Game,
@@ -1296,8 +1512,9 @@ function Start-InnMenu {
         Write-ColorLine "1. Rest for the night and end the adventure for now" "White"
         Write-ColorLine "2. Check inventory" "White"
         Write-ColorLine "3. Check quest log" "White"
-        Write-ColorLine "4. Manage stored gear" "White"
-        Write-ColorLine "5. Return to the city streets" "White"
+        Write-ColorLine "4. Spend time in the common room" "White"
+        Write-ColorLine "5. Manage stored gear" "White"
+        Write-ColorLine "6. Return to the city streets" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1315,9 +1532,12 @@ function Start-InnMenu {
                 Show-QuestLog -Game $Game -Hero $Game.Hero
             }
             "4" {
-                Start-InnStorageMenu -Hero $Game.Hero
+                Start-InnEveningMenu -Game $Game
             }
             "5" {
+                Start-InnStorageMenu -Hero $Game.Hero
+            }
+            "6" {
                 return "BackToTown"
             }
             default {

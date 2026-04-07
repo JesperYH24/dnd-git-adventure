@@ -155,6 +155,26 @@ function Test-ShopMentionsStashOrSellWhenFull {
     Assert-True -Condition ($result.Message -like "*stash gear or sell equipment*") -Message "The shop failure should point the player toward stash or selling."
 }
 
+function Test-BentNailShadyInfoIsRemembered {
+    $game = Initialize-Game
+
+    Resolve-BentNailEveningChoice -Game $game -Choice "1"
+    $relationshipBefore = $game.Town.Relationships["UnderstreetBroker"]
+    Resolve-BentNailEveningChoice -Game $game -Choice "1" | Out-Null
+
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $true -Message "Bent Nail shady information should set a persistent inn flag."
+    Assert-Equal -Actual $game.Town.Relationships["UnderstreetBroker"] -Expected $relationshipBefore -Message "Repeated Bent Nail rumor fishing should not unlock extra broker progress."
+}
+
+function Test-SilverKettleEconomicInfoSetsFutureHook {
+    $game = Initialize-Game
+
+    Resolve-SilverKettleEveningChoice -Game $game -Choice "1"
+
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettleEconomicInsight"] -Expected $true -Message "Silver Kettle economic information should set a persistent inn flag."
+    Assert-Equal -Actual $game.Town.QuestPayoutBonusCopper -Expected 20 -Message "Silver Kettle information should prime a future quest payout bonus."
+}
+
 Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
@@ -165,5 +185,7 @@ Test-RingTrainingUnlocksUnarmedBonus
 Test-InnStayResetsDailyRingLockout
 Test-StashCanStoreAndRetrieveGear
 Test-ShopMentionsStashOrSellWhenFull
+Test-BentNailShadyInfoIsRemembered
+Test-SilverKettleEconomicInfoSetsFutureHook
 
 Write-Host "Town shop tests passed." -ForegroundColor Green
