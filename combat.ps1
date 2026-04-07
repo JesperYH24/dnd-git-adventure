@@ -6,15 +6,22 @@ function Invoke-HeroAttack {
         $Hero,
         $Monster,
         [ref]$MonsterHP,
-        [ref]$HeroDroppedWeapon
+        [ref]$HeroDroppedWeapon,
+        [int]$AttackBonusModifier = 0
     )
 
     $weapon = Get-HeroWeaponProfile -Hero $Hero
     $targetArmorClass = [int]$Monster.armorClass
     $heroRoll = Roll-Dice -Sides 20
-    $attackTotal = $heroRoll + $weapon.TotalAttackBonus
+    $attackTotal = $heroRoll + $weapon.TotalAttackBonus + $AttackBonusModifier
 
-    Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal vs AC $targetArmorClass" "Cyan"
+    $bonusText = ""
+
+    if ($AttackBonusModifier -gt 0) {
+        $bonusText = " (+$AttackBonusModifier focus)"
+    }
+
+    Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
         $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
@@ -64,13 +71,20 @@ function Invoke-MonsterAttack {
         $Hero,
         $Monster,
         [ref]$HeroHP,
-        [ref]$MonsterOffBalance
+        [ref]$MonsterOffBalance,
+        [int]$BlockArmorBonus = 0
     )
 
-    $heroArmorClass = Get-HeroArmorClass -Hero $Hero
+    $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $attackRoll = Roll-Dice -Sides 20
     $attackTotal = $attackRoll + [int]$Monster.attackBonus
-    Write-Action "$($Monster.definite) attacks: roll $attackRoll, total $attackTotal vs AC $heroArmorClass" "DarkCyan"
+    $blockText = ""
+
+    if ($BlockArmorBonus -gt 0) {
+        $blockText = " (including +$BlockArmorBonus block)"
+    }
+
+    Write-Action "$($Monster.definite) attacks: roll $attackRoll, total $attackTotal vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
@@ -192,6 +206,8 @@ function Start-CombatLoop {
     )
 
     $showStatus = -not $SkipInitialStatus
+    $heroBlockArmorBonus = 0
+    $heroFocusAttackBonus = 0
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
         if ($showStatus) {
@@ -211,7 +227,7 @@ function Start-CombatLoop {
             continue
         }
 
-        $choice = (Read-Host "What do you want to do? (A/I/R) - Attack, Inventory or Run").ToUpper()
+        $choice = (Read-Host "What do you want to do? (A/B/F/I/R) - Attack, Block, Focus, Inventory or Run").ToUpper()
 
         if ($choice -eq "I") {
             Write-ColorLine ""
@@ -219,7 +235,8 @@ function Start-CombatLoop {
 
             if ($usedItem) {
                 if (-not $MonsterOffBalance.Value) {
-                    Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+                    Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
+                    $heroBlockArmorBonus = 0
 
                     if ($HeroHP.Value -le 0) {
                         Write-Scene "$($Hero.Name) falls in battle..."
@@ -240,16 +257,60 @@ function Start-CombatLoop {
             $EncounterFled.Value = $true
             break
         }
+        elseif ($choice -eq "B") {
+            Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
+            $heroBlockArmorBonus = 2
+            Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
+            Write-ColorLine ""
+
+            if (-not $MonsterOffBalance.Value) {
+                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
+                $heroBlockArmorBonus = 0
+
+                if ($HeroHP.Value -le 0) {
+                    Write-Scene "$($Hero.Name) falls in battle..."
+                    break
+                }
+            }
+            else {
+                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
+                $MonsterOffBalance.Value = $false
+                Write-ColorLine ""
+            }
+        }
+        elseif ($choice -eq "F") {
+            Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
+            $heroFocusAttackBonus = 2
+            Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
+            Write-ColorLine ""
+
+            if (-not $MonsterOffBalance.Value) {
+                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
+                $heroBlockArmorBonus = 0
+
+                if ($HeroHP.Value -le 0) {
+                    Write-Scene "$($Hero.Name) falls in battle..."
+                    break
+                }
+            }
+            else {
+                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
+                $MonsterOffBalance.Value = $false
+                Write-ColorLine ""
+            }
+        }
         elseif ($choice -eq "A") {
             Write-ColorLine ""
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
+            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier $heroFocusAttackBonus
+            $heroFocusAttackBonus = 0
 
             if ($MonsterHP.Value -le 0) {
                 break
             }
 
             if (-not $MonsterOffBalance.Value) {
-                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
+                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
+                $heroBlockArmorBonus = 0
 
                 if ($HeroHP.Value -le 0) {
                     Write-Scene "$($Hero.Name) falls in battle..."
@@ -264,7 +325,7 @@ function Start-CombatLoop {
         }
         else {
             Write-ColorLine ""
-            Write-ColorLine "Type A, I or R" "DarkYellow"
+            Write-ColorLine "Type A, B, F, I or R" "DarkYellow"
             Write-ColorLine ""
         }
     }

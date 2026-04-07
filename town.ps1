@@ -555,13 +555,20 @@ function Invoke-HeroBrawlAttack {
     param(
         $Hero,
         $Opponent,
-        [ref]$OpponentHP
+        [ref]$OpponentHP,
+        [int]$AttackBonusModifier = 0
     )
 
     $profile = Get-HeroUnarmedProfile -Hero $Hero
     $roll = Roll-Dice -Sides 20
-    $total = $roll + $profile.TotalAttackBonus
-    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total vs AC $($Opponent.ArmorClass)" "Cyan"
+    $total = $roll + $profile.TotalAttackBonus + $AttackBonusModifier
+    $bonusText = ""
+
+    if ($AttackBonusModifier -gt 0) {
+        $bonusText = " (+$AttackBonusModifier focus)"
+    }
+
+    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total$bonusText vs AC $($Opponent.ArmorClass)" "Cyan"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
@@ -594,14 +601,20 @@ function Invoke-OpponentBrawlAttack {
     param(
         $Hero,
         $Opponent,
-        [ref]$HeroHP
+        [ref]$HeroHP,
+        [int]$BlockArmorBonus = 0
     )
 
-    $heroArmorClass = 10 + [Math]::Max((Get-HeroAbilityModifier -Hero $Hero -Ability "STR"), (Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"))
+    $heroArmorClass = 10 + [Math]::Max((Get-HeroAbilityModifier -Hero $Hero -Ability "STR"), (Get-HeroAbilityModifier -Hero $Hero -Ability "DEX")) + $BlockArmorBonus
     $roll = Roll-Dice -Sides 20
     $total = $roll + $Opponent.AttackBonus
+    $blockText = ""
 
-    Write-Action "$($Opponent.Definite) throws a punch: roll $roll, total $total vs AC $heroArmorClass" "DarkCyan"
+    if ($BlockArmorBonus -gt 0) {
+        $blockText = " (including +$BlockArmorBonus block)"
+    }
+
+    Write-Action "$($Opponent.Definite) throws a punch: roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($roll -eq 20) {
         $firstDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
@@ -693,6 +706,8 @@ function Start-BrawlLoop {
     $heroBrawlHP = $Hero.HP
     $opponentHP = $Opponent.HP
     $opponentOffBalance = $false
+    $heroBlockArmorBonus = 0
+    $heroFocusAttackBonus = 0
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene $Opponent.Intro
@@ -702,6 +717,8 @@ function Start-BrawlLoop {
         Write-ColorLine "Borzig: $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
         Write-ColorLine "P. Punch" "White"
         Write-ColorLine "G. Grapple" "White"
+        Write-ColorLine "B. Block" "White"
+        Write-ColorLine "F. Focus" "White"
         Write-ColorLine "C. Concede" "White"
         Write-ColorLine ""
 
@@ -712,17 +729,30 @@ function Start-BrawlLoop {
             return $false
         }
 
-        if ($choice -notin @("P", "G")) {
-            Write-ColorLine "Choose P, G or C." "DarkYellow"
+        if ($choice -notin @("P", "G", "B", "F")) {
+            Write-ColorLine "Choose P, G, B, F or C." "DarkYellow"
             Write-ColorLine ""
             continue
         }
 
-        if ($choice -eq "G") {
+        if ($choice -eq "B") {
+            Write-Scene "$($Hero.Name) tightens the guard and waits for the incoming strike."
+            $heroBlockArmorBonus = 2
+            Write-Action "$($Hero.Name) gains +2 AC against the next punch." "Yellow"
+            Write-ColorLine ""
+        }
+        elseif ($choice -eq "F") {
+            Write-Scene "$($Hero.Name) studies the rhythm of the fight and times the next opening."
+            $heroFocusAttackBonus = 2
+            Write-Action "$($Hero.Name) gains +2 to hit on the next bare-handed attack." "Yellow"
+            Write-ColorLine ""
+        }
+        elseif ($choice -eq "G") {
             Resolve-HeroBrawlGrapple -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -OpponentOffBalance ([ref]$opponentOffBalance) | Out-Null
         }
         else {
-            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP)
+            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus
+            $heroFocusAttackBonus = 0
         }
 
         if ($opponentHP -le 0) {
@@ -736,7 +766,8 @@ function Start-BrawlLoop {
             $opponentOffBalance = $false
         }
         else {
-            Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP)
+            Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -BlockArmorBonus $heroBlockArmorBonus
+            $heroBlockArmorBonus = 0
         }
 
         if ($heroBrawlHP -le 0) {
