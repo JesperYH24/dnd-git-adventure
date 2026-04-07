@@ -40,6 +40,7 @@ function Initialize-Game {
             InnFlags = @{}
             Ring = @{
                 Visits = 0
+                FoughtToday = $false
             }
         }
         Rooms = $rooms

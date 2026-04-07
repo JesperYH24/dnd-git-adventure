@@ -428,39 +428,96 @@ function Start-QuestHubMenu {
     }
 }
 
-function Get-RingOpponents {
+function Get-RingOpponentPool {
     return @(
         [PSCustomObject]@{
             Name = "Dockhand Vero"
             Definite = "Dockhand Vero"
+            Tier = 1
             ArmorClass = 11
             HP = 8
             AttackBonus = 2
             DamageDiceSides = 4
             DamageBonus = 1
+            GrappleBonus = 2
             Intro = "A square-shouldered dockhand cracks his knuckles and grins through a split lip."
+        }
+        [PSCustomObject]@{
+            Name = "Street Bruiser Nella"
+            Definite = "Street Bruiser Nella"
+            Tier = 1
+            ArmorClass = 12
+            HP = 7
+            AttackBonus = 2
+            DamageDiceSides = 4
+            DamageBonus = 1
+            GrappleBonus = 1
+            Intro = "Nella rolls her neck once and comes in hard, like she expects every problem to break on impact."
         }
         [PSCustomObject]@{
             Name = "Pit Runner Sella"
             Definite = "Pit Runner Sella"
+            Tier = 2
             ArmorClass = 12
             HP = 10
             AttackBonus = 3
             DamageDiceSides = 4
             DamageBonus = 1
+            GrappleBonus = 3
             Intro = "Sella circles lightly on her feet, measuring Borzig with the patience of someone used to tiring out bigger foes."
+        }
+        [PSCustomObject]@{
+            Name = "Gravel-Tooth Harven"
+            Definite = "Gravel-Tooth Harven"
+            Tier = 2
+            ArmorClass = 12
+            HP = 11
+            AttackBonus = 3
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 2
+            Intro = "Harven spits blood into the sand and beckons Borzig closer with a broken grin."
         }
         [PSCustomObject]@{
             Name = "Ironjaw Marn"
             Definite = "Ironjaw Marn"
+            Tier = 3
             ArmorClass = 13
             HP = 12
             AttackBonus = 4
             DamageDiceSides = 4
             DamageBonus = 2
+            GrappleBonus = 4
             Intro = "Ironjaw Marn steps into the lantern light to a chorus of shouts. The crowd knows him, and that alone is warning enough."
         }
+        [PSCustomObject]@{
+            Name = "Silent Torh"
+            Definite = "Silent Torh"
+            Tier = 3
+            ArmorClass = 14
+            HP = 11
+            AttackBonus = 4
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 4
+            Intro = "Torh says nothing at all. He only plants his feet and raises his hands, which somehow feels worse."
+        }
     )
+}
+
+function Get-RingOpponents {
+    $pool = Get-RingOpponentPool
+    $selected = @()
+
+    foreach ($tier in 1..3) {
+        $options = @($pool | Where-Object { $_.Tier -eq $tier })
+
+        if ($options.Count -gt 0) {
+            $selected += ($options | Get-Random)
+        }
+    }
+
+    return $selected
 }
 
 function Get-RingRewardCopper {
@@ -483,7 +540,7 @@ function Grant-RingTraining {
     $Hero.RingWinsTotal += $Wins
     $unlocked = $false
 
-    if ($Hero.UnarmedTrainingLevel -lt 1 -and $Hero.RingWinsTotal -ge 3) {
+    if ($Hero.UnarmedTrainingLevel -lt 1 -and $Hero.RingWinsTotal -ge 10) {
         $Hero.UnarmedTrainingLevel = 1
         $unlocked = $true
     }
@@ -574,6 +631,58 @@ function Invoke-OpponentBrawlAttack {
     Write-ColorLine ""
 }
 
+function Resolve-HeroBrawlGrapple {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$OpponentHP,
+        [ref]$OpponentOffBalance
+    )
+
+    $heroAbility = Get-HeroBrawlAbility -Hero $Hero
+    $heroModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $heroAbility
+    $trainingBonus = 0
+
+    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+        $trainingBonus = [int]$Hero.UnarmedTrainingLevel
+    }
+
+    $opponentGrappleBonus = 0
+
+    if ($null -ne $Opponent.PSObject.Properties["GrappleBonus"]) {
+        $opponentGrappleBonus = [int]$Opponent.GrappleBonus
+    }
+    else {
+        $opponentGrappleBonus = [int]$Opponent.AttackBonus
+    }
+
+    $heroRoll = Roll-Dice -Sides 20
+    $opponentRoll = Roll-Dice -Sides 20
+    $heroTotal = $heroRoll + $heroModifier + $trainingBonus
+    $opponentTotal = $opponentRoll + $opponentGrappleBonus
+
+    Write-Action "$($Hero.Name) shoots in for a grapple: roll $heroRoll, total $heroTotal" "Cyan"
+    Write-Action "$($Opponent.Definite) braces against it: roll $opponentRoll, total $opponentTotal" "DarkCyan"
+
+    if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
+        $controlDamage = [Math]::Max(1, 1 + $heroModifier + $trainingBonus)
+        $OpponentHP.Value -= $controlDamage
+        $OpponentOffBalance.Value = $true
+        Write-Action "$($Hero.Name) drags $($Opponent.Definite) to the ground for $controlDamage damage and steals the tempo!" "Yellow"
+
+        if ($OpponentHP.Value -lt 0) {
+            $OpponentHP.Value = 0
+        }
+
+        Write-ColorLine ""
+        return $true
+    }
+
+    Write-Action "$($Hero.Name) fails to secure the hold." "DarkGray"
+    Write-ColorLine ""
+    return $false
+}
+
 function Start-BrawlLoop {
     param(
         $Hero,
@@ -583,6 +692,7 @@ function Start-BrawlLoop {
 
     $heroBrawlHP = $Hero.HP
     $opponentHP = $Opponent.HP
+    $opponentOffBalance = $false
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene $Opponent.Intro
@@ -591,6 +701,7 @@ function Start-BrawlLoop {
     while ($heroBrawlHP -gt 0 -and $opponentHP -gt 0) {
         Write-ColorLine "Borzig: $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
         Write-ColorLine "P. Punch" "White"
+        Write-ColorLine "G. Grapple" "White"
         Write-ColorLine "C. Concede" "White"
         Write-ColorLine ""
 
@@ -601,20 +712,32 @@ function Start-BrawlLoop {
             return $false
         }
 
-        if ($choice -ne "P") {
-            Write-ColorLine "Choose P or C." "DarkYellow"
+        if ($choice -notin @("P", "G")) {
+            Write-ColorLine "Choose P, G or C." "DarkYellow"
             Write-ColorLine ""
             continue
         }
 
-        Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP)
+        if ($choice -eq "G") {
+            Resolve-HeroBrawlGrapple -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -OpponentOffBalance ([ref]$opponentOffBalance) | Out-Null
+        }
+        else {
+            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP)
+        }
 
         if ($opponentHP -le 0) {
             Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
             return $true
         }
 
-        Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP)
+        if ($opponentOffBalance) {
+            Write-Scene "$($Opponent.Definite) scrambles to recover and loses the next beat of the fight."
+            Write-ColorLine ""
+            $opponentOffBalance = $false
+        }
+        else {
+            Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP)
+        }
 
         if ($heroBrawlHP -le 0) {
             Write-Scene "$($Hero.Name) is forced down and the referee calls the bout."
@@ -639,6 +762,12 @@ function Start-FightingRing {
     Write-ColorLine "0. Back" "DarkGray"
     Write-ColorLine ""
 
+    if ($Game.Town.Ring.FoughtToday) {
+        Write-Scene "The ring master shakes his head. 'One tournament per day. Come back after you've had a real night's sleep.'"
+        Write-ColorLine ""
+        return
+    }
+
     $choice = Read-Host "Choose"
 
     if ($choice -ne "1") {
@@ -655,6 +784,7 @@ function Start-FightingRing {
 
     $Game.Hero.RingVisits += 1
     $Game.Town.Ring.Visits += 1
+    $Game.Town.Ring.FoughtToday = $true
 
     $wins = 0
 
@@ -846,6 +976,7 @@ function Resolve-InnStay {
     Resolve-InnEvent -Game $Game -HeroHP $HeroHP -Inn $Inn -EventRoll $EventRoll
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
+    $Game.Town.Ring.FoughtToday = $false
     Write-Scene $Inn.RestText
     Write-Scene "A full night's rest restores Borzig to full health, and any lingering combat tonic fades with the morning."
     Write-ColorLine ""

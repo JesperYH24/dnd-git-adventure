@@ -102,12 +102,26 @@ function Test-RingTrainingUnlocksUnarmedBonus {
     $game = Initialize-Game
     $before = Get-HeroUnarmedProfile -Hero $game.Hero
 
-    $training = Grant-RingTraining -Hero $game.Hero -Wins 3
+    $partial = Grant-RingTraining -Hero $game.Hero -Wins 6
+    $training = Grant-RingTraining -Hero $game.Hero -Wins 4
     $after = Get-HeroUnarmedProfile -Hero $game.Hero
 
-    Assert-Equal -Actual $training.Unlocked -Expected $true -Message "Three total ring wins should unlock the first unarmed training tier."
+    Assert-Equal -Actual $partial.Unlocked -Expected $false -Message "Six ring wins should still be too few to unlock unarmed training."
+    Assert-Equal -Actual $training.Unlocked -Expected $true -Message "Ten total ring wins should unlock the first unarmed training tier."
     Assert-Equal -Actual $after.TotalAttackBonus -Expected ($before.TotalAttackBonus + 1) -Message "Unarmed training should raise hit chance by 1."
     Assert-Equal -Actual $after.DamageBonus -Expected ($before.DamageBonus + 1) -Message "Unarmed training should raise bare-hand damage by 1."
+}
+
+function Test-InnStayResetsDailyRingLockout {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.Ring.FoughtToday = $true
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+
+    Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $false -Message "A full inn stay should reset the once-per-day ring lockout."
 }
 
 Test-HeroCanBuyFromTownShop
@@ -117,5 +131,6 @@ Test-InnStayChargesGoldAndHealsHero
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-RingTrainingUnlocksUnarmedBonus
+Test-InnStayResetsDailyRingLockout
 
 Write-Host "Town shop tests passed." -ForegroundColor Green
