@@ -104,7 +104,7 @@ function Write-Scene {
     )
 
     foreach ($line in Split-DisplayText -Text $Text) {
-        Write-TypeLine -Text ("  " + $line) -Delay 35 -Color "DarkMagenta"
+        Write-TypeLine -Text ("  " + $line) -Delay 35 -Color "Gray"
     }
 }
 

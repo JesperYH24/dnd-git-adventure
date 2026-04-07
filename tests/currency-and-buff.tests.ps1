@@ -33,16 +33,16 @@ function Set-TestOutputStubs {
     function global:Write-EmphasisLine { param([string]$Text, [string]$Color) }
 }
 
-function Test-GoldPouchCapsAtOneHundredGP {
+function Test-GoldPouchCapsAtOneHundredFiftyGP {
     $hero = Get-Hero
 
-    $firstAdd = Add-HeroCurrency -Hero $hero -Denomination "GP" -Amount 100
+    $firstAdd = Add-HeroCurrency -Hero $hero -Denomination "GP" -Amount 150
     $secondAdd = Add-HeroCurrency -Hero $hero -Denomination "GP" -Amount 5
 
-    Assert-Equal -Actual $firstAdd.StoredCopper -Expected 10000 -Message "The gold pouch should hold 100 GP."
-    Assert-Equal -Actual $secondAdd.StoredCopper -Expected 0 -Message "The pouch should be full after 100 GP."
+    Assert-Equal -Actual $firstAdd.StoredCopper -Expected 15000 -Message "The gold pouch should hold 150 GP."
+    Assert-Equal -Actual $secondAdd.StoredCopper -Expected 0 -Message "The pouch should be full after 150 GP."
     Assert-Equal -Actual $secondAdd.LeftoverCopper -Expected 500 -Message "Extra GP should be left over when the pouch is full."
-    Assert-Equal -Actual $hero.CurrencyCopper -Expected 10000 -Message "Stored currency should stay capped at 100 GP."
+    Assert-Equal -Actual $hero.CurrencyCopper -Expected 15000 -Message "Stored currency should stay capped at 150 GP."
 }
 
 function Test-HasteBuffGrantsInitiativeAdvantage {
@@ -84,7 +84,7 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "The monster should not start if haste lets the hero win initiative."
 }
 
-Test-GoldPouchCapsAtOneHundredGP
+Test-GoldPouchCapsAtOneHundredFiftyGP
 Test-HasteBuffGrantsInitiativeAdvantage
 
 Write-Host "Currency and buff tests passed." -ForegroundColor Green

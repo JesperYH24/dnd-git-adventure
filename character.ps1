@@ -527,7 +527,7 @@ function Get-Hero {
         Level              = 1
         LevelCap           = 2
         XP                 = 0
-        GoldPouchCapacityGP = 100
+        GoldPouchCapacityGP = 150
         CurrencyCopper     = 0
         ActiveBuff         = $null
         HitDie             = 12

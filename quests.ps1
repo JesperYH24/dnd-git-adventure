@@ -16,7 +16,7 @@ function Show-QuestLog {
     Write-ColorLine ""
     Write-ColorLine "===== QUEST LOG =====" "Yellow"
     Write-ColorLine $Quest.Name "White"
-    Write-ColorLine $Quest.Description "Gray"
+    Write-ColorLine $Quest.Description "DarkGray"
     Write-ColorLine "Objective: $($Quest.Objective)" "White"
     Write-ColorLine "Status: $status" "Cyan"
 
