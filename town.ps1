@@ -1494,6 +1494,69 @@ function Resolve-InnStay {
     return $true
 }
 
+function Resolve-InnBookingCancellation {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+
+    if ($null -eq $inn) {
+        Write-Scene "Borzig does not currently have a room booked."
+        Write-ColorLine ""
+        return $false
+    }
+
+    if ($Game.Hero.StashedInventory.Count -gt 0) {
+        Write-Scene "$($inn.Keeper) folds their arms and points toward the room chest."
+        Write-Scene "'Clear out your stored gear before you give up the room,' the keeper says."
+        Write-ColorLine ""
+        return $false
+    }
+
+    Write-Scene "$($inn.Keeper) nods once and scratches Borzig's name off the room ledger."
+    Write-Scene "$($Game.Hero.Name) is no longer booked at $($inn.Name)."
+    Write-ColorLine ""
+    $Game.Town.ActiveInn = $null
+    return $true
+}
+
+function Start-InnkeeperMenu {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+
+    while ($true) {
+        Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
+        Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
+        Write-ColorLine ""
+        Write-ColorLine "1. Keep the room" "White"
+        Write-ColorLine "2. Cancel the booking" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene "$($inn.Keeper) gives a short nod and leaves the room booked under Borzig's name."
+                Write-ColorLine ""
+                return "Keep"
+            }
+            "2" {
+                if (Resolve-InnBookingCancellation -Game $Game) {
+                    return "Cancelled"
+                }
+            }
+            "0" {
+                return "Back"
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-InnMenu {
     param(
         $Game,
@@ -1514,7 +1577,8 @@ function Start-InnMenu {
         Write-ColorLine "3. Check quest log" "White"
         Write-ColorLine "4. Spend time in the common room" "White"
         Write-ColorLine "5. Manage stored gear" "White"
-        Write-ColorLine "6. Return to the city streets" "White"
+        Write-ColorLine "6. Speak with the innkeeper" "White"
+        Write-ColorLine "7. Return to the city streets" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1538,6 +1602,13 @@ function Start-InnMenu {
                 Start-InnStorageMenu -Hero $Game.Hero
             }
             "6" {
+                $innkeeperResult = Start-InnkeeperMenu -Game $Game
+
+                if ($innkeeperResult -eq "Cancelled") {
+                    return "BookingCancelled"
+                }
+            }
+            "7" {
                 return "BackToTown"
             }
             default {
@@ -1555,6 +1626,13 @@ function Start-InnSelectionMenu {
     )
 
     $inns = Get-TownInns
+
+    if ($null -ne $Game.Town.ActiveInn) {
+        Write-Scene "$($Game.Hero.Name) already has a room at $($Game.Town.ActiveInn.Name)."
+        Write-Scene "If he wants to move, he needs to speak with the keeper and cancel that booking first."
+        Write-ColorLine ""
+        return "AlreadyBooked"
+    }
 
     while ($true) {
         Write-SectionTitle -Text "Find Lodging" -Color "Yellow"
@@ -1638,7 +1716,9 @@ function Start-TownMenu {
         Write-ColorLine "7. Visit your room" "White"
         Write-ColorLine "8. Check inventory" "White"
         Write-ColorLine "9. Check quest log" "White"
-        Write-ColorLine "L. Find lodging for the night" "White"
+        if ($null -eq $Game.Town.ActiveInn) {
+            Write-ColorLine "L. Find lodging for the night" "White"
+        }
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine ""
 

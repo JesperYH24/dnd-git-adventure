@@ -142,6 +142,46 @@ function Test-StashCanStoreAndRetrieveGear {
     Assert-Equal -Actual $hero.StashedInventory.Count -Expected 0 -Message "Retrieving should remove the item from inn storage."
 }
 
+function Test-CannotChooseNewInnWhileBooked {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    $result = Start-InnSelectionMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $result -Expected "AlreadyBooked" -Message "A booked hero should not be offered a new inn until the current room is cancelled."
+    Assert-Equal -Actual $game.Town.ActiveInn.Id -Expected "lantern_rest" -Message "The current inn booking should remain active."
+}
+
+function Test-CannotCancelInnBookingWithStoredGear {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    Move-InventoryItemToStash -Hero $game.Hero -InventoryIndex 0
+    $cancelled = Resolve-InnBookingCancellation -Game $game
+
+    Assert-Equal -Actual $cancelled -Expected $false -Message "A booking should not be cancellable while stored gear is still in the room chest."
+    Assert-Equal -Actual $game.Town.ActiveInn.Id -Expected "lantern_rest" -Message "The inn booking should remain active when storage is not empty."
+}
+
+function Test-CanCancelInnBookingWhenStorageIsEmpty {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    $cancelled = Resolve-InnBookingCancellation -Game $game
+
+    Assert-Equal -Actual $cancelled -Expected $true -Message "The hero should be able to cancel an inn booking when storage is empty."
+    Assert-Equal -Actual $game.Town.ActiveInn -Expected $null -Message "Cancelling a booking should clear the active inn."
+}
+
 function Test-ShopMentionsStashOrSellWhenFull {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -184,6 +224,9 @@ Test-TownQuestCanBeAcceptedOnce
 Test-RingTrainingUnlocksUnarmedBonus
 Test-InnStayResetsDailyRingLockout
 Test-StashCanStoreAndRetrieveGear
+Test-CannotChooseNewInnWhileBooked
+Test-CannotCancelInnBookingWithStoredGear
+Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-ShopMentionsStashOrSellWhenFull
 Test-BentNailShadyInfoIsRemembered
 Test-SilverKettleEconomicInfoSetsFutureHook
