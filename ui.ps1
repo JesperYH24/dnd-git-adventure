@@ -44,6 +44,10 @@ function Toggle-TextSpeed {
     return $newValue
 }
 
+function Write-TextSpeedOption {
+    Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+}
+
 function Get-TypewriterInputAction {
     try {
         if (-not [Console]::KeyAvailable) {

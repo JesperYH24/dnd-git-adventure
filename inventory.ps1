@@ -193,7 +193,7 @@ function Open-InventoryMenu {
         }
 
         Write-ColorLine "0. Back" "DarkGray"
-        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+        Write-TextSpeedOption
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose item number").ToUpper()
@@ -234,7 +234,7 @@ function Open-InventoryMenu {
 
         Write-ColorLine "D. Drop" "White"
         Write-ColorLine "B. Back" "DarkGray"
-        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+        Write-TextSpeedOption
         Write-ColorLine ""
 
         $action = (Read-Host "Choose action").ToUpper()

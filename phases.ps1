@@ -100,7 +100,7 @@ function Start-CampfireMenu {
         Write-ColorLine "2. Enter the cave" "White"
         Write-ColorLine "3. Head to town" "White"
         Write-ColorLine "4. Check quest log" "White"
-        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+        Write-TextSpeedOption
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
