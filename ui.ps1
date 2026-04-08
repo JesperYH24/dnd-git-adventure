@@ -57,7 +57,7 @@ function Get-TypewriterInputAction {
         $key = [Console]::ReadKey($true)
 
         if ($key.Key -eq [ConsoleKey]::Enter) {
-            return "SkipLine"
+            return "SkipBlock"
         }
 
         if ($key.Key -eq [ConsoleKey]::Spacebar -or $key.Key -eq [ConsoleKey]::S) {
@@ -123,7 +123,7 @@ function Write-TypeLine {
 
     if (Get-FastTextEnabled) {
         Write-Host $Text -ForegroundColor $Color
-        return
+        return ""
     }
 
     $characters = $Text.ToCharArray()
@@ -133,7 +133,7 @@ function Write-TypeLine {
 
         $action = Get-TypewriterInputAction
 
-        if ($action -eq "SkipLine" -or $action -eq "ToggleFastText") {
+        if ($action -eq "SkipBlock" -or $action -eq "ToggleFastText") {
             if ($i -lt ($characters.Length - 1)) {
                 Write-Host -NoNewline (-join $characters[($i + 1)..($characters.Length - 1)]) -ForegroundColor $Color
             }
@@ -150,7 +150,7 @@ function Write-TypeLine {
 
             $action = Get-TypewriterInputAction
 
-            if ($action -eq "SkipLine" -or $action -eq "ToggleFastText") {
+            if ($action -eq "SkipBlock" -or $action -eq "ToggleFastText") {
                 if ($i -lt ($characters.Length - 1)) {
                     Write-Host -NoNewline (-join $characters[($i + 1)..($characters.Length - 1)]) -ForegroundColor $Color
                 }
@@ -162,6 +162,27 @@ function Write-TypeLine {
     }
 
     Write-Host ""
+    return $action
+}
+
+function Write-TypeBlock {
+    param(
+        [string[]]$Lines,
+        [int]$Delay,
+        [string]$Color
+    )
+
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        $action = Write-TypeLine -Text $Lines[$i] -Delay $Delay -Color $Color
+
+        if ($action -eq "SkipBlock") {
+            for ($remainingIndex = $i + 1; $remainingIndex -lt $Lines.Count; $remainingIndex++) {
+                Write-Host $Lines[$remainingIndex] -ForegroundColor $Color
+            }
+
+            return
+        }
+    }
 }
 
 function Write-SectionTitle {
@@ -196,9 +217,8 @@ function Write-Scene {
         [string]$Text
     )
 
-    foreach ($line in Split-DisplayText -Text $Text) {
-        Write-TypeLine -Text ("  " + $line) -Delay 35 -Color "Gray"
-    }
+    $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
+    Write-TypeBlock -Lines $lines -Delay 35 -Color "Gray"
 }
 
 function Write-Action {
@@ -207,9 +227,8 @@ function Write-Action {
         [string]$Color = "White"
     )
 
-    foreach ($line in Split-DisplayText -Text $Text) {
-        Write-TypeLine -Text ("  " + $line) -Delay 16 -Color $Color
-    }
+    $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
+    Write-TypeBlock -Lines $lines -Delay 16 -Color $Color
 }
 
 function Write-ColorLine {
