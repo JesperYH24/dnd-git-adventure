@@ -11,6 +11,9 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 1
             GrappleBonus = 4
+            GrappleChance = 45
+            FocusChance = 5
+            BlockChance = 5
             Intro = "A square-shouldered dockhand cracks his knuckles and grins through a split lip. Vero fights to drag people down, not just trade punches."
         }
         [PSCustomObject]@{
@@ -23,7 +26,25 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 1
             GrappleBonus = 1
+            GrappleChance = 10
+            FocusChance = 15
+            BlockChance = 20
             Intro = "Nella rolls her neck once and comes in light on her feet, slipping in and out before most fighters can plant for a counter."
+        }
+        [PSCustomObject]@{
+            Name = "Coal-Fist Bren"
+            Definite = "Coal-Fist Bren"
+            Tier = 1
+            ArmorClass = 12
+            HP = 9
+            AttackBonus = 2
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 2
+            GrappleChance = 15
+            FocusChance = 5
+            BlockChance = 5
+            Intro = "Bren comes in with soot still on his forearms, throwing short, ugly punches that land harder than they should."
         }
         [PSCustomObject]@{
             Name = "Pit Runner Sella"
@@ -35,6 +56,9 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 1
             GrappleBonus = 2
+            GrappleChance = 10
+            FocusChance = 20
+            BlockChance = 15
             Intro = "Sella circles lightly on her feet, measuring Borzig with the patience of someone used to tiring out bigger foes."
         }
         [PSCustomObject]@{
@@ -47,7 +71,25 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 3
             GrappleBonus = 2
+            GrappleChance = 10
+            FocusChance = 0
+            BlockChance = 0
             Intro = "Harven spits blood into the sand and beckons Borzig closer with a broken grin. He is slower than most, but every clean hit lands heavy."
+        }
+        [PSCustomObject]@{
+            Name = "Latchhook Vessa"
+            Definite = "Latchhook Vessa"
+            Tier = 2
+            ArmorClass = 13
+            HP = 11
+            AttackBonus = 3
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 4
+            GrappleChance = 35
+            FocusChance = 5
+            BlockChance = 10
+            Intro = "Vessa prowls in close, hunting wrists and elbows with the calm patience of someone who likes winning on the ground."
         }
         [PSCustomObject]@{
             Name = "Ironjaw Marn"
@@ -59,6 +101,9 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 2
             GrappleBonus = 5
+            GrappleChance = 30
+            FocusChance = 5
+            BlockChance = 10
             Intro = "Ironjaw Marn steps into the lantern light to a chorus of shouts. The crowd knows him, and that alone is warning enough."
         }
         [PSCustomObject]@{
@@ -71,7 +116,25 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 2
             GrappleBonus = 4
+            GrappleChance = 20
+            FocusChance = 20
+            BlockChance = 20
             Intro = "Torh says nothing at all. He only plants his feet and raises his hands, which somehow feels worse."
+        }
+        [PSCustomObject]@{
+            Name = "Stonewall Hedd"
+            Definite = "Stonewall Hedd"
+            Tier = 3
+            ArmorClass = 16
+            HP = 14
+            AttackBonus = 3
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 4
+            GrappleChance = 15
+            FocusChance = 10
+            BlockChance = 35
+            Intro = "Hedd steps forward behind a tight guard, looking less like a brawler and more like a wall that learned to punch back."
         }
         [PSCustomObject]@{
             Name = "Champion Breaker Ysold"
@@ -83,6 +146,9 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 3
             GrappleBonus = 5
+            GrappleChance = 30
+            FocusChance = 15
+            BlockChance = 15
             Intro = "Ysold steps through the ropes with the relaxed calm of someone who has ended more than one local legend."
         }
         [PSCustomObject]@{
@@ -95,7 +161,25 @@ function Get-RingOpponentPool {
             DamageDiceSides = 4
             DamageBonus = 2
             GrappleBonus = 3
+            GrappleChance = 10
+            FocusChance = 25
+            BlockChance = 20
             Intro = "Renn is unarmed tonight, but every step still looks like he learned to survive by never being where the blow lands."
+        }
+        [PSCustomObject]@{
+            Name = "Chainbreaker Odo"
+            Definite = "Chainbreaker Odo"
+            Tier = 4
+            ArmorClass = 15
+            HP = 18
+            AttackBonus = 4
+            DamageDiceSides = 4
+            DamageBonus = 3
+            GrappleBonus = 6
+            GrappleChance = 45
+            FocusChance = 5
+            BlockChance = 10
+            Intro = "Odo rolls his shoulders once and smiles without warmth. He fights like a man who believes every match should end in a takedown."
         }
     )
 }
@@ -119,6 +203,7 @@ function Get-RingOpponents {
         }
     }
 
+    # Even within the tier ladder, swap the faces enough that repeated tournaments do not feel scripted.
     return $selected
 }
 
@@ -159,19 +244,25 @@ function Invoke-HeroBrawlAttack {
         $Hero,
         $Opponent,
         [ref]$OpponentHP,
-        [int]$AttackBonusModifier = 0
+        [int]$AttackBonusModifier = 0,
+        [int]$TargetArmorBonus = 0
     )
 
     $profile = Get-HeroUnarmedProfile -Hero $Hero
     $roll = Roll-Dice -Sides 20
     $total = $roll + $profile.TotalAttackBonus + $AttackBonusModifier
     $bonusText = ""
+    $targetArmorClass = $Opponent.ArmorClass + $TargetArmorBonus
 
     if ($AttackBonusModifier -gt 0) {
         $bonusText = " (+$AttackBonusModifier focus)"
     }
 
-    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total$bonusText vs AC $($Opponent.ArmorClass)" "Cyan"
+    if ($TargetArmorBonus -gt 0) {
+        $bonusText += " against guarded AC"
+    }
+
+    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
@@ -183,7 +274,7 @@ function Invoke-HeroBrawlAttack {
     elseif ($roll -eq 1) {
         Write-Action "$($Hero.Name) overcommits and stumbles wide." "DarkGray"
     }
-    elseif ($total -ge $Opponent.ArmorClass) {
+    elseif ($total -ge $targetArmorClass) {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $profile
         $damage = [Math]::Max(1, $damageRoll + $profile.DamageBonus)
         $OpponentHP.Value -= $damage
@@ -205,28 +296,32 @@ function Invoke-OpponentBrawlAttack {
         $Hero,
         $Opponent,
         [ref]$HeroHP,
-        [int]$BlockArmorBonus = 0
+        [int]$BlockArmorBonus = 0,
+        [int]$AttackBonusModifier = 0
     )
 
     # Ring bouts use Borzig's current defensive gear baseline, with Block temporarily raising it.
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $roll = Roll-Dice -Sides 20
-    $total = $roll + $Opponent.AttackBonus
+    $total = $roll + $Opponent.AttackBonus + $AttackBonusModifier
     $blockText = ""
 
     if ($BlockArmorBonus -gt 0) {
         $blockText = " (including +$BlockArmorBonus block)"
     }
 
+    if ($AttackBonusModifier -gt 0) {
+        $blockText += " (+$AttackBonusModifier focus)"
+    }
+
     Write-Action "$($Opponent.Definite) throws a punch: roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($roll -eq 20) {
-        $firstDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
         $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
-        $damage = $firstDamage + $secondDamage + $Opponent.DamageBonus
+        $damage = $Opponent.DamageDiceSides + $secondDamage + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Opponent.Definite) crashes through Borzig's guard for $damage damage! ($firstDamage + $secondDamage + $($Opponent.DamageBonus))" "Yellow"
+        Write-Action "$($Opponent.Definite) crashes through Borzig's guard for $damage damage! ($($Opponent.DamageDiceSides) + $secondDamage + $($Opponent.DamageBonus))" "Yellow"
     }
     elseif ($roll -eq 1) {
         Write-Action "$($Opponent.Definite) slips and loses the angle." "DarkGray"
@@ -246,6 +341,73 @@ function Invoke-OpponentBrawlAttack {
     }
 
     Write-ColorLine ""
+}
+
+function Resolve-OpponentBrawlGrapple {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$HeroHP,
+        [ref]$HeroOffBalance
+    )
+
+    $heroAbility = Get-HeroBrawlAbility -Hero $Hero
+    $heroModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $heroAbility
+    $trainingBonus = 0
+
+    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+        $trainingBonus = [int]$Hero.UnarmedTrainingLevel
+    }
+
+    $opponentGrappleBonus = [int]$Opponent.GrappleBonus
+    $heroRoll = Roll-Dice -Sides 20
+    $opponentRoll = Roll-Dice -Sides 20
+    $heroTotal = $heroRoll + $heroModifier + $trainingBonus
+    $opponentTotal = $opponentRoll + $opponentGrappleBonus
+
+    Write-Action "$($Opponent.Definite) lunges for a takedown: roll $opponentRoll, total $opponentTotal" "DarkCyan"
+    Write-Action "$($Hero.Name) braces against it: roll $heroRoll, total $heroTotal" "Cyan"
+
+    if ($opponentRoll -eq 20 -or ($heroRoll -ne 20 -and $opponentTotal -ge $heroTotal)) {
+        $controlDamage = [Math]::Max(1, 1 + $Opponent.DamageBonus)
+        $HeroHP.Value -= $controlDamage
+        $HeroOffBalance.Value = $true
+        Write-Action "$($Opponent.Definite) drags Borzig down for $controlDamage damage and steals the next beat of the fight!" "Yellow"
+
+        if ($HeroHP.Value -lt 0) {
+            $HeroHP.Value = 0
+        }
+
+        Write-ColorLine ""
+        return $true
+    }
+
+    Write-Action "$($Opponent.Definite) fails to secure the hold." "DarkGray"
+    Write-ColorLine ""
+    return $false
+}
+
+function Get-OpponentBrawlAction {
+    param($Opponent)
+
+    $roll = Roll-Dice -Sides 100
+    $grappleChance = [int]$Opponent.GrappleChance
+    $focusChance = [int]$Opponent.FocusChance
+    $blockChance = [int]$Opponent.BlockChance
+
+    if ($roll -le $grappleChance) {
+        return "G"
+    }
+
+    if ($roll -le ($grappleChance + $focusChance)) {
+        return "F"
+    }
+
+    if ($roll -le ($grappleChance + $focusChance + $blockChance)) {
+        return "B"
+    }
+
+    return "P"
 }
 
 function Resolve-HeroBrawlGrapple {
@@ -312,6 +474,9 @@ function Start-BrawlLoop {
     $opponentOffBalance = $false
     $heroBlockArmorBonus = 0
     $heroFocusAttackBonus = 0
+    $heroOffBalance = $false
+    $opponentBlockArmorBonus = 0
+    $opponentFocusAttackBonus = 0
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene $Opponent.Intro
@@ -355,8 +520,9 @@ function Start-BrawlLoop {
             Resolve-HeroBrawlGrapple -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -OpponentOffBalance ([ref]$opponentOffBalance) | Out-Null
         }
         else {
-            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus
+            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus $opponentBlockArmorBonus
             $heroFocusAttackBonus = 0
+            $opponentBlockArmorBonus = 0
         }
 
         if ($opponentHP -le 0) {
@@ -370,7 +536,36 @@ function Start-BrawlLoop {
             $opponentOffBalance = $false
         }
         else {
-            Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -BlockArmorBonus $heroBlockArmorBonus
+            $opponentChoice = Get-OpponentBrawlAction -Opponent $Opponent
+
+            if ($heroOffBalance) {
+                Write-Scene "$($Hero.Name) is still trying to recover footing and loses the chance to punish the next move."
+                Write-ColorLine ""
+                $heroOffBalance = $false
+            }
+
+            switch ($opponentChoice) {
+                "B" {
+                    Write-Scene "$($Opponent.Definite) tightens up behind a careful guard."
+                    $opponentBlockArmorBonus = 2
+                    Write-Action "$($Opponent.Definite) gains +2 AC against the next bare-handed strike." "Yellow"
+                    Write-ColorLine ""
+                }
+                "F" {
+                    Write-Scene "$($Opponent.Definite) watches Borzig's timing and waits for a cleaner opening."
+                    $opponentFocusAttackBonus = 2
+                    Write-Action "$($Opponent.Definite) gains +2 to hit on the next punch." "Yellow"
+                    Write-ColorLine ""
+                }
+                "G" {
+                    Resolve-OpponentBrawlGrapple -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -HeroOffBalance ([ref]$heroOffBalance) | Out-Null
+                }
+                default {
+                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -BlockArmorBonus $heroBlockArmorBonus -AttackBonusModifier $opponentFocusAttackBonus
+                    $opponentFocusAttackBonus = 0
+                }
+            }
+
             $heroBlockArmorBonus = 0
         }
 

@@ -43,7 +43,7 @@ function Show-TownQuestSource {
     )
 
     while ($true) {
-        $quests = Get-TownQuestList -Game $Game -Source $Source
+        $quests = @(Get-TownQuestList -Game $Game -Source $Source)
         Write-SectionTitle -Text $Title -Color "Yellow"
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""

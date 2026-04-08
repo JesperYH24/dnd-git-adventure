@@ -60,9 +60,58 @@ function Test-UnarmedProfileIgnoresWeaponAttackBonus {
     Assert-Equal -Actual $unarmed.TotalAttackBonus -Expected 4 -Message "Bare-handed attacks should use proficiency and ability, not weapon attack bonuses."
 }
 
+function Test-OpponentCritUsesMaxDiePlusRolledDie {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $heroHP = 20
+    $opponent = [PSCustomObject]@{
+        Name = "Test Bruiser"
+        Definite = "Test Bruiser"
+        ArmorClass = 12
+        HP = 10
+        AttackBonus = 2
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 2
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(20)
+    $script:rollQueue.Enqueue(3)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return $script:rollQueue.Dequeue()
+    }
+
+    Invoke-OpponentBrawlAttack -Hero $hero -Opponent $opponent -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $heroHP -Expected 12 -Message "Opponent crits should deal max die + rolled die + modifier."
+}
+
+function Test-GrappleHeavyOpponentCanChooseGrapple {
+    $opponent = [PSCustomObject]@{
+        GrappleChance = 45
+        FocusChance = 5
+        BlockChance = 5
+    }
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 10
+    }
+
+    $choice = Get-OpponentBrawlAction -Opponent $opponent
+
+    Assert-Equal -Actual $choice -Expected "G" -Message "A grapple-heavy opponent should sometimes choose a grapple."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
 Test-UnarmedProfileIgnoresWeaponAttackBonus
+Test-OpponentCritUsesMaxDiePlusRolledDie
+Test-GrappleHeavyOpponentCanChooseGrapple
 
 Write-Host "Ring tests passed." -ForegroundColor Green
