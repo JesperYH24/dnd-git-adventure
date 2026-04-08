@@ -30,6 +30,31 @@ function Test-InnStayResetsDailyRingLockout {
     Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $false -Message "A full inn stay should reset the once-per-day ring lockout."
 }
 
+function Test-BookedInnNightRestResetsDailySystems {
+    $game = Initialize-Game
+    $heroHP = 5
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+
+    $game.Town.Ring.FoughtToday = $true
+    $game.Hero.ActiveBuff = [PSCustomObject]@{
+        Name = "Potion of Haste"
+        Type = "Haste"
+        InitiativeAdvantage = $true
+    }
+    $heroHP = 3
+
+    $rested = Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $rested -Expected $true -Message "A booked room should allow a normal night of rest."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 100 -Message "A repeat night should charge the inn price again."
+    Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $false -Message "A booked-room rest should reset the daily ring lockout."
+    Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "A booked-room rest should restore the hero to full HP."
+    Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "A booked-room rest should clear lingering buffs."
+}
+
 function Test-StashCanStoreAndRetrieveGear {
     $hero = Get-Hero
     $startingInventoryCount = $hero.Inventory.Count
@@ -88,6 +113,7 @@ function Test-CanCancelInnBookingWhenStorageIsEmpty {
 
 Test-InnStayChargesGoldAndHealsHero
 Test-InnStayResetsDailyRingLockout
+Test-BookedInnNightRestResetsDailySystems
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear

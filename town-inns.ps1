@@ -392,6 +392,39 @@ function Resolve-InnStay {
     return $true
 }
 
+function Resolve-BookedInnNightRest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $inn = $Game.Town.ActiveInn
+
+    if ($null -eq $inn) {
+        Write-Scene "Borzig has no room to return to tonight."
+        Write-ColorLine ""
+        return $false
+    }
+
+    $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $inn.PriceCopper
+
+    if (-not $spendResult.Success) {
+        Write-Scene "$($Game.Hero.Name) does not have enough coin to cover another night at $($inn.Name)."
+        Write-ColorLine ""
+        return $false
+    }
+
+    Write-Scene "$($Game.Hero.Name) closes the shutters, pays for another night, and lets the city fade to a muffled hum beyond the walls."
+    Write-Scene (Get-InnRepeatRestText -Inn $inn)
+    Clear-HeroBuff -Hero $Game.Hero
+    $HeroHP.Value = $Game.Hero.HP
+    $Game.Town.Ring.FoughtToday = $false
+    Write-Scene "A full night's rest restores Borzig to full health, clears the day from his head, and resets the city for morning."
+    Write-ColorLine ""
+
+    return $true
+}
+
 function Resolve-InnBookingCancellation {
     param($Game)
 
@@ -483,13 +516,14 @@ function Start-InnMenu {
         Write-ColorLine "Inn: $($inn.Name) | Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
-        Write-ColorLine "1. Rest for the night and end the adventure for now" "White"
+        Write-ColorLine "1. Rest for the night" "White"
         Write-ColorLine "2. Check inventory" "White"
         Write-ColorLine "3. Check quest log" "White"
         Write-ColorLine "4. Spend time in the common room" "White"
         Write-ColorLine "5. Manage stored gear" "White"
         Write-ColorLine "6. Speak with the innkeeper" "White"
         Write-ColorLine "7. Return to the city streets" "White"
+        Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
@@ -497,6 +531,9 @@ function Start-InnMenu {
 
         switch ($choice) {
             "1" {
+                Resolve-BookedInnNightRest -Game $Game -HeroHP $HeroHP | Out-Null
+            }
+            "0" {
                 Write-Scene "$($Game.Hero.Name) bars the door, sets down the weight of the day, and lets sleep finally claim him."
                 $Game.GameWon = $true
                 return "EndGame"
