@@ -4,6 +4,35 @@
 . "$PSScriptRoot\\town-ring.ps1"
 . "$PSScriptRoot\\town-inns.ps1"
 
+function Get-TownSourceVisitKey {
+    param([string]$Source)
+
+    return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
+}
+
+function Get-TownQuestSourceIntroText {
+    param(
+        [string]$Source,
+        [string]$DefaultIntroText,
+        $Game
+    )
+
+    $visitKey = Get-TownSourceVisitKey -Source $Source
+    $isRepeatVisit = [bool]$Game.Town.StreetFlags[$visitKey]
+
+    if (-not $isRepeatVisit) {
+        $Game.Town.StreetFlags[$visitKey] = $true
+        return $DefaultIntroText
+    }
+
+    switch ($Source) {
+        "Quest Board" { return "The board looks thinner now, but there is still work on it for anyone willing to take the coin." }
+        "Guard Station" { return "The watch hall is busier than it looks. Hard jobs are passed quietly from one tired hand to the next." }
+        "Quest Giver" { return "The patron's clerk recognizes Borzig now and reaches for the stack of private work without wasting words." }
+        default { return $DefaultIntroText }
+    }
+}
+
 function Show-TownQuestSource {
     param(
         [string]$Title,
@@ -16,8 +45,31 @@ function Show-TownQuestSource {
     while ($true) {
         $quests = Get-TownQuestList -Game $Game -Source $Source
         Write-SectionTitle -Text $Title -Color "Yellow"
-        Write-Scene $IntroText
+        Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
+
+        if ($Source -eq "Guard Station") {
+            $watchQuest = $quests | Where-Object { $_.Id -eq "guard_night_watch" } | Select-Object -First 1
+
+            if ($null -ne $watchQuest) {
+                if ($watchQuest.Completed) {
+                    Write-EmphasisLine -Text "Night Watch Relief stands completed on the station ledger." -Color "Green"
+                }
+                elseif ($watchQuest.Accepted) {
+                    Write-EmphasisLine -Text "Night Watch Relief is ready to start from the guard station." -Color "Yellow"
+                }
+                else {
+                    Write-EmphasisLine -Text "Available guard assignment: Night Watch Relief." -Color "Yellow"
+                }
+
+                Write-ColorLine ""
+            }
+        }
+
+        if ($quests.Count -eq 0) {
+            Write-Scene "No work is posted here right now."
+            Write-ColorLine ""
+        }
 
         for ($i = 0; $i -lt $quests.Count; $i++) {
             $quest = $quests[$i]
@@ -133,8 +185,15 @@ function Start-TownMenu {
 
         Write-ColorLine ""
         Write-ColorLine "===== TOWN =====" "Yellow"
-        Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
-        Write-Scene "The city no longer feels like refuge alone. It feels like a place where the next chapter might actually begin."
+
+        if (-not $Game.Town.StreetFlags["TownMenuVisited"]) {
+            Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
+            Write-Scene "The city no longer feels like refuge alone. It feels like a place where the next chapter might actually begin."
+            $Game.Town.StreetFlags["TownMenuVisited"] = $true
+        }
+        else {
+            Write-Scene "The city is awake around Borzig again, full of noise, work, and the feeling that something below it still has not settled."
+        }
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Walk the streets" "White"

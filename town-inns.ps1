@@ -366,7 +366,7 @@ function Resolve-InnStay {
     $Game.Town.MustChooseFirstInn = $false
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
-    Write-Scene (Get-InnKeeperGreeting -Inn $Inn -Hero $Game.Hero)
+    Write-Scene (Get-InnKeeperGreeting -Inn $Inn -Hero $Game.Hero -RepeatVisit $false)
     Write-EmphasisLine -Text "$($Game.Hero.Name) pays $(Convert-CopperToCurrencyText -Copper $Inn.PriceCopper) for a $($Inn.Quality.ToLower()) room." -Color "Yellow"
     Resolve-InnEvent -Game $Game -HeroHP $HeroHP -Inn $Inn -EventRoll $EventRoll
     Clear-HeroBuff -Hero $Game.Hero
@@ -425,7 +425,10 @@ function Start-InnkeeperMenu {
     while ($true) {
         Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
         Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
-        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero)
+        $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
+        $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
+        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
+        $Game.Town.InnFlags[$metInnkeeperKey] = $true
         Write-ColorLine ""
         Write-ColorLine "1. Keep the room" "White"
         Write-ColorLine "2. Cancel the booking" "White"
@@ -467,7 +470,16 @@ function Start-InnMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== INN ROOM =====" "Yellow"
-        Write-Scene "Borzig's room at $($inn.Name) is modestly lit, closed off from the street below, and blessedly still."
+        $roomVisitKey = "InnRoomVisited_$($inn.Id)"
+
+        if (-not $Game.Town.InnFlags[$roomVisitKey]) {
+            Write-Scene "Borzig's room at $($inn.Name) is modestly lit, closed off from the street below, and blessedly still."
+            $Game.Town.InnFlags[$roomVisitKey] = $true
+        }
+        else {
+            Write-Scene "Borzig's room at $($inn.Name) waits in welcome silence above the city's noise."
+        }
+
         Write-ColorLine "Inn: $($inn.Name) | Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"

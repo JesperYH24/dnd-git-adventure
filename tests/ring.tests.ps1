@@ -31,7 +31,38 @@ function Test-RingMasterRespectsPhysicalProwess {
     Assert-True -Condition ($rogueGreeting -like "*Fast feet survive longer*") -Message "The ring master should notice quick fighters differently."
 }
 
+function Test-RingChampionUnlocksHarderCircuit {
+    $hero = Get-Hero
+    $hero.RingWinsTotal = 10
+
+    $greeting = Get-RingMasterGreeting -Hero $hero
+    $opponents = Get-RingOpponents -Hero $hero
+
+    Assert-True -Condition ($greeting -like "*Champion's back*") -Message "The ring master should acknowledge a ten-win champion."
+    Assert-Equal -Actual $opponents.Count -Expected 4 -Message "Champion status should unlock a longer ring circuit."
+}
+
+function Test-UnarmedProfileIgnoresWeaponAttackBonus {
+    $hero = Get-Hero
+    $steelAxe = New-WeaponItem -Name "Steel Great Axe" -Value 0 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2
+    $hero.Inventory += $steelAxe
+
+    foreach ($item in $hero.Inventory) {
+        if ($item.Type -eq "Weapon") {
+            $item.Equipped = $false
+        }
+    }
+
+    $steelAxe.Equipped = $true
+
+    $unarmed = Get-HeroUnarmedProfile -Hero $hero
+
+    Assert-Equal -Actual $unarmed.TotalAttackBonus -Expected 4 -Message "Bare-handed attacks should use proficiency and ability, not weapon attack bonuses."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
+Test-RingChampionUnlocksHarderCircuit
+Test-UnarmedProfileIgnoresWeaponAttackBonus
 
 Write-Host "Ring tests passed." -ForegroundColor Green

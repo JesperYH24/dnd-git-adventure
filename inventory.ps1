@@ -121,7 +121,8 @@ function Use-InventoryItem {
         $Item
     )
 
-    if ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
+    # Healing consumables key off their data, not a hard-coded potion name.
+    if ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount -and [int]$Item.HealAmount -gt 0) {
         if ($HeroHP.Value -ge $Hero.HP) {
             Write-Scene "$($Hero.Name) is already at full HP and cannot use $($Item.Name)."
             return $false

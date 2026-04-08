@@ -35,13 +35,18 @@ function Get-HeroTownPersona {
 function Get-InnKeeperGreeting {
     param(
         $Inn,
-        $Hero
+        $Hero,
+        [bool]$RepeatVisit = $false
     )
 
     $persona = Get-HeroTownPersona -Hero $Hero
 
     switch ($Inn.Id) {
         "bent_nail" {
+            if ($RepeatVisit) {
+                return "Marta jerks her chin toward the bar. 'Room's still yours if the coin keeps showing up and the trouble stays manageable.'"
+            }
+
             if ($persona.IsBarbarian -or $persona.IsStrong) {
                 return "Marta squints up at Borzig's shoulders and grunts. 'You look like the kind who breaks furniture instead of rules. Pay first and keep the trouble pointed away from my bar.'"
             }
@@ -57,6 +62,10 @@ function Get-InnKeeperGreeting {
             return $Inn.KeeperText
         }
         "lantern_rest" {
+            if ($RepeatVisit) {
+                return "Oren gives Borzig an easy nod. 'Back again. Same room, same clean sheets, same promise that this place stays calmer than most.'"
+            }
+
             if ($persona.IsBardLike -or $persona.IsCharming) {
                 return "Oren's smile comes easier as he sizes Borzig up. 'A good room, a better meal, and company willing to listen if you speak like you mean it. That is what the Lantern Rest is for.'"
             }
@@ -72,6 +81,10 @@ function Get-InnKeeperGreeting {
             return $Inn.KeeperText
         }
         "silver_kettle" {
+            if ($RepeatVisit) {
+                return "Madam Seraphine's smile turns knowing. 'Welcome back. Try not to look surprised that refined company remembers its own.'"
+            }
+
             if ($persona.IsBardLike -or $persona.IsCharming) {
                 return "Madam Seraphine's expression warms at once. 'Ah, there you are. Someone in this city still understands the value of presentation. Recover here, and do try not to make the rest of them look drab.'"
             }
@@ -156,6 +169,23 @@ function Get-RingMasterGreeting {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $ringWins = 0
+
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"]) {
+        $ringWins = [int]$Hero.RingWinsTotal
+    }
+
+    if ($ringWins -ge 10) {
+        return "Ringmaster Dorr slaps the rail hard enough to wake the whole pit. 'Champion's back. Good. The easy money cleared out weeks ago, so now the real challengers come looking for your name.'"
+    }
+
+    if ($ringWins -ge 5) {
+        return "Ringmaster Dorr gives Borzig a harder look than before, half measuring and half approving. 'The crowd knows you now. That means the next lot will come in sharper.'"
+    }
+
+    if ($ringWins -gt 0) {
+        return "Ringmaster Dorr points at Borzig with two thick fingers. 'You're not new anymore. The pit remembers faces that win.'"
+    }
 
     if ($persona.IsStrong -and $persona.IsTough) {
         return "Ringmaster Dorr looks Borzig over and bares his teeth in approval. 'Good. Real shoulders, real lungs, real scars. The crowd knows what to do with that.'"
@@ -245,8 +275,16 @@ function Start-TownStreetScene {
 
     while ($true) {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
-        Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
-        Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
+
+        if (-not $Game.Town.StreetFlags["StreetSceneVisited"]) {
+            Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
+            Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
+            $Game.Town.StreetFlags["StreetSceneVisited"] = $true
+        }
+        else {
+            Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
+        }
+
         Write-ColorLine ""
         Write-ColorLine "1. Speak with Widow Elira" "White"
         Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
@@ -286,94 +324,6 @@ function Start-TownStreetScene {
                 $guardChoice = Read-Host "Choose"
                 Write-Scene (Resolve-BelorChoice -Game $Game -Choice $guardChoice)
                 Write-ColorLine ""
-            }
-            "0" {
-                return
-            }
-            default {
-                Write-ColorLine "Invalid choice. Try again." "Red"
-                Write-ColorLine ""
-            }
-        }
-    }
-}
-
-function Show-TownQuestSource {
-    param(
-        [string]$Title,
-        [string]$IntroText,
-        [string]$Source,
-        $Game
-    )
-
-    while ($true) {
-        $quests = Get-TownQuestList -Game $Game -Source $Source
-        Write-SectionTitle -Text $Title -Color "Yellow"
-        Write-Scene $IntroText
-        Write-ColorLine ""
-
-        for ($i = 0; $i -lt $quests.Count; $i++) {
-            $quest = $quests[$i]
-            $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
-            Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
-            Write-ColorLine "   $($quest.Description)" "DarkGray"
-            Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
-        }
-
-        Write-ColorLine ""
-        Write-ColorLine "0. Back" "DarkGray"
-        Write-ColorLine ""
-
-        $choice = Read-Host "Choose"
-
-        if ($choice -eq "0") {
-            return
-        }
-
-        if ($choice -notmatch '^\d+$') {
-            Write-ColorLine "Choose a listed number." "DarkYellow"
-            Write-ColorLine ""
-            continue
-        }
-
-        $index = [int]$choice - 1
-
-        if ($index -lt 0 -or $index -ge $quests.Count) {
-            Write-ColorLine "That quest is not listed." "DarkYellow"
-            Write-ColorLine ""
-            continue
-        }
-
-        $questResult = Accept-TownQuest -Game $Game -QuestId $quests[$index].Id
-        Write-Scene $questResult.Message
-        Write-ColorLine ""
-    }
-}
-
-function Start-QuestHubMenu {
-    param($Game)
-
-    while ($true) {
-        Write-SectionTitle -Text "Seek Work" -Color "Yellow"
-        Write-Scene "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems."
-        Write-ColorLine ""
-        Write-ColorLine "1. Check the quest board" "White"
-        Write-ColorLine "2. Visit the guard station" "White"
-        Write-ColorLine "3. Speak with the quest giver's clerk" "White"
-        Write-ColorLine "0. Back" "DarkGray"
-        Write-ColorLine ""
-
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                Show-TownQuestSource -Title "Quest Board" -IntroText "Pinned notices flap in the night wind. Most offer coin, some offer trouble, and all of them want someone else to solve a problem." -Source "Quest Board" -Game $Game
-            }
-            "2" {
-                Show-TownQuestSource -Title "Guard Station" -IntroText "The watch hall smells of lamp oil, damp cloaks, and sleepless men. Steady work hangs here, though rarely easy work." -Source "Guard Station" -Game $Game
-            }
-            "3" {
-                Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game
             }
             "0" {
                 return

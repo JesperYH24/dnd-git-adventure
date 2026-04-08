@@ -46,6 +46,25 @@ function Test-BackpackCanBePickedUpAgain {
     Assert-True -Condition (Can-HeroCarryItem -Hero $hero -Item $room.Loot[0]) -Message "The backpack should be pick-up-able even when it is the item that restores carrying capacity."
 }
 
+function Test-LootedPotionsCanBeUsed {
+    function global:Write-Scene { param([string]$Text) }
+
+    $hero = Get-Hero
+    $heroHP = 4
+    $smallPotion = New-ConsumableItem -Name "Small Healing Potion" -Value 10 -HealAmount 4 -SlotCost 1
+    $greaterPotion = New-ConsumableItem -Name "Greater Healing Potion" -Value 25 -HealAmount 12 -SlotCost 1
+
+    $smallUsed = Use-InventoryItem -Hero $hero -HeroHP ([ref]$heroHP) -Item $smallPotion
+    Assert-Equal -Actual $smallUsed -Expected $true -Message "Small Healing Potion should be usable."
+    Assert-Equal -Actual $heroHP -Expected 8 -Message "Small Healing Potion should restore its heal amount."
+
+    $heroHP = 2
+    $greaterUsed = Use-InventoryItem -Hero $hero -HeroHP ([ref]$heroHP) -Item $greaterPotion
+    Assert-Equal -Actual $greaterUsed -Expected $true -Message "Greater Healing Potion should be usable."
+    Assert-Equal -Actual $heroHP -Expected 14 -Message "Greater Healing Potion should restore up to the hero's max HP."
+}
+
 Test-BackpackCanBePickedUpAgain
+Test-LootedPotionsCanBeUsed
 
 Write-Host "Inventory capacity tests passed." -ForegroundColor Green

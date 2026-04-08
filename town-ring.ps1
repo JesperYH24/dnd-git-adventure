@@ -6,81 +6,112 @@ function Get-RingOpponentPool {
             Definite = "Dockhand Vero"
             Tier = 1
             ArmorClass = 11
-            HP = 8
+            HP = 10
             AttackBonus = 2
             DamageDiceSides = 4
             DamageBonus = 1
-            GrappleBonus = 2
-            Intro = "A square-shouldered dockhand cracks his knuckles and grins through a split lip."
+            GrappleBonus = 4
+            Intro = "A square-shouldered dockhand cracks his knuckles and grins through a split lip. Vero fights to drag people down, not just trade punches."
         }
         [PSCustomObject]@{
             Name = "Street Bruiser Nella"
             Definite = "Street Bruiser Nella"
             Tier = 1
-            ArmorClass = 12
+            ArmorClass = 13
             HP = 7
-            AttackBonus = 2
+            AttackBonus = 1
             DamageDiceSides = 4
             DamageBonus = 1
             GrappleBonus = 1
-            Intro = "Nella rolls her neck once and comes in hard, like she expects every problem to break on impact."
+            Intro = "Nella rolls her neck once and comes in light on her feet, slipping in and out before most fighters can plant for a counter."
         }
         [PSCustomObject]@{
             Name = "Pit Runner Sella"
             Definite = "Pit Runner Sella"
             Tier = 2
-            ArmorClass = 12
+            ArmorClass = 14
             HP = 10
             AttackBonus = 3
             DamageDiceSides = 4
             DamageBonus = 1
-            GrappleBonus = 3
+            GrappleBonus = 2
             Intro = "Sella circles lightly on her feet, measuring Borzig with the patience of someone used to tiring out bigger foes."
         }
         [PSCustomObject]@{
             Name = "Gravel-Tooth Harven"
             Definite = "Gravel-Tooth Harven"
             Tier = 2
-            ArmorClass = 12
-            HP = 11
+            ArmorClass = 11
+            HP = 13
             AttackBonus = 3
             DamageDiceSides = 4
-            DamageBonus = 2
+            DamageBonus = 3
             GrappleBonus = 2
-            Intro = "Harven spits blood into the sand and beckons Borzig closer with a broken grin."
+            Intro = "Harven spits blood into the sand and beckons Borzig closer with a broken grin. He is slower than most, but every clean hit lands heavy."
         }
         [PSCustomObject]@{
             Name = "Ironjaw Marn"
             Definite = "Ironjaw Marn"
             Tier = 3
             ArmorClass = 13
-            HP = 12
+            HP = 15
             AttackBonus = 4
             DamageDiceSides = 4
             DamageBonus = 2
-            GrappleBonus = 4
+            GrappleBonus = 5
             Intro = "Ironjaw Marn steps into the lantern light to a chorus of shouts. The crowd knows him, and that alone is warning enough."
         }
         [PSCustomObject]@{
             Name = "Silent Torh"
             Definite = "Silent Torh"
             Tier = 3
-            ArmorClass = 14
-            HP = 11
-            AttackBonus = 4
+            ArmorClass = 15
+            HP = 12
+            AttackBonus = 3
             DamageDiceSides = 4
             DamageBonus = 2
             GrappleBonus = 4
             Intro = "Torh says nothing at all. He only plants his feet and raises his hands, which somehow feels worse."
         }
+        [PSCustomObject]@{
+            Name = "Champion Breaker Ysold"
+            Definite = "Champion Breaker Ysold"
+            Tier = 4
+            ArmorClass = 15
+            HP = 16
+            AttackBonus = 5
+            DamageDiceSides = 4
+            DamageBonus = 3
+            GrappleBonus = 5
+            Intro = "Ysold steps through the ropes with the relaxed calm of someone who has ended more than one local legend."
+        }
+        [PSCustomObject]@{
+            Name = "Quick-Knife Renn"
+            Definite = "Quick-Knife Renn"
+            Tier = 4
+            ArmorClass = 16
+            HP = 14
+            AttackBonus = 4
+            DamageDiceSides = 4
+            DamageBonus = 2
+            GrappleBonus = 3
+            Intro = "Renn is unarmed tonight, but every step still looks like he learned to survive by never being where the blow lands."
+        }
     )
 }
 
 function Get-RingOpponents {
+    param($Hero)
+
     $pool = Get-RingOpponentPool
     $selected = @()
+    $tiers = @(1, 2, 3)
 
-    foreach ($tier in 1..3) {
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"] -and [int]$Hero.RingWinsTotal -ge 10) {
+        $tiers += 4
+    }
+
+    foreach ($tier in $tiers) {
         $options = @($pool | Where-Object { $_.Tier -eq $tier })
 
         if ($options.Count -gt 0) {
@@ -98,6 +129,7 @@ function Get-RingRewardCopper {
         1 { return 100 }
         2 { return 220 }
         3 { return 350 }
+        4 { return 520 }
         default { return 0 }
     }
 }
@@ -176,7 +208,8 @@ function Invoke-OpponentBrawlAttack {
         [int]$BlockArmorBonus = 0
     )
 
-    $heroArmorClass = 10 + [Math]::Max((Get-HeroAbilityModifier -Hero $Hero -Ability "STR"), (Get-HeroAbilityModifier -Hero $Hero -Ability "DEX")) + $BlockArmorBonus
+    # Ring bouts use Borzig's current defensive gear baseline, with Block temporarily raising it.
+    $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $roll = Roll-Dice -Sides 20
     $total = $roll + $Opponent.AttackBonus
     $blockText = ""
@@ -361,6 +394,15 @@ function Start-FightingRing {
     Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
+    if ($Game.Hero.RingWinsTotal -ge 10) {
+        Write-ColorLine "Ring Standing: Champion" "DarkYellow"
+    }
+    elseif ($Game.Hero.RingWinsTotal -gt 0) {
+        Write-ColorLine "Ring Standing: Known Contender ($($Game.Hero.RingWinsTotal) total wins)" "DarkYellow"
+    }
+    else {
+        Write-ColorLine "Ring Standing: New Blood" "DarkYellow"
+    }
     if ($Game.Hero.UnarmedTrainingLevel -gt 0) {
         Write-ColorLine "Pit-Fighter Basics: unlocked" "DarkYellow"
     }
@@ -399,7 +441,7 @@ function Start-FightingRing {
 
     $wins = 0
 
-    foreach ($opponent in (Get-RingOpponents)) {
+    foreach ($opponent in (Get-RingOpponents -Hero $Game.Hero)) {
         $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title "Ring Round $($wins + 1)"
 
         if (-not $wonBout) {

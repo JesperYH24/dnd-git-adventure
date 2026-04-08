@@ -2,6 +2,15 @@
 
 Set-TestOutputStubs
 
+function Test-GuardStationListsNightWatchRelief {
+    $game = Initialize-Game
+    $guardQuests = @(Get-TownQuestList -Game $game -Source "Guard Station")
+    $nightWatch = $guardQuests | Where-Object { $_.Id -eq "guard_night_watch" } | Select-Object -First 1
+
+    Assert-Equal -Actual $guardQuests.Count -Expected 1 -Message "The guard station should currently list exactly one guard quest."
+    Assert-Equal -Actual $nightWatch.Name -Expected "Night Watch Relief" -Message "Night Watch Relief should be visible through the guard station quest source."
+}
+
 function Test-NightWatchReliefCompletesAndSetsStoryFlag {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -35,6 +44,7 @@ function Test-NightWatchReliefCompletesAndSetsStoryFlag {
     Assert-Equal -Actual $game.Town.Relationships["NightCaptain"] -Expected "Respectful" -Message "Finishing the patrol should improve the guard relationship."
 }
 
+Test-GuardStationListsNightWatchRelief
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 
 Write-Host "City quest tests passed." -ForegroundColor Green
