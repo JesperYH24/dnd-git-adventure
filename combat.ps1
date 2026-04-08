@@ -227,7 +227,7 @@ function Start-CombatLoop {
             continue
         }
 
-        $choice = (Read-Host "What do you want to do? (A/B/F/I/R) - Attack, Block, Focus, Inventory or Run").ToUpper()
+        $choice = (Read-Host "What do you want to do? (A/B/F/I/R/T) - Attack, Block, Focus, Inventory, Run or Toggle text speed").ToUpper()
 
         if ($choice -eq "I") {
             Write-ColorLine ""
@@ -256,6 +256,10 @@ function Start-CombatLoop {
             Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
             $EncounterFled.Value = $true
             break
+        }
+        elseif ($choice -eq "T") {
+            Toggle-TextSpeed | Out-Null
+            continue
         }
         elseif ($choice -eq "B") {
             Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."

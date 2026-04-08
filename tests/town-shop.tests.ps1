@@ -23,6 +23,16 @@ function Assert-True {
     }
 }
 
+function Set-TestOutputStubs {
+    function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
+    function global:Write-Scene { param([string]$Text) }
+    function global:Write-Action { param([string]$Text, [string]$Color) }
+    function global:Write-ColorLine { param([string]$Text, [string]$Color) }
+    function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
+    function global:Write-SectionTitle { param([string]$Text, [string]$Color) }
+    function global:Write-EmphasisLine { param([string]$Text, [string]$Color) }
+}
+
 function Test-HeroCanBuyFromTownShop {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -243,6 +253,8 @@ function Test-RingMasterRespectsPhysicalProwess {
     Assert-True -Condition ($barbarianGreeting -like "*Real shoulders, real lungs, real scars*") -Message "The ring master should admire strong and hardy heroes."
     Assert-True -Condition ($rogueGreeting -like "*Fast feet survive longer*") -Message "The ring master should notice quick fighters differently."
 }
+
+Set-TestOutputStubs
 
 Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold

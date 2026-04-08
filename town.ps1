@@ -1758,6 +1758,7 @@ function Start-InnMenu {
         Write-ColorLine "5. Manage stored gear" "White"
         Write-ColorLine "6. Speak with the innkeeper" "White"
         Write-ColorLine "7. Return to the city streets" "White"
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1789,6 +1790,9 @@ function Start-InnMenu {
             }
             "7" {
                 return "BackToTown"
+            }
+            "T" {
+                Toggle-TextSpeed | Out-Null
             }
             default {
                 Write-ColorLine "Invalid choice. Try again." "Red"
@@ -1898,6 +1902,7 @@ function Start-TownMenu {
         if ($null -eq $Game.Town.ActiveInn) {
             Write-ColorLine "L. Find lodging for the night" "White"
         }
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine ""
 
@@ -1943,6 +1948,9 @@ function Start-TownMenu {
                 if ($innResult -eq "Stayed") {
                     Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
                 }
+            }
+            "T" {
+                Toggle-TextSpeed | Out-Null
             }
             "0" {
                 Write-Scene "$($Game.Hero.Name) finds a quiet corner of the city and lets the day finally come to an end."

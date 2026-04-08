@@ -14,6 +14,60 @@ function Get-ReadableTextWidth {
     return $defaultWidth
 }
 
+function Get-FastTextEnabled {
+    if ($null -eq $global:FastTextEnabled) {
+        $global:FastTextEnabled = $false
+    }
+
+    return [bool]$global:FastTextEnabled
+}
+
+function Set-FastTextEnabled {
+    param([bool]$Enabled)
+
+    $global:FastTextEnabled = $Enabled
+}
+
+function Get-TextSpeedLabel {
+    if (Get-FastTextEnabled) {
+        return "Fast"
+    }
+
+    return "Normal"
+}
+
+function Toggle-TextSpeed {
+    $newValue = -not (Get-FastTextEnabled)
+    Set-FastTextEnabled -Enabled $newValue
+    Write-ColorLine "Text speed: $(Get-TextSpeedLabel)" "DarkYellow"
+    Write-ColorLine ""
+    return $newValue
+}
+
+function Get-TypewriterInputAction {
+    try {
+        if (-not [Console]::KeyAvailable) {
+            return ""
+        }
+
+        $key = [Console]::ReadKey($true)
+
+        if ($key.Key -eq [ConsoleKey]::Enter) {
+            return "SkipLine"
+        }
+
+        if ($key.Key -eq [ConsoleKey]::Spacebar -or $key.Key -eq [ConsoleKey]::S) {
+            Set-FastTextEnabled -Enabled (-not (Get-FastTextEnabled))
+            return "ToggleFastText"
+        }
+    }
+    catch {
+        return ""
+    }
+
+    return ""
+}
+
 function Split-DisplayText {
     param(
         [string]$Text,
@@ -63,9 +117,44 @@ function Write-TypeLine {
         [string]$Color = "White"
     )
 
-    foreach ($char in $Text.ToCharArray()) {
-        Write-Host -NoNewline $char -ForegroundColor $Color
-        Start-Sleep -Milliseconds $Delay
+    if (Get-FastTextEnabled) {
+        Write-Host $Text -ForegroundColor $Color
+        return
+    }
+
+    $characters = $Text.ToCharArray()
+
+    for ($i = 0; $i -lt $characters.Length; $i++) {
+        Write-Host -NoNewline $characters[$i] -ForegroundColor $Color
+
+        $action = Get-TypewriterInputAction
+
+        if ($action -eq "SkipLine" -or $action -eq "ToggleFastText") {
+            if ($i -lt ($characters.Length - 1)) {
+                Write-Host -NoNewline (-join $characters[($i + 1)..($characters.Length - 1)]) -ForegroundColor $Color
+            }
+
+            break
+        }
+
+        $remainingDelay = [Math]::Max(0, $Delay)
+
+        while ($remainingDelay -gt 0) {
+            $sleepSlice = [Math]::Min(10, $remainingDelay)
+            Start-Sleep -Milliseconds $sleepSlice
+            $remainingDelay -= $sleepSlice
+
+            $action = Get-TypewriterInputAction
+
+            if ($action -eq "SkipLine" -or $action -eq "ToggleFastText") {
+                if ($i -lt ($characters.Length - 1)) {
+                    Write-Host -NoNewline (-join $characters[($i + 1)..($characters.Length - 1)]) -ForegroundColor $Color
+                }
+
+                $remainingDelay = 0
+                break
+            }
+        }
     }
 
     Write-Host ""

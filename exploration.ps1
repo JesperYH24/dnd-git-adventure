@@ -91,6 +91,9 @@ function Start-CaveExploration {
                     Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Game.Hero)/$(Get-InventoryCapacity -Hero $Game.Hero) slots" "White"
                     Write-ColorLine ""
                 }
+                "T" {
+                    Toggle-TextSpeed | Out-Null
+                }
                 "Q" {
                     if ($room.Id -eq "entrance") {
                         Write-Scene "$($Game.Hero.Name) leaves the cave and returns to the campfire."

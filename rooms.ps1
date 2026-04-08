@@ -72,6 +72,7 @@ function Show-RoomActions {
     Write-ColorLine "I. Open inventory" "White"
     Write-ColorLine "L. Check room loot" "White"
     Write-ColorLine "S. View status" "White"
+    Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
     if ($Room.Id -eq "entrance") {
         Write-ColorLine "Q. Leave the cave" "White"
     }

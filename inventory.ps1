@@ -193,12 +193,18 @@ function Open-InventoryMenu {
         }
 
         Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose item number"
+        $choice = (Read-Host "Choose item number").ToUpper()
 
         if ($choice -eq "0") {
             return $false
+        }
+
+        if ($choice -eq "T") {
+            Toggle-TextSpeed | Out-Null
+            continue
         }
 
         if ($choice -notmatch '^\d+$') {
@@ -228,6 +234,7 @@ function Open-InventoryMenu {
 
         Write-ColorLine "D. Drop" "White"
         Write-ColorLine "B. Back" "DarkGray"
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
         $action = (Read-Host "Choose action").ToUpper()
@@ -262,6 +269,9 @@ function Open-InventoryMenu {
                 }
             }
             "B" {
+            }
+            "T" {
+                Toggle-TextSpeed | Out-Null
             }
             default {
                 Write-ColorLine "Choose one of the available actions." "DarkYellow"
