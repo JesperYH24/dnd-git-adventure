@@ -2,6 +2,25 @@
 
 Set-TestOutputStubs
 
+function Set-TestReadHostSequence {
+    param([string[]]$Values)
+
+    $script:ReadHostSequence = @($Values)
+    $script:ReadHostIndex = 0
+
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:ReadHostIndex -ge $script:ReadHostSequence.Count) {
+            throw "Read-Host was called more times than the test expected."
+        }
+
+        $value = $script:ReadHostSequence[$script:ReadHostIndex]
+        $script:ReadHostIndex += 1
+        return $value
+    }
+}
+
 function Test-InnStayChargesGoldAndHealsHero {
     $game = Initialize-Game
     $heroHP = 3
@@ -16,6 +35,16 @@ function Test-InnStayChargesGoldAndHealsHero {
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Inn stay should restore the hero to full HP."
     Assert-Equal -Actual $game.Town.ChapterOneComplete -Expected $true -Message "The first successful inn stay should complete chapter one."
     Assert-Equal -Actual $game.Town.MustChooseFirstInn -Expected $false -Message "The first inn stay should clear the forced-lodging flag."
+}
+
+function Test-TutorialArrivalStarterFundsCoverCheapestInn {
+    $game = Initialize-Game
+    $game.Hero.CurrencyCopper = 0
+
+    $starterFunds = Ensure-TutorialArrivalStarterFunds -Game $game
+
+    Assert-Equal -Actual $starterFunds.CopperGranted -Expected 80 -Message "Town arrival support should only cover the cheapest inn."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 80 -Message "The hero should receive enough coin for the cheapest room."
 }
 
 function Test-InnStayResetsDailyRingLockout {
@@ -111,12 +140,32 @@ function Test-CanCancelInnBookingWhenStorageIsEmpty {
     Assert-Equal -Actual $game.Town.ActiveInn -Expected $null -Message "Cancelling a booking should clear the active inn."
 }
 
+function Test-WorkOffRoomCoversNightAndBlocksRing {
+    $game = Initialize-Game
+    $heroHP = 2
+    $game.Town.MustChooseFirstInn = $true
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
+    $game.Hero.CurrencyCopper = 0
+    Set-TestReadHostSequence -Values @("1", "1")
+
+    $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99
+
+    Assert-Equal -Actual $result -Expected $true -Message "Working off the room should still secure the inn stay."
+    Assert-Equal -Actual $game.Town.ActiveInn.Id -Expected "bent_nail" -Message "Working off the room should still book the chosen inn."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 0 -Message "A simple worked-off room should not require coin."
+    Assert-Equal -Actual $game.Town.WorkedForRoomToday -Expected $true -Message "Working off the room should mark the hero as fatigued for the next day."
+    Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $true -Message "Working off the room should block the ring for the next day."
+    Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Working off the room should still end with a full night's rest."
+}
+
 Test-InnStayChargesGoldAndHealsHero
+Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear
 Test-CanCancelInnBookingWhenStorageIsEmpty
+Test-WorkOffRoomCoversNightAndBlocksRing
 
 Write-Host "Town inn tests passed." -ForegroundColor Green

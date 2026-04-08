@@ -780,6 +780,12 @@ function Start-FightingRing {
     Write-ColorLine "0. Back" "DarkGray"
     Write-ColorLine ""
 
+    if ($Game.Town.WorkedForRoomToday) {
+        Write-Scene "Ringmaster Dorr snorts when Borzig approaches. 'You smell like inn-work and sleep loss. Come back after a real night off.'"
+        Write-ColorLine ""
+        return
+    }
+
     if ($Game.Town.Ring.FoughtToday) {
         Write-Scene "The ring master shakes his head. 'One tournament per day. Come back after you've had a real night's sleep.'"
         Write-ColorLine ""

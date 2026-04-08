@@ -346,6 +346,109 @@ function Start-InnEveningMenu {
     }
 }
 
+function Resolve-InnWorkOffRoom {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        $Inn
+    )
+
+    while ($true) {
+        Write-SectionTitle -Text "Work Off the Room" -Color "Yellow"
+        Write-Scene "$($Inn.Keeper) looks Borzig over, then points toward the sort of work that keeps an inn alive after dark."
+        Write-Scene "If he cannot pay in coin tonight, he can pay in sweat."
+        Write-ColorLine ""
+        Write-ColorLine "1. Haul kegs and split firewood (STR)" "White"
+        Write-ColorLine "2. Scrub tables and reset the room (CON)" "White"
+        Write-ColorLine "3. Hold the late door and break up trouble (STR)" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return $false
+        }
+
+        $ability = ""
+        $taskText = ""
+
+        switch ($choice) {
+            "1" {
+                $ability = "STR"
+                $taskText = "Borzig shoulders casks, drags split wood, and keeps the cellar moving until his back burns."
+            }
+            "2" {
+                $ability = "CON"
+                $taskText = "Borzig spends the late hours hauling benches straight, scrubbing down tables, and keeping on his feet long past comfort."
+            }
+            "3" {
+                $ability = "STR"
+                $taskText = "Borzig stands the late door, hauling drunks apart before fists become blood on the floorboards."
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        $modifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability $ability
+        $roll = Roll-Dice -Sides 20
+        $total = $roll + $modifier
+        $dc = switch ($Inn.Id) {
+            "silver_kettle" { 15 }
+            "lantern_rest" { 12 }
+            default { 10 }
+        }
+
+        Write-Scene $taskText
+        Write-Action "$($Game.Hero.Name) works the night: roll $roll $(Format-AbilityModifier -Modifier $modifier) = $total" "Cyan"
+
+        $tipCopper = 0
+
+        if ($total -ge ($dc + 5)) {
+            $tipCopper = switch ($Inn.Id) {
+                "silver_kettle" { 30 }
+                "lantern_rest" { 20 }
+                default { 10 }
+            }
+            Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $tipCopper | Out-Null
+            Write-Scene "$($Inn.Keeper) grudgingly admits the work was worth more than a bed and slips Borzig a small tip."
+        }
+        elseif ($total -ge $dc) {
+            Write-Scene "$($Inn.Keeper) decides the work settles the bill well enough."
+        }
+        else {
+            Write-Scene "$($Inn.Keeper) is not impressed, but the work is done and the room is covered."
+        }
+
+        $Game.Town.ActiveInn = $Inn
+        $Game.Town.MustChooseFirstInn = $false
+        $Game.Town.WorkedForRoomToday = $true
+        $Game.Town.Ring.FoughtToday = $true
+        Clear-HeroBuff -Hero $Game.Hero
+        $HeroHP.Value = $Game.Hero.HP
+
+        Write-Scene "Borzig drops into bed exhausted. The room is paid for, but the night leaves him too worn out for the fighting ring tomorrow."
+
+        if ($tipCopper -gt 0) {
+            Write-EmphasisLine -Text "$($Game.Hero.Name) also earns $(Convert-CopperToCurrencyText -Copper $tipCopper) for the effort." -Color "Yellow"
+        }
+
+        if (-not $Game.Town.ChapterOneComplete) {
+            $Game.Town.ChapterOneComplete = $true
+            Write-ColorLine ""
+            Write-SectionTitle -Text "Chapter One Complete" -Color "Green"
+            Write-EmphasisLine -Text "Borzig survives the cave, reaches the city, and earns his first true night behind safe walls." -Color "Green"
+            Write-Scene "The tutorial ends with sore hands, a cheap room, and the feeling that city life has to be earned one hard night at a time."
+        }
+
+        Write-ColorLine ""
+        return $true
+    }
+}
+
 function Resolve-InnStay {
     param(
         $Game,
@@ -358,12 +461,29 @@ function Resolve-InnStay {
 
     if (-not $spendResult.Success) {
         Write-Scene "$($Game.Hero.Name) cannot afford a room at $($Inn.Name)."
+        Write-ColorLine "1. Work off the room tonight" "White"
+        Write-ColorLine "2. Choose another inn" "White"
+        Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
-        return $false
+
+        while ($true) {
+            $choice = Read-Host "Choose"
+
+            switch ($choice) {
+                "1" { return (Resolve-InnWorkOffRoom -Game $Game -HeroHP $HeroHP -Inn $Inn) }
+                "2" { return $false }
+                "0" { return $false }
+                default {
+                    Write-ColorLine "Choose 1, 2 or 0." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
     }
 
     $Game.Town.ActiveInn = $Inn
     $Game.Town.MustChooseFirstInn = $false
+    $Game.Town.WorkedForRoomToday = $false
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
     Write-Scene (Get-InnKeeperGreeting -Inn $Inn -Hero $Game.Hero -RepeatVisit $false)
@@ -410,14 +530,31 @@ function Resolve-BookedInnNightRest {
 
     if (-not $spendResult.Success) {
         Write-Scene "$($Game.Hero.Name) does not have enough coin to cover another night at $($inn.Name)."
+        Write-ColorLine "1. Work off the room tonight" "White"
+        Write-ColorLine "2. Keep walking the city instead" "White"
+        Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
-        return $false
+
+        while ($true) {
+            $choice = Read-Host "Choose"
+
+            switch ($choice) {
+                "1" { return (Resolve-InnWorkOffRoom -Game $Game -HeroHP $HeroHP -Inn $inn) }
+                "2" { return $false }
+                "0" { return $false }
+                default {
+                    Write-ColorLine "Choose 1, 2 or 0." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
     }
 
     Write-Scene "$($Game.Hero.Name) closes the shutters, pays for another night, and lets the city fade to a muffled hum beyond the walls."
     Write-Scene (Get-InnRepeatRestText -Inn $inn)
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
+    $Game.Town.WorkedForRoomToday = $false
     $Game.Town.Ring.FoughtToday = $false
     Write-Scene "A full night's rest restores Borzig to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""

@@ -12,6 +12,29 @@ function Start-Intro {
     Write-ColorLine ""
 }
 
+function Ensure-TutorialArrivalStarterFunds {
+    param($Game)
+
+    $cheapestInn = Get-CheapestTownInn
+
+    if ($null -eq $cheapestInn) {
+        return $null
+    }
+
+    $missingCopper = [Math]::Max(0, [int]$cheapestInn.PriceCopper - [int]$Game.Hero.CurrencyCopper)
+
+    if ($missingCopper -le 0) {
+        return $null
+    }
+
+    Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $missingCopper | Out-Null
+
+    return [PSCustomObject]@{
+        CopperGranted = $missingCopper
+        Inn = $cheapestInn
+    }
+}
+
 function Complete-TutorialAndEnterTown {
     param(
         $Game,
@@ -27,7 +50,7 @@ function Complete-TutorialAndEnterTown {
         $Game.Quest.SeenDragon = $true
 
         if (-not $Game.ShadowSanctumRewardTaken) {
-            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100
+            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount (Get-ShadowSanctumGoldRewardGP)
 
             if ($currencyResult.LeftoverCopper -gt 0 -and $null -ne $currencyResult.LeftoverItem) {
                 $ashenThreshold = $Game.Rooms["ashen_threshold"]
@@ -49,6 +72,13 @@ function Complete-TutorialAndEnterTown {
     if ($remainingTutorialXP -gt 0) {
         Grant-HeroXP -Hero $Game.Hero -XP $remainingTutorialXP
         Write-Scene "$($Game.Hero.Name) gains the final $remainingTutorialXP XP from completing the tutorial."
+    }
+
+    $starterFunds = Ensure-TutorialArrivalStarterFunds -Game $Game
+
+    if ($null -ne $starterFunds) {
+        Write-Scene "Seeing Borzig nearly coinless, the quest giver presses just enough travel silver into his hand to cover the cheapest bed in town."
+        Write-Scene "$($Game.Hero.Name) gains $(Convert-CopperToCurrencyText -Copper $starterFunds.CopperGranted), enough for a room at $($starterFunds.Inn.Name)."
     }
 
     Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."

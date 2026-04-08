@@ -7,7 +7,8 @@ function Resolve-ShadowSanctumReward {
 
     Write-SectionTitle -Text "Ancient Temptation" -Color "Yellow"
     Write-Scene "Near the edge of the hoard, two prizes catch $($Game.Hero.Name)'s eye before the true horror fully stirs."
-    Write-ColorLine "1. Take 100 GP" "White"
+    $goldRewardGP = Get-ShadowSanctumGoldRewardGP
+    Write-ColorLine "1. Take $goldRewardGP GP" "White"
     Write-ColorLine "2. Drink a Potion of Haste" "White"
     Write-ColorLine ""
 
@@ -15,10 +16,10 @@ function Resolve-ShadowSanctumReward {
         $choice = Read-Host "Choose your prize"
 
         if ($choice -eq "1") {
-            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount 100
+            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount $goldRewardGP
 
             if ($currencyResult.StoredCopper -gt 0) {
-                Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs as much of the 100 GP as possible into the gold pouch." -Color "Yellow"
+                Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs as much of the $goldRewardGP GP as possible into the gold pouch." -Color "Yellow"
             }
 
             if ($currencyResult.LeftoverCopper -gt 0) {

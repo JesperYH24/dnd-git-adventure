@@ -52,6 +52,10 @@ function Get-TownInns {
     )
 }
 
+function Get-CheapestTownInn {
+    return (Get-TownInns | Sort-Object PriceCopper | Select-Object -First 1)
+}
+
 function Get-InnRepeatRestText {
     param($Inn)
 

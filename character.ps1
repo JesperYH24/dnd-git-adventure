@@ -76,6 +76,10 @@ function Get-HeroNextLevelXPThreshold {
     return Get-XPThresholdForLevel -Level ($Hero.Level + 1)
 }
 
+function Get-ShadowSanctumGoldRewardGP {
+    return 2
+}
+
 function Convert-CurrencyToCopper {
     param(
         [string]$Denomination,

@@ -23,6 +23,8 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
 - weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
 - town hub with:
   - first-night inn choice after the tutorial
+  - guaranteed coin for the cheapest first-night room if Borzig reaches town broke
+  - `work off the room` fallback when money runs short
   - locked inn booking until the player cancels it with the innkeeper
   - inn storage
   - inn-specific evening activities based on quality and clientele
@@ -99,7 +101,7 @@ This hidden shortcut:
 - delivers Borzig to the city
 - applies the level 2 long-rest level up with fixed HP gain
 - restores him to full HP
-- always takes the `100 GP` Shadow Sanctum reward
+- always takes the reduced Shadow Sanctum gold reward path
 - never grants the haste reward
 
 ---
