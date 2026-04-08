@@ -1,13 +1,13 @@
 # DnD Git Adventure
 
-A text-based fantasy adventure in PowerShell where you play as Borzig, a level 1 barbarian exploring a dangerous cave, surviving a tutorial quest, and returning to town to recover, shop, and prepare for what comes next.
+A text-based fantasy adventure in PowerShell where you play as Borzig, a barbarian who survives a dangerous tutorial expedition, reaches town, and begins uncovering a larger threat beneath the city.
 
 ---
 
 ## Current features
 
 - DnD-inspired hero stats: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`
-- level 1 barbarian start with XP, level-up readiness, and long-rest leveling to level 2
+- barbarian progression with XP, level-up readiness, and long-rest leveling from level 1 to level 2
 - turn-based combat with:
   - initiative rolls
   - critical hits and critical fails
@@ -20,9 +20,12 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a level 1
 - quest log with tutorial progression, XP tracking, and accepted town quests
 - inventory with slot limits, equipping, consumables, and dropped loot persistence
 - currency system with `CP`, `SP`, `GP` and a gold pouch
+- weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
 - town hub with:
   - first-night inn choice after the tutorial
+  - locked inn booking until the player cancels it with the innkeeper
   - inn storage
+  - inn-specific evening activities based on quality and clientele
   - street interactions
   - quest board
   - guard station
@@ -31,6 +34,16 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a level 1
   - apothecary
   - fighting ring
   - small NPC rewards, information hooks, and discounts
+- class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
+- fighting ring progression with:
+  - unarmed combat
+  - `Punch`, `Grapple`, `Block`, and `Focus`
+  - once-per-day tournament access
+  - long-term progress toward an unarmed fighting feature
+- Chapter Two has started with the first playable city quest chain:
+  - `Night Watch Relief`
+  - story flags for the city mystery under the streets
+  - quest rewards in XP, currency, and reputation
 
 ---
 
@@ -111,6 +124,7 @@ The city remains blocked until the tutorial quest is completed.
 After the warning is delivered, the game opens into a simple town hub where Borzig can:
 
 - choose an inn for the first night in the city
+- keep or cancel a room booking through the innkeeper
 - stash gear in inn storage
 - walk the streets
 - talk to townsfolk
@@ -120,6 +134,13 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 - visit the fighting ring
 - spend gold on weapons and potions
 - sell gear to free up slots
+- begin the Chapter Two city story through the first guard quest chain
+
+### 3. Chapter Two opening
+
+The first step of the post-tutorial story is now playable.
+
+`Night Watch Relief` begins the investigation into suspicious movement and broken seals near the city tunnels. It introduces the first story flag toward the larger underground plot that will lead into the Chapter Two finale beneath the city.
 
 ---
 
@@ -144,6 +165,7 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 - `exploration.ps1`
 - `rooms.ps1`
 - `encounters.ps1`
+- `city-quests.ps1`
 - `town.ps1`
 - `quests.ps1`
 
@@ -178,18 +200,26 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 ## Notes
 
 - the game is currently built around a tutorial arc and a first town hub
+- Chapter Two is now partially playable, but only its opening quest chain is implemented so far
 - some systems are intentionally lightweight for now so they can be expanded later
-- several town information hooks are already in place as setup for later quest branches and reward modifiers
+- several town information hooks are already in place as setup for later quest branches, payout modifiers, and underground story paths
 
 ---
 
 ## Next possible steps
 
-- actual playable follow-up quests from the quest board, guard station, and quest giver
+- continue the Chapter Two story arc with:
+  - `Storehouse Trouble`
+  - `Whispers Beneath the Bent Nail`
+  - `Ledger of Ash`
+  - `Broken Seal Patrol`
+  - the final underground chapter quest beneath the city
+- progression from level 2 to level 3 across the Chapter Two quest arc
 - more city districts and stronger NPC quest lines
-- additional caves or wilderness zones
+- additional caves or wilderness zones after the city-understreet arc
 - short rests and secured rooms
 - more shop inventory, armor progression, and trader variety
+- more classes and class-specific dialogue, gear use, and social reactions
 - class features beyond level 2
 - deeper inn events, shady city routes, and economic info payoffs
 - resistances, elemental effects, and broader enemy mechanics
