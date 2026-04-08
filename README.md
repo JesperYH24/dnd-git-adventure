@@ -193,4 +193,5 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 - class features beyond level 2
 - deeper inn events, shady city routes, and economic info payoffs
 - resistances, elemental effects, and broader enemy mechanics
+- optional audio cues and simple visual scene flourishes such as ASCII art or external image moments
 - save/load support
