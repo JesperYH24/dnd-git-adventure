@@ -177,7 +177,11 @@ function Start-TownMenu {
             $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
             if ($innResult -eq "Stayed") {
-                Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+                $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+
+                if ($innMenuResult -eq "EndGame") {
+                    return "EndGame"
+                }
             }
 
             continue
@@ -235,7 +239,11 @@ function Start-TownMenu {
             }
             "7" {
                 if ($null -ne $Game.Town.ActiveInn) {
-                    Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+                    $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+
+                    if ($innMenuResult -eq "EndGame") {
+                        return "EndGame"
+                    }
                 }
                 else {
                     Write-Scene "Borzig has not taken a room yet."
@@ -252,7 +260,11 @@ function Start-TownMenu {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
                 if ($innResult -eq "Stayed") {
-                    Start-InnMenu -Game $Game -HeroHP $HeroHP | Out-Null
+                    $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+
+                    if ($innMenuResult -eq "EndGame") {
+                        return "EndGame"
+                    }
                 }
             }
             "T" {

@@ -22,6 +22,20 @@ function Get-FastTextEnabled {
     return [bool]$global:FastTextEnabled
 }
 
+function Set-TransientTextSkip {
+    param([int]$Milliseconds = 2000)
+
+    $global:TransientTextSkipUntil = [DateTime]::UtcNow.AddMilliseconds($Milliseconds)
+}
+
+function Get-TransientTextSkipEnabled {
+    if ($null -eq $global:TransientTextSkipUntil) {
+        return $false
+    }
+
+    return [DateTime]::UtcNow -lt $global:TransientTextSkipUntil
+}
+
 function Set-FastTextEnabled {
     param([bool]$Enabled)
 
@@ -57,6 +71,7 @@ function Get-TypewriterInputAction {
         $key = [Console]::ReadKey($true)
 
         if ($key.Key -eq [ConsoleKey]::Enter) {
+            Set-TransientTextSkip -Milliseconds 2000
             return "SkipBlock"
         }
 
@@ -121,7 +136,7 @@ function Write-TypeLine {
         [string]$Color = "White"
     )
 
-    if (Get-FastTextEnabled) {
+    if ((Get-FastTextEnabled) -or (Get-TransientTextSkipEnabled)) {
         Write-Host $Text -ForegroundColor $Color
         return ""
     }
