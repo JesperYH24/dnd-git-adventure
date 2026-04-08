@@ -188,23 +188,16 @@ function Get-RingOpponents {
     param($Hero)
 
     $pool = Get-RingOpponentPool
-    $selected = @()
-    $tiers = @(1, 2, 3)
+    $maxTier = 3
+    $roundCount = 3
 
     if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"] -and [int]$Hero.RingWinsTotal -ge 10) {
-        $tiers += 4
+        $maxTier = 4
+        $roundCount = 4
     }
 
-    foreach ($tier in $tiers) {
-        $options = @($pool | Where-Object { $_.Tier -eq $tier })
-
-        if ($options.Count -gt 0) {
-            $selected += ($options | Get-Random)
-        }
-    }
-
-    # Even within the tier ladder, swap the faces enough that repeated tournaments do not feel scripted.
-    return $selected
+    $eligible = @($pool | Where-Object { $_.Tier -le $maxTier } | Sort-Object { Get-Random })
+    return @($eligible | Select-Object -First $roundCount)
 }
 
 function Get-RingRewardCopper {
@@ -245,7 +238,8 @@ function Invoke-HeroBrawlAttack {
         $Opponent,
         [ref]$OpponentHP,
         [int]$AttackBonusModifier = 0,
-        [int]$TargetArmorBonus = 0
+        [int]$TargetArmorBonus = 0,
+        [string]$TargetAction = "Punch"
     )
 
     $profile = Get-HeroUnarmedProfile -Hero $Hero
@@ -262,7 +256,7 @@ function Invoke-HeroBrawlAttack {
         $bonusText += " against guarded AC"
     }
 
-    Write-Action "$($Hero.Name) swings with bare hands: roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
+    Write-Action "$($Hero.Name) throws a punch into ${TargetAction}: roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
@@ -297,7 +291,8 @@ function Invoke-OpponentBrawlAttack {
         $Opponent,
         [ref]$HeroHP,
         [int]$BlockArmorBonus = 0,
-        [int]$AttackBonusModifier = 0
+        [int]$AttackBonusModifier = 0,
+        [string]$TargetAction = "Punch"
     )
 
     # Ring bouts use Borzig's current defensive gear baseline, with Block temporarily raising it.
@@ -314,7 +309,7 @@ function Invoke-OpponentBrawlAttack {
         $blockText += " (+$AttackBonusModifier focus)"
     }
 
-    Write-Action "$($Opponent.Definite) throws a punch: roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
+    Write-Action "$($Opponent.Definite) throws a punch into ${TargetAction}: roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($roll -eq 20) {
         $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
@@ -410,6 +405,92 @@ function Get-OpponentBrawlAction {
     return "P"
 }
 
+function Get-BrawlActionLabel {
+    param([string]$Action)
+
+    switch ($Action) {
+        "P" { return "Punch" }
+        "B" { return "Block" }
+        "F" { return "Focus" }
+        "G" { return "Grapple" }
+        "R" { return "Recover" }
+        default { return "Recover" }
+    }
+}
+
+function Resolve-BrawlGrappleContest {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$HeroHP,
+        [ref]$OpponentHP,
+        [ref]$HeroOffBalance,
+        [ref]$OpponentOffBalance,
+        [bool]$HeroUsesModifier = $true,
+        [bool]$OpponentUsesModifier = $true,
+        [string]$HeroActionLabel = "Grapple",
+        [string]$OpponentActionLabel = "Grapple"
+    )
+
+    $heroAbility = Get-HeroBrawlAbility -Hero $Hero
+    $heroModifier = 0
+    $trainingBonus = 0
+
+    if ($HeroUsesModifier) {
+        $heroModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $heroAbility
+
+        if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+            $trainingBonus = [int]$Hero.UnarmedTrainingLevel
+        }
+    }
+
+    $opponentModifier = 0
+
+    if ($OpponentUsesModifier) {
+        $opponentModifier = [int]$Opponent.GrappleBonus
+    }
+
+    $heroRoll = Roll-Dice -Sides 20
+    $opponentRoll = Roll-Dice -Sides 20
+    $heroTotal = $heroRoll + $heroModifier + $trainingBonus
+    $opponentTotal = $opponentRoll + $opponentModifier
+
+    Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: roll $heroRoll, total $heroTotal" "Cyan"
+    Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: roll $opponentRoll, total $opponentTotal" "DarkCyan"
+
+    if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -gt $opponentTotal)) {
+        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroModifier) + $trainingBonus)
+        $OpponentHP.Value -= $controlDamage
+
+        if ($OpponentHP.Value -lt 0) {
+            $OpponentHP.Value = 0
+        }
+
+        $OpponentOffBalance.Value = $true
+        Write-Action "$($Hero.Name) wins the clinch, deals $controlDamage damage, and leaves $($Opponent.Definite) off balance for the next round." "Yellow"
+        Write-ColorLine ""
+        return "Hero"
+    }
+
+    if ($opponentRoll -eq 20 -or $opponentTotal -gt $heroTotal) {
+        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $opponentModifier))
+        $HeroHP.Value -= $controlDamage
+
+        if ($HeroHP.Value -lt 0) {
+            $HeroHP.Value = 0
+        }
+
+        $HeroOffBalance.Value = $true
+        Write-Action "$($Opponent.Definite) wins the clinch, deals $controlDamage damage, and leaves $($Hero.Name) off balance for the next round." "Yellow"
+        Write-ColorLine ""
+        return "Opponent"
+    }
+
+    Write-Action "Neither fighter secures the hold cleanly." "DarkGray"
+    Write-ColorLine ""
+    return "Tie"
+}
+
 function Resolve-HeroBrawlGrapple {
     param(
         $Hero,
@@ -471,12 +552,10 @@ function Start-BrawlLoop {
 
     $heroBrawlHP = $Hero.HP
     $opponentHP = $Opponent.HP
-    $opponentOffBalance = $false
-    $heroBlockArmorBonus = 0
     $heroFocusAttackBonus = 0
-    $heroOffBalance = $false
-    $opponentBlockArmorBonus = 0
     $opponentFocusAttackBonus = 0
+    $heroOffBalance = $false
+    $opponentOffBalance = $false
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene $Opponent.Intro
@@ -504,69 +583,159 @@ function Start-BrawlLoop {
             continue
         }
 
-        if ($choice -eq "B") {
-            Write-Scene "$($Hero.Name) tightens the guard and waits for the incoming strike."
-            $heroBlockArmorBonus = 2
-            Write-Action "$($Hero.Name) gains +2 AC against the next punch." "Yellow"
-            Write-ColorLine ""
+        $opponentChoice = Get-OpponentBrawlAction -Opponent $Opponent
+        $displayHeroChoice = if ($heroOffBalance) { "R" } else { $choice }
+        $displayOpponentChoice = if ($opponentOffBalance) { "R" } else { $opponentChoice }
+
+        Write-Action "$($Hero.Name) commits to $(Get-BrawlActionLabel -Action $displayHeroChoice)." "Cyan"
+        Write-Action "$($Opponent.Definite) commits to $(Get-BrawlActionLabel -Action $displayOpponentChoice)." "DarkCyan"
+        Write-ColorLine ""
+
+        if ($heroOffBalance -and $opponentOffBalance) {
+            Write-Scene "Both fighters are still reeling from the last exchange and spend the round regaining their footing."
+            $heroOffBalance = $false
+            $opponentOffBalance = $false
+            continue
         }
-        elseif ($choice -eq "F") {
-            Write-Scene "$($Hero.Name) studies the rhythm of the fight and times the next opening."
-            $heroFocusAttackBonus = 2
-            Write-Action "$($Hero.Name) gains +2 to hit on the next bare-handed attack." "Yellow"
-            Write-ColorLine ""
+
+        if ($heroOffBalance) {
+            Write-Scene "$($Hero.Name) is off balance and can only recover this round."
+            $heroOffBalance = $false
+
+            switch ($opponentChoice) {
+                "F" {
+                    $opponentFocusAttackBonus = 2
+                    Write-Action "$($Opponent.Definite) uses the opening to focus on the next strike." "Yellow"
+                    Write-ColorLine ""
+                }
+                "G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Recover" -OpponentActionLabel "Grapple" | Out-Null
+                }
+                "B" {
+                    Write-Scene "$($Opponent.Definite) keeps the guard high and lets Borzig spend the round recovering."
+                    Write-ColorLine ""
+                }
+                default {
+                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Recover"
+                    $opponentFocusAttackBonus = 0
+                }
+            }
         }
-        elseif ($choice -eq "G") {
-            Resolve-HeroBrawlGrapple -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -OpponentOffBalance ([ref]$opponentOffBalance) | Out-Null
+        elseif ($opponentOffBalance) {
+            Write-Scene "$($Opponent.Definite) is off balance and can only recover this round."
+            $opponentOffBalance = $false
+
+            switch ($choice) {
+                "F" {
+                    $heroFocusAttackBonus = 2
+                    Write-Action "$($Hero.Name) uses the opening to focus on the next strike." "Yellow"
+                    Write-ColorLine ""
+                }
+                "G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Recover" | Out-Null
+                }
+                "B" {
+                    Write-Scene "$($Hero.Name) keeps the guard tight and lets the round breathe."
+                    Write-ColorLine ""
+                }
+                default {
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Recover"
+                    $heroFocusAttackBonus = 0
+                }
+            }
         }
         else {
-            Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus $opponentBlockArmorBonus
-            $heroFocusAttackBonus = 0
-            $opponentBlockArmorBonus = 0
+            switch ("$choice/$opponentChoice") {
+                "P/P" {
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Punch"
+                    $heroFocusAttackBonus = 0
+
+                    if ($opponentHP -gt 0) {
+                        Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Punch"
+                        $opponentFocusAttackBonus = 0
+                    }
+                }
+                "P/B" {
+                    Write-Scene "$($Opponent.Definite) reads the attack and brings the guard up in time."
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus 2 -TargetAction "Block"
+                    $heroFocusAttackBonus = 0
+                }
+                "B/P" {
+                    Write-Scene "$($Hero.Name) braces behind a tight guard."
+                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -BlockArmorBonus 2 -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Block"
+                    $opponentFocusAttackBonus = 0
+                }
+                "P/F" {
+                    Write-Scene "$($Opponent.Definite) tries to read the rhythm, but that leaves an opening."
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Focus"
+                    $heroFocusAttackBonus = 0
+
+                    if ($opponentHP -gt 0) {
+                        $opponentFocusAttackBonus = 2
+                        Write-Action "$($Opponent.Definite) still gains +2 to hit on the next punch." "Yellow"
+                        Write-ColorLine ""
+                    }
+                }
+                "F/P" {
+                    Write-Scene "$($Hero.Name) tries to read the rhythm, but that leaves an opening."
+                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Focus"
+                    $opponentFocusAttackBonus = 0
+
+                    if ($heroBrawlHP -gt 0) {
+                        $heroFocusAttackBonus = 2
+                        Write-Action "$($Hero.Name) still gains +2 to hit on the next punch." "Yellow"
+                        Write-ColorLine ""
+                    }
+                }
+                "B/B" {
+                    Write-Scene "Both fighters settle behind careful guards and give the crowd a tense but harmless round."
+                    Write-ColorLine ""
+                }
+                "F/F" {
+                    $heroFocusAttackBonus = 2
+                    $opponentFocusAttackBonus = 2
+                    Write-Scene "Both fighters spend the round reading timing and distance, each building toward the next exchange."
+                    Write-ColorLine ""
+                }
+                "F/B" {
+                    $heroFocusAttackBonus = 2
+                    Write-Scene "$($Hero.Name) uses the guarded pause to study the rhythm of the fight."
+                    Write-Action "$($Hero.Name) gains +2 to hit on the next punch." "Yellow"
+                    Write-ColorLine ""
+                }
+                "B/F" {
+                    $opponentFocusAttackBonus = 2
+                    Write-Scene "$($Opponent.Definite) uses the guarded pause to study the rhythm of the fight."
+                    Write-Action "$($Opponent.Definite) gains +2 to hit on the next punch." "Yellow"
+                    Write-ColorLine ""
+                }
+                "G/G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroActionLabel "Grapple" -OpponentActionLabel "Grapple" | Out-Null
+                }
+                "G/B" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Block" | Out-Null
+                }
+                "B/G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Block" -OpponentActionLabel "Grapple" | Out-Null
+                }
+                "G/F" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Focus" | Out-Null
+                }
+                "F/G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Focus" -OpponentActionLabel "Grapple" | Out-Null
+                }
+                "G/P" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Punch" | Out-Null
+                }
+                "P/G" {
+                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Punch" -OpponentActionLabel "Grapple" | Out-Null
+                }
+            }
         }
 
         if ($opponentHP -le 0) {
             Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
             return $true
-        }
-
-        if ($opponentOffBalance) {
-            Write-Scene "$($Opponent.Definite) scrambles to recover and loses the next beat of the fight."
-            Write-ColorLine ""
-            $opponentOffBalance = $false
-        }
-        else {
-            $opponentChoice = Get-OpponentBrawlAction -Opponent $Opponent
-
-            if ($heroOffBalance) {
-                Write-Scene "$($Hero.Name) is still trying to recover footing and loses the chance to punish the next move."
-                Write-ColorLine ""
-                $heroOffBalance = $false
-            }
-
-            switch ($opponentChoice) {
-                "B" {
-                    Write-Scene "$($Opponent.Definite) tightens up behind a careful guard."
-                    $opponentBlockArmorBonus = 2
-                    Write-Action "$($Opponent.Definite) gains +2 AC against the next bare-handed strike." "Yellow"
-                    Write-ColorLine ""
-                }
-                "F" {
-                    Write-Scene "$($Opponent.Definite) watches Borzig's timing and waits for a cleaner opening."
-                    $opponentFocusAttackBonus = 2
-                    Write-Action "$($Opponent.Definite) gains +2 to hit on the next punch." "Yellow"
-                    Write-ColorLine ""
-                }
-                "G" {
-                    Resolve-OpponentBrawlGrapple -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -HeroOffBalance ([ref]$heroOffBalance) | Out-Null
-                }
-                default {
-                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -BlockArmorBonus $heroBlockArmorBonus -AttackBonusModifier $opponentFocusAttackBonus
-                    $opponentFocusAttackBonus = 0
-                }
-            }
-
-            $heroBlockArmorBonus = 0
         }
 
         if ($heroBrawlHP -le 0) {
@@ -586,6 +755,7 @@ function Start-FightingRing {
     Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
     Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
+    Write-Scene "Each round is read in the same breath: both fighters commit first, then the pit learns who guessed right."
     Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"

@@ -36,8 +36,10 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - small NPC rewards, information hooks, and discounts
 - class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
 - fighting ring progression with:
-  - unarmed combat
+  - unarmed combat with simultaneous round choices
   - `Punch`, `Grapple`, `Block`, and `Focus`
+  - matchup-style ring rounds where both fighters commit before the exchange is resolved
+  - distinct opponents with different styles such as pressure fighters, clinch hunters, defensive readers, and heavy hitters
   - once-per-day tournament access
   - long-term progress toward an unarmed fighting feature
 - Chapter Two has started with the first playable city quest chain:
