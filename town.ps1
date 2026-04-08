@@ -9,7 +9,8 @@ function Show-TownQuestSource {
         [string]$Title,
         [string]$IntroText,
         [string]$Source,
-        $Game
+        $Game,
+        [ref]$HeroHP
     )
 
     while ($true) {
@@ -50,14 +51,30 @@ function Show-TownQuestSource {
             continue
         }
 
-        $questResult = Accept-TownQuest -Game $Game -QuestId $quests[$index].Id
+        $selectedQuest = $quests[$index]
+
+        if ($selectedQuest.Completed) {
+            Write-Scene "$($selectedQuest.Name) is already complete."
+            Write-ColorLine ""
+            continue
+        }
+
+        if ($selectedQuest.Accepted) {
+            Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $selectedQuest.Id
+            continue
+        }
+
+        $questResult = Accept-TownQuest -Game $Game -QuestId $selectedQuest.Id
         Write-Scene $questResult.Message
         Write-ColorLine ""
     }
 }
 
 function Start-QuestHubMenu {
-    param($Game)
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
 
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
@@ -73,13 +90,13 @@ function Start-QuestHubMenu {
 
         switch ($choice) {
             "1" {
-                Show-TownQuestSource -Title "Quest Board" -IntroText "Pinned notices flap in the night wind. Most offer coin, some offer trouble, and all of them want someone else to solve a problem." -Source "Quest Board" -Game $Game
+                Show-TownQuestSource -Title "Quest Board" -IntroText "Pinned notices flap in the night wind. Most offer coin, some offer trouble, and all of them want someone else to solve a problem." -Source "Quest Board" -Game $Game -HeroHP $HeroHP
             }
             "2" {
-                Show-TownQuestSource -Title "Guard Station" -IntroText "The watch hall smells of lamp oil, damp cloaks, and sleepless men. Steady work hangs here, though rarely easy work." -Source "Guard Station" -Game $Game
+                Show-TownQuestSource -Title "Guard Station" -IntroText "The watch hall smells of lamp oil, damp cloaks, and sleepless men. Steady work hangs here, though rarely easy work." -Source "Guard Station" -Game $Game -HeroHP $HeroHP
             }
             "3" {
-                Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game
+                Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game -HeroHP $HeroHP
             }
             "0" {
                 return
@@ -152,7 +169,7 @@ function Start-TownMenu {
                 Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers)
             }
             "5" {
-                Start-QuestHubMenu -Game $Game
+                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
             }
             "6" {
                 Start-FightingRing -Game $Game

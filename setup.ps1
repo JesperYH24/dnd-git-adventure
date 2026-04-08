@@ -7,6 +7,7 @@
 . "$PSScriptRoot\inventory.ps1"
 . "$PSScriptRoot\combat.ps1"
 . "$PSScriptRoot\quests.ps1"
+. "$PSScriptRoot\city-quests.ps1"
 . "$PSScriptRoot\town.ps1"
 . "$PSScriptRoot\rooms.ps1"
 . "$PSScriptRoot\encounters.ps1"
@@ -40,6 +41,7 @@ function Initialize-Game {
             Quests = (Initialize-TownQuests)
             Relationships = @{}
             InnFlags = @{}
+            StoryFlags = @{}
             Ring = @{
                 Visits = 0
                 FoughtToday = $false

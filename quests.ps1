@@ -18,6 +18,7 @@ function New-TownQuest {
         RewardCopper = $RewardCopper
         RewardItemName = $RewardItemName
         Accepted = $false
+        Started = $false
         Completed = $false
     }
 }
@@ -113,6 +114,52 @@ function Accept-TownQuest {
         Success = $true
         Message = "$($quest.Name) is added to Borzig's quest log."
         Quest = $quest
+    }
+}
+
+function Complete-TownQuest {
+    param(
+        $Game,
+        [string]$QuestId
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -eq $quest) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "That quest could not be completed."
+        }
+    }
+
+    if ($quest.Completed) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($quest.Name) is already complete."
+            Quest = $quest
+        }
+    }
+
+    $quest.Completed = $true
+    $quest.Started = $false
+
+    $rewardCopper = [int]$quest.RewardCopper
+
+    if ($rewardCopper -gt 0 -and $Game.Town.QuestPayoutBonusCopper -gt 0) {
+        $rewardCopper += [int]$Game.Town.QuestPayoutBonusCopper
+    }
+
+    $currencyResult = $null
+
+    if ($rewardCopper -gt 0) {
+        $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper
+    }
+
+    return [PSCustomObject]@{
+        Success = $true
+        Quest = $quest
+        RewardCopper = $rewardCopper
+        CurrencyResult = $currencyResult
     }
 }
 
