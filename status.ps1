@@ -68,6 +68,16 @@ function Get-HeroStatusSnapshot {
     }
 }
 
+function Get-CombatTargetLabel {
+    param($Target)
+
+    if ($null -ne $Target.PSObject.Properties["combatantType"] -and -not [string]::IsNullOrWhiteSpace($Target.combatantType)) {
+        return [string]$Target.combatantType
+    }
+
+    return "Monster"
+}
+
 function Write-HeroStatusDetails {
     param(
         $Hero,
@@ -86,7 +96,7 @@ function Write-HeroStatusDetails {
     Write-ColorLine "XP: $($Snapshot.DisplayXP)/$($Snapshot.NextLevelXP)" "White"
     Write-ColorLine "STR $($Hero.STR) $(Format-AbilityModifier -Modifier $Snapshot.STRMod) | DEX $($Hero.DEX) $(Format-AbilityModifier -Modifier $Snapshot.DEXMod) | CON $($Hero.CON) $(Format-AbilityModifier -Modifier $Snapshot.CONMod)" "DarkGray"
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"
-    Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Hero) | Active Buff: $($Snapshot.ActiveBuff)" "DarkYellow"
+    Write-ColorLine "Active Buff: $($Snapshot.ActiveBuff)" "DarkYellow"
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {
         Write-ColorLine "Unarmed Training: Tier $($Snapshot.UnarmedTrainingLevel) (+$($Snapshot.UnarmedTrainingLevel) to hit and damage)" "DarkYellow"
@@ -124,6 +134,7 @@ function Show-Status {
         Write-ColorLine "$($Monster.definite): $MonsterHP HP" $monsterColor
     }
 
-    Write-ColorLine "Monster AC: $($Monster.armorClass) | Attack bonus: $($Monster.attackBonus) | Damage: $(Get-MonsterDamageRollText -Monster $Monster)" "White"
+    $targetLabel = Get-CombatTargetLabel -Target $Monster
+    Write-ColorLine "$targetLabel AC: $($Monster.armorClass) | Attack bonus: $($Monster.attackBonus) | Damage: $(Get-MonsterDamageRollText -Monster $Monster)" "White"
     Start-Sleep -Milliseconds 750
 }

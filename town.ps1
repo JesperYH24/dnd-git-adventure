@@ -112,13 +112,84 @@ function Show-TownQuestSource {
         }
 
         if ($selectedQuest.Accepted) {
-            Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $selectedQuest.Id
+            Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $selectedQuest
             continue
         }
 
         $questResult = Accept-TownQuest -Game $Game -QuestId $selectedQuest.Id
         Write-Scene $questResult.Message
         Write-ColorLine ""
+
+        if ($questResult.Success) {
+            while ($true) {
+                Write-ColorLine "1. Start now" "White"
+                Write-ColorLine "2. Prepare in town first" "White"
+                Write-ColorLine "" "White"
+
+                $followUpChoice = Read-Host "Choose"
+
+                if ($followUpChoice -eq "1") {
+                    Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $selectedQuest.Id
+                    break
+                }
+
+                if ($followUpChoice -eq "2") {
+                    Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $selectedQuest
+                    break
+                }
+
+                Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-TownQuestPreparationMenu {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        $Quest
+    )
+
+    while ($true) {
+        Write-SectionTitle -Text "Prepare for Quest" -Color "Yellow"
+        Write-Scene "$($Quest.Name) waits when Borzig is ready. He can make final adjustments before stepping out."
+        Write-ColorLine "Quest: $($Quest.Name)" "White"
+        Write-ColorLine "Objective: $($Quest.Objective)" "DarkGray"
+        Write-ColorLine "Reward: $(Get-QuestRewardText -Quest $Quest)" "DarkGray"
+        Write-ColorLine ""
+        Write-ColorLine "1. Start the quest now" "White"
+        Write-ColorLine "2. Check inventory and gear" "White"
+        Write-ColorLine "3. Check quest log" "White"
+        Write-ColorLine "4. Return to town without starting" "White"
+        Write-TextSpeedOption
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" {
+                Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $Quest.Id
+                return
+            }
+            "2" {
+                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
+            }
+            "3" {
+                Show-QuestLog -Game $Game -Hero $Game.Hero
+            }
+            "4" {
+                return
+            }
+            "T" {
+                Toggle-TextSpeed | Out-Null
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
     }
 }
 

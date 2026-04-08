@@ -5,6 +5,7 @@ function Get-NightWatchReliefEnemy {
         name = "tunnel runner"
         article = "A"
         definite = "The Tunnel Runner"
+        combatantType = "Opponent"
         hp = 12
         xp = 0
         armorClass = 11
