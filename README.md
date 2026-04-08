@@ -212,13 +212,26 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ## Next possible steps
 
-- continue the Chapter Two story arc with:
-  - `Storehouse Trouble`
-  - `Whispers Beneath the Bent Nail`
-  - `Ledger of Ash`
-  - `Broken Seal Patrol`
-  - the final underground chapter quest beneath the city
-- progression from level 2 to level 3 across the Chapter Two quest arc
+- continue the Chapter Two story arc from level 2 to level 3 with a structured quest chain:
+  - `1 story quest per day`
+  - `1 day job per day`
+  - story quests grant XP, currency, and story flags
+  - day jobs grant no XP and instead focus on money, small items, discounts, rumors, and relationships
+- build the first Chapter Two quest layers around replay-friendly progression:
+  - opening story quests:
+    - `Night Watch Relief`
+    - `Storehouse Trouble`
+    - `Missing Herb Satchel`
+    - `Ledger of Ash`
+  - the player should only need part of this set to advance, not every quest
+  - follow-up story quests:
+    - `Broken Seal Patrol`
+    - `Whispers Beneath the Bent Nail`
+    - `Warehouse Ledger Recovery`
+    - `Night Courier Intercept`
+  - the final chapter quest remains the underground complex beneath the city
+- use story flags such as smuggling links, tunnel access, and named suspects to unlock the next stage instead of forcing every quest
+- keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
 - short rests and secured rooms
