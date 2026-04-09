@@ -817,6 +817,46 @@ function Start-WarehouseLedgerRecoveryQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "patron_warehouse_ledger" -CompletionText "The clerk reads the recovered pages once, swallows hard, and locks them away. 'That is enough to ruin careful men,' he says." -ProgressText "Story Progress: Borzig now holds hard ledger evidence tying the city's missing goods to the understreet operation."
 }
 
+function Start-UnderstreetComplexQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "guard_understreet_complex"
+
+    if ($null -eq $quest) {
+        Write-Scene "The watch has not yet put together a final move beneath the city."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Borzig needs to take the final understreet assignment before the watch will commit men and steel."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The Understreet Complex is already marked as settled."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not (Is-TownQuestUnlocked -Game $Game -Quest $quest)) {
+        Write-Scene "Borzig still lacks enough hard evidence to force the watch into the understreet complex."
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Understreet Complex" -Color "Yellow"
+    Write-Scene "Captain Halden spreads Borzig's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, and broker whispers that all point below the same streets."
+    Write-Scene "'This is it,' he says. 'No more scattered errands. No more guessing. We know enough to strike the complex under the ward.'"
+    Write-Scene "The watch begins its quiet preparations while Borzig looks over the tunnel sketches and the route they will have to take when the descent begins."
+    Write-EmphasisLine -Text "Chapter Two Final Unlocked: The route into the understreet complex is finally identified." -Color "Yellow"
+    Write-ColorLine ""
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -1051,6 +1091,7 @@ function Start-TownQuest {
     switch ($QuestId) {
         "guard_night_watch" { Start-NightWatchReliefQuest -Game $Game -HeroHP $HeroHP }
         "guard_night_courier" { Start-NightCourierInterceptQuest -Game $Game -HeroHP $HeroHP }
+        "guard_understreet_complex" { Start-UnderstreetComplexQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }

@@ -244,6 +244,41 @@ function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 170 -Message "Warehouse Ledger Recovery should pay its listed copper reward."
 }
 
+function Test-UnderstreetComplexStaysLockedWithoutTunnelAccess {
+    $game = Initialize-Game
+    $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["FoundCourierRoute"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $false -Message "The Understreet Complex should stay locked until Borzig confirms tunnel access."
+}
+
+function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
+    $game = Initialize-Game
+    $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["FoundCourierRoute"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $true -Message "The Understreet Complex should unlock once Borzig has tunnel access and at least two major story clues."
+}
+
+function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
+    $game = Initialize-Game
+
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+
+    $result = Accept-TownQuest -Game $game -QuestId "guard_understreet_complex"
+    $quest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "The Understreet Complex should be acceptible once its evidence requirements are met."
+    Assert-Equal -Actual $quest.Accepted -Expected $true -Message "Accepting the Understreet Complex should add it to Borzig's quest log."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -256,5 +291,8 @@ Test-NightCourierUnlocksFromCourierLead
 Test-NightCourierCompletesAndSetsCourierRoute
 Test-WarehouseLedgerUnlocksFromLedgerClues
 Test-WarehouseLedgerCompletesAndSecuresEvidence
+Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
+Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
+Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 
 Write-Host "City quest tests passed." -ForegroundColor Green

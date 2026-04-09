@@ -38,6 +38,7 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -RewardCopper 170 -RewardXP 170)
         (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
         (New-TownQuest -Id "guard_night_courier" -Name "Night Courier Intercept" -Source "Guard Station" -Description "The watch believes a marked courier is moving messages between the city's surface contacts and the understreet routes." -Objective "Intercept the night courier and secure whatever they are carrying." -QuestType "Story" -RewardCopper 150 -RewardXP 160)
+        (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -RewardCopper 230 -RewardXP 240)
         (New-TownQuest -Id "bent_nail_whispers" -Name "Whispers Beneath the Bent Nail" -Source "Bent Nail" -Description "A back-room fixer at the Bent Nail knows more about the city's quiet cargo routes than any honest merchant should." -Objective "Follow the broker lead inside the Bent Nail and learn where the smugglers are moving goods." -QuestType "Story" -RewardCopper 130 -RewardXP 150)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before dawn." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90)
         (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100)
@@ -113,6 +114,24 @@ function Is-TownQuestUnlocked {
 
     if ($Quest.Id -eq "patron_warehouse_ledger") {
         return [bool]$Game.Town.StoryFlags["FoundEconomicIrregularity"] -or [bool]$Game.Town.StoryFlags["NamedUnderstreetLeader"]
+    }
+
+    if ($Quest.Id -eq "guard_understreet_complex") {
+        if (-not [bool]$Game.Town.StoryFlags["FoundTunnelAccess"]) {
+            return $false
+        }
+
+        $finalEvidenceFlags = @(
+            "FoundSmugglingLink"
+            "NamedUnderstreetLeader"
+            "FoundCourierRoute"
+            "ConfirmedUndergroundRoute"
+            "SecuredLedgerEvidence"
+            "BentNailBrokerConfirmed"
+        )
+
+        $evidenceCount = @($finalEvidenceFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
+        return $evidenceCount -ge 2
     }
 
     if ($Quest.RequiredStoryClues -le 0) {
