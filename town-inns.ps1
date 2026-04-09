@@ -718,6 +718,15 @@ function Get-InnkeeperHouseTalk {
 
     switch ($inn.Id) {
         "bent_nail" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"] = $true
+                    return "Marta scratches at the bar and gives Borzig a sideways look. 'Strange thing. Ever since you broke that mess under the ward, even the rough houses are sleeping lighter.'"
+                }
+
+                return "Marta grunts. 'House is rough as ever, but the whole quarter feels less trapped than it did.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "'This place stands because the roof leaks slower than the patrons bleed,' Marta says. 'That counts as luxury in this quarter.'"
@@ -726,6 +735,15 @@ function Get-InnkeeperHouseTalk {
             return "Marta wipes down the same scarred patch of bar. 'Bent Nail's still standing. That's the whole business plan.'"
         }
         "lantern_rest" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"] = $true
+                    return "Oren smooths the counter with quiet satisfaction. 'Trade came back faster than I expected once the understreet route was broken. Stable houses notice stable nights.'"
+                }
+
+                return "Oren smiles faintly. 'Better for business when the city thinks tomorrow will arrive on time.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "Oren smooths a hand over the polished counter. 'Merchants pay for predictability. Warm food, clean rooms, and no knives in the hall. That keeps a house alive.'"
@@ -734,6 +752,15 @@ function Get-InnkeeperHouseTalk {
             return "Oren smiles faintly. 'A quiet house is good business. If people sleep well, they come back with coin.'"
         }
         "silver_kettle" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"] = $true
+                    return "Madam Seraphine folds her hands and studies Borzig with frank approval. 'Victory changes a room long before it changes a ledger. People are spending more confidently because you reminded them fear can fail.'"
+                }
+
+                return "Madam Seraphine smiles into her glass. 'Confidence suits the city better than panic ever did.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "Madam Seraphine glances across the lamp-lit room with proprietary pride. 'Comfort is theater, darling. People pay to believe they are safer, softer, and more important than the city outside allows.'"
@@ -792,6 +819,15 @@ function Get-InnkeeperLocalRumorTalk {
 
     switch ($inn.Id) {
         "bent_nail" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
+                    return "Marta lowers her voice. 'Now the talk is not whether the understreet was real. It's who paid Serik and why some coin trails went cold the second you won.'"
+                }
+
+                return "Marta's eye narrows. 'The river quarter smells cleaner. The money behind it does not.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "Marta tips her head toward the back booths. 'If city trouble is looking for a quiet door, it usually finds the river quarter first. Cheap locks and desperate people make easy cover.'"
@@ -800,6 +836,15 @@ function Get-InnkeeperLocalRumorTalk {
             return "Marta grunts. 'Same river talk as before. Too many crates moving at bad hours and too many folk pretending not to notice.'"
         }
         "lantern_rest" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
+                    return "Oren lowers his voice. 'Trade captains think the road ahead clears now. The smarter ones think someone will try to rebuild what you broke, only quieter.'"
+                }
+
+                return "Oren folds a towel over one arm. 'Calmer traffic, sharper rumors. That's usually a sign of money moving into new hands.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "Oren lowers his voice. 'Road captains are nervous. Not panicked, just cautious. That is worse. It means the trouble has pattern, not noise.'"
@@ -808,6 +853,15 @@ function Get-InnkeeperLocalRumorTalk {
             return "Oren folds a towel over one arm. 'Travelers still talk like they expect the city to stabilize. None of them sound convinced.'"
         }
         "silver_kettle" {
+            if ($Game.Hero.Level -ge 3) {
+                if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
+                    $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
+                    return "Madam Seraphine's smile never quite reaches her eyes. 'The elegant version is that the city is recovering. The honest version is that someone just lost a profitable machine and will hate you properly for it.'"
+                }
+
+                return "Madam Seraphine tilts her head. 'Panic recedes. Ambition does not.'"
+            }
+
             if (-not $Game.Town.InnFlags[$flag]) {
                 $Game.Town.InnFlags[$flag] = $true
                 return "Madam Seraphine smiles without warmth. 'The polished version is that commerce is under strain. The honest version is that someone is profiting from fear while better-dressed people pretend to be surprised.'"

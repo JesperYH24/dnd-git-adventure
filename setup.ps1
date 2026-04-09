@@ -36,6 +36,7 @@ function Initialize-Game {
             Discounts = @{}
             ChapterOneComplete = $false
             ChapterTwoComplete = $false
+            ChapterThreeHookSeen = $false
             ActiveInn = $null
             MustChooseFirstInn = $false
             WorkedForRoomToday = $false

@@ -42,6 +42,29 @@ function Test-RingChampionUnlocksHarderCircuit {
     Assert-Equal -Actual $opponents.Count -Expected 4 -Message "Champion status should unlock a longer ring circuit."
 }
 
+function Test-RingVeteranCircuitUnlocksAfterFifteenWins {
+    $hero = Get-Hero
+    $hero.RingWinsTotal = 15
+
+    $pitTalk = Get-RingMasterPitTalk -Hero $hero
+    $opponents = Get-RingOpponents -Hero $hero
+
+    Assert-True -Condition ($pitTalk -like "*fifteen wins*") -Message "The ring master should acknowledge the deeper post-champion tier."
+    Assert-Equal -Actual $opponents.Count -Expected 5 -Message "Fifteen total ring wins should unlock the extended veteran circuit."
+}
+
+function Test-SecondRingTrainingTierUnlocksAtTwentyWins {
+    $hero = Get-Hero
+    $first = Grant-RingTraining -Hero $hero -Wins 10
+    $second = Grant-RingTraining -Hero $hero -Wins 10
+    $profile = Get-HeroUnarmedProfile -Hero $hero
+
+    Assert-Equal -Actual $first.Unlocked -Expected $true -Message "Ten wins should still unlock the first pit-fighter tier."
+    Assert-Equal -Actual $second.Unlocked -Expected $true -Message "Twenty total ring wins should unlock the second pit-fighter tier."
+    Assert-Equal -Actual $hero.UnarmedTrainingLevel -Expected 2 -Message "Twenty ring wins should raise unarmed training to tier 2."
+    Assert-Equal -Actual $profile.DamageBonus -Expected 4 -Message "Tier 2 unarmed training should give Borzig +2 damage on top of his base modifier."
+}
+
 function Test-UnarmedProfileIgnoresWeaponAttackBonus {
     $hero = Get-Hero
     $steelAxe = New-WeaponItem -Name "Steel Great Axe" -Value 0 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2
@@ -254,6 +277,8 @@ function Test-OffBalanceFallsBackToSimpleActions {
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
+Test-RingVeteranCircuitUnlocksAfterFifteenWins
+Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie
 Test-GrappleHeavyOpponentCanChooseGrapple

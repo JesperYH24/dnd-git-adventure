@@ -181,6 +181,36 @@ function Get-RingOpponentPool {
             BlockChance = 10
             Intro = "Odo rolls his shoulders once and smiles without warmth. He fights like a man who believes every match should end in a takedown."
         }
+        [PSCustomObject]@{
+            Name = "Ashen Varg"
+            Definite = "Ashen Varg"
+            Tier = 5
+            ArmorClass = 16
+            HP = 19
+            AttackBonus = 5
+            DamageDiceSides = 4
+            DamageBonus = 3
+            GrappleBonus = 6
+            GrappleChance = 30
+            FocusChance = 20
+            BlockChance = 20
+            Intro = "Ashen Varg steps in without fanfare, all cold eyes and deliberate movement. He fights like someone who studies people before he hurts them."
+        }
+        [PSCustomObject]@{
+            Name = "The Ox of Merefield"
+            Definite = "The Ox of Merefield"
+            Tier = 5
+            ArmorClass = 15
+            HP = 22
+            AttackBonus = 5
+            DamageDiceSides = 4
+            DamageBonus = 4
+            GrappleBonus = 7
+            GrappleChance = 40
+            FocusChance = 5
+            BlockChance = 10
+            Intro = "The Ox ducks through the ropes to a wall of noise. Broad-backed and patient, he looks like the sort of man who expects the ring itself to move for him."
+        }
     )
 }
 
@@ -191,7 +221,11 @@ function Get-RingOpponents {
     $maxTier = 3
     $roundCount = 3
 
-    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"] -and [int]$Hero.RingWinsTotal -ge 10) {
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"] -and [int]$Hero.RingWinsTotal -ge 15) {
+        $maxTier = 5
+        $roundCount = 5
+    }
+    elseif ($null -ne $Hero.PSObject.Properties["RingWinsTotal"] -and [int]$Hero.RingWinsTotal -ge 10) {
         $maxTier = 4
         $roundCount = 4
     }
@@ -208,6 +242,7 @@ function Get-RingRewardCopper {
         2 { return 220 }
         3 { return 350 }
         4 { return 520 }
+        5 { return 700 }
         default { return 0 }
     }
 }
@@ -222,6 +257,10 @@ function Get-RingMasterPitTalk {
     }
 
     if ($wins -ge 10) {
+        if ($Hero.RingWinsTotal -ge 15) {
+            return "Dorr's grin turns savage. 'Champion? That's old news. Once you push past fifteen wins, you stop getting tested by hopefuls. You start getting hunted by professionals.'"
+        }
+
         return "Ringmaster Dorr leans both arms on the rail. 'Champions don't just fight opponents. They fight expectations, bettors, and every fool who wants a piece of a name.'"
     }
 
@@ -242,6 +281,10 @@ function Get-RingMasterOpponentTalk {
     }
 
     if ($wins -ge 10) {
+        if ($Hero.RingWinsTotal -ge 15) {
+            return "Dorr jerks his chin toward the back shadows. 'Now they send the specialists. Men who read grips, break rhythm, and come in with plans instead of temper.'"
+        }
+
         return "Dorr's grin turns sharp. 'Now you get the ones who study habits, hold grudges, and come in with something to prove.'"
     }
 
@@ -334,6 +377,10 @@ function Grant-RingTraining {
 
     if ($Hero.UnarmedTrainingLevel -lt 1 -and $Hero.RingWinsTotal -ge 10) {
         $Hero.UnarmedTrainingLevel = 1
+        $unlocked = $true
+    }
+    elseif ($Hero.UnarmedTrainingLevel -lt 2 -and $Hero.RingWinsTotal -ge 20) {
+        $Hero.UnarmedTrainingLevel = 2
         $unlocked = $true
     }
 
@@ -996,7 +1043,7 @@ function Start-FightingRing {
         Write-ColorLine "Ring Standing: New Blood" "DarkYellow"
     }
     if ($Game.Hero.UnarmedTrainingLevel -gt 0) {
-        Write-ColorLine "Pit-Fighter Basics: unlocked" "DarkYellow"
+        Write-ColorLine "Pit-Fighter Basics: Tier $($Game.Hero.UnarmedTrainingLevel)" "DarkYellow"
     }
     else {
         $progressWins = [Math]::Min($Game.Hero.RingWinsTotal, $trainingGoal)
@@ -1085,7 +1132,12 @@ function Start-FightingRing {
 
         if ($trainingResult.Unlocked) {
             Write-SectionTitle -Text "Skill Gained" -Color "Green"
-            Write-EmphasisLine -Text "Pit-Fighter Basics unlocked: Borzig gains +1 to hit and +1 damage with bare hands." -Color "Green"
+            if ($Game.Hero.UnarmedTrainingLevel -eq 1) {
+                Write-EmphasisLine -Text "Pit-Fighter Basics unlocked: Borzig gains +1 to hit and +1 damage with bare hands." -Color "Green"
+            }
+            else {
+                Write-EmphasisLine -Text "Pit-Fighter Basics deepens: Borzig now gains +2 to hit and +2 damage with bare hands." -Color "Green"
+            }
         }
     }
 

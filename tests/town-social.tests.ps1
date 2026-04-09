@@ -101,6 +101,19 @@ function Test-RingMasterHasExtendedConversationHooks {
     Assert-True -Condition ($opponentTalk -like "*Some swing wild*") -Message "Ringmaster Dorr should be able to hint at opponent styles."
 }
 
+function Test-LevelThreeNpcToneChangesAfterUnderstreet {
+    $hero = Get-Hero
+    $hero.Level = 3
+
+    $widow = Get-WidowEliraIntro -Hero $hero
+    $hadrik = Get-HadrikIntro -Hero $hero
+    $belor = Get-BelorIntro -Hero $hero
+
+    Assert-True -Condition ($widow -like "*went under the city*") -Message "Widow Elira should acknowledge Borzig's undercity victory once he reaches level 3."
+    Assert-True -Condition ($hadrik -like "*broke the smugglers' den*") -Message "Hadrik should react to Borzig's city-level reputation at level 3."
+    Assert-True -Condition ($belor -like "*won't be small*") -Message "Belor should frame later work differently once Borzig has proven himself."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
@@ -110,5 +123,6 @@ Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
 Test-StreetNpcExtraFlavorTalksExist
 Test-RingMasterHasExtendedConversationHooks
+Test-LevelThreeNpcToneChangesAfterUnderstreet
 
 Write-Host "Town social tests passed." -ForegroundColor Green

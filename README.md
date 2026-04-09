@@ -7,7 +7,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
 ## Current features
 
 - DnD-inspired hero stats: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`
-- barbarian progression with XP, level-up readiness, and long-rest leveling from level 1 to level 2
+- barbarian progression with XP, level-up readiness, and long-rest leveling from level 1 to level 3
 - turn-based combat with:
   - initiative rolls
   - critical hits and critical fails
@@ -47,7 +47,8 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - opponent rivalries that remember Borzig's record against specific fighters
   - rebalanced grapple pressure so takedowns disrupt the next exchange without deleting a full round
   - once-per-day tournament access
-  - long-term progress toward an unarmed fighting feature
+  - champion-tier and veteran-tier opponent pools
+  - long-term progress toward stronger unarmed fighting features
 - Chapter Two has a playable opening batch:
   - opening story quests:
     - `Night Watch Relief`
@@ -69,6 +70,14 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
     - `1 day job per day`
   - story flags for the city mystery under the streets
   - day jobs that pay coin but no XP
+  - a playable finale in `The Understreet Complex`
+  - a level 3 gate before the final assault begins
+  - navigable finale rooms with a safe-room short-rest mechanic
+- post-Chapter-Two city state with:
+  - stronger NPC greetings and town tone once Borzig returns as a proven level 3 hero
+  - improved shop inventory for a level 3 barbarian
+  - tougher fighting ring progression after champion status
+  - better-paying day jobs for a proven veteran without granting XP
 
 ---
 
@@ -122,7 +131,7 @@ This hidden shortcut:
 - delivers Borzig to the city
 - applies the level 2 long-rest level up with fixed HP gain
 - restores him to full HP
-- always takes the reduced Shadow Sanctum gold reward path
+- always takes the reduced Shadow Sanctum gold reward path of `2 GP`
 - never grants the haste reward
 
 ---
@@ -161,11 +170,13 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 - sell gear to free up slots
 - begin the Chapter Two city story through the first guard quest chain
 
-### 3. Chapter Two opening
+### 3. Chapter Two
 
 The Chapter Two quest chain is now playable from its opening clues through the current final assault.
 
 `Night Watch Relief`, `Storehouse Trouble`, `Missing Herb Satchel`, and `Ledger of Ash` form the opening layer of Chapter Two. Those clues can branch into `Broken Seal Patrol`, `Whispers Beneath the Bent Nail`, `Night Courier Intercept`, and `Warehouse Ledger Recovery`, and enough gathered evidence now unlocks `The Understreet Complex` as the Chapter Two finale beneath the city.
+
+The final quest now plays as a focused mini-dungeon with connected rooms, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
 
 ---
 
@@ -224,28 +235,28 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ## Notes
 
-- the game is currently built around a tutorial arc and a first town hub
-- Chapter Two is now playable from its opening story layer through its current finale, with multiple replay-friendly clue paths and first day jobs implemented
+- the game is currently built around a tutorial arc, a full city hub, and a first complete Chapter Two story chain
+- Chapter Two is now playable from its opening story layer through its finale, with multiple replay-friendly clue paths and first day jobs implemented
 - some systems are intentionally lightweight for now so they can be expanded later
-- several town information hooks are already in place as setup for later quest branches, payout modifiers, and underground story paths
+- several town information hooks are already in place as setup for later quest branches, payout modifiers, and post-Understreet story paths
 
 ---
 
 ## Next possible steps
 
-- continue the Chapter Two story arc from level 2 to level 3 with the next replay-friendly quest layer:
 - add a proper clue log or investigation log so the player can review gathered evidence and understand why the next story stage unlocked
-- turn `The Understreet Complex` from its current focused finale into a fuller dungeon crawl with more rooms, routing, and encounter variety
+- continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
+- deepen `The Understreet Complex` with more room variety, routing choices, and encounter variety
 - build the next post-Understreet story chain from the consequences of breaking the network under the city
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - add more day jobs that reinforce economy and city life without granting XP
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
+- expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
-- short rests and secured rooms
 - more shop inventory, armor progression, and trader variety
 - more classes and class-specific dialogue, gear use, and social reactions
-- class features beyond level 2
+- class features beyond level 3
 - deeper inn events, shady city routes, and economic info payoffs
 - resistances, elemental effects, and broader enemy mechanics
 - optional audio cues and simple visual scene flourishes such as ASCII art or external image moments

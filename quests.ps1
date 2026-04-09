@@ -183,6 +183,21 @@ function Get-QuestRewardText {
     return ($parts -join " + ")
 }
 
+function Get-DayJobRewardCopper {
+    param(
+        $Game,
+        $Quest
+    )
+
+    $rewardCopper = [int]$Quest.RewardCopper
+
+    if ($Quest.QuestType -eq "DayJob" -and $null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $rewardCopper += 20
+    }
+
+    return $rewardCopper
+}
+
 function Get-TownQuestList {
     param(
         $Game,
@@ -319,7 +334,7 @@ function Complete-TownQuest {
     $quest.Completed = $true
     $quest.Started = $false
 
-    $rewardCopper = [int]$quest.RewardCopper
+    $rewardCopper = Get-DayJobRewardCopper -Game $Game -Quest $quest
 
     if ($rewardCopper -gt 0 -and $Game.Town.QuestPayoutBonusCopper -gt 0) {
         $rewardCopper += [int]$Game.Town.QuestPayoutBonusCopper

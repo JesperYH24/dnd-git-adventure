@@ -2,6 +2,20 @@
 
 Set-TestOutputStubs
 
+function Test-LevelThreeShopsUnlockBetterOffers {
+    $game = Initialize-Game
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
+
+    $market = @(Get-MarketOffers -Game $game)
+    $smithy = @(Get-SmithyOffers -Game $game)
+    $apothecary = @(Get-ApothecaryOffers -Game $game)
+
+    Assert-True -Condition ($market.Id -contains "market_throwing_axe") -Message "Level 3 Borzig should see an upgraded market weapon offer."
+    Assert-True -Condition ($smithy.Id -contains "smithy_executioner_axe") -Message "Level 3 Borzig should unlock a heavier smithy weapon offer."
+    Assert-True -Condition ($apothecary.Id -contains "apothecary_battle_tonic") -Message "Level 3 Borzig should unlock a stronger apothecary tonic."
+}
+
 function Test-HeroCanBuyFromTownShop {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -57,5 +71,6 @@ Test-HeroCanBuyFromTownShop
 Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
 Test-ShopMentionsStashOrSellWhenFull
+Test-LevelThreeShopsUnlockBetterOffers
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

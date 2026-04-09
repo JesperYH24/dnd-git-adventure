@@ -10,6 +10,23 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Show-PostUnderstreetHook {
+    param($Game)
+
+    if (-not $Game.Town.ChapterTwoComplete -or $Game.Town.ChapterThreeHookSeen) {
+        return
+    }
+
+    Write-SectionTitle -Text "Aftermath" -Color "Green"
+    Write-Scene "Word spreads faster than Borzig expected. By dawn, half the city knows the hidden route under the ward has been broken open."
+    Write-Scene "Captain Halden sends quiet thanks. Merchants start asking what else was hidden below. The wrong people are suddenly too silent."
+    Write-Scene "And in more than one district, Borzig hears the same uneasy thought repeated in different words: if the understreet was only one branch, what larger hand planted it here?"
+    Write-EmphasisLine -Text "New Chapter Hook: Borzig's victory under the city has exposed a wider network still worth hunting." -Color "Yellow"
+    Write-ColorLine ""
+
+    $Game.Town.ChapterThreeHookSeen = $true
+}
+
 function Get-TownQuestSourceIntroText {
     param(
         [string]$Source,
@@ -19,6 +36,14 @@ function Get-TownQuestSourceIntroText {
 
     $visitKey = Get-TownSourceVisitKey -Source $Source
     $isRepeatVisit = [bool]$Game.Town.StreetFlags[$visitKey]
+
+    if ($Game.Town.ChapterTwoComplete) {
+        switch ($Source) {
+            "Quest Board" { return "Fresh notices have started appearing now that Borzig's name carries more weight. Some want coin-work. Some want the man who broke the understreet to look into worse things." }
+            "Guard Station" { return "The watch hall changes tone when Borzig enters now. Some guards step aside out of respect, and the harder jobs are no longer hidden from him." }
+            "Quest Giver" { return "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." }
+        }
+    }
 
     if (-not $isRepeatVisit) {
         $Game.Town.StreetFlags[$visitKey] = $true
@@ -252,6 +277,8 @@ function Start-TownMenu {
     )
 
     while ($true) {
+        Show-PostUnderstreetHook -Game $Game
+
         # The first city night is mandatory so the tutorial always lands on the inn chapter ending.
         if ($Game.Town.MustChooseFirstInn -and -not $Game.Town.ChapterOneComplete) {
             Write-SectionTitle -Text "Night Falls" -Color "Yellow"
@@ -278,6 +305,10 @@ function Start-TownMenu {
             Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
             Write-Scene "The city no longer feels like refuge alone. It feels like a place where the next chapter might actually begin."
             $Game.Town.StreetFlags["TownMenuVisited"] = $true
+        }
+        elseif ($Game.Town.ChapterTwoComplete) {
+            Write-Scene "The city watches Borzig differently now. Some faces carry relief, some calculation, and some the tight unease of people wondering what his next target might be."
+            Write-Scene "Level 3 has changed the way the streets receive him: with more respect, better offers, and harder eyes from anyone still hiding something."
         }
         else {
             Write-Scene "The city is awake around Borzig again, full of noise, work, and the feeling that something below it still has not settled."
@@ -307,13 +338,13 @@ function Start-TownMenu {
                 Start-TownStreetScene -Game $Game
             }
             "2" {
-                Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers)
+                Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game)
             }
             "3" {
-                Show-TownShop -Title "Smithy" -IntroText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel." -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers)
+                Show-TownShop -Title "Smithy" -IntroText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel." -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game)
             }
             "4" {
-                Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers)
+                Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game)
             }
             "5" {
                 Start-QuestHubMenu -Game $Game -HeroHP $HeroHP

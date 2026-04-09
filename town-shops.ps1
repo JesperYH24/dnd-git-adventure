@@ -93,27 +93,51 @@ function Get-TownOfferPrice {
 }
 
 function Get-MarketOffers {
-    return @(
+    param($Game = $null)
+
+    $offers = @(
         (New-TownOffer -Id "market_healing_potion" -Name "Healing Potion" -Category "Consumable" -Description "A simple red tonic that restores 8 HP." -PriceCopper 60)
         (New-TownOffer -Id "market_dagger" -Name "Dagger" -Category "Weapon" -Description "A light backup blade with a sharp edge and a quick draw. Requires DEX 11." -PriceCopper 90)
         (New-TownOffer -Id "market_handaxe" -Name "Hand Axe" -Category "Weapon" -Description "A practical one-handed axe for close quarters. Requires STR 11." -PriceCopper 140)
     )
+
+    if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $offers += (New-TownOffer -Id "market_throwing_axe" -Name "Balanced Throwing Axe" -Category "Weapon" -Description "A clean-weighted axe light enough for quick work and vicious enough for a close finish. Requires STR 12." -PriceCopper 190)
+    }
+
+    return $offers
 }
 
 function Get-SmithyOffers {
-    return @(
+    param($Game = $null)
+
+    $offers = @(
         (New-TownOffer -Id "smithy_longsword" -Name "Longsword" -Category "Weapon" -Description "A balanced soldier's blade for dependable strikes. Requires STR 11." -PriceCopper 180)
         (New-TownOffer -Id "smithy_warhammer" -Name "Warhammer" -Category "Weapon" -Description "A brutal hammer built to crush armor and bone. Requires STR 13." -PriceCopper 220)
         (New-TownOffer -Id "smithy_greataxe" -Name "Steel Great Axe" -Category "Weapon" -Description "A heavier axe with a cleaner edge than Borzig's old camp weapon. Two-Handed. Requires STR 15." -PriceCopper 260)
     )
+
+    if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $offers += (New-TownOffer -Id "smithy_executioner_axe" -Name "Executioner Axe" -Category "Weapon" -Description "A broad-bladed two-handed axe forged for fighters with the strength to end a battle in one committed swing. Requires STR 16." -PriceCopper 420)
+    }
+
+    return $offers
 }
 
 function Get-ApothecaryOffers {
-    return @(
+    param($Game = $null)
+
+    $offers = @(
         (New-TownOffer -Id "apothecary_healing_potion" -Name "Healing Potion" -Category "Consumable" -Description "A standard restorative draught for injured adventurers." -PriceCopper 60)
         (New-TownOffer -Id "apothecary_greater_healing_potion" -Name "Greater Healing Potion" -Category "Consumable" -Description "A stronger restorative blend that heals 12 HP." -PriceCopper 180)
         (New-TownOffer -Id "apothecary_haste_potion" -Name "Potion of Haste" -Category "Consumable" -Description "A silver-bright elixir that grants initiative advantage until rest or a new buff replaces it." -PriceCopper 300)
     )
+
+    if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $offers += (New-TownOffer -Id "apothecary_battle_tonic" -Name "Battle Tonic" -Category "Consumable" -Description "A dense black-red tonic that restores 18 HP and is sold only to fighters with a name." -PriceCopper 420)
+    }
+
+    return $offers
 }
 
 function New-TownItemFromOfferId {
@@ -123,12 +147,15 @@ function New-TownItemFromOfferId {
         "market_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
         "market_dagger" { return (New-WeaponItem -Name "Dagger" -Value 90 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -Light $true -RequiredDEX 11 -SlotCost 1) }
         "market_handaxe" { return (New-WeaponItem -Name "Hand Axe" -Value 140 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 11 -SlotCost 1) }
+        "market_throwing_axe" { return (New-WeaponItem -Name "Balanced Throwing Axe" -Value 190 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 12 -SlotCost 1) }
         "smithy_longsword" { return (New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_greataxe" { return (New-WeaponItem -Name "Steel Great Axe" -Value 260 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 15 -SlotCost 2) }
+        "smithy_executioner_axe" { return (New-WeaponItem -Name "Executioner Axe" -Value 420 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 16 -SlotCost 2) }
         "apothecary_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
         "apothecary_greater_healing_potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }
         "apothecary_haste_potion" { return (New-ConsumableItem -Name "Potion of Haste" -Value 300 -HealAmount 0 -BuffType "Haste" -BuffName "Potion of Haste" -InitiativeAdvantage $true -SlotCost 1) }
+        "apothecary_battle_tonic" { return (New-ConsumableItem -Name "Battle Tonic" -Value 420 -HealAmount 18 -SlotCost 1) }
         default { return $null }
     }
 }

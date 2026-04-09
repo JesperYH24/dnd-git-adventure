@@ -110,6 +110,10 @@ function Get-WidowEliraIntro {
 
     $persona = Get-HeroTownPersona -Hero $Hero
 
+    if ($Hero.Level -ge 3) {
+        return "Widow Elira squeezes Borzig's forearm and smiles with more pride than fear now. 'They say you went under the city and came back with the dark broken behind you. Folk sleep easier for it.'"
+    }
+
     if ($persona.IsBardLike -or $persona.IsCharming) {
         return "Widow Elira reaches for Borzig's hand with watery eyes. 'The city said you carried yourself gently, and now I see why. Your warning brought my son home before sunset.'"
     }
@@ -130,6 +134,10 @@ function Get-HadrikIntro {
 
     $persona = Get-HeroTownPersona -Hero $Hero
 
+    if ($Hero.Level -ge 3) {
+        return "Hadrik's grin comes faster now. 'So it is true. You broke the smugglers' den under the ward. Master's been saying steel feels different in the hands of someone the city finally believes in.'"
+    }
+
     if ($persona.IsBarbarian -or $persona.IsStrong) {
         return "Hadrik wipes soot from his brow and grins at Borzig's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly.'"
     }
@@ -149,6 +157,10 @@ function Get-BelorIntro {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+
+    if ($Hero.Level -ge 3) {
+        return "Watchman Belor's nod is small but real. 'The halls under the ward are yours now, as far as the watch is concerned. Means the next work we hand you won't be small.'"
+    }
 
     if ($persona.IsKnightLike) {
         return "Watchman Belor gives Borzig the kind of look guards save for people they might one day salute. 'If the cave held one ancient thing, do not assume it held only one.'"
@@ -176,6 +188,10 @@ function Get-RingMasterGreeting {
     }
 
     if ($ringWins -ge 10) {
+        if ($Hero.Level -ge 3) {
+            return "Ringmaster Dorr slaps the rail and laughs once. 'Champion and city-breaker both. Good. Means the next ones stepping in won't come for purse alone. They'll come for your name.'"
+        }
+
         return "Ringmaster Dorr slaps the rail hard enough to wake the whole pit. 'Champion's back. Good. The easy money cleared out weeks ago, so now the real challengers come looking for your name.'"
     }
 
@@ -273,6 +289,15 @@ function Resolve-BelorChoice {
 function Get-WidowEliraFamilyTalk {
     param($Game)
 
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["WidowFamilyTalk_Post"]) {
+            $Game.Town.StreetFlags["WidowFamilyTalk_Post"] = $true
+            return "Elira's eyes brighten. 'My son says the wagoners talk about you like a wall the city can move. That matters more than most soldiers understand.'"
+        }
+
+        return "Elira smiles softly. 'It is easier to send family out on the road now that people believe the city can fight back.'"
+    }
+
     if (-not $Game.Town.StreetFlags["WidowFamilyTalk"]) {
         $Game.Town.StreetFlags["WidowFamilyTalk"] = $true
         return "Elira's face softens. 'My boy drives grain in from the outer farms. One rumor about the cave and half the district thought the road was cursed. Your warning got him home before the panic got worse.'"
@@ -283,6 +308,15 @@ function Get-WidowEliraFamilyTalk {
 
 function Get-WidowEliraDistrictTalk {
     param($Game)
+
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["WidowDistrictTalk_Post"]) {
+            $Game.Town.StreetFlags["WidowDistrictTalk_Post"] = $true
+            return "Elira glances down the lane and nods once. 'The district still knows fear, but not helplessness. That is new. People stand a little straighter when your name comes up.'"
+        }
+
+        return "Elira folds her hands. 'The district is healing. Slow, stubborn, and real.'"
+    }
 
     if (-not $Game.Town.StreetFlags["WidowDistrictTalk"]) {
         $Game.Town.StreetFlags["WidowDistrictTalk"] = $true
@@ -295,6 +329,15 @@ function Get-WidowEliraDistrictTalk {
 function Get-HadrikForgeTalk {
     param($Game)
 
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["HadrikForgeTalk_Post"]) {
+            $Game.Town.StreetFlags["HadrikForgeTalk_Post"] = $true
+            return "Hadrik jerks his chin toward the forge. 'Now that you've proved yourself under the city, Rurik's started talking about steel for named fighters, not just caravan bruisers.'"
+        }
+
+        return "Hadrik laughs under his breath. 'Funny how a forge gets more serious once the hero walking in has already broken a hidden war below the streets.'"
+    }
+
     if (-not $Game.Town.StreetFlags["HadrikForgeTalk"]) {
         $Game.Town.StreetFlags["HadrikForgeTalk"] = $true
         return "Hadrik jerks a thumb toward the sparks. 'Rurik says a blade tells you what kind of fool bought it. Fancy steel for nobles, practical steel for survivors, and heavy steel for people who solve things the hard way.'"
@@ -305,6 +348,15 @@ function Get-HadrikForgeTalk {
 
 function Get-HadrikCityTalk {
     param($Game)
+
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["HadrikCityTalk_Post"]) {
+            $Game.Town.StreetFlags["HadrikCityTalk_Post"] = $true
+            return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken. The city has gone from frightened to opportunistic in record time.'"
+        }
+
+        return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel.'"
+    }
 
     if (-not $Game.Town.StreetFlags["HadrikCityTalk"]) {
         $Game.Town.StreetFlags["HadrikCityTalk"] = $true
@@ -317,6 +369,15 @@ function Get-HadrikCityTalk {
 function Get-BelorWatchTalk {
     param($Game)
 
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["BelorWatchTalk_Post"]) {
+            $Game.Town.StreetFlags["BelorWatchTalk_Post"] = $true
+            return "Belor keeps his eyes on the gate. 'You broke the understreet and now the watch has proof the rot was organized. Means the next enemy will hide smarter.'"
+        }
+
+        return "Belor's mouth tightens. 'The city trusts the walls more today, but walls only matter if we learn faster than the next lot of liars.'"
+    }
+
     if (-not $Game.Town.StreetFlags["BelorWatchTalk"]) {
         $Game.Town.StreetFlags["BelorWatchTalk"] = $true
         return "Belor keeps his eyes on the gate as he talks. 'People think walls keep danger out. Truth is, walls only help if tired men on watch still know what to look for.'"
@@ -327,6 +388,15 @@ function Get-BelorWatchTalk {
 
 function Get-BelorDistrictRumorTalk {
     param($Game)
+
+    if ($Game.Hero.Level -ge 3) {
+        if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk_Post"]) {
+            $Game.Town.StreetFlags["BelorDistrictRumorTalk_Post"] = $true
+            return "Belor's voice drops. 'People are already whispering that Serik answered to someone else. You know how cities work. Once one hidden hand is cut off, everyone starts looking for the arm.'"
+        }
+
+        return "Belor exhales through his nose. 'The streets are calmer. The rumors are not.'"
+    }
 
     if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk"]) {
         $Game.Town.StreetFlags["BelorDistrictRumorTalk"] = $true

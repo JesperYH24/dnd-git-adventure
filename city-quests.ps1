@@ -1405,7 +1405,12 @@ function Start-MissingDeliveryDayJob {
     }
 
     Write-SectionTitle -Text "Missing Delivery" -Color "Yellow"
-    Write-Scene "A crate of lamp oil and cheap cloth never reached its stall, and the market runner is desperate to get paid before sunrise."
+    if ($Game.Hero.Level -ge 3) {
+        Write-Scene "The market runner is visibly relieved when Borzig takes the job. A level 3 name means fewer arguments, fewer knives, and a better chance the crate comes back intact."
+    }
+    else {
+        Write-Scene "A crate of lamp oil and cheap cloth never reached its stall, and the market runner is desperate to get paid before sunrise."
+    }
     Write-ColorLine "1. Intimidate the squatters using the alley as a shortcut" "White"
     Write-ColorLine "2. Lift the jammed crate onto the cart yourself" "White"
     Write-ColorLine "3. Talk the neighbors into helping sort out the mix-up" "White"
@@ -1462,7 +1467,12 @@ function Start-GateDutyOverflowDayJob {
     }
 
     Write-SectionTitle -Text "Gate Duty Overflow" -Color "Yellow"
-    Write-Scene "At the east gate, freight has jammed the archway and three drivers are one insult away from a riot."
+    if ($Game.Hero.Level -ge 3) {
+        Write-Scene "At the east gate, even the loudest drivers quiet a little when they realize the fighter who broke the understreet has been sent to straighten out the line."
+    }
+    else {
+        Write-Scene "At the east gate, freight has jammed the archway and three drivers are one insult away from a riot."
+    }
     Write-ColorLine "1. Bark the line straight with sheer force of presence" "White"
     Write-ColorLine "2. Shoulder the worst wagon clear yourself" "White"
     Write-ColorLine "3. Calm the loudest driver before it spreads" "White"

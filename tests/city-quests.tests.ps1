@@ -107,6 +107,21 @@ function Test-DayJobPaysCoinButNoXP {
     Assert-Equal -Actual $game.Town.DayJobDoneToday -Expected $true -Message "Finishing a day job should consume the daily side-job slot."
 }
 
+function Test-DayJobVeteranRateImprovesPayAtLevelThree {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
+
+    Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
+
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 110 -Message "Level 3 day jobs should pay a small veteran premium without granting XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 0 -Message "The veteran premium should not change the no-XP rule for day jobs."
+}
+
 function Test-OnlyOneStoryQuestCanBeStartedPerDay {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -366,6 +381,7 @@ Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
 Test-DayJobPaysCoinButNoXP
+Test-DayJobVeteranRateImprovesPayAtLevelThree
 Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
 Test-BentNailWhispersUnlocksFromBentNailInfo
