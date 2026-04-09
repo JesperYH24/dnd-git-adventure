@@ -26,6 +26,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - guaranteed coin for the cheapest first-night room if Borzig reaches town broke
   - `work off the room` fallback when money runs short
   - locked inn booking until the player cancels it with the innkeeper
+  - inn-first navigation where the player enters the inn before choosing room or common-room activities
   - inn storage
   - inn-specific evening activities based on quality and clientele
   - street interactions
@@ -36,21 +37,24 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - apothecary
   - fighting ring
   - small NPC rewards, information hooks, and discounts
+  - deeper innkeeper and street-NPC conversations with repeat-aware dialogue
 - class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
   - `Punch`, `Grapple`, `Block`, and `Focus`
   - matchup-style ring rounds where both fighters commit before the exchange is resolved
   - distinct opponents with different styles such as pressure fighters, clinch hunters, defensive readers, and heavy hitters
+  - opponent rivalries that remember Borzig's record against specific fighters
+  - rebalanced grapple pressure so takedowns disrupt the next exchange without deleting a full round
   - once-per-day tournament access
   - long-term progress toward an unarmed fighting feature
-- Chapter Two has started with the first playable city quest chain:
+- Chapter Two has a playable opening batch:
   - opening story quests:
     - `Night Watch Relief`
     - `Storehouse Trouble`
     - `Missing Herb Satchel`
     - `Ledger of Ash`
-  - follow-up unlock:
+  - first unlocked follow-up:
     - `Broken Seal Patrol`
   - day jobs:
     - `Missing Delivery`
@@ -216,7 +220,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 ## Notes
 
 - the game is currently built around a tutorial arc and a first town hub
-- Chapter Two is now partially playable, but only its opening quest chain is implemented so far
+- Chapter Two is now partially playable, with its opening story layer, first follow-up quest, and first day jobs implemented
 - some systems are intentionally lightweight for now so they can be expanded later
 - several town information hooks are already in place as setup for later quest branches, payout modifiers, and underground story paths
 
@@ -224,26 +228,22 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ## Next possible steps
 
-- continue the Chapter Two story arc from level 2 to level 3 with a structured quest chain:
-  - `1 story quest per day`
-  - `1 day job per day`
-  - story quests grant XP, currency, and story flags
-  - day jobs grant no XP and instead focus on money, small items, discounts, rumors, and relationships
-- build the first Chapter Two quest layers around replay-friendly progression:
-  - opening story quests:
-    - `Night Watch Relief`
-    - `Storehouse Trouble`
-    - `Missing Herb Satchel`
-    - `Ledger of Ash`
-  - the player should only need part of this set to advance, not every quest
-  - follow-up story quests:
-    - `Broken Seal Patrol`
+- continue the Chapter Two story arc from level 2 to level 3 with the next replay-friendly quest layer:
+  - the player should still only need part of the available story quest pool to advance, not every quest
+  - next story quests to build:
     - `Whispers Beneath the Bent Nail`
     - `Warehouse Ledger Recovery`
     - `Night Courier Intercept`
   - the final chapter quest remains the underground complex beneath the city
+- expand the story-flag unlock structure so the next stage is driven more clearly by gathered evidence:
+  - smuggling links
+  - tunnel access
+  - named suspects
+  - confirmed underground routes
 - use story flags such as smuggling links, tunnel access, and named suspects to unlock the next stage instead of forcing every quest
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
+- add more day jobs that reinforce economy and city life without granting XP
+- let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
 - short rests and secured rooms
