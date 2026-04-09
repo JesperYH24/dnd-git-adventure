@@ -279,6 +279,26 @@ function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     Assert-Equal -Actual $quest.Accepted -Expected $true -Message "Accepting the Understreet Complex should add it to Borzig's quest log."
 }
 
+function Test-UnderstreetComplexCannotStartBeforeLevelThree {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Hero.XP = 900
+
+    Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
+    Use-ReadHostSequence -Values @()
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_understreet_complex"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    Assert-Equal -Actual $quest.Completed -Expected $false -Message "The Understreet Complex should not start while Borzig is still level 2."
+    Assert-Equal -Actual $game.Town.StoryQuestDoneToday -Expected $false -Message "Trying to start the final quest early should not consume the daily story slot."
+}
+
 function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -286,10 +306,12 @@ function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
 
     Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
     Use-StoryCombatWinStub
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("1", "1", "1", "1")
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_understreet_complex"
 
@@ -300,6 +322,32 @@ function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
     Assert-Equal -Actual $game.Town.StoryFlags["UnderstreetComplexCleared"] -Expected $true -Message "Finishing the final quest should mark the complex as cleared."
     Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The Understreet Complex should grant its final story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 230 -Message "The Understreet Complex should pay its listed copper reward."
+}
+
+function Test-UnderstreetShortRestHealsAndClearsBuff {
+    $game = Initialize-Game
+    $heroHP = 6
+
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
+    Apply-HeroBuff -Hero $game.Hero -BuffType "Haste" -BuffName "Potion of Haste"
+
+    Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
+    Use-StoryCombatWinStub
+    Use-ReadHostSequence -Values @("1", "1", "R", "1", "1")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 6
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_understreet_complex"
+
+    Assert-True -Condition ($heroHP -gt 6) -Message "Securing a room in the Understreet Complex should heal Borzig during a short rest."
+    Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Taking a short rest in a secured room should clear the current dungeon buff."
 }
 
 Test-QuestSourcesListOpeningQuestsAndDayJobs
@@ -317,6 +365,8 @@ Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
+Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
+Test-UnderstreetShortRestHealsAndClearsBuff
 
 Write-Host "City quest tests passed." -ForegroundColor Green

@@ -141,6 +141,20 @@ function Is-TownQuestUnlocked {
     return (Get-StoryClueCount -Game $Game) -ge [int]$Quest.RequiredStoryClues
 }
 
+function Get-UnderstreetFinalEntryMessage {
+    param($Hero)
+
+    if ($Hero.Level -ge 3) {
+        return ""
+    }
+
+    if ((Get-HeroAvailableLevelUps -Hero $Hero) -gt 0) {
+        return "Borzig is not ready to descend yet. He needs a long rest at the inn to reach level 3 before taking on the Understreet Complex."
+    }
+
+    return "Borzig is not ready to descend yet. He needs to grow stronger and reach level 3 before taking on the Understreet Complex."
+}
+
 function Get-QuestRewardText {
     param($Quest)
 

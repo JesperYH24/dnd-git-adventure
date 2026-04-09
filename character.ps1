@@ -386,6 +386,38 @@ function Resolve-HeroLongRestLevelUp {
     }
 }
 
+function Resolve-HeroShortRest {
+    param(
+        $Hero,
+        [ref]$HeroHP
+    )
+
+    if ($HeroHP.Value -ge $Hero.HP) {
+        Clear-HeroBuff -Hero $Hero
+
+        return [PSCustomObject]@{
+            Healed = 0
+            Roll = $null
+            Modifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+            ClearedBuff = $true
+        }
+    }
+
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    $roll = Roll-Dice -Sides 8
+    $healing = [Math]::Max(1, $roll + $constitutionModifier)
+    $oldHP = $HeroHP.Value
+    $HeroHP.Value = [Math]::Min($Hero.HP, $HeroHP.Value + $healing)
+    Clear-HeroBuff -Hero $Hero
+
+    return [PSCustomObject]@{
+        Healed = ($HeroHP.Value - $oldHP)
+        Roll = $roll
+        Modifier = $constitutionModifier
+        ClearedBuff = $true
+    }
+}
+
 function Get-EquippedArmor {
     param($Hero)
 

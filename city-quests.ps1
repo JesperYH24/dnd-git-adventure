@@ -60,6 +60,40 @@ function Get-BrokenSealPatrolEnemy {
     }
 }
 
+function New-UnderstreetQuestRoom {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [string]$Description,
+        [hashtable]$Exits,
+        [string]$EncounterFactory = "",
+        [string]$EncounterTitle = "",
+        [string]$EncounterIntro = "",
+        [bool]$BossRoom = $false
+    )
+
+    $room = New-Room -Id $Id -Name $Name -Description $Description -Exits $Exits -BossRoom $BossRoom
+    $room | Add-Member -NotePropertyName EncounterFactory -NotePropertyValue $EncounterFactory
+    $room | Add-Member -NotePropertyName EncounterTitle -NotePropertyValue $EncounterTitle
+    $room | Add-Member -NotePropertyName EncounterIntro -NotePropertyValue $EncounterIntro
+    $room | Add-Member -NotePropertyName Secured -NotePropertyValue $false
+    $room | Add-Member -NotePropertyName ShortRestTaken -NotePropertyValue $false
+    return $room
+}
+
+function Get-UnderstreetComplexRooms {
+    $rooms = @{
+        sealed_descent = (New-UnderstreetQuestRoom -Id "sealed_descent" -Name "Sealed Descent" -Description "Broken stone stairs fall away beneath the ward. Damp mortar and old guard sigils mark the last point where the city still pretended these routes were closed." -Exits @{ east = "contraband_hall" })
+        contraband_hall = (New-UnderstreetQuestRoom -Id "contraband_hall" -Name "Contraband Hall" -Description "False crates line the passage in crooked ranks. Cheap lamp oil, stamped cloth, and sealed packets have all been staged here for quick movement above." -Exits @{ west = "sealed_descent"; south = "cistern_refuge"; east = "record_chamber" } -EncounterFactory "Get-UnderstreetLookoutEnemy" -EncounterTitle "Contraband Hall" -EncounterIntro "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence.")
+        cistern_refuge = (New-UnderstreetQuestRoom -Id "cistern_refuge" -Name "Cistern Refuge" -Description "An old maintenance alcove opens beside a stagnant cistern. The space is cramped, but the stone lip and rusted grating make it defensible if Borzig takes the time to secure it." -Exits @{ north = "contraband_hall" })
+        record_chamber = (New-UnderstreetQuestRoom -Id "record_chamber" -Name "Record Chamber" -Description "Shelves of coded tallies and damp ledgers fill a long narrow room. The understreet network kept its memory here, hidden in dust and oilskin." -Exits @{ west = "contraband_hall"; east = "command_vault" } -EncounterFactory "Get-UnderstreetRecordKeeperEnemy" -EncounterTitle "Record Chamber" -EncounterIntro "A ledger-keeper slams shut a hidden folio, grabs a hooked blade, and throws himself between Borzig and the chamber's evidence.")
+        command_vault = (New-UnderstreetQuestRoom -Id "command_vault" -Name "Command Vault" -Description "The deepest chamber is half office, half bunker. Route maps, coin ledgers, and sealed orders cover a heavy table beneath a pair of guttering lanterns." -Exits @{ west = "record_chamber" } -EncounterFactory "Get-UnderstreetCaptainEnemy" -EncounterTitle "Command Vault" -EncounterIntro "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here." -BossRoom $true)
+    }
+
+    $rooms["record_chamber"].Loot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
+    return $rooms
+}
+
 function Get-UnderstreetLookoutEnemy {
     return [PSCustomObject]@{
         name = "understreet lookout"
@@ -67,6 +101,26 @@ function Get-UnderstreetLookoutEnemy {
         definite = "The Understreet Lookout"
         combatantType = "Opponent"
         hp = 18
+        xp = 0
+        armorClass = 13
+        attackBonus = 4
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 2
+        damageMin = 3
+        damageMax = 10
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetRecordKeeperEnemy {
+    return [PSCustomObject]@{
+        name = "ledger-keeper"
+        article = "A"
+        definite = "The Ledger-Keeper"
+        combatantType = "Opponent"
+        hp = 17
         xp = 0
         armorClass = 13
         attackBonus = 4
@@ -219,6 +273,225 @@ function Complete-StoryQuestAndReport {
     }
 
     Write-ColorLine ""
+}
+
+function Resolve-UnderstreetRoomEncounter {
+    param(
+        $Game,
+        $Room,
+        [ref]$HeroHP,
+        [string]$PreviousRoomId,
+        [ref]$CurrentRoomId
+    )
+
+    if ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) {
+        return "None"
+    }
+
+    $combatResult = Invoke-StoryCombat `
+        -Game $Game `
+        -HeroHP $HeroHP `
+        -Monster (& $Room.EncounterFactory) `
+        -Title $Room.EncounterTitle `
+        -IntroText $Room.EncounterIntro
+
+    if ($combatResult.Defeated) {
+        return "Defeated"
+    }
+
+    if ($combatResult.Fled) {
+        if (-not [string]::IsNullOrWhiteSpace($PreviousRoomId)) {
+            $CurrentRoomId.Value = $PreviousRoomId
+        }
+        else {
+            $CurrentRoomId.Value = "sealed_descent"
+        }
+
+        return "Fled"
+    }
+
+    if ($combatResult.Won) {
+        $Room.EncounterResolved = $true
+        return $(if ($Room.BossRoom) { "Victory" } else { "Won" })
+    }
+
+    return "None"
+}
+
+function Show-UnderstreetRoomActions {
+    param(
+        $Room,
+        $Hero,
+        [int]$HeroHP
+    )
+
+    $exitIndex = 1
+    $exitMap = @{}
+
+    Write-ColorLine "What do you want to do?" "Cyan"
+
+    foreach ($exit in $Room.Exits.GetEnumerator() | Sort-Object Name) {
+        $destinationLabel = $exit.Value -replace "_", " "
+        Write-ColorLine "$exitIndex. Go $($exit.Name) to $destinationLabel" "White"
+        $exitMap["$exitIndex"] = $exit.Value
+        $exitIndex++
+    }
+
+    if (-not $Room.BossRoom -and ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) -and -not $Room.ShortRestTaken) {
+        Write-ColorLine "R. Secure this room and take a short rest" "White"
+    }
+
+    Write-ColorLine "I. Open inventory" "White"
+    Write-ColorLine "L. Check room loot" "White"
+    Write-ColorLine "S. View status" "White"
+    Write-TextSpeedOption
+    Write-ColorLine "Q. Withdraw to town" "White"
+    Write-ColorLine ""
+
+    return $exitMap
+}
+
+function Show-UnderstreetRoom {
+    param($Room)
+
+    Write-SectionTitle -Text $Room.Name -Color "Cyan"
+    Write-Scene $Room.Description
+
+    if ($Room.Loot.Count -gt 0) {
+        Write-Scene "You spot useful gear or hidden spoils left in the chamber."
+    }
+
+    if (-not $Room.Visited) {
+        Write-Scene "The understreet air feels close and dangerous, as if the whole place is listening for one wrong step."
+    }
+
+    if ($Room.Secured) {
+        Write-Scene "Borzig has already secured this space well enough to catch his breath here."
+    }
+
+    Write-ColorLine ""
+}
+
+function Secure-UnderstreetRoomAndRest {
+    param(
+        $Game,
+        $Room,
+        [ref]$HeroHP
+    )
+
+    if ($Room.BossRoom -or $Room.ShortRestTaken) {
+        return
+    }
+
+    if (-not ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory))) {
+        Write-Scene "Borzig cannot secure the room while it is still contested."
+        Write-ColorLine ""
+        return
+    }
+
+    $Room.Secured = $true
+    Write-Scene "Borzig drags debris into place, checks the angles, and turns $($Room.Name) into a temporary strongpoint."
+    $restResult = Resolve-HeroShortRest -Hero $Game.Hero -HeroHP $HeroHP
+    $Room.ShortRestTaken = $true
+
+    if ($restResult.Healed -gt 0) {
+        Write-Scene "$($Game.Hero.Name) catches his breath, binds his wounds, and recovers $($restResult.Healed) HP."
+        Write-Scene "Short rest: d8 roll $($restResult.Roll) $(Format-AbilityModifier -Modifier $restResult.Modifier)."
+    }
+    else {
+        Write-Scene "$($Game.Hero.Name) takes a short rest, but the pause mostly steadies the nerves rather than closing fresh wounds."
+    }
+
+    if ($restResult.ClearedBuff) {
+        Write-Scene "Any active combat tonic burns out as the short rest settles in."
+    }
+
+    Write-ColorLine ""
+}
+
+function Start-UnderstreetComplexExploration {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $rooms = Get-UnderstreetComplexRooms
+    $currentRoomId = "sealed_descent"
+    $previousRoomId = $null
+
+    while ($HeroHP.Value -gt 0) {
+        $room = $rooms[$currentRoomId]
+        Show-UnderstreetRoom -Room $room
+
+        $encounterResult = Resolve-UnderstreetRoomEncounter `
+            -Game $Game `
+            -Room $room `
+            -HeroHP $HeroHP `
+            -PreviousRoomId $previousRoomId `
+            -CurrentRoomId ([ref]$currentRoomId)
+
+        if ($encounterResult -eq "Defeated") {
+            Write-Scene "$($Game.Hero.Name) is forced out of the understreet before the command vault can be broken."
+            Write-ColorLine ""
+            return "Defeated"
+        }
+
+        if ($encounterResult -eq "Fled") {
+            Write-Scene "$($Game.Hero.Name) gives ground and falls back through the complex before the fight can finish him."
+            Write-ColorLine ""
+            continue
+        }
+
+        if ($encounterResult -eq "Victory") {
+            return "Victory"
+        }
+
+        $room.Visited = $true
+
+        while ($true) {
+            $exitMap = Show-UnderstreetRoomActions -Room $room -Hero $Game.Hero -HeroHP $HeroHP.Value
+            $choice = (Read-Host "Choose").ToUpper()
+
+            if ($exitMap.ContainsKey($choice)) {
+                $previousRoomId = $currentRoomId
+                $currentRoomId = $exitMap[$choice]
+                break
+            }
+
+            switch ($choice) {
+                "R" {
+                    Secure-UnderstreetRoomAndRest -Game $Game -Room $room -HeroHP $HeroHP
+                }
+                "I" {
+                    Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP -Room $room | Out-Null
+                }
+                "L" {
+                    Resolve-RoomLoot -Hero $Game.Hero -Room $room
+                }
+                "S" {
+                    $statusSnapshot = Get-HeroStatusSnapshot -Hero $Game.Hero -HeroHP $HeroHP.Value
+                    Write-ColorLine ""
+                    Write-ColorLine "Status:" "Cyan"
+                    Write-HeroStatusDetails -Hero $Game.Hero -HeroHP $HeroHP.Value -Snapshot $statusSnapshot
+                    Write-ColorLine ""
+                }
+                "T" {
+                    Toggle-TextSpeed | Out-Null
+                }
+                "Q" {
+                    Write-Scene "$($Game.Hero.Name) withdraws from the understreet to regroup in the city above."
+                    Write-ColorLine ""
+                    return "Withdrawn"
+                }
+                default {
+                    Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
+    }
+
+    return "Defeated"
 }
 
 function Start-NightWatchReliefQuest {
@@ -889,6 +1162,12 @@ function Start-UnderstreetComplexQuest {
         return
     }
 
+    if ($Game.Hero.Level -lt 3) {
+        Write-Scene (Get-UnderstreetFinalEntryMessage -Hero $Game.Hero)
+        Write-ColorLine ""
+        return
+    }
+
     $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
 
     if (-not $startResult.Success) {
@@ -948,49 +1227,13 @@ function Start-UnderstreetComplexQuest {
     }
 
     Write-ColorLine ""
-    Write-Scene "Below the city, the complex opens in stages: damp stairs, a contraband hall lined with false crates, and a command vault where orders have been flowing out into the streets above."
-    Write-Scene "Borzig hears a sharp whistle ahead. Someone has seen the descent."
+    Write-Scene "Below the city, the route opens into a real complex of sealed stairs, contraband chambers, hidden records, and the command vault at its heart."
+    Write-Scene "Borzig will have to move room by room if he wants to break it cleanly."
     Write-ColorLine ""
 
-    $lookoutResult = Invoke-StoryCombat `
-        -Game $Game `
-        -HeroHP $HeroHP `
-        -Monster (Get-UnderstreetLookoutEnemy) `
-        -Title "Contraband Hall" `
-        -IntroText "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence."
+    $explorationResult = Start-UnderstreetComplexExploration -Game $Game -HeroHP $HeroHP
 
-    if ($lookoutResult.Defeated) {
-        Write-Scene "$($Game.Hero.Name) is driven back up the lower passage before the command vault can be reached."
-        Write-ColorLine ""
-        return
-    }
-
-    if ($lookoutResult.Fled) {
-        Write-Scene "The lookout slips deeper into the complex and the whole route wakes up before Borzig can cut the heart out of it."
-        Write-ColorLine ""
-        return
-    }
-
-    Write-Scene "The lookout drops beside split crates and scattered manifests. Behind the contraband hall Borzig finds enough proof to know the whole network has been feeding one command room."
-    Write-Scene "Beyond a reinforced iron door waits Captain Serik, the same name that kept surfacing in ledgers, whispers, and courier marks."
-    Write-ColorLine ""
-
-    $serikResult = Invoke-StoryCombat `
-        -Game $Game `
-        -HeroHP $HeroHP `
-        -Monster (Get-UnderstreetCaptainEnemy) `
-        -Title "Command Vault" `
-        -IntroText "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here."
-
-    if ($serikResult.Defeated) {
-        Write-Scene "$($Game.Hero.Name) is forced out of the command vault before Serik can be finished."
-        Write-ColorLine ""
-        return
-    }
-
-    if ($serikResult.Fled) {
-        Write-Scene "Serik abandons the vault and vanishes through a deeper escape run, leaving Borzig with a wounded network but no clean ending."
-        Write-ColorLine ""
+    if ($explorationResult -ne "Victory") {
         return
     }
 

@@ -66,6 +66,7 @@ function Complete-TutorialAndEnterTown {
     Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
     Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
     Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
+    $Game.Hero.LevelCap = 3
     $nextLevelXP = Get-HeroNextLevelXPThreshold -Hero $Game.Hero
     $remainingTutorialXP = [Math]::Max(0, $nextLevelXP - $Game.Hero.XP)
 
