@@ -48,6 +48,18 @@ function Show-TownQuestSource {
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
 
+        if ($Game.Town.StoryQuestDoneToday) {
+            Write-EmphasisLine -Text "Borzig has already pushed the main story forward today. Another story quest must wait until tomorrow." -Color "DarkYellow"
+        }
+
+        if ($Game.Town.DayJobDoneToday) {
+            Write-EmphasisLine -Text "Borzig has already taken one paid side job today." -Color "DarkYellow"
+        }
+
+        if ($Game.Town.StoryQuestDoneToday -or $Game.Town.DayJobDoneToday) {
+            Write-ColorLine ""
+        }
+
         if ($Source -eq "Guard Station") {
             $watchQuest = $quests | Where-Object { $_.Id -eq "guard_night_watch" } | Select-Object -First 1
 
@@ -75,6 +87,7 @@ function Show-TownQuestSource {
             $quest = $quests[$i]
             $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
             Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
+            Write-ColorLine "   Type: $($quest.QuestType)" "DarkGray"
             Write-ColorLine "   $($quest.Description)" "DarkGray"
             Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
         }

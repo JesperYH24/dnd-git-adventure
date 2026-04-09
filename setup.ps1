@@ -38,6 +38,8 @@ function Initialize-Game {
             ActiveInn = $null
             MustChooseFirstInn = $false
             WorkedForRoomToday = $false
+            StoryQuestDoneToday = $false
+            DayJobDoneToday = $false
             QuestPayoutBonusCopper = 0
             Quests = (Initialize-TownQuests)
             Relationships = @{}

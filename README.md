@@ -45,9 +45,21 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - once-per-day tournament access
   - long-term progress toward an unarmed fighting feature
 - Chapter Two has started with the first playable city quest chain:
-  - `Night Watch Relief`
+  - opening story quests:
+    - `Night Watch Relief`
+    - `Storehouse Trouble`
+    - `Missing Herb Satchel`
+    - `Ledger of Ash`
+  - follow-up unlock:
+    - `Broken Seal Patrol`
+  - day jobs:
+    - `Missing Delivery`
+    - `Gate Duty Overflow`
+  - separate daily limits for:
+    - `1 story quest per day`
+    - `1 day job per day`
   - story flags for the city mystery under the streets
-  - quest rewards in XP, currency, and reputation
+  - day jobs that pay coin but no XP
 
 ---
 
@@ -144,7 +156,7 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 
 The first step of the post-tutorial story is now playable.
 
-`Night Watch Relief` begins the investigation into suspicious movement and broken seals near the city tunnels. It introduces the first story flag toward the larger underground plot that will lead into the Chapter Two finale beneath the city.
+`Night Watch Relief`, `Storehouse Trouble`, `Missing Herb Satchel`, and `Ledger of Ash` now form the opening layer of Chapter Two. They feed story clues into the larger underground plot, and once enough clues are found, `Broken Seal Patrol` becomes available as the first deeper follow-up.
 
 ---
 

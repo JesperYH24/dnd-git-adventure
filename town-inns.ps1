@@ -427,6 +427,8 @@ function Resolve-InnWorkOffRoom {
         $Game.Town.MustChooseFirstInn = $false
         $Game.Town.WorkedForRoomToday = $true
         $Game.Town.Ring.FoughtToday = $true
+        $Game.Town.StoryQuestDoneToday = $false
+        $Game.Town.DayJobDoneToday = $false
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
 
@@ -492,6 +494,8 @@ function Resolve-InnStay {
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
     $Game.Town.Ring.FoughtToday = $false
+    $Game.Town.StoryQuestDoneToday = $false
+    $Game.Town.DayJobDoneToday = $false
     if (-not $Game.Town.ChapterOneComplete) {
         Write-Scene $Inn.RestText
     }
@@ -556,6 +560,8 @@ function Resolve-BookedInnNightRest {
     $HeroHP.Value = $Game.Hero.HP
     $Game.Town.WorkedForRoomToday = $false
     $Game.Town.Ring.FoughtToday = $false
+    $Game.Town.StoryQuestDoneToday = $false
+    $Game.Town.DayJobDoneToday = $false
     Write-Scene "A full night's rest restores Borzig to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""
 

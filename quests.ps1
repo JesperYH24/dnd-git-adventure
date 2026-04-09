@@ -5,8 +5,11 @@ function New-TownQuest {
         [string]$Source,
         [string]$Description,
         [string]$Objective,
+        [string]$QuestType = "Story",
         [int]$RewardCopper = 0,
-        [string]$RewardItemName = ""
+        [int]$RewardXP = 0,
+        [string]$RewardItemName = "",
+        [int]$RequiredStoryClues = 0
     )
 
     return [PSCustomObject]@{
@@ -15,8 +18,11 @@ function New-TownQuest {
         Source = $Source
         Description = $Description
         Objective = $Objective
+        QuestType = $QuestType
         RewardCopper = $RewardCopper
+        RewardXP = $RewardXP
         RewardItemName = $RewardItemName
+        RequiredStoryClues = $RequiredStoryClues
         Accepted = $false
         Started = $false
         Completed = $false
@@ -25,16 +31,94 @@ function New-TownQuest {
 
 function Initialize-TownQuests {
     return @(
-        (New-TownQuest -Id "quest_board_missing_herbs" -Name "Missing Herb Satchel" -Source "Quest Board" -Description "A local herbalist needs a satchel recovered from the old road beyond the city wall." -Objective "Search the old road and return the satchel." -RewardCopper 120)
-        (New-TownQuest -Id "guard_night_watch" -Name "Night Watch Relief" -Source "Guard Station" -Description "The guards need a capable arm on a short night patrol through the outer district." -Objective "Report to the watch captain for an evening patrol." -RewardCopper 180)
-        (New-TownQuest -Id "patron_storehouse_rats" -Name "Storehouse Trouble" -Source "Quest Giver" -Description "A merchant patron wants someone to clear vermin and thieves from a locked riverside storehouse." -Objective "Meet the patron's clerk and investigate the storehouse." -RewardCopper 150 -RewardItemName "Healing Potion")
+        (New-TownQuest -Id "guard_night_watch" -Name "Night Watch Relief" -Source "Guard Station" -Description "The guards need a capable arm on a short night patrol through the outer district." -Objective "Report to the watch captain for an evening patrol." -QuestType "Story" -RewardCopper 180 -RewardXP 200)
+        (New-TownQuest -Id "patron_storehouse_rats" -Name "Storehouse Trouble" -Source "Quest Giver" -Description "A merchant patron wants someone to clear vermin and thieves from a locked riverside storehouse." -Objective "Meet the patron's clerk and investigate the storehouse." -QuestType "Story" -RewardCopper 150 -RewardXP 180 -RewardItemName "Healing Potion")
+        (New-TownQuest -Id "quest_board_missing_herbs" -Name "Missing Herb Satchel" -Source "Quest Board" -Description "A local herbalist needs a satchel recovered from the old road beyond the city wall." -Objective "Search the old road and return the satchel." -QuestType "Story" -RewardCopper 120 -RewardXP 120)
+        (New-TownQuest -Id "patron_ledger_of_ash" -Name "Ledger of Ash" -Source "Quest Giver" -Description "A merchant clerk suspects false entries and hush money in a ledger tied to missing goods." -Objective "Question the clerk, inspect the ledger, and trace the irregular payments." -QuestType "Story" -RewardCopper 140 -RewardXP 160)
+        (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
+        (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before dawn." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90)
+        (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100)
     )
+}
+
+function New-TownQuestRewardItem {
+    param([string]$RewardItemName)
+
+    switch ($RewardItemName) {
+        "Healing Potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
+        "Greater Healing Potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }
+        default { return $null }
+    }
+}
+
+function Get-StoryClueCount {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StoryFlags) {
+        return 0
+    }
+
+    return @($Game.Town.StoryFlags.Keys | Where-Object { $Game.Town.StoryFlags[$_] -eq $true }).Count
+}
+
+function Get-CompletedStoryQuestCount {
+    param($Game)
+
+    return @(Get-TownQuestList -Game $Game | Where-Object { $_.QuestType -eq "Story" -and $_.Completed }).Count
+}
+
+function Get-TownQuestDailyLimitReached {
+    param(
+        $Game,
+        $Quest
+    )
+
+    if ($Quest.QuestType -eq "DayJob") {
+        return [bool]$Game.Town.DayJobDoneToday
+    }
+
+    return [bool]$Game.Town.StoryQuestDoneToday
+}
+
+function Get-TownQuestDailyLockText {
+    param($Quest)
+
+    if ($Quest.QuestType -eq "DayJob") {
+        return "Borzig has already taken on a paid side job today. Another day job will have to wait until tomorrow."
+    }
+
+    return "Borzig has already spent today's real story effort. Another story quest will have to wait until after a night's rest."
+}
+
+function Is-TownQuestUnlocked {
+    param(
+        $Game,
+        $Quest
+    )
+
+    if ($Quest.Completed -or $Quest.Accepted) {
+        return $true
+    }
+
+    if ($Quest.RequiredStoryClues -le 0) {
+        return $true
+    }
+
+    return (Get-StoryClueCount -Game $Game) -ge [int]$Quest.RequiredStoryClues
 }
 
 function Get-QuestRewardText {
     param($Quest)
 
     $parts = @()
+
+    if ($Quest.QuestType -eq "DayJob") {
+        $parts += "No XP"
+    }
+
+    if ($null -ne $Quest.PSObject.Properties["RewardXP"] -and [int]$Quest.RewardXP -gt 0) {
+        $parts += "$($Quest.RewardXP) XP"
+    }
 
     if ($null -ne $Quest.PSObject.Properties["RewardCopper"] -and [int]$Quest.RewardCopper -gt 0) {
         $parts += (Convert-CopperToCurrencyText -Copper ([int]$Quest.RewardCopper))
@@ -61,7 +145,7 @@ function Get-TownQuestList {
         return @()
     }
 
-    $quests = @($Game.Town.Quests)
+    $quests = @($Game.Town.Quests | Where-Object { Is-TownQuestUnlocked -Game $Game -Quest $_ })
 
     if ([string]::IsNullOrWhiteSpace($Source)) {
         return $quests
@@ -76,7 +160,7 @@ function Find-TownQuest {
         [string]$QuestId
     )
 
-    return (Get-TownQuestList -Game $Game | Where-Object { $_.Id -eq $QuestId } | Select-Object -First 1)
+    return ($Game.Town.Quests | Where-Object { $_.Id -eq $QuestId } | Select-Object -First 1)
 }
 
 function Accept-TownQuest {
@@ -91,6 +175,13 @@ function Accept-TownQuest {
         return [PSCustomObject]@{
             Success = $false
             Message = "That quest is no longer available."
+        }
+    }
+
+    if (-not (Is-TownQuestUnlocked -Game $Game -Quest $quest)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Borzig does not have enough clues to take that quest yet."
         }
     }
 
@@ -113,6 +204,43 @@ function Accept-TownQuest {
     return [PSCustomObject]@{
         Success = $true
         Message = "$($quest.Name) is added to Borzig's quest log."
+        Quest = $quest
+    }
+}
+
+function Start-TownQuestAttempt {
+    param(
+        $Game,
+        [string]$QuestId
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -eq $quest) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "That quest is no longer available."
+        }
+    }
+
+    if (Get-TownQuestDailyLimitReached -Game $Game -Quest $quest) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = (Get-TownQuestDailyLockText -Quest $quest)
+        }
+    }
+
+    if ($quest.QuestType -eq "DayJob") {
+        $Game.Town.DayJobDoneToday = $true
+    }
+    else {
+        $Game.Town.StoryQuestDoneToday = $true
+    }
+
+    $quest.Started = $true
+
+    return [PSCustomObject]@{
+        Success = $true
         Quest = $quest
     }
 }
@@ -155,11 +283,29 @@ function Complete-TownQuest {
         $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper
     }
 
+    $rewardXP = [int]$quest.RewardXP
+
+    if ($rewardXP -gt 0) {
+        Grant-HeroXP -Hero $Game.Hero -XP $rewardXP
+    }
+
+    $rewardItem = $null
+
+    if (-not [string]::IsNullOrWhiteSpace($quest.RewardItemName)) {
+        $rewardItem = New-TownQuestRewardItem -RewardItemName $quest.RewardItemName
+
+        if ($null -ne $rewardItem -and (Can-HeroCarryItem -Hero $Game.Hero -Item $rewardItem)) {
+            $Game.Hero.Inventory += $rewardItem
+        }
+    }
+
     return [PSCustomObject]@{
         Success = $true
         Quest = $quest
         RewardCopper = $rewardCopper
         CurrencyResult = $currencyResult
+        RewardXP = $rewardXP
+        RewardItem = $rewardItem
     }
 }
 
@@ -210,11 +356,12 @@ function Show-QuestLog {
         $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
 
         if ($acceptedQuests.Count -gt 0) {
-            Write-ColorLine "" 
+            Write-ColorLine ""
             Write-ColorLine "Accepted Town Quests" "Yellow"
 
             foreach ($townQuest in $acceptedQuests) {
                 Write-ColorLine "- $($townQuest.Name) [$($townQuest.Source)]" "White"
+                Write-ColorLine "  Type: $($townQuest.QuestType)" "DarkGray"
                 Write-ColorLine "  Objective: $($townQuest.Objective)" "DarkGray"
                 Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
             }
