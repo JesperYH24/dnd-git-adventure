@@ -709,6 +709,114 @@ function Start-NightCourierInterceptQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_courier" -CompletionText "Belor studies the recovered markings in silence, then gives Borzig a curt nod. 'Good. Now we've got their streets as well as their tunnels.'" -ProgressText "Story Progress: Borzig has identified a real courier route feeding the understreet network."
 }
 
+function Start-WarehouseLedgerRecoveryQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "patron_warehouse_ledger"
+
+    if ($null -eq $quest) {
+        Write-Scene "The warehouse-ledger job has vanished before Borzig could get his hands on it."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Borzig needs to accept the warehouse-ledger job before the clerk risks the details."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The warehouse ledger has already been secured."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    $quest.Objective = "Get into the shuttered warehouse office, secure the hidden ledger, and tie the city's missing goods to a named hand."
+
+    Write-SectionTitle -Text "Warehouse Ledger Recovery" -Color "Yellow"
+    Write-Scene "The patron's clerk meets Borzig in a side passage and keeps his voice low."
+    Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter.'"
+    Write-Scene "The warehouse office is dark, shuttered, and recently searched. Someone knew the papers were worth hiding."
+    Write-ColorLine ""
+    Write-ColorLine "1. Force the office lock and search fast" "White"
+    Write-ColorLine "2. Piece the hiding place together from the disturbed room" "White"
+    Write-ColorLine "3. Pressure the night clerk into giving up where the ledger was moved" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig forces the office before anyone can come back for the papers."
+
+                if ($success) {
+                    Write-Scene "Behind a false shelf panel Borzig finds the true warehouse ledger, complete with hidden marks and payout names."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                }
+                else {
+                    Write-Scene "The search turns rough, but Borzig still finds enough torn pages and margin codes to prove the ledger existed and who it served."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "Borzig slows down and reads the office by what has been moved, scrubbed, or disturbed too recently."
+
+                if ($success) {
+                    Write-Scene "A dragged stool and fresh dust line lead Borzig straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                }
+                else {
+                    Write-Scene "The room gives up only fragments, but the fragments are enough to preserve the evidence before the whole chain goes dark."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig corners the night clerk with the kind of flat certainty that makes lies feel expensive."
+
+                if ($success) {
+                    Write-Scene "The clerk breaks and points Borzig to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                }
+                else {
+                    Write-Scene "The clerk lies first and folds late, but Borzig still gets enough of the papers to keep the trail alive."
+                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                }
+
+                break
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_warehouse_ledger" -CompletionText "The clerk reads the recovered pages once, swallows hard, and locks them away. 'That is enough to ruin careful men,' he says." -ProgressText "Story Progress: Borzig now holds hard ledger evidence tying the city's missing goods to the understreet operation."
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -946,6 +1054,7 @@ function Start-TownQuest {
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
+        "patron_warehouse_ledger" { Start-WarehouseLedgerRecoveryQuest -Game $Game -HeroHP $HeroHP }
         "guard_broken_seal" { Start-BrokenSealPatrolQuest -Game $Game -HeroHP $HeroHP }
         "bent_nail_whispers" { Start-WhispersBeneathBentNailQuest -Game $Game -HeroHP $HeroHP }
         "dayjob_market_delivery" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP }

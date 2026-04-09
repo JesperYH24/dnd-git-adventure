@@ -209,6 +209,41 @@ function Test-NightCourierCompletesAndSetsCourierRoute {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Night Courier Intercept should pay its listed copper reward."
 }
 
+function Test-WarehouseLedgerUnlocksFromLedgerClues {
+    $game = Initialize-Game
+    $ledgerQuest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $ledgerQuest) -Expected $false -Message "Warehouse Ledger Recovery should stay locked before Borzig has real ledger clues."
+
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $ledgerQuest) -Expected $true -Message "Warehouse Ledger Recovery should unlock after ledger irregularities are confirmed."
+}
+
+function Test-WarehouseLedgerCompletesAndSecuresEvidence {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 16
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Warehouse Ledger Recovery should complete after the search resolves."
+    Assert-Equal -Actual $game.Town.StoryFlags["SecuredLedgerEvidence"] -Expected $true -Message "Warehouse Ledger Recovery should secure hard ledger evidence."
+    Assert-Equal -Actual $game.Town.StoryFlags["NamedUnderstreetLeader"] -Expected $true -Message "Warehouse Ledger Recovery should be able to name the leader behind the route."
+    Assert-Equal -Actual $game.Hero.XP -Expected 170 -Message "Warehouse Ledger Recovery should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 170 -Message "Warehouse Ledger Recovery should pay its listed copper reward."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -219,5 +254,7 @@ Test-BentNailWhispersUnlocksFromBentNailInfo
 Test-BentNailWhispersCompletesAndSetsBrokerFlag
 Test-NightCourierUnlocksFromCourierLead
 Test-NightCourierCompletesAndSetsCourierRoute
+Test-WarehouseLedgerUnlocksFromLedgerClues
+Test-WarehouseLedgerCompletesAndSecuresEvidence
 
 Write-Host "City quest tests passed." -ForegroundColor Green
