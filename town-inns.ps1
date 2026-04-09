@@ -299,7 +299,10 @@ function Resolve-SilverKettleEveningChoice {
 }
 
 function Start-InnEveningMenu {
-    param($Game)
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
 
     $inn = $Game.Town.ActiveInn
 
@@ -311,6 +314,12 @@ function Start-InnEveningMenu {
                 Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
                 Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
                 Write-ColorLine "2. Join a loud dice table" "White"
+                $bentNailQuest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
+
+                if ($null -ne $bentNailQuest -and (Is-TownQuestUnlocked -Game $Game -Quest $bentNailQuest) -and -not $bentNailQuest.Completed) {
+                    $questStatus = if ($bentNailQuest.Accepted) { "Accepted" } else { "Available" }
+                    Write-ColorLine "3. Follow up the Bent Nail whispers [$questStatus]" "White"
+                }
             }
             "lantern_rest" {
                 Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
@@ -336,7 +345,54 @@ function Start-InnEveningMenu {
         }
 
         switch ($inn.Id) {
-            "bent_nail" { Resolve-BentNailEveningChoice -Game $Game -Choice $choice }
+            "bent_nail" {
+                if ($choice -eq "3") {
+                    $quest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
+
+                    if ($null -eq $quest -or -not (Is-TownQuestUnlocked -Game $Game -Quest $quest) -or $quest.Completed) {
+                        Write-Scene "No one in the back booths is ready to say more tonight."
+                        Write-ColorLine ""
+                        continue
+                    }
+
+                    if (-not $quest.Accepted) {
+                        $questResult = Accept-TownQuest -Game $Game -QuestId $quest.Id
+                        Write-Scene $questResult.Message
+                        Write-ColorLine ""
+
+                        if ($questResult.Success) {
+                            while ($true) {
+                                Write-ColorLine "1. Start now" "White"
+                                Write-ColorLine "2. Prepare in town first" "White"
+                                Write-ColorLine "" "White"
+
+                                $followUpChoice = Read-Host "Choose"
+
+                                if ($followUpChoice -eq "1") {
+                                    Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $quest.Id
+                                    break
+                                }
+
+                                if ($followUpChoice -eq "2") {
+                                    Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $quest
+                                    break
+                                }
+
+                                Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                                Write-ColorLine ""
+                            }
+                        }
+                    }
+                    else {
+                        Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $quest
+                    }
+
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Resolve-BentNailEveningChoice -Game $Game -Choice $choice
+            }
             "lantern_rest" { Resolve-LanternRestEveningChoice -Game $Game -Choice $choice }
             "silver_kettle" { Resolve-SilverKettleEveningChoice -Game $Game -Choice $choice }
         }
@@ -384,7 +440,7 @@ function Start-InnVisitMenu {
                 }
             }
             "2" {
-                Start-InnEveningMenu -Game $Game
+                Start-InnEveningMenu -Game $Game -HeroHP $HeroHP
             }
             "3" {
                 $innkeeperResult = Start-InnkeeperMenu -Game $Game

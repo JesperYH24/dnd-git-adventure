@@ -36,6 +36,7 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "quest_board_missing_herbs" -Name "Missing Herb Satchel" -Source "Quest Board" -Description "A local herbalist needs a satchel recovered from the old road beyond the city wall." -Objective "Search the old road and return the satchel." -QuestType "Story" -RewardCopper 120 -RewardXP 120)
         (New-TownQuest -Id "patron_ledger_of_ash" -Name "Ledger of Ash" -Source "Quest Giver" -Description "A merchant clerk suspects false entries and hush money in a ledger tied to missing goods." -Objective "Question the clerk, inspect the ledger, and trace the irregular payments." -QuestType "Story" -RewardCopper 140 -RewardXP 160)
         (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
+        (New-TownQuest -Id "bent_nail_whispers" -Name "Whispers Beneath the Bent Nail" -Source "Bent Nail" -Description "A back-room fixer at the Bent Nail knows more about the city's quiet cargo routes than any honest merchant should." -Objective "Follow the broker lead inside the Bent Nail and learn where the smugglers are moving goods." -QuestType "Story" -RewardCopper 130 -RewardXP 150)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before dawn." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90)
         (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100)
     )
@@ -98,6 +99,10 @@ function Is-TownQuestUnlocked {
 
     if ($Quest.Completed -or $Quest.Accepted) {
         return $true
+    }
+
+    if ($Quest.Id -eq "bent_nail_whispers") {
+        return [bool]$Game.Town.InnFlags["BentNailBrokerInfo"] -or [bool]$Game.Town.InnFlags["BentNailShadyRumor"]
     }
 
     if ($Quest.RequiredStoryClues -le 0) {

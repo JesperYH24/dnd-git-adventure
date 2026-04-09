@@ -602,6 +602,116 @@ function Start-BrokenSealPatrolQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_broken_seal" -CompletionText "Halden listens to the report in silence, then orders the map room opened. 'Good. Now we stop guessing and start hunting.'" -ProgressText "Story Progress: Borzig has confirmed an active understreet route beneath the city."
 }
 
+function Start-WhispersBeneathBentNailQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
+
+    if ($null -eq $quest) {
+        Write-Scene "Whatever whispers lived under the Bent Nail seem to have gone quiet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Borzig needs to take the broker's lead seriously before the back room opens up."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "Borzig has already squeezed what truth he can from the Bent Nail's under-table whispers."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    $quest.Objective = "Lean on the Bent Nail's broker network and learn where the city's quiet cargo routes are feeding into the understreets."
+
+    Write-SectionTitle -Text "Whispers Beneath the Bent Nail" -Color "Yellow"
+    Write-Scene "Past the loud tables and dice cups, a scarred broker finally admits Borzig into the Bent Nail's back booths."
+    Write-Scene "The man calls himself Brin and talks like every sentence costs him something. 'You didn't hear this from me,' he mutters. 'But plenty of folk are moving cargo that never sees a legal ledger.'"
+    Write-ColorLine ""
+    Write-ColorLine "1. Press Brin hard and demand the route names" "White"
+    Write-ColorLine "2. Buy him a drink and let him talk on his own terms" "White"
+    Write-ColorLine "3. Leave the booth and shadow the next handoff yourself" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig leans over the table and makes it clear this is the last soft chance Brin gets."
+
+                if ($success) {
+                    Write-Scene "Brin folds fast and names a smugglers' route running beneath the river stairs, along with the warning that the work is organized."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
+                }
+                else {
+                    Write-Scene "Brin gives up less than Borzig wants, but enough slips loose to prove the Bent Nail has been feeding work into the same underground routes."
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "Borzig pays for the next round, lowers his tone, and lets the broker believe the conversation is still his idea."
+
+                if ($success) {
+                    Write-Scene "Brin loosens up enough to name the handlers moving cargo off-book and to admit the Bent Nail has been hearing their footsteps for weeks."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
+                }
+                else {
+                    Write-Scene "The coin buys patience more than honesty, but Borzig still learns that the same back-room names keep circling smuggled cargo."
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "Borzig slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over."
+
+                if ($success) {
+                    Write-Scene "Borzig shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                }
+                else {
+                    Write-Scene "The tail is clumsy, but Borzig still sees enough to prove the Bent Nail is tied to the same cargo movement haunting the city."
+                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                }
+
+                break
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "bent_nail_whispers" -CompletionText "Brin vanishes back into the Bent Nail's smoke before Borzig is even done thinking through the lead." -ProgressText "Story Progress: Borzig has turned Bent Nail whispers into usable understreet intelligence."
+}
+
 function Start-MissingDeliveryDayJob {
     param(
         $Game,
@@ -729,6 +839,7 @@ function Start-TownQuest {
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
         "guard_broken_seal" { Start-BrokenSealPatrolQuest -Game $Game -HeroHP $HeroHP }
+        "bent_nail_whispers" { Start-WhispersBeneathBentNailQuest -Game $Game -HeroHP $HeroHP }
         "dayjob_market_delivery" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP }
         "dayjob_gate_labor" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP }
         default {

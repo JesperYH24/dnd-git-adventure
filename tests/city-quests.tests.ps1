@@ -140,11 +140,48 @@ function Test-BrokenSealPatrolUnlocksAfterTwoStoryClues {
     Assert-True -Condition ($null -ne $unlockedBrokenSeal) -Message "Broken Seal Patrol should unlock after two story clues."
 }
 
+function Test-BentNailWhispersUnlocksFromBentNailInfo {
+    $game = Initialize-Game
+    $initialBentNailQuest = Find-TownQuest -Game $game -QuestId "bent_nail_whispers"
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $initialBentNailQuest) -Expected $false -Message "Bent Nail whispers should stay hidden until Borzig has earned shady local information."
+
+    $game.Town.InnFlags["BentNailBrokerInfo"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $initialBentNailQuest) -Expected $true -Message "Bent Nail whispers should unlock once Borzig has broker access at the Bent Nail."
+}
+
+function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.InnFlags["BentNailBrokerInfo"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 15
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "bent_nail_whispers"
+
+    $quest = Find-TownQuest -Game $game -QuestId "bent_nail_whispers"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Whispers Beneath the Bent Nail should complete after the broker scene resolves."
+    Assert-Equal -Actual $game.Town.StoryFlags["BentNailBrokerConfirmed"] -Expected $true -Message "The Bent Nail broker quest should confirm the local broker lead."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $true -Message "The broker lead should reinforce the smuggling story flag."
+    Assert-Equal -Actual $game.Hero.XP -Expected 150 -Message "Whispers Beneath the Bent Nail should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 130 -Message "Whispers Beneath the Bent Nail should pay its listed copper reward."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
 Test-DayJobPaysCoinButNoXP
 Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
+Test-BentNailWhispersUnlocksFromBentNailInfo
+Test-BentNailWhispersCompletesAndSetsBrokerFlag
 
 Write-Host "City quest tests passed." -ForegroundColor Green
