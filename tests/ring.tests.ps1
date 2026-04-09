@@ -207,6 +207,43 @@ function Test-BlockedGrappleDoesNotReverseIntoCounterGrapple {
     Assert-Equal -Actual $opponentOffBalance -Expected $false -Message "Blocking a grapple should not reverse the grapple onto the initiator."
 }
 
+function Test-GrappleDamageUsesRolledDamage {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+    $opponentHP = 20
+    $heroOffBalance = $false
+    $opponentOffBalance = $false
+    $heroFocusAttackBonus = 0
+    $opponentFocusAttackBonus = 0
+    $opponent = [PSCustomObject]@{
+        Name = "Test Grappler"
+        Definite = "Test Grappler"
+        ArmorClass = 11
+        HP = 20
+        AttackBonus = 1
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 4
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(18)
+    $script:rollQueue.Enqueue(8)
+    $script:rollQueue.Enqueue(3)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return $script:rollQueue.Dequeue()
+    }
+
+    $result = Resolve-BrawlGrappleAttempt -Hero $hero -Opponent $opponent -HeroHP ([ref]$heroHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Block"
+
+    Assert-Equal -Actual $result -Expected "Initiator" -Message "The hero grapple should still land in the controlled test."
+    Assert-Equal -Actual $opponentHP -Expected 15 -Message "Hero grapple damage should use a rolled d4 plus grapple bonus, not a fixed flat value."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
@@ -216,5 +253,6 @@ Test-GrappleHeavyOpponentCanChooseGrapple
 Test-RingOpponentIntroReflectsRivalryRecord
 Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
+Test-GrappleDamageUsesRolledDamage
 
 Write-Host "Ring tests passed." -ForegroundColor Green

@@ -147,6 +147,7 @@ function Test-WorkOffRoomCoversNightAndBlocksRing {
     $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
     $game.Hero.CurrencyCopper = 0
     Set-TestReadHostSequence -Values @("1", "1")
+    function global:Roll-Dice { param([int]$Sides) return 10 }
 
     $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99
 

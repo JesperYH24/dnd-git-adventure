@@ -435,10 +435,11 @@ function Resolve-OpponentBrawlGrapple {
     Write-Action "$($Hero.Name) braces against it: roll $heroRoll, total $heroTotal" "Cyan"
 
     if ($opponentRoll -eq 20 -or ($heroRoll -ne 20 -and $opponentTotal -ge $heroTotal)) {
-        $controlDamage = [Math]::Max(1, 1 + $Opponent.DamageBonus)
+        $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
+        $controlDamage = [Math]::Max(1, $damageRoll + $Opponent.DamageBonus)
         $HeroHP.Value -= $controlDamage
         $HeroOffBalance.Value = $true
-        Write-Action "$($Opponent.Definite) drags Borzig down for $controlDamage damage and steals the next beat of the fight!" "Yellow"
+        Write-Action "$($Opponent.Definite) drags Borzig down for $controlDamage damage! ($damageRoll + $($Opponent.DamageBonus))" "Yellow"
 
         if ($HeroHP.Value -lt 0) {
             $HeroHP.Value = 0
@@ -536,7 +537,8 @@ function Resolve-BrawlGrappleContest {
     Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: roll $opponentRoll, total $opponentTotal$opponentBonusText" "DarkCyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -gt $opponentTotal)) {
-        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroModifier) + $trainingBonus + $HeroDamageBonus)
+        $damageRoll = Roll-Dice -Sides 4
+        $controlDamage = [Math]::Max(1, $damageRoll + [Math]::Max(0, $heroModifier) + $trainingBonus + $HeroDamageBonus)
         $OpponentHP.Value -= $controlDamage
 
         if ($OpponentHP.Value -lt 0) {
@@ -544,13 +546,14 @@ function Resolve-BrawlGrappleContest {
         }
 
         $OpponentOffBalance.Value = $true
-        Write-Action "$($Hero.Name) wins the clinch, deals $controlDamage damage, and leaves $($Opponent.Definite) off balance for the next round." "Yellow"
+        Write-Action "$($Hero.Name) wins the clinch for $controlDamage damage! ($damageRoll + $([Math]::Max(0, $heroModifier) + $trainingBonus + $HeroDamageBonus)) $($Opponent.Definite) is left off balance for the next round." "Yellow"
         Write-ColorLine ""
         return "Hero"
     }
 
     if ($opponentRoll -eq 20 -or $opponentTotal -gt $heroTotal) {
-        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $opponentModifier) + $OpponentDamageBonus)
+        $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
+        $controlDamage = [Math]::Max(1, $damageRoll + [Math]::Max(0, $opponentModifier) + $OpponentDamageBonus)
         $HeroHP.Value -= $controlDamage
 
         if ($HeroHP.Value -lt 0) {
@@ -558,7 +561,7 @@ function Resolve-BrawlGrappleContest {
         }
 
         $HeroOffBalance.Value = $true
-        Write-Action "$($Opponent.Definite) wins the clinch, deals $controlDamage damage, and leaves $($Hero.Name) off balance for the next round." "Yellow"
+        Write-Action "$($Opponent.Definite) wins the clinch for $controlDamage damage! ($damageRoll + $([Math]::Max(0, $opponentModifier) + $OpponentDamageBonus)) $($Hero.Name) is left off balance for the next round." "Yellow"
         Write-ColorLine ""
         return "Opponent"
     }
@@ -618,7 +621,8 @@ function Resolve-BrawlGrappleAttempt {
 
     if ($initiatorRoll -eq 20 -or ($defenderRoll -ne 20 -and $initiatorTotal -gt $defenderTotal)) {
         if ($HeroInitiates) {
-            $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroGrappleBonus))
+            $damageRoll = Roll-Dice -Sides 4
+            $controlDamage = [Math]::Max(1, $damageRoll + [Math]::Max(0, $heroGrappleBonus))
             $OpponentHP.Value -= $controlDamage
 
             if ($OpponentHP.Value -lt 0) {
@@ -626,10 +630,11 @@ function Resolve-BrawlGrappleAttempt {
             }
 
             $OpponentOffBalance.Value = $true
-            Write-Action "$($Hero.Name) forces the hold through, deals $controlDamage damage, and leaves $($Opponent.Definite) off balance for the next round." "Yellow"
+            Write-Action "$($Hero.Name) forces the hold through for $controlDamage damage! ($damageRoll + $([Math]::Max(0, $heroGrappleBonus))) $($Opponent.Definite) is left off balance for the next round." "Yellow"
         }
         else {
-            $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, [int]$Opponent.GrappleBonus))
+            $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
+            $controlDamage = [Math]::Max(1, $damageRoll + [Math]::Max(0, [int]$Opponent.GrappleBonus))
             $HeroHP.Value -= $controlDamage
 
             if ($HeroHP.Value -lt 0) {
@@ -637,7 +642,7 @@ function Resolve-BrawlGrappleAttempt {
             }
 
             $HeroOffBalance.Value = $true
-            Write-Action "$($Opponent.Definite) forces the hold through, deals $controlDamage damage, and leaves $($Hero.Name) off balance for the next round." "Yellow"
+            Write-Action "$($Opponent.Definite) forces the hold through for $controlDamage damage! ($damageRoll + $([Math]::Max(0, [int]$Opponent.GrappleBonus))) $($Hero.Name) is left off balance for the next round." "Yellow"
         }
 
         Write-ColorLine ""
@@ -716,10 +721,11 @@ function Resolve-HeroBrawlGrapple {
     Write-Action "$($Opponent.Definite) braces against it: roll $opponentRoll, total $opponentTotal" "DarkCyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
-        $controlDamage = [Math]::Max(1, 1 + $heroModifier + $trainingBonus)
+        $damageRoll = Roll-Dice -Sides 4
+        $controlDamage = [Math]::Max(1, $damageRoll + $heroModifier + $trainingBonus)
         $OpponentHP.Value -= $controlDamage
         $OpponentOffBalance.Value = $true
-        Write-Action "$($Hero.Name) drags $($Opponent.Definite) to the ground for $controlDamage damage and steals the tempo!" "Yellow"
+        Write-Action "$($Hero.Name) drags $($Opponent.Definite) to the ground for $controlDamage damage! ($damageRoll + $($heroModifier + $trainingBonus))" "Yellow"
 
         if ($OpponentHP.Value -lt 0) {
             $OpponentHP.Value = 0
