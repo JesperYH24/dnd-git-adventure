@@ -35,6 +35,7 @@ function Initialize-Game {
             StreetFlags = @{}
             Discounts = @{}
             ChapterOneComplete = $false
+            ChapterTwoComplete = $false
             ActiveInn = $null
             MustChooseFirstInn = $false
             WorkedForRoomToday = $false

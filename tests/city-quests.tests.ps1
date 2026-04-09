@@ -279,6 +279,29 @@ function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     Assert-Equal -Actual $quest.Accepted -Expected $true -Message "Accepting the Understreet Complex should add it to Borzig's quest log."
 }
 
+function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
+    Use-StoryCombatWinStub
+    Use-ReadHostSequence -Values @("1")
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_understreet_complex"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Understreet Complex should complete after Borzig wins the final assault."
+    Assert-Equal -Actual $game.Town.ChapterTwoComplete -Expected $true -Message "Finishing the Understreet Complex should mark chapter two as complete."
+    Assert-Equal -Actual $game.Town.StoryFlags["UnderstreetComplexCleared"] -Expected $true -Message "Finishing the final quest should mark the complex as cleared."
+    Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The Understreet Complex should grant its final story XP reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 230 -Message "The Understreet Complex should pay its listed copper reward."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -294,5 +317,6 @@ Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
+Test-UnderstreetComplexCompletesAndMarksChapterTwo
 
 Write-Host "City quest tests passed." -ForegroundColor Green

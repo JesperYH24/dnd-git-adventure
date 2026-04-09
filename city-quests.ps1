@@ -60,6 +60,46 @@ function Get-BrokenSealPatrolEnemy {
     }
 }
 
+function Get-UnderstreetLookoutEnemy {
+    return [PSCustomObject]@{
+        name = "understreet lookout"
+        article = "An"
+        definite = "The Understreet Lookout"
+        combatantType = "Opponent"
+        hp = 18
+        xp = 0
+        armorClass = 13
+        attackBonus = 4
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 2
+        damageMin = 3
+        damageMax = 10
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetCaptainEnemy {
+    return [PSCustomObject]@{
+        name = "Captain Serik"
+        article = ""
+        definite = "Captain Serik"
+        combatantType = "Opponent"
+        hp = 24
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 3
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 13
+        isBoss = $true
+    }
+}
+
 function Invoke-StoryCombat {
     param(
         $Game,
@@ -849,12 +889,118 @@ function Start-UnderstreetComplexQuest {
         return
     }
 
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    $quest.Objective = "Descend into the understreet complex, break the command vault, and bring the hidden network crashing down."
+
     Write-SectionTitle -Text "The Understreet Complex" -Color "Yellow"
     Write-Scene "Captain Halden spreads Borzig's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, and broker whispers that all point below the same streets."
     Write-Scene "'This is it,' he says. 'No more scattered errands. No more guessing. We know enough to strike the complex under the ward.'"
-    Write-Scene "The watch begins its quiet preparations while Borzig looks over the tunnel sketches and the route they will have to take when the descent begins."
-    Write-EmphasisLine -Text "Chapter Two Final Unlocked: The route into the understreet complex is finally identified." -Color "Yellow"
+    Write-Scene "The watch begins its quiet preparations while Borzig looks over tunnel sketches showing a sealed descent, a contraband hall, and the command vault at the heart of the route."
     Write-ColorLine ""
+    Write-ColorLine "1. Descend with the watch through the broken maintenance shaft" "White"
+    Write-ColorLine "2. Use the broker's lower route and go in fast" "White"
+    Write-ColorLine "3. Study the route a moment longer before moving" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $approachText = ""
+
+        switch ($choice) {
+            "1" {
+                $approachText = "Borzig descends beside two watch veterans, boots splashing into black runoff beneath the district."
+                $Game.Town.Relationships["NightCaptain"] = "Committed"
+                break
+            }
+            "2" {
+                $approachText = "Borzig takes the broker's route instead, entering through a mean little cut beneath old river stairs before the smugglers can shift their guard."
+                $Game.Town.Relationships["UnderstreetBroker"] = "Proven"
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "Borzig studies the sketched route and the gathered clues one last time before committing to the descent."
+
+                if ($success) {
+                    $approachText = "The route finally clicks into place in Borzig's head. He leads the descent like he has already walked it once in the dark."
+                }
+                else {
+                    $approachText = "Borzig gets enough from the map to move. It is not elegant, but it is enough to start the descent with purpose."
+                }
+
+                break
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        Write-Scene $approachText
+        break
+    }
+
+    Write-ColorLine ""
+    Write-Scene "Below the city, the complex opens in stages: damp stairs, a contraband hall lined with false crates, and a command vault where orders have been flowing out into the streets above."
+    Write-Scene "Borzig hears a sharp whistle ahead. Someone has seen the descent."
+    Write-ColorLine ""
+
+    $lookoutResult = Invoke-StoryCombat `
+        -Game $Game `
+        -HeroHP $HeroHP `
+        -Monster (Get-UnderstreetLookoutEnemy) `
+        -Title "Contraband Hall" `
+        -IntroText "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence."
+
+    if ($lookoutResult.Defeated) {
+        Write-Scene "$($Game.Hero.Name) is driven back up the lower passage before the command vault can be reached."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($lookoutResult.Fled) {
+        Write-Scene "The lookout slips deeper into the complex and the whole route wakes up before Borzig can cut the heart out of it."
+        Write-ColorLine ""
+        return
+    }
+
+    Write-Scene "The lookout drops beside split crates and scattered manifests. Behind the contraband hall Borzig finds enough proof to know the whole network has been feeding one command room."
+    Write-Scene "Beyond a reinforced iron door waits Captain Serik, the same name that kept surfacing in ledgers, whispers, and courier marks."
+    Write-ColorLine ""
+
+    $serikResult = Invoke-StoryCombat `
+        -Game $Game `
+        -HeroHP $HeroHP `
+        -Monster (Get-UnderstreetCaptainEnemy) `
+        -Title "Command Vault" `
+        -IntroText "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here."
+
+    if ($serikResult.Defeated) {
+        Write-Scene "$($Game.Hero.Name) is forced out of the command vault before Serik can be finished."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($serikResult.Fled) {
+        Write-Scene "Serik abandons the vault and vanishes through a deeper escape run, leaving Borzig with a wounded network but no clean ending."
+        Write-ColorLine ""
+        return
+    }
+
+    Write-Scene "Serik falls hard across his own ledger table. The command vault is taken, the route maps are seized, and the old understreet network finally breaks open under guard hands."
+    Write-Scene "Whatever comes next for the city will grow out of this ruin, because Borzig has broken the hidden structure that held the whole scheme together."
+    $Game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+    $Game.Town.ChapterTwoComplete = $true
+    $Game.Town.Relationships["NightCaptain"] = "Proven"
+    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_understreet_complex" -CompletionText "Captain Halden clasps Borzig's forearm over the captured command ledgers. 'That was the heart of it,' he says. 'The city will breathe easier because you went down there.'" -ProgressText "Chapter Two Complete: Borzig has broken the understreet command network beneath the city."
 }
 
 function Start-WhispersBeneathBentNailQuest {

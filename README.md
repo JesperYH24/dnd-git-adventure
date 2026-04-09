@@ -54,8 +54,13 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
     - `Storehouse Trouble`
     - `Missing Herb Satchel`
     - `Ledger of Ash`
-  - first unlocked follow-up:
+  - deeper follow-up quests:
     - `Broken Seal Patrol`
+    - `Whispers Beneath the Bent Nail`
+    - `Night Courier Intercept`
+    - `Warehouse Ledger Recovery`
+  - final story quest:
+    - `The Understreet Complex`
   - day jobs:
     - `Missing Delivery`
     - `Gate Duty Overflow`
@@ -158,9 +163,9 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 
 ### 3. Chapter Two opening
 
-The first step of the post-tutorial story is now playable.
+The Chapter Two quest chain is now playable from its opening clues through the current final assault.
 
-`Night Watch Relief`, `Storehouse Trouble`, `Missing Herb Satchel`, and `Ledger of Ash` now form the opening layer of Chapter Two. They feed story clues into the larger underground plot, and once enough clues are found, `Broken Seal Patrol` becomes available as the first deeper follow-up.
+`Night Watch Relief`, `Storehouse Trouble`, `Missing Herb Satchel`, and `Ledger of Ash` form the opening layer of Chapter Two. Those clues can branch into `Broken Seal Patrol`, `Whispers Beneath the Bent Nail`, `Night Courier Intercept`, and `Warehouse Ledger Recovery`, and enough gathered evidence now unlocks `The Understreet Complex` as the Chapter Two finale beneath the city.
 
 ---
 
@@ -220,7 +225,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 ## Notes
 
 - the game is currently built around a tutorial arc and a first town hub
-- Chapter Two is now partially playable, with its opening story layer, first follow-up quest, and first day jobs implemented
+- Chapter Two is now playable from its opening story layer through its current finale, with multiple replay-friendly clue paths and first day jobs implemented
 - some systems are intentionally lightweight for now so they can be expanded later
 - several town information hooks are already in place as setup for later quest branches, payout modifiers, and underground story paths
 
@@ -229,18 +234,9 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 ## Next possible steps
 
 - continue the Chapter Two story arc from level 2 to level 3 with the next replay-friendly quest layer:
-  - the player should still only need part of the available story quest pool to advance, not every quest
-  - next story quests to build:
-    - `Whispers Beneath the Bent Nail`
-    - `Warehouse Ledger Recovery`
-    - `Night Courier Intercept`
-  - the final chapter quest remains the underground complex beneath the city
-- expand the story-flag unlock structure so the next stage is driven more clearly by gathered evidence:
-  - smuggling links
-  - tunnel access
-  - named suspects
-  - confirmed underground routes
-- use story flags such as smuggling links, tunnel access, and named suspects to unlock the next stage instead of forcing every quest
+- add a proper clue log or investigation log so the player can review gathered evidence and understand why the next story stage unlocked
+- turn `The Understreet Complex` from its current focused finale into a fuller dungeon crawl with more rooms, routing, and encounter variety
+- build the next post-Understreet story chain from the consequences of breaking the network under the city
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - add more day jobs that reinforce economy and city life without granting XP
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
