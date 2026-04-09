@@ -212,6 +212,77 @@ function Get-RingRewardCopper {
     }
 }
 
+function Get-HeroRingRivalryRecord {
+    param(
+        $Hero,
+        [string]$OpponentName
+    )
+
+    if ($null -eq $Hero.PSObject.Properties["RingRivalries"]) {
+        $Hero | Add-Member -NotePropertyName RingRivalries -NotePropertyValue @{}
+    }
+
+    if ($null -eq $Hero.RingRivalries[$OpponentName]) {
+        $Hero.RingRivalries[$OpponentName] = [PSCustomObject]@{
+            HeroWins = 0
+            OpponentWins = 0
+        }
+    }
+
+    return $Hero.RingRivalries[$OpponentName]
+}
+
+function Update-HeroRingRivalryRecord {
+    param(
+        $Hero,
+        $Opponent,
+        [bool]$HeroWon
+    )
+
+    $record = Get-HeroRingRivalryRecord -Hero $Hero -OpponentName $Opponent.Name
+
+    if ($HeroWon) {
+        $record.HeroWins += 1
+    }
+    else {
+        $record.OpponentWins += 1
+    }
+
+    return $record
+}
+
+function Get-RingOpponentIntro {
+    param(
+        $Hero,
+        $Opponent
+    )
+
+    $intro = $Opponent.Intro
+    $record = Get-HeroRingRivalryRecord -Hero $Hero -OpponentName $Opponent.Name
+
+    if ($record.HeroWins -eq 0 -and $record.OpponentWins -eq 0) {
+        return $intro
+    }
+
+    if ($record.HeroWins -gt 0 -and $record.OpponentWins -eq 0) {
+        return "$intro `n$($Opponent.Name) does not hide the fact that Borzig has already beaten $([int]$record.HeroWins) time(s), and the crowd can feel the grudge."
+    }
+
+    if ($record.OpponentWins -gt 0 -and $record.HeroWins -eq 0) {
+        return "$intro `n$($Opponent.Name) carries the easy confidence of someone who has already put Borzig on the canvas $([int]$record.OpponentWins) time(s)."
+    }
+
+    if ($record.HeroWins -eq $record.OpponentWins) {
+        return "$intro `nTheir record stands even at $($record.HeroWins)-$($record.OpponentWins), and the pit treats it like unfinished business."
+    }
+
+    if ($record.HeroWins -gt $record.OpponentWins) {
+        return "$intro `nBorzig leads their rivalry $($record.HeroWins)-$($record.OpponentWins), which leaves $($Opponent.Name) tense, proud, and eager to change that."
+    }
+
+    return "$intro `n$($Opponent.Name) leads their rivalry $($record.OpponentWins)-$($record.HeroWins), and steps in like someone expecting history to repeat."
+}
+
 function Grant-RingTraining {
     param(
         $Hero,
@@ -428,6 +499,10 @@ function Resolve-BrawlGrappleContest {
         [ref]$OpponentOffBalance,
         [bool]$HeroUsesModifier = $true,
         [bool]$OpponentUsesModifier = $true,
+        [int]$HeroFlatBonus = 0,
+        [int]$OpponentFlatBonus = 0,
+        [int]$HeroDamageBonus = 0,
+        [int]$OpponentDamageBonus = 0,
         [string]$HeroActionLabel = "Grapple",
         [string]$OpponentActionLabel = "Grapple"
     )
@@ -452,14 +527,16 @@ function Resolve-BrawlGrappleContest {
 
     $heroRoll = Roll-Dice -Sides 20
     $opponentRoll = Roll-Dice -Sides 20
-    $heroTotal = $heroRoll + $heroModifier + $trainingBonus
-    $opponentTotal = $opponentRoll + $opponentModifier
+    $heroTotal = $heroRoll + $heroModifier + $trainingBonus + $HeroFlatBonus
+    $opponentTotal = $opponentRoll + $opponentModifier + $OpponentFlatBonus
+    $heroBonusText = if ($HeroFlatBonus -gt 0) { " (+$HeroFlatBonus)" } elseif ($HeroFlatBonus -lt 0) { " ($HeroFlatBonus)" } else { "" }
+    $opponentBonusText = if ($OpponentFlatBonus -gt 0) { " (+$OpponentFlatBonus)" } elseif ($OpponentFlatBonus -lt 0) { " ($OpponentFlatBonus)" } else { "" }
 
-    Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: roll $heroRoll, total $heroTotal" "Cyan"
-    Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: roll $opponentRoll, total $opponentTotal" "DarkCyan"
+    Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: roll $heroRoll, total $heroTotal$heroBonusText" "Cyan"
+    Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: roll $opponentRoll, total $opponentTotal$opponentBonusText" "DarkCyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -gt $opponentTotal)) {
-        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroModifier) + $trainingBonus)
+        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroModifier) + $trainingBonus + $HeroDamageBonus)
         $OpponentHP.Value -= $controlDamage
 
         if ($OpponentHP.Value -lt 0) {
@@ -473,7 +550,7 @@ function Resolve-BrawlGrappleContest {
     }
 
     if ($opponentRoll -eq 20 -or $opponentTotal -gt $heroTotal) {
-        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $opponentModifier))
+        $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $opponentModifier) + $OpponentDamageBonus)
         $HeroHP.Value -= $controlDamage
 
         if ($HeroHP.Value -lt 0) {
@@ -489,6 +566,120 @@ function Resolve-BrawlGrappleContest {
     Write-Action "Neither fighter secures the hold cleanly." "DarkGray"
     Write-ColorLine ""
     return "Tie"
+}
+
+function Resolve-BrawlGrappleAttempt {
+    param(
+        $Hero,
+        $Opponent,
+        [ref]$HeroHP,
+        [ref]$OpponentHP,
+        [ref]$HeroOffBalance,
+        [ref]$OpponentOffBalance,
+        [ref]$HeroFocusAttackBonus,
+        [ref]$OpponentFocusAttackBonus,
+        [bool]$HeroInitiates,
+        [string]$DefenderAction = "Recover"
+    )
+
+    $heroProfile = Get-HeroUnarmedProfile -Hero $Hero
+    $heroGrappleBonus = Get-HeroAbilityModifier -Hero $Hero -Ability (Get-HeroBrawlAbility -Hero $Hero)
+
+    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+        $heroGrappleBonus += [int]$Hero.UnarmedTrainingLevel
+    }
+
+    $initiatorName = if ($HeroInitiates) { $Hero.Name } else { $Opponent.Definite }
+    $defenderName = if ($HeroInitiates) { $Opponent.Definite } else { $Hero.Name }
+    $initiatorActionLabel = "Grapple"
+    $defenderActionLabel = $DefenderAction
+
+    $initiatorRoll = Roll-Dice -Sides 20
+    $initiatorBonus = if ($HeroInitiates) { $heroGrappleBonus } else { [int]$Opponent.GrappleBonus }
+    $initiatorTotal = $initiatorRoll + $initiatorBonus
+
+    $defenderRoll = Roll-Dice -Sides 20
+    $defenderBonus = 0
+
+    switch ($DefenderAction) {
+        "Punch" {
+            $defenderBonus = if ($HeroInitiates) { [int]$Opponent.AttackBonus } else { [int]$heroProfile.TotalAttackBonus }
+        }
+        "Block" { $defenderBonus = 0 }
+        "Focus" { $defenderBonus = 0 }
+        "Recover" { $defenderBonus = 0 }
+    }
+
+    $defenderTotal = $defenderRoll + $defenderBonus
+    $defenderBonusText = if ($defenderBonus -gt 0) { " (+$defenderBonus)" } else { "" }
+
+    Write-Action "${initiatorName} commits to ${initiatorActionLabel}: roll $initiatorRoll, total $initiatorTotal" "Cyan"
+    Write-Action "${defenderName} answers with ${defenderActionLabel}: roll $defenderRoll, total $defenderTotal$defenderBonusText" "DarkCyan"
+
+    if ($initiatorRoll -eq 20 -or ($defenderRoll -ne 20 -and $initiatorTotal -gt $defenderTotal)) {
+        if ($HeroInitiates) {
+            $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, $heroGrappleBonus))
+            $OpponentHP.Value -= $controlDamage
+
+            if ($OpponentHP.Value -lt 0) {
+                $OpponentHP.Value = 0
+            }
+
+            $OpponentOffBalance.Value = $true
+            Write-Action "$($Hero.Name) forces the hold through, deals $controlDamage damage, and leaves $($Opponent.Definite) off balance for the next round." "Yellow"
+        }
+        else {
+            $controlDamage = [Math]::Max(1, 1 + [Math]::Max(0, [int]$Opponent.GrappleBonus))
+            $HeroHP.Value -= $controlDamage
+
+            if ($HeroHP.Value -lt 0) {
+                $HeroHP.Value = 0
+            }
+
+            $HeroOffBalance.Value = $true
+            Write-Action "$($Opponent.Definite) forces the hold through, deals $controlDamage damage, and leaves $($Hero.Name) off balance for the next round." "Yellow"
+        }
+
+        Write-ColorLine ""
+        return "Initiator"
+    }
+
+    Write-Action "$defenderName slips the grapple attempt before it can settle." "DarkGray"
+
+    switch ($DefenderAction) {
+        "Punch" {
+            if ($HeroInitiates) {
+                Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP $HeroHP -AttackBonusModifier $OpponentFocusAttackBonus.Value -TargetAction "Grapple"
+                $OpponentFocusAttackBonus.Value = 0
+            }
+            else {
+                Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP $OpponentHP -AttackBonusModifier $HeroFocusAttackBonus.Value -TargetAction "Grapple"
+                $HeroFocusAttackBonus.Value = 0
+            }
+        }
+        "Focus" {
+            if ($HeroInitiates) {
+                $OpponentFocusAttackBonus.Value = 2
+                Write-Action "$($Opponent.Definite) turns the failed clinch into a read on Borzig's rhythm and gains +2 to hit on the next punch." "Yellow"
+                Write-ColorLine ""
+            }
+            else {
+                $HeroFocusAttackBonus.Value = 2
+                Write-Action "$($Hero.Name) turns the failed clinch into a read on the fight and gains +2 to hit on the next punch." "Yellow"
+                Write-ColorLine ""
+            }
+        }
+        "Block" {
+            Write-Scene "$defenderName keeps the guard disciplined and gives up nothing else."
+            Write-ColorLine ""
+        }
+        "Recover" {
+            Write-Scene "$defenderName escapes cleanly and resets their footing."
+            Write-ColorLine ""
+        }
+    }
+
+    return "Defender"
 }
 
 function Resolve-HeroBrawlGrapple {
@@ -547,7 +738,8 @@ function Start-BrawlLoop {
     param(
         $Hero,
         $Opponent,
-        [string]$Title = "Brawl"
+        [string]$Title = "Brawl",
+        [bool]$TrackRivalry = $false
     )
 
     $heroBrawlHP = $Hero.HP
@@ -558,7 +750,7 @@ function Start-BrawlLoop {
     $opponentOffBalance = $false
 
     Write-SectionTitle -Text $Title -Color "Yellow"
-    Write-Scene $Opponent.Intro
+    Write-Scene (Get-RingOpponentIntro -Hero $Hero -Opponent $Opponent)
     Write-ColorLine ""
 
     while ($heroBrawlHP -gt 0 -and $opponentHP -gt 0) {
@@ -609,7 +801,7 @@ function Start-BrawlLoop {
                     Write-ColorLine ""
                 }
                 "G" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Recover" -OpponentActionLabel "Grapple" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Recover" | Out-Null
                 }
                 "B" {
                     Write-Scene "$($Opponent.Definite) keeps the guard high and lets Borzig spend the round recovering."
@@ -632,7 +824,7 @@ function Start-BrawlLoop {
                     Write-ColorLine ""
                 }
                 "G" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Recover" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Recover" | Out-Null
                 }
                 "B" {
                     Write-Scene "$($Hero.Name) keeps the guard tight and lets the round breathe."
@@ -713,33 +905,43 @@ function Start-BrawlLoop {
                     Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroActionLabel "Grapple" -OpponentActionLabel "Grapple" | Out-Null
                 }
                 "G/B" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Block" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Block" | Out-Null
                 }
                 "B/G" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Block" -OpponentActionLabel "Grapple" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Block" | Out-Null
                 }
                 "G/F" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Focus" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Focus" | Out-Null
                 }
                 "F/G" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Focus" -OpponentActionLabel "Grapple" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Focus" | Out-Null
                 }
                 "G/P" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $true -OpponentUsesModifier $false -HeroActionLabel "Grapple" -OpponentActionLabel "Punch" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Punch" | Out-Null
                 }
                 "P/G" {
-                    Resolve-BrawlGrappleContest -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroUsesModifier $false -OpponentUsesModifier $true -HeroActionLabel "Punch" -OpponentActionLabel "Grapple" | Out-Null
+                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Punch" | Out-Null
                 }
             }
         }
 
         if ($opponentHP -le 0) {
             Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
+
+            if ($TrackRivalry) {
+                Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $true | Out-Null
+            }
+
             return $true
         }
 
         if ($heroBrawlHP -le 0) {
             Write-Scene "$($Hero.Name) is forced down and the referee calls the bout."
+
+            if ($TrackRivalry) {
+                Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $false | Out-Null
+            }
+
             return $false
         }
     }
@@ -813,7 +1015,7 @@ function Start-FightingRing {
     $wins = 0
 
     foreach ($opponent in (Get-RingOpponents -Hero $Game.Hero)) {
-        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title "Ring Round $($wins + 1)"
+        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title "Ring Round $($wins + 1)" -TrackRivalry $true
 
         if (-not $wonBout) {
             break

@@ -107,11 +107,114 @@ function Test-GrappleHeavyOpponentCanChooseGrapple {
     Assert-Equal -Actual $choice -Expected "G" -Message "A grapple-heavy opponent should sometimes choose a grapple."
 }
 
+function Test-RingOpponentIntroReflectsRivalryRecord {
+    $hero = Get-Hero
+    $opponent = [PSCustomObject]@{
+        Name = "Dockhand Vero"
+        Intro = "Base intro."
+    }
+
+    $firstIntro = Get-RingOpponentIntro -Hero $hero -Opponent $opponent
+    Update-HeroRingRivalryRecord -Hero $hero -Opponent $opponent -HeroWon $true | Out-Null
+    $secondIntro = Get-RingOpponentIntro -Hero $hero -Opponent $opponent
+    Update-HeroRingRivalryRecord -Hero $hero -Opponent $opponent -HeroWon $false | Out-Null
+    $thirdIntro = Get-RingOpponentIntro -Hero $hero -Opponent $opponent
+
+    Assert-Equal -Actual $firstIntro -Expected "Base intro." -Message "A fresh opponent should use the baseline intro."
+    Assert-True -Condition ($secondIntro -like "*already beaten 1 time(s)*") -Message "An opponent Borzig has beaten should remember that loss."
+    Assert-True -Condition ($thirdIntro -like "*unfinished business*") -Message "An even rivalry should change the intro tone."
+}
+
+function Test-PunchVsGrappleUsesPunchBonus {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $opponent = [PSCustomObject]@{
+        Name = "Test Grappler"
+        Definite = "Test Grappler"
+        ArmorClass = 11
+        HP = 1
+        AttackBonus = 1
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 2
+        GrappleChance = 100
+        FocusChance = 0
+        BlockChance = 0
+        Intro = "Test intro."
+    }
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "P"
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(10)
+    $script:rollQueue.Enqueue(10)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+
+        if ($script:rollQueue.Count -gt 0) {
+            return $script:rollQueue.Dequeue()
+        }
+
+        return 10
+    }
+
+    $won = Start-BrawlLoop -Hero $hero -Opponent $opponent -Title "Test Bout"
+
+    Assert-Equal -Actual $won -Expected $true -Message "Punch versus Grapple should include the punch bonus strongly enough to win this tied roll test."
+}
+
+function Test-BlockedGrappleDoesNotReverseIntoCounterGrapple {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+    $opponentHP = 10
+    $heroOffBalance = $false
+    $opponentOffBalance = $false
+    $heroFocusAttackBonus = 0
+    $opponentFocusAttackBonus = 0
+    $opponent = [PSCustomObject]@{
+        Name = "Test Grappler"
+        Definite = "Test Grappler"
+        ArmorClass = 11
+        HP = 10
+        AttackBonus = 1
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 4
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(8)
+    $script:rollQueue.Enqueue(18)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return $script:rollQueue.Dequeue()
+    }
+
+    $result = Resolve-BrawlGrappleAttempt -Hero $hero -Opponent $opponent -HeroHP ([ref]$heroHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Block"
+
+    Assert-Equal -Actual $result -Expected "Defender" -Message "A defended grapple should be blocked when the non-grappler wins the contest."
+    Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Blocking a grapple should not make the defender take reverse grapple damage."
+    Assert-Equal -Actual $opponentHP -Expected 10 -Message "Blocking a grapple should not deal automatic counter-grapple damage."
+    Assert-Equal -Actual $heroOffBalance -Expected $false -Message "Blocking a grapple should not leave the defender off balance."
+    Assert-Equal -Actual $opponentOffBalance -Expected $false -Message "Blocking a grapple should not reverse the grapple onto the initiator."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie
 Test-GrappleHeavyOpponentCanChooseGrapple
+Test-RingOpponentIntroReflectsRivalryRecord
+Test-PunchVsGrappleUsesPunchBonus
+Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 
 Write-Host "Ring tests passed." -ForegroundColor Green

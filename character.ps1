@@ -739,6 +739,7 @@ function Get-Hero {
         UnarmedTrainingLevel = 0
         RingWinsTotal      = 0
         RingVisits         = 0
+        RingRivalries      = @{}
         HitDie             = 12
         STR                = 15
         DEX                = 14
