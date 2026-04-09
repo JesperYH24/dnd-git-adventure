@@ -175,6 +175,40 @@ function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 130 -Message "Whispers Beneath the Bent Nail should pay its listed copper reward."
 }
 
+function Test-NightCourierUnlocksFromCourierLead {
+    $game = Initialize-Game
+    $courierQuest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $courierQuest) -Expected $false -Message "Night Courier Intercept should stay locked before Borzig has a courier lead."
+
+    $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $courierQuest) -Expected $true -Message "Night Courier Intercept should unlock once Borzig has a courier trail to follow."
+}
+
+function Test-NightCourierCompletesAndSetsCourierRoute {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 14
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Night Courier Intercept should complete after the pursuit resolves."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $true -Message "Night Courier Intercept should reveal a courier route into the understreet network."
+    Assert-Equal -Actual $game.Hero.XP -Expected 160 -Message "Night Courier Intercept should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Night Courier Intercept should pay its listed copper reward."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -183,5 +217,7 @@ Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
 Test-BentNailWhispersUnlocksFromBentNailInfo
 Test-BentNailWhispersCompletesAndSetsBrokerFlag
+Test-NightCourierUnlocksFromCourierLead
+Test-NightCourierCompletesAndSetsCourierRoute
 
 Write-Host "City quest tests passed." -ForegroundColor Green

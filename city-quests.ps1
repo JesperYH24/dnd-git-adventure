@@ -602,6 +602,113 @@ function Start-BrokenSealPatrolQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_broken_seal" -CompletionText "Halden listens to the report in silence, then orders the map room opened. 'Good. Now we stop guessing and start hunting.'" -ProgressText "Story Progress: Borzig has confirmed an active understreet route beneath the city."
 }
 
+function Start-NightCourierInterceptQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "guard_night_courier"
+
+    if ($null -eq $quest) {
+        Write-Scene "The courier assignment is gone from the watch board."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Borzig needs to accept the courier assignment before the watch shares the route."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The night courier has already been intercepted."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    $quest.Objective = "Cut off the courier route through the city lanes and recover whatever message is feeding the understreet network."
+
+    Write-SectionTitle -Text "Night Courier Intercept" -Color "Yellow"
+    Write-Scene "Belor marks three back lanes on a scrap of guard paper and taps the last one with a callused finger."
+    Write-Scene "'Runner moves light, keeps to shadow, and never uses the same lane twice unless he thinks no one is watching. Tonight we make him wrong.'"
+    Write-ColorLine ""
+    Write-ColorLine "1. Set a hard ambush and block the lane with brute presence" "White"
+    Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point" "White"
+    Write-ColorLine "3. Step into the open and force a panicked mistake" "White"
+    Write-ColorLine "" 
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig plants himself in the narrowest part of the lane and turns surprise into a wall of muscle."
+
+                if ($success) {
+                    Write-Scene "The courier freezes for half a heartbeat too long. Borzig gets a hand on him, tears the satchel free, and sends him running empty into the dark."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    $Game.Town.Relationships["Belor"] = "Trusting"
+                }
+                else {
+                    Write-Scene "The courier slips away, but not before dropping a marked wax strip and exposing the lane pattern the watch needed."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "Borzig hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible."
+
+                if ($success) {
+                    Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. Borzig does not get the man, but he gets the route and the signal mark."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                }
+                else {
+                    Write-Scene "The courier senses something and breaks early, but the path he chooses still tells Borzig which streets matter."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "Borzig steps out under the lantern light and barks a challenge sharp enough to turn speed into panic."
+
+                if ($success) {
+                    Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in Borzig's hands."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                }
+                else {
+                    Write-Scene "The courier still escapes, but the route and the dropped signal token are enough to pin the run to the same network Borzig has been tracking."
+                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                }
+
+                break
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_courier" -CompletionText "Belor studies the recovered markings in silence, then gives Borzig a curt nod. 'Good. Now we've got their streets as well as their tunnels.'" -ProgressText "Story Progress: Borzig has identified a real courier route feeding the understreet network."
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -835,6 +942,7 @@ function Start-TownQuest {
 
     switch ($QuestId) {
         "guard_night_watch" { Start-NightWatchReliefQuest -Game $Game -HeroHP $HeroHP }
+        "guard_night_courier" { Start-NightCourierInterceptQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
