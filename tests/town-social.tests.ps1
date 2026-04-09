@@ -59,10 +59,33 @@ function Test-InnkeeperGreetingChangesWithHeroStyle {
     Assert-True -Condition ($bardGreeting -like "*understands the value of presentation*") -Message "Silver Kettle should greet a bard more warmly."
 }
 
+function Test-InnkeeperSmallTalkChangesAfterFirstAsk {
+    $game = Initialize-Game
+    $game.Town.ActiveInn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
+
+    $first = Get-InnkeeperHouseTalk -Game $game
+    $second = Get-InnkeeperHouseTalk -Game $game
+
+    Assert-True -Condition ($first -like "*roof leaks slower than the patrons bleed*") -Message "Innkeepers should have a fuller first-time house explanation."
+    Assert-True -Condition ($second -like "*still standing*") -Message "Innkeepers should have a shorter repeat answer after the first ask."
+}
+
+function Test-StreetNpcFlavorTalkIsRemembered {
+    $game = Initialize-Game
+
+    $first = Get-BelorWatchTalk -Game $game
+    $second = Get-BelorWatchTalk -Game $game
+
+    Assert-True -Condition ($first -like "*walls keep danger out*") -Message "Belor should have a fuller first warning about the watch."
+    Assert-True -Condition ($second -like "*Too many small problems*") -Message "Belor should shift to a shorter repeat warning on later talks."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
 Test-SilverKettleEconomicInfoSetsFutureHook
 Test-InnkeeperGreetingChangesWithHeroStyle
+Test-InnkeeperSmallTalkChangesAfterFirstAsk
+Test-StreetNpcFlavorTalkIsRemembered
 
 Write-Host "Town social tests passed." -ForegroundColor Green

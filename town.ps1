@@ -290,7 +290,7 @@ function Start-TownMenu {
         Write-ColorLine "4. Visit the apothecary" "White"
         Write-ColorLine "5. Seek work" "White"
         Write-ColorLine "6. Visit the fighting ring" "White"
-        Write-ColorLine "7. Visit your room" "White"
+        Write-ColorLine "7. Visit your inn" "White"
         Write-ColorLine "8. Check inventory" "White"
         Write-ColorLine "9. Check quest log" "White"
         if ($null -eq $Game.Town.ActiveInn) {
@@ -323,7 +323,7 @@ function Start-TownMenu {
             }
             "7" {
                 if ($null -ne $Game.Town.ActiveInn) {
-                    $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+                    $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
 
                     if ($innMenuResult -eq "EndGame") {
                         return "EndGame"
@@ -344,7 +344,7 @@ function Start-TownMenu {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
                 if ($innResult -eq "Stayed") {
-                    $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+                    $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
 
                     if ($innMenuResult -eq "EndGame") {
                         return "EndGame"

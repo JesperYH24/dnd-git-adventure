@@ -342,7 +342,68 @@ function Start-InnEveningMenu {
         }
 
         Write-ColorLine ""
-        return
+    }
+}
+
+function Start-InnVisitMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $inn = $Game.Town.ActiveInn
+
+    if ($null -eq $inn) {
+        Write-Scene "Borzig has not taken a room yet."
+        Write-ColorLine ""
+        return "NoInn"
+    }
+
+    while ($true) {
+        Write-ColorLine ""
+        Write-ColorLine "===== $($inn.Name.ToUpper()) =====" "Yellow"
+        Write-Scene "$($inn.Name) wraps around Borzig like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
+        Write-ColorLine "Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
+        Write-ColorLine ""
+        Write-ColorLine "What do you want to do?" "Cyan"
+        Write-ColorLine "1. Go to your room" "White"
+        Write-ColorLine "2. Spend time in the common room" "White"
+        Write-ColorLine "3. Speak with the innkeeper" "White"
+        Write-ColorLine "0. Return to town" "DarkGray"
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" {
+                $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+
+                if ($innMenuResult -eq "EndGame") {
+                    return "EndGame"
+                }
+            }
+            "2" {
+                Start-InnEveningMenu -Game $Game
+            }
+            "3" {
+                $innkeeperResult = Start-InnkeeperMenu -Game $Game
+
+                if ($innkeeperResult -eq "Cancelled") {
+                    return "BookingCancelled"
+                }
+            }
+            "0" {
+                return "BackToTown"
+            }
+            "T" {
+                Toggle-TextSpeed | Out-Null
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
     }
 }
 
@@ -593,18 +654,86 @@ function Resolve-InnBookingCancellation {
     return $true
 }
 
-function Start-InnkeeperMenu {
+function Get-InnkeeperHouseTalk {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+    $flag = "InnkeeperHouseTalk_$($inn.Id)"
+
+    switch ($inn.Id) {
+        "bent_nail" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "'This place stands because the roof leaks slower than the patrons bleed,' Marta says. 'That counts as luxury in this quarter.'"
+            }
+
+            return "Marta wipes down the same scarred patch of bar. 'Bent Nail's still standing. That's the whole business plan.'"
+        }
+        "lantern_rest" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Oren smooths a hand over the polished counter. 'Merchants pay for predictability. Warm food, clean rooms, and no knives in the hall. That keeps a house alive.'"
+            }
+
+            return "Oren smiles faintly. 'A quiet house is good business. If people sleep well, they come back with coin.'"
+        }
+        "silver_kettle" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Madam Seraphine glances across the lamp-lit room with proprietary pride. 'Comfort is theater, darling. People pay to believe they are safer, softer, and more important than the city outside allows.'"
+            }
+
+            return "Madam Seraphine adjusts a silver lamp-cap by a fraction. 'Standards are maintained one tiny correction at a time.'"
+        }
+        default {
+            return "$($inn.Keeper) shrugs. 'A roof, a ledger, and enough patience to outlast the city. That's innkeeping.'"
+        }
+    }
+}
+
+function Get-InnkeeperClienteleTalk {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+    $flag = "InnkeeperClienteleTalk_$($inn.Id)"
+
+    switch ($inn.Id) {
+        "bent_nail" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Marta jerks a thumb at the room. 'Dockers, bruisers, runners, and people too tired to lie about who they are. Best kind of guest, if you ask me.'"
+            }
+
+            return "Marta snorts. 'Same lot as always. Hard hands, bad tempers, and the occasional useful rumor.'"
+        }
+        "lantern_rest" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Oren lowers his voice a little. 'Caravan guards, factors, road captains, and sensible sellswords. People who like steady terms more than surprises.'"
+            }
+
+            return "Oren glances toward the tables. 'Traders and traveling steel. Enough stories to fill the room, but not many fools.'"
+        }
+        "silver_kettle" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Madam Seraphine smiles over the rim of a crystal glass. 'Clerks with ambitions, patrons with money, and people who would rather whisper than shout. They are easier to serve and far harder to impress.'"
+            }
+
+            return "Madam Seraphine's eyes flick over the upper tables. 'The same soft voices, the same expensive worries, and the same dangerous little favors.'"
+        }
+        default {
+            return "$($inn.Keeper) glances around the room. 'Mostly regulars, and regulars are how a house survives.'"
+        }
+    }
+}
+
+function Start-InnBookingConversation {
     param($Game)
 
     $inn = $Game.Town.ActiveInn
 
     while ($true) {
-        Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
-        Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
-        $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
-        $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
-        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
-        $Game.Town.InnFlags[$metInnkeeperKey] = $true
         Write-ColorLine ""
         Write-ColorLine "1. Keep the room" "White"
         Write-ColorLine "2. Cancel the booking" "White"
@@ -621,6 +750,54 @@ function Start-InnkeeperMenu {
             }
             "2" {
                 if (Resolve-InnBookingCancellation -Game $Game) {
+                    return "Cancelled"
+                }
+            }
+            "0" {
+                return "Back"
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-InnkeeperMenu {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+
+    while ($true) {
+        Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
+        Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
+        $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
+        $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
+        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
+        $Game.Town.InnFlags[$metInnkeeperKey] = $true
+        Write-ColorLine ""
+        Write-ColorLine "1. Ask about the house" "White"
+        Write-ColorLine "2. Ask what sort of people stay here" "White"
+        Write-ColorLine "3. Discuss your room booking" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene (Get-InnkeeperHouseTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "2" {
+                Write-Scene (Get-InnkeeperClienteleTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "3" {
+                $bookingResult = Start-InnBookingConversation -Game $Game
+
+                if ($bookingResult -eq "Cancelled") {
                     return "Cancelled"
                 }
             }

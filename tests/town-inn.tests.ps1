@@ -159,6 +159,21 @@ function Test-WorkOffRoomCoversNightAndBlocksRing {
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Working off the room should still end with a full night's rest."
 }
 
+function Test-CommonRoomStaysOpenUntilBackedOut {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    Set-TestReadHostSequence -Values @("1", "0")
+
+    Start-InnEveningMenu -Game $game
+
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $true -Message "Taking a common-room action should still resolve as normal."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The common room should stay open until the player explicitly backs out."
+}
+
 Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
@@ -168,5 +183,6 @@ Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear
 Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-WorkOffRoomCoversNightAndBlocksRing
+Test-CommonRoomStaysOpenUntilBackedOut
 
 Write-Host "Town inn tests passed." -ForegroundColor Green

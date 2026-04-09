@@ -270,6 +270,150 @@ function Resolve-BelorChoice {
     return "Belor shrugs. 'Fine. Then keep your head down and buy healing before the city empties the shelves.'"
 }
 
+function Get-WidowEliraFamilyTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["WidowFamilyTalk"]) {
+        $Game.Town.StreetFlags["WidowFamilyTalk"] = $true
+        return "Elira's face softens. 'My boy drives grain in from the outer farms. One rumor about the cave and half the district thought the road was cursed. Your warning got him home before the panic got worse.'"
+    }
+
+    return "Elira smiles more easily now. 'He's still home, still complaining about city bread, and still alive. I call that a good week.'"
+}
+
+function Get-HadrikForgeTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["HadrikForgeTalk"]) {
+        $Game.Town.StreetFlags["HadrikForgeTalk"] = $true
+        return "Hadrik jerks a thumb toward the sparks. 'Rurik says a blade tells you what kind of fool bought it. Fancy steel for nobles, practical steel for survivors, and heavy steel for people who solve things the hard way.'"
+    }
+
+    return "Hadrik grins through the soot. 'Forge is the same as ever. Too hot, too loud, and somehow still not finished by dusk.'"
+}
+
+function Get-BelorWatchTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["BelorWatchTalk"]) {
+        $Game.Town.StreetFlags["BelorWatchTalk"] = $true
+        return "Belor keeps his eyes on the gate as he talks. 'People think walls keep danger out. Truth is, walls only help if tired men on watch still know what to look for.'"
+    }
+
+    return "Belor's mouth tightens. 'Too many small problems in a city turn into one large one if nobody stays awake long enough to connect them.'"
+}
+
+function Start-WidowEliraConversation {
+    param($Game)
+
+    while ($true) {
+        Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
+        Write-ColorLine "1. Ask after her family" "White"
+        Write-ColorLine "2. Tell her no thanks are needed" "White"
+        Write-ColorLine "3. Accept her gratitude with respect" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene (Get-WidowEliraFamilyTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "2" {
+                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice "1")
+                Write-ColorLine ""
+            }
+            "3" {
+                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice "2")
+                Write-ColorLine ""
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-HadrikConversation {
+    param($Game)
+
+    while ($true) {
+        Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
+        Write-ColorLine "1. Ask about the forge and its steel" "White"
+        Write-ColorLine "2. Ask if the forge has anything worth carrying into the wilds" "White"
+        Write-ColorLine "3. Shrug him off and keep walking" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene (Get-HadrikForgeTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "2" {
+                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice "1")
+                Write-ColorLine ""
+            }
+            "3" {
+                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice "2")
+                Write-ColorLine ""
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-BelorConversation {
+    param($Game)
+
+    while ($true) {
+        Write-Scene (Get-BelorIntro -Hero $Game.Hero)
+        Write-ColorLine "1. Ask where a capable fighter can find decent work" "White"
+        Write-ColorLine "2. Ask what has the watch worried" "White"
+        Write-ColorLine "3. Thank him and move on" "White"
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Write-Scene (Resolve-BelorChoice -Game $Game -Choice "1")
+                Write-ColorLine ""
+            }
+            "2" {
+                Write-Scene (Get-BelorWatchTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "3" {
+                Write-Scene (Resolve-BelorChoice -Game $Game -Choice "2")
+                Write-ColorLine ""
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-TownStreetScene {
     param($Game)
 
@@ -296,34 +440,13 @@ function Start-TownStreetScene {
 
         switch ($choice) {
             "1" {
-                Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
-                Write-ColorLine "1. Tell her no thanks are needed." "White"
-                Write-ColorLine "2. Accept her gratitude with respect." "White"
-                Write-ColorLine ""
-
-                $widowChoice = Read-Host "Choose"
-                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice $widowChoice)
-                Write-ColorLine ""
+                Start-WidowEliraConversation -Game $Game
             }
             "2" {
-                Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
-                Write-ColorLine "1. Ask if the forge has anything worth carrying into the wilds." "White"
-                Write-ColorLine "2. Shrug him off and keep walking." "White"
-                Write-ColorLine ""
-
-                $smithChoice = Read-Host "Choose"
-                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice $smithChoice)
-                Write-ColorLine ""
+                Start-HadrikConversation -Game $Game
             }
             "3" {
-                Write-Scene (Get-BelorIntro -Hero $Game.Hero)
-                Write-ColorLine "1. Ask where a capable fighter can find decent work." "White"
-                Write-ColorLine "2. Thank him and move on." "White"
-                Write-ColorLine ""
-
-                $guardChoice = Read-Host "Choose"
-                Write-Scene (Resolve-BelorChoice -Game $Game -Choice $guardChoice)
-                Write-ColorLine ""
+                Start-BelorConversation -Game $Game
             }
             "0" {
                 return
