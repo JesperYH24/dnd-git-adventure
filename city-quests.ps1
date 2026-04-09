@@ -78,6 +78,7 @@ function New-UnderstreetQuestRoom {
     $room | Add-Member -NotePropertyName EncounterIntro -NotePropertyValue $EncounterIntro
     $room | Add-Member -NotePropertyName Secured -NotePropertyValue $false
     $room | Add-Member -NotePropertyName ShortRestTaken -NotePropertyValue $false
+    $room | Add-Member -NotePropertyName RestHintShown -NotePropertyValue $false
     return $room
 }
 
@@ -369,7 +370,32 @@ function Show-UnderstreetRoom {
         Write-Scene "Borzig has already secured this space well enough to catch his breath here."
     }
 
+    $restHint = Get-UnderstreetRoomRestHintText -Room $Room
+
+    if (-not [string]::IsNullOrWhiteSpace($restHint)) {
+        Write-EmphasisLine -Text $restHint -Color "Yellow"
+        $Room.RestHintShown = $true
+    }
+
     Write-ColorLine ""
+}
+
+function Get-UnderstreetRoomRestHintText {
+    param($Room)
+
+    $canSecureForRest = -not $Room.BossRoom -and `
+        -not $Room.ShortRestTaken -and `
+        ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory))
+
+    if (-not $canSecureForRest) {
+        return ""
+    }
+
+    if ($Room.RestHintShown) {
+        return ""
+    }
+
+    return "This chamber looks defensible. Borzig can secure it and use R to take a short rest before pushing deeper."
 }
 
 function Secure-UnderstreetRoomAndRest {

@@ -324,6 +324,18 @@ function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 230 -Message "The Understreet Complex should pay its listed copper reward."
 }
 
+function Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce {
+    $rooms = Get-UnderstreetComplexRooms
+    $safeRoom = $rooms["cistern_refuge"]
+
+    $firstHint = Get-UnderstreetRoomRestHintText -Room $safeRoom
+    $safeRoom.RestHintShown = $true
+    $secondHint = Get-UnderstreetRoomRestHintText -Room $safeRoom
+
+    Assert-True -Condition (-not [string]::IsNullOrWhiteSpace($firstHint)) -Message "The first compatible Understreet room should explain that Borzig can secure it for a short rest."
+    Assert-Equal -Actual $secondHint -Expected "" -Message "The short-rest hint should only appear once per room."
+}
+
 function Test-UnderstreetShortRestHealsAndClearsBuff {
     $game = Initialize-Game
     $heroHP = 6
@@ -367,6 +379,7 @@ Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
+Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
 
 Write-Host "City quest tests passed." -ForegroundColor Green
