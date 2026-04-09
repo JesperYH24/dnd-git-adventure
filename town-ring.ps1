@@ -490,6 +490,16 @@ function Get-BrawlActionLabel {
     }
 }
 
+function Get-OffBalanceBrawlAction {
+    param([string]$Action)
+
+    if ($Action -in @("B", "P")) {
+        return $Action
+    }
+
+    return "P"
+}
+
 function Resolve-BrawlGrappleContest {
     param(
         $Hero,
@@ -782,68 +792,38 @@ function Start-BrawlLoop {
         }
 
         $opponentChoice = Get-OpponentBrawlAction -Opponent $Opponent
-        $displayHeroChoice = if ($heroOffBalance) { "R" } else { $choice }
-        $displayOpponentChoice = if ($opponentOffBalance) { "R" } else { $opponentChoice }
-
-        Write-Action "$($Hero.Name) commits to $(Get-BrawlActionLabel -Action $displayHeroChoice)." "Cyan"
-        Write-Action "$($Opponent.Definite) commits to $(Get-BrawlActionLabel -Action $displayOpponentChoice)." "DarkCyan"
-        Write-ColorLine ""
-
-        if ($heroOffBalance -and $opponentOffBalance) {
-            Write-Scene "Both fighters are still reeling from the last exchange and spend the round regaining their footing."
-            $heroOffBalance = $false
-            $opponentOffBalance = $false
-            continue
-        }
+        $heroChoice = $choice
+        $heroAdjusted = $false
 
         if ($heroOffBalance) {
-            Write-Scene "$($Hero.Name) is off balance and can only recover this round."
-            $heroOffBalance = $false
+            $heroChoice = Get-OffBalanceBrawlAction -Action $choice
+            $heroAdjusted = $heroChoice -ne $choice
 
-            switch ($opponentChoice) {
-                "F" {
-                    $opponentFocusAttackBonus = 2
-                    Write-Action "$($Opponent.Definite) uses the opening to focus on the next strike." "Yellow"
-                    Write-ColorLine ""
-                }
-                "G" {
-                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Recover" | Out-Null
-                }
-                "B" {
-                    Write-Scene "$($Opponent.Definite) keeps the guard high and lets Borzig spend the round recovering."
-                    Write-ColorLine ""
-                }
-                default {
-                    Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Recover"
-                    $opponentFocusAttackBonus = 0
-                }
+            if ($heroAdjusted) {
+                Write-Scene "$($Hero.Name) is off balance and cannot commit to a clean focus or takedown this round."
             }
         }
-        elseif ($opponentOffBalance) {
-            Write-Scene "$($Opponent.Definite) is off balance and can only recover this round."
-            $opponentOffBalance = $false
 
-            switch ($choice) {
-                "F" {
-                    $heroFocusAttackBonus = 2
-                    Write-Action "$($Hero.Name) uses the opening to focus on the next strike." "Yellow"
-                    Write-ColorLine ""
-                }
-                "G" {
-                    Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Recover" | Out-Null
-                }
-                "B" {
-                    Write-Scene "$($Hero.Name) keeps the guard tight and lets the round breathe."
-                    Write-ColorLine ""
-                }
-                default {
-                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Recover"
-                    $heroFocusAttackBonus = 0
-                }
+        $opponentDisplayChoice = $opponentChoice
+        $opponentAdjusted = $false
+
+        if ($opponentOffBalance) {
+            $opponentDisplayChoice = Get-OffBalanceBrawlAction -Action $opponentChoice
+            $opponentAdjusted = $opponentDisplayChoice -ne $opponentChoice
+
+            if ($opponentAdjusted) {
+                Write-Scene "$($Opponent.Definite) is still off balance and falls back to a simpler exchange."
             }
         }
-        else {
-            switch ("$choice/$opponentChoice") {
+
+        Write-Action "$($Hero.Name) commits to $(Get-BrawlActionLabel -Action $heroChoice)." "Cyan"
+        Write-Action "$($Opponent.Definite) commits to $(Get-BrawlActionLabel -Action $opponentDisplayChoice)." "DarkCyan"
+        Write-ColorLine ""
+
+        $heroOffBalance = $false
+        $opponentOffBalance = $false
+
+        switch ("$heroChoice/$opponentDisplayChoice") {
                 "P/P" {
                     Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Punch"
                     $heroFocusAttackBonus = 0
@@ -928,7 +908,6 @@ function Start-BrawlLoop {
                 "P/G" {
                     Resolve-BrawlGrappleAttempt -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $false -DefenderAction "Punch" | Out-Null
                 }
-            }
         }
 
         if ($opponentHP -le 0) {

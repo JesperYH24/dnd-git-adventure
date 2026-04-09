@@ -244,6 +244,13 @@ function Test-GrappleDamageUsesRolledDamage {
     Assert-Equal -Actual $opponentHP -Expected 15 -Message "Hero grapple damage should use a rolled d4 plus grapple bonus, not a fixed flat value."
 }
 
+function Test-OffBalanceFallsBackToSimpleActions {
+    Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "G") -Expected "P" -Message "Off-balance fighters should not be allowed to grapple again immediately."
+    Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "F") -Expected "P" -Message "Off-balance fighters should not be allowed to focus immediately."
+    Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "P") -Expected "P" -Message "Off-balance fighters should still be able to punch."
+    Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "B") -Expected "B" -Message "Off-balance fighters should still be able to block."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
@@ -254,5 +261,6 @@ Test-RingOpponentIntroReflectsRivalryRecord
 Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage
+Test-OffBalanceFallsBackToSimpleActions
 
 Write-Host "Ring tests passed." -ForegroundColor Green
