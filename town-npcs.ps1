@@ -281,6 +281,17 @@ function Get-WidowEliraFamilyTalk {
     return "Elira smiles more easily now. 'He's still home, still complaining about city bread, and still alive. I call that a good week.'"
 }
 
+function Get-WidowEliraDistrictTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["WidowDistrictTalk"]) {
+        $Game.Town.StreetFlags["WidowDistrictTalk"] = $true
+        return "Elira glances down the lane before she answers. 'People here act brave in daylight, but every loud sound after dusk still sends shutters closing. The city is upright, not calm.'"
+    }
+
+    return "Elira lowers her voice. 'The district is breathing easier than it was, but not easy. Not yet.'"
+}
+
 function Get-HadrikForgeTalk {
     param($Game)
 
@@ -290,6 +301,17 @@ function Get-HadrikForgeTalk {
     }
 
     return "Hadrik grins through the soot. 'Forge is the same as ever. Too hot, too loud, and somehow still not finished by dusk.'"
+}
+
+function Get-HadrikCityTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["HadrikCityTalk"]) {
+        $Game.Town.StreetFlags["HadrikCityTalk"] = $true
+        return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need steel before the week is out.'"
+    }
+
+    return "Hadrik scratches soot from his jaw. 'City still wants steel. City always wants steel. Means the forge sleeps last.'"
 }
 
 function Get-BelorWatchTalk {
@@ -303,14 +325,26 @@ function Get-BelorWatchTalk {
     return "Belor's mouth tightens. 'Too many small problems in a city turn into one large one if nobody stays awake long enough to connect them.'"
 }
 
+function Get-BelorDistrictRumorTalk {
+    param($Game)
+
+    if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk"]) {
+        $Game.Town.StreetFlags["BelorDistrictRumorTalk"] = $true
+        return "Belor keeps his tone flat. 'Outer lanes are jumpy, river quarter is lying about something, and half the city still thinks the trouble lives outside the walls. It doesn't.'"
+    }
+
+    return "Belor exhales through his nose. 'Same rumors, sharper edges. That usually means some of them are true.'"
+}
+
 function Start-WidowEliraConversation {
     param($Game)
 
     while ($true) {
         Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
         Write-ColorLine "1. Ask after her family" "White"
-        Write-ColorLine "2. Tell her no thanks are needed" "White"
-        Write-ColorLine "3. Accept her gratitude with respect" "White"
+        Write-ColorLine "2. Ask how the district is holding up" "White"
+        Write-ColorLine "3. Tell her no thanks are needed" "White"
+        Write-ColorLine "4. Accept her gratitude with respect" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
@@ -322,10 +356,14 @@ function Start-WidowEliraConversation {
                 Write-ColorLine ""
             }
             "2" {
-                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice "1")
+                Write-Scene (Get-WidowEliraDistrictTalk -Game $Game)
                 Write-ColorLine ""
             }
             "3" {
+                Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice "1")
+                Write-ColorLine ""
+            }
+            "4" {
                 Write-Scene (Resolve-WidowEliraChoice -Game $Game -Choice "2")
                 Write-ColorLine ""
             }
@@ -346,8 +384,9 @@ function Start-HadrikConversation {
     while ($true) {
         Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
         Write-ColorLine "1. Ask about the forge and its steel" "White"
-        Write-ColorLine "2. Ask if the forge has anything worth carrying into the wilds" "White"
-        Write-ColorLine "3. Shrug him off and keep walking" "White"
+        Write-ColorLine "2. Ask how business in the city has changed" "White"
+        Write-ColorLine "3. Ask if the forge has anything worth carrying into the wilds" "White"
+        Write-ColorLine "4. Shrug him off and keep walking" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
@@ -359,10 +398,14 @@ function Start-HadrikConversation {
                 Write-ColorLine ""
             }
             "2" {
-                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice "1")
+                Write-Scene (Get-HadrikCityTalk -Game $Game)
                 Write-ColorLine ""
             }
             "3" {
+                Write-Scene (Resolve-HadrikChoice -Game $Game -Choice "1")
+                Write-ColorLine ""
+            }
+            "4" {
                 Write-Scene (Resolve-HadrikChoice -Game $Game -Choice "2")
                 Write-ColorLine ""
             }
@@ -384,7 +427,8 @@ function Start-BelorConversation {
         Write-Scene (Get-BelorIntro -Hero $Game.Hero)
         Write-ColorLine "1. Ask where a capable fighter can find decent work" "White"
         Write-ColorLine "2. Ask what has the watch worried" "White"
-        Write-ColorLine "3. Thank him and move on" "White"
+        Write-ColorLine "3. Ask which part of the city feels wrong" "White"
+        Write-ColorLine "4. Thank him and move on" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
@@ -400,6 +444,10 @@ function Start-BelorConversation {
                 Write-ColorLine ""
             }
             "3" {
+                Write-Scene (Get-BelorDistrictRumorTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "4" {
                 Write-Scene (Resolve-BelorChoice -Game $Game -Choice "2")
                 Write-ColorLine ""
             }

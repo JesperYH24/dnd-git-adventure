@@ -80,6 +80,27 @@ function Test-StreetNpcFlavorTalkIsRemembered {
     Assert-True -Condition ($second -like "*Too many small problems*") -Message "Belor should shift to a shorter repeat warning on later talks."
 }
 
+function Test-StreetNpcExtraFlavorTalksExist {
+    $game = Initialize-Game
+
+    $widow = Get-WidowEliraDistrictTalk -Game $game
+    $hadrik = Get-HadrikCityTalk -Game $game
+    $belor = Get-BelorDistrictRumorTalk -Game $game
+
+    Assert-True -Condition ($widow -like "*city is upright*" -or $widow -like "*breathing easier*") -Message "Widow Elira should have an extra district-focused conversation path."
+    Assert-True -Condition ($hadrik -like "*money comes from*") -Message "Hadrik should have extra city-business flavor dialogue."
+    Assert-True -Condition ($belor -like "*river quarter*") -Message "Belor should have an extra district rumor conversation path."
+}
+
+function Test-RingMasterHasExtendedConversationHooks {
+    $hero = Get-Hero
+    $pitTalk = Get-RingMasterPitTalk -Hero $hero
+    $opponentTalk = Get-RingMasterOpponentTalk -Hero $hero
+
+    Assert-True -Condition ($pitTalk -like "*pit teaches quick*") -Message "Ringmaster Dorr should be able to talk about the pit itself."
+    Assert-True -Condition ($opponentTalk -like "*Some swing wild*") -Message "Ringmaster Dorr should be able to hint at opponent styles."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
@@ -87,5 +108,7 @@ Test-SilverKettleEconomicInfoSetsFutureHook
 Test-InnkeeperGreetingChangesWithHeroStyle
 Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
+Test-StreetNpcExtraFlavorTalksExist
+Test-RingMasterHasExtendedConversationHooks
 
 Write-Host "Town social tests passed." -ForegroundColor Green

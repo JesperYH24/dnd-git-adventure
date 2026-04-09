@@ -728,6 +728,43 @@ function Get-InnkeeperClienteleTalk {
     }
 }
 
+function Get-InnkeeperLocalRumorTalk {
+    param($Game)
+
+    $inn = $Game.Town.ActiveInn
+    $flag = "InnkeeperLocalRumorTalk_$($inn.Id)"
+
+    switch ($inn.Id) {
+        "bent_nail" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Marta tips her head toward the back booths. 'If city trouble is looking for a quiet door, it usually finds the river quarter first. Cheap locks and desperate people make easy cover.'"
+            }
+
+            return "Marta grunts. 'Same river talk as before. Too many crates moving at bad hours and too many folk pretending not to notice.'"
+        }
+        "lantern_rest" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Oren lowers his voice. 'Road captains are nervous. Not panicked, just cautious. That is worse. It means the trouble has pattern, not noise.'"
+            }
+
+            return "Oren folds a towel over one arm. 'Travelers still talk like they expect the city to stabilize. None of them sound convinced.'"
+        }
+        "silver_kettle" {
+            if (-not $Game.Town.InnFlags[$flag]) {
+                $Game.Town.InnFlags[$flag] = $true
+                return "Madam Seraphine smiles without warmth. 'The polished version is that commerce is under strain. The honest version is that someone is profiting from fear while better-dressed people pretend to be surprised.'"
+            }
+
+            return "Madam Seraphine's gaze drifts toward the upper tables. 'The wealthy are still pretending this is temporary. That usually means it is not.'"
+        }
+        default {
+            return "$($inn.Keeper) shrugs. 'People talk. Most of it is nerves, some of it is useful.'"
+        }
+    }
+}
+
 function Start-InnBookingConversation {
     param($Game)
 
@@ -779,7 +816,8 @@ function Start-InnkeeperMenu {
         Write-ColorLine ""
         Write-ColorLine "1. Ask about the house" "White"
         Write-ColorLine "2. Ask what sort of people stay here" "White"
-        Write-ColorLine "3. Discuss your room booking" "White"
+        Write-ColorLine "3. Ask what people have been saying lately" "White"
+        Write-ColorLine "4. Discuss your room booking" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
@@ -795,6 +833,10 @@ function Start-InnkeeperMenu {
                 Write-ColorLine ""
             }
             "3" {
+                Write-Scene (Get-InnkeeperLocalRumorTalk -Game $Game)
+                Write-ColorLine ""
+            }
+            "4" {
                 $bookingResult = Start-InnBookingConversation -Game $Game
 
                 if ($bookingResult -eq "Cancelled") {

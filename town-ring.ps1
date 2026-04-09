@@ -212,6 +212,46 @@ function Get-RingRewardCopper {
     }
 }
 
+function Get-RingMasterPitTalk {
+    param($Hero)
+
+    $wins = 0
+
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"]) {
+        $wins = [int]$Hero.RingWinsTotal
+    }
+
+    if ($wins -ge 10) {
+        return "Ringmaster Dorr leans both arms on the rail. 'Champions don't just fight opponents. They fight expectations, bettors, and every fool who wants a piece of a name.'"
+    }
+
+    if ($wins -ge 5) {
+        return "Dorr jerks his chin toward the sand. 'The pit changes once people recognize you. New blood gets tested. Known blood gets hunted.'"
+    }
+
+    return "Dorr raps the rail with his knuckles. 'The pit teaches quick. Crowd loves courage, but it pays hardest for timing and nerve.'"
+}
+
+function Get-RingMasterOpponentTalk {
+    param($Hero)
+
+    $wins = 0
+
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"]) {
+        $wins = [int]$Hero.RingWinsTotal
+    }
+
+    if ($wins -ge 10) {
+        return "Dorr's grin turns sharp. 'Now you get the ones who study habits, hold grudges, and come in with something to prove.'"
+    }
+
+    if ($wins -ge 5) {
+        return "Dorr hooks a thumb toward the back benches. 'You won't see many easy bruisers now. Faster hands, smarter guards, meaner reads.'"
+    }
+
+    return "Dorr squints toward the waiting fighters. 'Some swing wild. Some hide behind a tight guard. Some want the floor under you more than your jaw. Watch their first step.'"
+}
+
 function Get-HeroRingRivalryRecord {
     param(
         $Hero,
@@ -964,6 +1004,8 @@ function Start-FightingRing {
     }
     Write-ColorLine ""
     Write-ColorLine "1. Enter the ring" "White"
+    Write-ColorLine "2. Ask Dorr about the pit" "White"
+    Write-ColorLine "3. Ask Dorr what sort of challengers are waiting" "White"
     Write-ColorLine "0. Back" "DarkGray"
     Write-ColorLine ""
 
@@ -979,10 +1021,27 @@ function Start-FightingRing {
         return
     }
 
-    $choice = Read-Host "Choose"
+    while ($true) {
+        $choice = Read-Host "Choose"
 
-    if ($choice -ne "1") {
-        return
+        switch ($choice) {
+            "1" { break }
+            "2" {
+                Write-Scene (Get-RingMasterPitTalk -Hero $Game.Hero)
+                Write-ColorLine ""
+            }
+            "3" {
+                Write-Scene (Get-RingMasterOpponentTalk -Hero $Game.Hero)
+                Write-ColorLine ""
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
     }
 
     $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $entryFee
