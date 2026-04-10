@@ -510,7 +510,7 @@ function Start-UnderstreetComplexExploration {
                     Resolve-RoomLoot -Hero $Game.Hero -Room $room
                 }
                 "S" {
-                    $statusSnapshot = Get-HeroStatusSnapshot -Hero $Game.Hero -HeroHP $HeroHP.Value
+                    $statusSnapshot = Get-HeroStatusSnapshot -Hero $Game.Hero -HeroHP $HeroHP.Value -Game $Game
                     Write-ColorLine ""
                     Write-ColorLine "Status:" "Cyan"
                     Write-HeroStatusDetails -Hero $Game.Hero -HeroHP $HeroHP.Value -Snapshot $statusSnapshot

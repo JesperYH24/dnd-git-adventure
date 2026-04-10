@@ -442,6 +442,32 @@ function Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit {
     $global:TownQuestPreparationOverride = $null
 }
 
+function Test-StoryClueNotesReflectKnownEvidence {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+
+    $notes = @(Get-StoryClueNotes -Game $game)
+
+    Assert-Equal -Actual $notes.Count -Expected 3 -Message "Story clue notes should list each discovered clue once."
+    Assert-Equal -Actual $notes[0].Flag -Expected "FoundTunnelAccess" -Message "Story clue notes should keep a stable readable order."
+    Assert-True -Condition ($notes[2].Text -like "*Serik*") -Message "Leader notes should mention the named understreet contact."
+}
+
+function Test-StoryClueProgressSummaryTracksTierAndEvidence {
+    $game = Initialize-Game
+    Set-StoryTier -Game $game -Tier 3
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["FoundCourierRoute"] = $true
+
+    $summary = Get-StoryClueProgressSummary -Game $game
+
+    Assert-True -Condition ($summary -like "*Tier 3 active*") -Message "The story clue summary should report the currently active story tier."
+    Assert-True -Condition ($summary -like "*2/6*") -Message "The story clue summary should count major evidence toward the chapter finale."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -464,5 +490,7 @@ Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
 Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
+Test-StoryClueNotesReflectKnownEvidence
+Test-StoryClueProgressSummaryTracksTierAndEvidence
 
 Write-Host "City quest tests passed." -ForegroundColor Green

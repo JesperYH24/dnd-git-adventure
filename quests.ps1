@@ -67,6 +67,71 @@ function Get-StoryClueCount {
     return @($Game.Town.StoryFlags.Keys | Where-Object { $Game.Town.StoryFlags[$_] -eq $true }).Count
 }
 
+function Get-StoryClueNotes {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StoryFlags) {
+        return @()
+    }
+
+    $storyFlags = $Game.Town.StoryFlags
+    $notes = @()
+    $definitions = @(
+        @{ Flag = "FoundTunnelAccess"; Category = "Access"; Text = "The old city tunnels are active again, and the broken seal was opened from below." }
+        @{ Flag = "FoundSmugglingLink"; Category = "Smuggling"; Text = "Missing goods and hidden cargo routes are tied to the same understreet traffic." }
+        @{ Flag = "FoundStreetCourierMark"; Category = "Courier"; Text = "A marked courier trail links street handoffs to the underground operation." }
+        @{ Flag = "FoundCourierRoute"; Category = "Courier"; Text = "A working courier route into the understreet network has been confirmed." }
+        @{ Flag = "FoundEconomicIrregularity"; Category = "Ledger"; Text = "The books do not balance. Someone has been moving coin and stock off-book." }
+        @{ Flag = "NamedUnderstreetLeader"; Category = "Leadership"; Text = "The name Serik surfaced as a real hand behind the understreet route." }
+        @{ Flag = "BentNailBrokerConfirmed"; Category = "Broker"; Text = "Bent Nail whispers led to a broker who confirmed the hidden cargo traffic." }
+        @{ Flag = "ConfirmedUndergroundRoute"; Category = "Route"; Text = "A breached maintenance route proved the smugglers are guarding a deeper path." }
+        @{ Flag = "SecuredLedgerEvidence"; Category = "Evidence"; Text = "Hard ledger evidence now ties the missing goods to the underground network." }
+        @{ Flag = "HelpedLocalVictim"; Category = "Street"; Text = "A shaken local witness added weight to the courier trail moving through the district." }
+        @{ Flag = "UnderstreetComplexCleared"; Category = "Resolution"; Text = "The Understreet Complex was broken and its command structure exposed." }
+    )
+
+    foreach ($definition in $definitions) {
+        if ([bool]$storyFlags[$definition.Flag]) {
+            $notes += [PSCustomObject]@{
+                Flag = $definition.Flag
+                Category = $definition.Category
+                Text = $definition.Text
+            }
+        }
+    }
+
+    return @($notes)
+}
+
+function Get-StoryClueProgressSummary {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return ""
+    }
+
+    $currentTier = Get-CurrentStoryQuestTier -Game $Game
+    $majorEvidenceFlags = @(
+        "FoundSmugglingLink"
+        "NamedUnderstreetLeader"
+        "FoundCourierRoute"
+        "ConfirmedUndergroundRoute"
+        "SecuredLedgerEvidence"
+        "BentNailBrokerConfirmed"
+    )
+    $majorEvidenceCount = @($majorEvidenceFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
+
+    if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
+        return "Chapter Two Notes: The understreet network has been broken, but the fallout is still moving through the city."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["FoundTunnelAccess"]) {
+        return "Chapter Two Notes: Tier $currentTier active. Major evidence gathered: $majorEvidenceCount/6."
+    }
+
+    return "Chapter Two Notes: Borzig has not yet uncovered his first real understreet lead."
+}
+
 function Get-CompletedStoryQuestCount {
     param($Game)
 
@@ -461,6 +526,7 @@ function Show-QuestLog {
     if ($null -ne $Game -and $null -ne $Game.Town -and $null -ne $Game.Town.Quests) {
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
         $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
+        $storyNotes = @(Get-StoryClueNotes -Game $Game)
 
         if ($acceptedQuests.Count -gt 0) {
             Write-ColorLine ""
@@ -481,6 +547,16 @@ function Show-QuestLog {
 
             foreach ($townQuest in $completedQuests) {
                 Write-ColorLine "- $($townQuest.Name)" "White"
+            }
+        }
+
+        if ($storyNotes.Count -gt 0) {
+            Write-ColorLine ""
+            Write-ColorLine "Story Notes" "Yellow"
+            Write-ColorLine (Get-StoryClueProgressSummary -Game $Game) "DarkYellow"
+
+            foreach ($note in $storyNotes) {
+                Write-ColorLine "- [$($note.Category)] $($note.Text)" "DarkGray"
             }
         }
     }

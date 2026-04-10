@@ -19,7 +19,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - brutal barbarian crit-finish text on lethal takedowns
 - cave exploration with connected rooms, backtracking, room loot, and encounters
 - tutorial boss warning flow with a Shadow Sanctum reward choice
-- quest log with tutorial progression, XP tracking, and accepted town quests
+- quest log with tutorial progression, XP tracking, accepted town quests, and story notes / clue tracking for Chapter Two
 - inventory with:
   - `8` ready-use personal slots
   - a separate backpack storage layer
@@ -259,7 +259,6 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
-- add a proper clue log or quest-notes system so gathered evidence can be reviewed in-character
 - introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads

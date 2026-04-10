@@ -39,7 +39,8 @@ function Get-MonsterHPColor {
 function Get-HeroStatusSnapshot {
     param(
         $Hero,
-        [int]$HeroHP
+        [int]$HeroHP,
+        $Game = $null
     )
 
     $weapon = Get-HeroWeaponProfile -Hero $Hero
@@ -65,6 +66,7 @@ function Get-HeroStatusSnapshot {
         DisplayXP = $displayXP
         NextLevelXP = $nextLevelXP
         UnarmedTrainingLevel = $unarmedTrainingLevel
+        StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
     }
 }
 
@@ -94,6 +96,9 @@ function Write-HeroStatusDetails {
 
     Write-ColorLine "Level: $($Hero.Level) | AC: $($Snapshot.ArmorClass) | Weapon: $($Snapshot.Weapon.Name) | To Hit: +$($Snapshot.Weapon.TotalAttackBonus) | Damage: $(Get-WeaponDamageRollText -WeaponProfile $Snapshot.Weapon) + $($Snapshot.Weapon.DamageBonus) ($($Snapshot.Weapon.TotalDamageMin)-$($Snapshot.Weapon.TotalDamageMax)) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
     Write-ColorLine "XP: $($Snapshot.DisplayXP)/$($Snapshot.NextLevelXP)" "White"
+    if ($Snapshot.StoryClueCount -gt 0) {
+        Write-ColorLine "Story Clues Logged: $($Snapshot.StoryClueCount)" "DarkYellow"
+    }
     Write-ColorLine "STR $($Hero.STR) $(Format-AbilityModifier -Modifier $Snapshot.STRMod) | DEX $($Hero.DEX) $(Format-AbilityModifier -Modifier $Snapshot.DEXMod) | CON $($Hero.CON) $(Format-AbilityModifier -Modifier $Snapshot.CONMod)" "DarkGray"
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"
     Write-ColorLine "Active Buff: $($Snapshot.ActiveBuff)" "DarkYellow"
