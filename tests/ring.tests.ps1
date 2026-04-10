@@ -2,6 +2,12 @@
 
 Set-TestOutputStubs
 
+function Set-TestRollStub {
+    param([scriptblock]$Body)
+
+    $global:RollDiceOverride = $Body
+}
+
 function Test-RingTrainingUnlocksUnarmedBonus {
     $game = Initialize-Game
     $before = Get-HeroUnarmedProfile -Hero $game.Hero
@@ -103,7 +109,7 @@ function Test-OpponentCritUsesMaxDiePlusRolledDie {
     $script:rollQueue.Enqueue(20)
     $script:rollQueue.Enqueue(3)
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides)
         return $script:rollQueue.Dequeue()
     }
@@ -120,7 +126,7 @@ function Test-GrappleHeavyOpponentCanChooseGrapple {
         BlockChance = 5
     }
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides)
         return 10
     }
@@ -176,7 +182,7 @@ function Test-PunchVsGrappleUsesPunchBonus {
     $script:rollQueue.Enqueue(10)
     $script:rollQueue.Enqueue(10)
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides)
 
         if ($script:rollQueue.Count -gt 0) {
@@ -216,7 +222,7 @@ function Test-BlockedGrappleDoesNotReverseIntoCounterGrapple {
     $script:rollQueue.Enqueue(8)
     $script:rollQueue.Enqueue(18)
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides)
         return $script:rollQueue.Dequeue()
     }
@@ -256,7 +262,7 @@ function Test-GrappleDamageUsesRolledDamage {
     $script:rollQueue.Enqueue(8)
     $script:rollQueue.Enqueue(3)
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides)
         return $script:rollQueue.Dequeue()
     }
@@ -289,3 +295,4 @@ Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
 
 Write-Host "Ring tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null

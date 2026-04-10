@@ -47,10 +47,16 @@ function Set-TestOutputStubs {
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
 }
 
+function Set-TestRollStub {
+    param([scriptblock]$Body)
+
+    $global:RollDiceOverride = $Body
+}
+
 function Test-MonsterOpeningPhaseCriticalHit {
     Set-TestOutputStubs
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 20 }
@@ -76,13 +82,13 @@ function Test-MonsterOpeningPhaseCriticalHit {
         -MonsterStarts $true
 
     Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after monster crits without lethal damage."
-    Assert-Equal -Actual $heroHP -Expected 12 -Message "Monster crit in opening phase should roll damage dice twice and reduce hero HP accordingly."
+    Assert-Equal -Actual $heroHP -Expected 12 -Message "Monster crit in opening phase should deal max die plus a fresh damage roll."
 }
 
 function Test-MonsterOpeningPhaseNormalHit {
     Set-TestOutputStubs
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 10 }
@@ -115,3 +121,4 @@ Test-MonsterOpeningPhaseCriticalHit
 Test-MonsterOpeningPhaseNormalHit
 
 Write-Host "All opening phase monster attack tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null

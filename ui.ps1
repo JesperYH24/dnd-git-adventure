@@ -14,6 +14,10 @@ function Get-ReadableTextWidth {
     return $defaultWidth
 }
 
+function Get-UiOutputSuppressed {
+    return [bool]$global:SuppressUiOutput
+}
+
 function Get-FastTextEnabled {
     if ($null -eq $global:FastTextEnabled) {
         $global:FastTextEnabled = $false
@@ -136,6 +140,10 @@ function Write-TypeLine {
         [string]$Color = "White"
     )
 
+    if (Get-UiOutputSuppressed) {
+        return ""
+    }
+
     if ((Get-FastTextEnabled) -or (Get-TransientTextSkipEnabled)) {
         Write-Host $Text -ForegroundColor $Color
         return ""
@@ -206,6 +214,10 @@ function Write-SectionTitle {
         [string]$Color = "Cyan"
     )
 
+    if (Get-UiOutputSuppressed) {
+        return
+    }
+
     $title = "  $($Text.ToUpper())  "
     $borderWidth = [Math]::Max($title.Length, 26)
     $border = "".PadLeft($borderWidth, "=")
@@ -222,6 +234,10 @@ function Write-EmphasisLine {
         [string]$Color = "Yellow"
     )
 
+    if (Get-UiOutputSuppressed) {
+        return
+    }
+
     foreach ($line in Split-DisplayText -Text $Text) {
         Write-Host ("  " + $line) -ForegroundColor $Color
     }
@@ -231,6 +247,10 @@ function Write-Scene {
     param(
         [string]$Text
     )
+
+    if (Get-UiOutputSuppressed) {
+        return
+    }
 
     $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
     Write-TypeBlock -Lines $lines -Delay 35 -Color "Gray"
@@ -242,6 +262,10 @@ function Write-Action {
         [string]$Color = "White"
     )
 
+    if (Get-UiOutputSuppressed) {
+        return
+    }
+
     $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
     Write-TypeBlock -Lines $lines -Delay 16 -Color $Color
 }
@@ -251,6 +275,10 @@ function Write-ColorLine {
         [string]$Text,
         [string]$Color = "White"
     )
+
+    if (Get-UiOutputSuppressed) {
+        return
+    }
 
     Write-Host $Text -ForegroundColor $Color
 }
@@ -262,6 +290,10 @@ function Write-BlinkingLine {
         [string]$Color2 = "DarkRed",
         [int]$Times = 3
     )
+
+    if (Get-UiOutputSuppressed) {
+        return
+    }
 
     for ($i = 0; $i -lt $Times; $i++) {
         Write-Host "`r$Text" -ForegroundColor $Color1 -NoNewline

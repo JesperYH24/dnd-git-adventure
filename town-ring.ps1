@@ -414,7 +414,7 @@ function Invoke-HeroBrawlAttack {
         $bonusText += " against guarded AC"
     }
 
-    Write-Action "$($Hero.Name) throws a punch into ${TargetAction}: roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
+    Write-Action "$($Hero.Name) throws a punch into ${TargetAction}: d20 roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
@@ -467,7 +467,7 @@ function Invoke-OpponentBrawlAttack {
         $blockText += " (+$AttackBonusModifier focus)"
     }
 
-    Write-Action "$($Opponent.Definite) throws a punch into ${TargetAction}: roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
+    Write-Action "$($Opponent.Definite) throws a punch into ${TargetAction}: d20 roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($roll -eq 20) {
         $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
@@ -518,8 +518,8 @@ function Resolve-OpponentBrawlGrapple {
     $heroTotal = $heroRoll + $heroModifier + $trainingBonus
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
-    Write-Action "$($Opponent.Definite) lunges for a takedown: roll $opponentRoll, total $opponentTotal" "DarkCyan"
-    Write-Action "$($Hero.Name) braces against it: roll $heroRoll, total $heroTotal" "Cyan"
+    Write-Action "$($Opponent.Definite) lunges for a takedown: d20 roll $opponentRoll, total $opponentTotal" "DarkCyan"
+    Write-Action "$($Hero.Name) braces against it: d20 roll $heroRoll, total $heroTotal" "Cyan"
 
     if ($opponentRoll -eq 20 -or ($heroRoll -ne 20 -and $opponentTotal -ge $heroTotal)) {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
@@ -630,8 +630,8 @@ function Resolve-BrawlGrappleContest {
     $heroBonusText = if ($HeroFlatBonus -gt 0) { " (+$HeroFlatBonus)" } elseif ($HeroFlatBonus -lt 0) { " ($HeroFlatBonus)" } else { "" }
     $opponentBonusText = if ($OpponentFlatBonus -gt 0) { " (+$OpponentFlatBonus)" } elseif ($OpponentFlatBonus -lt 0) { " ($OpponentFlatBonus)" } else { "" }
 
-    Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: roll $heroRoll, total $heroTotal$heroBonusText" "Cyan"
-    Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: roll $opponentRoll, total $opponentTotal$opponentBonusText" "DarkCyan"
+    Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: d20 roll $heroRoll, total $heroTotal$heroBonusText" "Cyan"
+    Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: d20 roll $opponentRoll, total $opponentTotal$opponentBonusText" "DarkCyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -gt $opponentTotal)) {
         $damageRoll = Roll-Dice -Sides 4
@@ -713,8 +713,8 @@ function Resolve-BrawlGrappleAttempt {
     $defenderTotal = $defenderRoll + $defenderBonus
     $defenderBonusText = if ($defenderBonus -gt 0) { " (+$defenderBonus)" } else { "" }
 
-    Write-Action "${initiatorName} commits to ${initiatorActionLabel}: roll $initiatorRoll, total $initiatorTotal" "Cyan"
-    Write-Action "${defenderName} answers with ${defenderActionLabel}: roll $defenderRoll, total $defenderTotal$defenderBonusText" "DarkCyan"
+    Write-Action "${initiatorName} commits to ${initiatorActionLabel}: d20 roll $initiatorRoll, total $initiatorTotal" "Cyan"
+    Write-Action "${defenderName} answers with ${defenderActionLabel}: d20 roll $defenderRoll, total $defenderTotal$defenderBonusText" "DarkCyan"
 
     if ($initiatorRoll -eq 20 -or ($defenderRoll -ne 20 -and $initiatorTotal -gt $defenderTotal)) {
         if ($HeroInitiates) {
@@ -814,8 +814,8 @@ function Resolve-HeroBrawlGrapple {
     $heroTotal = $heroRoll + $heroModifier + $trainingBonus
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
-    Write-Action "$($Hero.Name) shoots in for a grapple: roll $heroRoll, total $heroTotal" "Cyan"
-    Write-Action "$($Opponent.Definite) braces against it: roll $opponentRoll, total $opponentTotal" "DarkCyan"
+    Write-Action "$($Hero.Name) shoots in for a grapple: d20 roll $heroRoll, total $heroTotal" "Cyan"
+    Write-Action "$($Opponent.Definite) braces against it: d20 roll $opponentRoll, total $opponentTotal" "DarkCyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
         $damageRoll = Roll-Dice -Sides 4

@@ -21,6 +21,12 @@ function Set-TestOutputStubs {
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
 }
 
+function Set-TestRollStub {
+    param([scriptblock]$Body)
+
+    $global:RollDiceOverride = $Body
+}
+
 function New-TestMonster {
     return [PSCustomObject]@{
         name = "training dummy"
@@ -38,7 +44,7 @@ function New-TestMonster {
 function Test-FocusBonusImprovesHeroAttack {
     Set-TestOutputStubs
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 12 }
@@ -58,7 +64,7 @@ function Test-FocusBonusImprovesHeroAttack {
 function Test-BlockRaisesArmorClassAgainstNextAttack {
     Set-TestOutputStubs
 
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 9 }
@@ -76,23 +82,12 @@ function Test-BlockRaisesArmorClassAgainstNextAttack {
 }
 
 function Test-BarbarianCritKillGetsSavageFinisherText {
-    Set-TestOutputStubs
-
-    function global:Roll-Dice {
-        param([int]$Sides = 20)
-
-        if ($Sides -eq 20) { return 20 }
-        return 6
-    }
-
     $hero = Get-Hero
     $monster = New-TestMonster
-    $monsterHP = 5
-    $heroDroppedWeapon = $false
+    $weapon = Get-HeroWeaponProfile -Hero $hero
+    $text = Get-BarbarianCriticalKillText -Hero $hero -Monster $monster -Weapon $weapon
 
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
-
-    if (-not ($global:CapturedScenes | Where-Object { $_ -like "*savage finishing blow*" })) {
+    if ($text -notlike "*savage finishing blow*") {
         throw "A barbarian crit kill should produce the savage finishing blow text."
     }
 }
@@ -102,3 +97,4 @@ Test-BlockRaisesArmorClassAgainstNextAttack
 Test-BarbarianCritKillGetsSavageFinisherText
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null

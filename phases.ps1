@@ -223,12 +223,12 @@ function Start-DetectionPhase {
     $monsterTotal = $monsterRoll + $monsterInitiativeBonus
 
     if ($heroHasAdvantage) {
-        Write-Scene "$($Hero.Name) rolls initiative with advantage: $heroFirstRoll and $heroSecondRoll, taking $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+        Write-Scene "$($Hero.Name) rolls initiative with d20 advantage: $heroFirstRoll and $heroSecondRoll, taking $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
     }
     else {
-        Write-Scene "$($Hero.Name) rolls initiative: $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
+        Write-Scene "$($Hero.Name) rolls initiative on d20: $heroRoll $(Format-AbilityModifier -Modifier $heroDexModifier) = $heroTotal"
     }
-    Write-Scene "$($Monster.definite) rolls initiative: $monsterRoll $(Format-AbilityModifier -Modifier $monsterInitiativeBonus) = $monsterTotal"
+    Write-Scene "$($Monster.definite) rolls initiative on d20: $monsterRoll $(Format-AbilityModifier -Modifier $monsterInitiativeBonus) = $monsterTotal"
     Write-ColorLine ""
 
     if ($heroRoll -eq 20) {

@@ -34,11 +34,17 @@ function Set-TestOutputStubs {
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
 }
 
+function Set-TestRollStub {
+    param([scriptblock]$Body)
+
+    $global:RollDiceOverride = $Body
+}
+
 function Test-NaturalTwentyAlwaysGrantsHeroTwoAttacks {
     Set-TestOutputStubs
 
     $script:rollIndex = 0
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         $script:rollIndex += 1
@@ -66,7 +72,7 @@ function Test-MonsterCanWinOpposedInitiative {
     Set-TestOutputStubs
 
     $script:rollIndex = 0
-    function global:Roll-Dice {
+    Set-TestRollStub {
         param([int]$Sides = 20)
 
         $script:rollIndex += 1
@@ -94,3 +100,4 @@ Test-NaturalTwentyAlwaysGrantsHeroTwoAttacks
 Test-MonsterCanWinOpposedInitiative
 
 Write-Host "Initiative tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null

@@ -17,6 +17,19 @@ function Get-BarbarianCriticalKillText {
     return "$($Hero.Name) tears through $($Monster.definite) in a savage finishing blow, driving the $weaponName clean through the kill!"
 }
 
+function Get-MonsterCriticalDamage {
+    param($Monster)
+
+    $profile = Get-MonsterDamageProfile -Monster $Monster
+    $extraDamageRoll = Roll-Dice -Sides $profile.DiceSides
+
+    return [PSCustomObject]@{
+        Damage = [Math]::Max(1, $profile.DamageMax + $extraDamageRoll)
+        DamageMax = $profile.DamageMax
+        ExtraDamageRoll = $extraDamageRoll
+    }
+}
+
 function Invoke-HeroAttack {
     param(
         $Hero,
@@ -37,7 +50,7 @@ function Invoke-HeroAttack {
         $bonusText = " (+$AttackBonusModifier focus)"
     }
 
-    Write-Action "$($Hero.Name) attacks with $($weapon.Name): roll $heroRoll, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
+    Write-Action "$($Hero.Name) attacks with $($weapon.Name): d20 roll $heroRoll, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
         $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
@@ -104,17 +117,16 @@ function Invoke-MonsterAttack {
         $blockText = " (including +$BlockArmorBonus block)"
     }
 
-    Write-Action "$($Monster.definite) attacks: roll $attackRoll, total $attackTotal vs AC $heroArmorClass$blockText" "DarkCyan"
+    Write-Action "$($Monster.definite) attacks: d20 roll $attackRoll, total $attackTotal vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
-        $firstDamageRoll = Roll-MonsterDamage -Monster $Monster
-        $secondDamageRoll = Roll-MonsterDamage -Monster $Monster
-        $monsterDamage = $firstDamageRoll + $secondDamageRoll
+        $criticalDamage = Get-MonsterCriticalDamage -Monster $Monster
+        $monsterDamage = $criticalDamage.Damage
 
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($firstDamageRoll + $secondDamageRoll)" "Yellow"
+        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($($criticalDamage.DamageMax) + $($criticalDamage.ExtraDamageRoll))" "Yellow"
     }
     elseif ($attackRoll -eq 1) {
         Write-Action "CRITICAL FAIL!" "Magenta"
@@ -183,8 +195,8 @@ function Resolve-DroppedWeaponTurn {
         $heroTotal = $heroRoll + $heroStrengthModifier
         $monsterTotal = $monsterRoll + $monsterStrengthBonus
 
-        Write-Action "$($Hero.Name) lunges for a grapple: roll $heroRoll, total $heroTotal" "Cyan"
-        Write-Action "$($Monster.definite) resists: roll $monsterRoll, total $monsterTotal" "DarkCyan"
+        Write-Action "$($Hero.Name) lunges for a grapple: d20 roll $heroRoll, total $heroTotal" "Cyan"
+        Write-Action "$($Monster.definite) resists: d20 roll $monsterRoll, total $monsterTotal" "DarkCyan"
 
         if ($heroRoll -eq 20 -or ($monsterRoll -ne 20 -and $heroTotal -ge $monsterTotal)) {
             Write-Action "$($Hero.Name) slams into $($Monster.definite), forces it off balance, and snatches the weapon back!" "Yellow"
