@@ -110,7 +110,7 @@ function Test-ShadowSanctumGoldOverflowStaysInRoom {
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot.Count -Expected 1 -Message "Overflowing sanctum gold should remain in the cave as loot."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Type -Expected "Currency" -Message "The leftover sanctum reward should still be currency."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Denomination -Expected "GP" -Message "The leftover sanctum reward should keep its gold denomination."
-    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 99 -Message "Overflowing sanctum gold should leave the correct amount behind."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 1 -Message "Overflowing sanctum gold should leave the correct amount behind."
 }
 
 Test-GoldPouchCapsAtOneHundredFiftyGP

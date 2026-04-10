@@ -15,10 +15,17 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - armor class
   - `Block` and `Focus`
   - dropped-weapon recovery for the barbarian
+  - a cleaner battle-status layout with clearer separation between Borzig and the enemy
+  - brutal barbarian crit-finish text on lethal takedowns
 - cave exploration with connected rooms, backtracking, room loot, and encounters
 - tutorial boss warning flow with a Shadow Sanctum reward choice
 - quest log with tutorial progression, XP tracking, and accepted town quests
-- inventory with slot limits, equipping, consumables, and dropped loot persistence
+- inventory with:
+  - `8` ready-use personal slots
+  - a separate backpack storage layer
+  - out-of-combat transfer between backpack and ready gear
+  - combat-only access to what Borzig is carrying on his person
+  - equipping, consumables, and dropped loot persistence
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
 - town hub with:
@@ -35,9 +42,12 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - market
   - smithy
   - apothecary
+  - a dedicated town buyer
   - fighting ring
   - small NPC rewards, information hooks, and discounts
   - deeper innkeeper and street-NPC conversations with repeat-aware dialogue
+  - specialist selling prices depending on who Borzig sells to
+  - comments and flavor around Borzig's worn starting gear and rough cave salvage
 - class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
@@ -167,7 +177,8 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 - accept town quests
 - visit the fighting ring
 - spend gold on weapons and potions
-- sell gear to free up slots
+- sell gear either to a dedicated town buyer or to specialists who value some item types more than others
+- keep extra gear in the backpack, then move items onto Borzig's person before combat if they need to be used in battle
 - begin the Chapter Two city story through the first guard quest chain
 
 ### 3. Chapter Two
@@ -244,7 +255,6 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ## Next possible steps
 
-- add a proper clue log or investigation log so the player can review gathered evidence and understand why the next story stage unlocked
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - deepen `The Understreet Complex` with more room variety, routing choices, and encounter variety
 - build the next post-Understreet story chain from the consequences of breaking the network under the city
