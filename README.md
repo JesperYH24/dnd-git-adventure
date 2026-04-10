@@ -259,6 +259,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
+- formalize defeat and HP persistence rules so the tutorial can hard-reset at the campfire, the city can keep combat damage between activities, and the fighting ring can stay fully restorative between bouts
 - introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
