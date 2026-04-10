@@ -59,12 +59,14 @@ function Test-ShopMentionsStashOrSellWhenFull {
     $hero = $game.Hero
     $hero.CurrencyCopper = 500
     $hero.Inventory += (New-WeaponItem -Name "Spare Pike" -Value 50 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "Two-Handed" -RequiredSTR 11 -SlotCost 3)
+    $hero.BackpackInventory += (New-ArmorItem -Name "Packed Plates" -Value 30 -ArmorBonus 1 -SlotCost 2)
+    $hero.BackpackInventory += (New-WeaponItem -Name "Packed Hammer" -Value 25 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -RequiredSTR 10 -SlotCost 2)
     $offer = Get-SmithyOffers | Where-Object { $_.Id -eq "smithy_longsword" } | Select-Object -First 1
 
     $result = Try-BuyTownOffer -Game $game -Hero $hero -Offer $offer
 
-    Assert-Equal -Actual $result.Success -Expected $false -Message "Buying should fail when the hero is out of carrying room."
-    Assert-True -Condition ($result.Message -like "*stash gear or sell equipment*") -Message "The shop failure should point the player toward stash or selling."
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Buying should fail when the hero is out of carrying room and backpack space."
+    Assert-True -Condition ($result.Message -like "*stash gear*" -or $result.Message -like "*clear space in the backpack*") -Message "The shop failure should point the player toward stash, selling, or backpack space."
 }
 
 Test-HeroCanBuyFromTownShop

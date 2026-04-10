@@ -23,27 +23,27 @@ function Assert-True {
     }
 }
 
-function Test-BackpackCanBePickedUpAgain {
+function Test-PersonalInventoryAndBackpackAreSeparate {
     $hero = Get-Hero
-    $room = [PSCustomObject]@{
-        Name = "Test Room"
-        Loot = @()
-    }
 
-    $backpackIndex = -1
+    Assert-Equal -Actual (Get-InventoryCapacity -Hero $hero) -Expected 8 -Message "Borzig should have eight ready inventory slots on hand."
+    Assert-Equal -Actual (Get-BackpackCapacity -Hero $hero) -Expected 4 -Message "The backpack should provide its own separate storage."
+    Assert-Equal -Actual (Get-InventoryUsedSlots -Hero $hero) -Expected 4 -Message "Starting on-hand gear should use only its own ready slots."
+    Assert-Equal -Actual (Get-BackpackUsedSlots -Hero $hero) -Expected 0 -Message "The backpack should start empty."
+}
 
-    for ($i = 0; $i -lt $hero.Inventory.Count; $i++) {
-        if ($hero.Inventory[$i].Name -eq "Backpack") {
-            $backpackIndex = $i
-            break
-        }
-    }
+function Test-ItemsCanOverflowIntoBackpack {
+    $hero = Get-Hero
 
-    Drop-InventoryItem -Hero $hero -Index $backpackIndex -Room $room | Out-Null
+    $hero.Inventory += (New-WeaponItem -Name "Spare Pike" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "Two-Handed" -RequiredSTR 11 -SlotCost 3)
+    $hero.Inventory += (New-ArmorItem -Name "Traveler Plates" -Value 0 -ArmorBonus 1 -SlotCost 1)
 
-    Assert-Equal -Actual (Get-InventoryUsedSlots -Hero $hero) -Expected 4 -Message "Used slots should shrink after dropping the backpack."
-    Assert-Equal -Actual (Get-InventoryCapacity -Hero $hero) -Expected 4 -Message "Capacity should fall back to the base value after dropping the backpack."
-    Assert-True -Condition (Can-HeroCarryItem -Hero $hero -Item $room.Loot[0]) -Message "The backpack should be pick-up-able even when it is the item that restores carrying capacity."
+    $item = New-ConsumableItem -Name "Greater Healing Potion" -Value 25 -HealAmount 12 -SlotCost 1
+    $storeResult = Add-ItemToHeroStorage -Hero $hero -Item $item
+
+    Assert-Equal -Actual $storeResult.Success -Expected $true -Message "Overflow items should still be storable if the backpack has room."
+    Assert-Equal -Actual $storeResult.Location -Expected "Backpack" -Message "Overflow items should go into the backpack."
+    Assert-Equal -Actual (Get-BackpackUsedSlots -Hero $hero) -Expected 1 -Message "The backpack should track stored slots separately."
 }
 
 function Test-LootedPotionsCanBeUsed {
@@ -64,7 +64,21 @@ function Test-LootedPotionsCanBeUsed {
     Assert-Equal -Actual $heroHP -Expected 14 -Message "Greater Healing Potion should restore up to the hero's max HP."
 }
 
-Test-BackpackCanBePickedUpAgain
+function Test-BackpackCannotBeManagedInCombat {
+    $global:capturedScenes = @()
+    function global:Write-Scene { param([string]$Text) $global:capturedScenes += $Text }
+
+    $hero = Get-Hero
+    $hero.BackpackInventory += (New-ConsumableItem -Name "Battle Tonic" -Value 0 -HealAmount 18 -SlotCost 1)
+
+    Open-BackpackMenu -Hero $hero -InCombat | Out-Null
+
+    Assert-True -Condition ([bool]($global:capturedScenes | Where-Object { $_ -like "*cannot rummage through the backpack*" })) -Message "Backpack management should be blocked in combat."
+}
+
+Test-PersonalInventoryAndBackpackAreSeparate
+Test-ItemsCanOverflowIntoBackpack
 Test-LootedPotionsCanBeUsed
+Test-BackpackCannotBeManagedInCombat
 
 Write-Host "Inventory capacity tests passed." -ForegroundColor Green

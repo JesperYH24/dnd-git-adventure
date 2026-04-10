@@ -251,7 +251,7 @@ function Start-CombatLoop {
 
         if ($choice -eq "I") {
             Write-ColorLine ""
-            $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP
+            $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP -InCombat
 
             if ($usedItem) {
                 if (-not $MonsterOffBalance.Value) {

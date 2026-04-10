@@ -117,13 +117,13 @@ function Resolve-RoomLoot {
                     $remainingLoot += $currencyResult.LeftoverItem
                 }
             }
-            elseif (Can-HeroCarryItem -Hero $Hero -Item $item) {
-                $Hero.Inventory += $item
-                Write-Scene "$($Hero.Name) picks up $($item.Name)."
-            }
             else {
-                Write-Scene "$($Hero.Name) has no room for $($item.Name)."
-                $remainingLoot += $item
+                $storeResult = Add-ItemWithStorageMessage -Hero $Hero -Item $item
+
+                if (-not $storeResult.Success) {
+                    Write-Scene "$($Hero.Name) has no room for $($item.Name)."
+                    $remainingLoot += $item
+                }
             }
         }
         else {

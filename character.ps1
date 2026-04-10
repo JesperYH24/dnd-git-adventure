@@ -424,13 +424,49 @@ function Get-EquippedArmor {
     return ($Hero.Inventory | Where-Object { $_.Type -eq "Armor" -and $_.Equipped } | Select-Object -First 1)
 }
 
+function Get-HeroBackpackItem {
+    param($Hero)
+
+    return ($Hero.Inventory | Where-Object { $_.Type -eq "Utility" -and $_.Name -eq "Backpack" } | Select-Object -First 1)
+}
+
+function Get-BackpackCapacity {
+    param($Hero)
+
+    if ($null -eq (Get-HeroBackpackItem -Hero $Hero)) {
+        return 0
+    }
+
+    if ($null -ne $Hero.PSObject.Properties["BackpackCapacitySlots"]) {
+        return [int]$Hero.BackpackCapacitySlots
+    }
+
+    return 0
+}
+
+function Get-BackpackUsedSlots {
+    param($Hero)
+
+    if ($null -eq $Hero.PSObject.Properties["BackpackInventory"] -or $null -eq $Hero.BackpackInventory) {
+        return 0
+    }
+
+    $usedSlots = 0
+
+    foreach ($item in $Hero.BackpackInventory) {
+        $usedSlots += Get-ItemSlotCost -Item $item
+    }
+
+    return $usedSlots
+}
+
 function Get-InventoryCapacity {
     param($Hero)
 
     $utilityBonus = 0
 
     foreach ($item in $Hero.Inventory) {
-        if ($item.Type -eq "Utility" -and $null -ne $item.SlotBonus) {
+        if ($item.Type -eq "Utility" -and $item.Name -ne "Backpack" -and $null -ne $item.SlotBonus) {
             $utilityBonus += [int]$item.SlotBonus
         }
     }
@@ -465,6 +501,54 @@ function Can-HeroCarryItem {
     }
 
     return ($usedSlots + (Get-ItemSlotCost -Item $Item)) -le $projectedCapacity
+}
+
+function Can-HeroStoreItemInBackpack {
+    param(
+        $Hero,
+        $Item
+    )
+
+    if ($Item.Type -eq "Currency") {
+        return $false
+    }
+
+    $capacity = Get-BackpackCapacity -Hero $Hero
+
+    if ($capacity -le 0) {
+        return $false
+    }
+
+    $usedSlots = Get-BackpackUsedSlots -Hero $Hero
+    return ($usedSlots + (Get-ItemSlotCost -Item $Item)) -le $capacity
+}
+
+function Add-ItemToHeroStorage {
+    param(
+        $Hero,
+        $Item
+    )
+
+    if (Can-HeroCarryItem -Hero $Hero -Item $Item) {
+        $Hero.Inventory += $Item
+        return [PSCustomObject]@{
+            Success = $true
+            Location = "Inventory"
+        }
+    }
+
+    if (Can-HeroStoreItemInBackpack -Hero $Hero -Item $Item) {
+        $Hero.BackpackInventory += $Item
+        return [PSCustomObject]@{
+            Success = $true
+            Location = "Backpack"
+        }
+    }
+
+    return [PSCustomObject]@{
+        Success = $false
+        Location = ""
+    }
 }
 
 function Get-HeroArmorClass {
@@ -747,9 +831,13 @@ function Can-DropItem {
         $Item
     )
 
+    if ($Item.Type -eq "Utility" -and $Item.Name -eq "Backpack" -and (Get-BackpackUsedSlots -Hero $Hero) -gt 0) {
+        return $false
+    }
+
     $capacityAfterDrop = Get-InventoryCapacity -Hero $Hero
 
-    if ($Item.Type -eq "Utility" -and $null -ne $Item.SlotBonus) {
+    if ($Item.Type -eq "Utility" -and $Item.Name -ne "Backpack" -and $null -ne $Item.SlotBonus) {
         $capacityAfterDrop -= [int]$Item.SlotBonus
     }
 
@@ -780,12 +868,14 @@ function Get-Hero {
         WIS                = 10
         CHA                = 8
         BaseArmorClass     = 10
-        BaseInventorySlots = 4
+        BaseInventorySlots = 8
+        BackpackCapacitySlots = 4
+        BackpackInventory  = @()
         StashedInventory   = @()
         Inventory          = @(
             (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
             (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
-            (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 4 -SlotCost 1 -Equipped $true)
+            (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
             (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
         )
     }

@@ -176,10 +176,10 @@ function Try-BuyTownOffer {
         }
     }
 
-    if (-not (Can-HeroCarryItem -Hero $Hero -Item $item)) {
+    if (-not (Can-HeroCarryItem -Hero $Hero -Item $item) -and -not (Can-HeroStoreItemInBackpack -Hero $Hero -Item $item)) {
         return [PSCustomObject]@{
             Success = $false
-            Message = "$($Hero.Name) does not have enough room for $($item.Name). Visit the inn to stash gear or sell equipment to make space."
+            Message = "$($Hero.Name) does not have enough room for $($item.Name). Visit the inn to stash gear, sell equipment, or clear space in the backpack."
         }
     }
 
@@ -193,10 +193,11 @@ function Try-BuyTownOffer {
         }
     }
 
-    $Hero.Inventory += $item
+    $storeResult = Add-ItemToHeroStorage -Hero $Hero -Item $item
 
     $priceText = Convert-CopperToCurrencyText -Copper $finalPriceCopper
     $discountText = ""
+    $carryText = if ($storeResult.Location -eq "Backpack") { " and stows it in the backpack" } else { "" }
 
     if ($finalPriceCopper -lt $Offer.PriceCopper) {
         $discountText = " after a local recommendation lowers the price"
@@ -205,7 +206,7 @@ function Try-BuyTownOffer {
     return [PSCustomObject]@{
         Success = $true
         Item = $item
-        Message = "$($Hero.Name) buys $($item.Name) for $priceText$discountText."
+        Message = "$($Hero.Name) buys $($item.Name) for $priceText$discountText$carryText."
     }
 }
 
@@ -366,6 +367,11 @@ function Move-InventoryItemToStash {
 
     $item = $Hero.Inventory[$InventoryIndex]
 
+    if ($item.Type -eq "Utility" -and $item.Name -eq "Backpack" -and (Get-BackpackUsedSlots -Hero $Hero) -gt 0) {
+        Write-Scene "Borzig cannot stash the backpack while it still holds gear."
+        return
+    }
+
     if ($null -ne $item.PSObject.Properties["Equipped"]) {
         $item.Equipped = $false
     }
@@ -383,12 +389,12 @@ function Retrieve-StashedItem {
 
     $item = $Hero.StashedInventory[$StashIndex]
 
-    if (-not (Can-HeroCarryItem -Hero $Hero -Item $item)) {
-        Write-Scene "$($Hero.Name) does not have enough room to carry $($item.Name) right now."
+    if (-not (Can-HeroCarryItem -Hero $Hero -Item $item) -and -not (Can-HeroStoreItemInBackpack -Hero $Hero -Item $item)) {
+        Write-Scene "$($Hero.Name) does not have enough room to carry or stow $($item.Name) right now."
         return $false
     }
 
-    $Hero.Inventory += $item
+    $storeResult = Add-ItemToHeroStorage -Hero $Hero -Item $item
     $Hero.StashedInventory = @(
         for ($i = 0; $i -lt $Hero.StashedInventory.Count; $i++) {
             if ($i -ne $StashIndex) {
@@ -396,7 +402,12 @@ function Retrieve-StashedItem {
             }
         }
     )
-    Write-Scene "$($Hero.Name) takes $($item.Name) back from storage."
+    if ($storeResult.Location -eq "Backpack") {
+        Write-Scene "$($Hero.Name) takes $($item.Name) back from storage and packs it away."
+    }
+    else {
+        Write-Scene "$($Hero.Name) takes $($item.Name) back from storage."
+    }
     return $true
 }
 
