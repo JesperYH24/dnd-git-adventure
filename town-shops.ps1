@@ -160,6 +160,137 @@ function New-TownItemFromOfferId {
     }
 }
 
+function Get-TownBuyerLabel {
+    param([string]$BuyerType)
+
+    switch ($BuyerType) {
+        "GeneralBuyer" { return "Town Buyer" }
+        "Market" { return "Market Trader" }
+        "Smithy" { return "Smith" }
+        "Apothecary" { return "Apothecary" }
+        default { return "Trader" }
+    }
+}
+
+function Get-TownBuyerIntroText {
+    param([string]$BuyerType)
+
+    switch ($BuyerType) {
+        "GeneralBuyer" { return "A calm-eyed quartermaster weighs every piece Borzig lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin." }
+        "Market" { return "The market trader turns goods over quickly, happy with tonics and travel-ready stock but much less impressed by heavy battlefield gear. Rusted cave salvage gets a skeptical sniff before the price comes out." }
+        "Smithy" { return "The smith checks balance, grip, and metal first. Weapons and armor interest the forge. Potions do not. Anything dragged out of the tutorial cave gets judged hard for chips, rust, and poor temper." }
+        "Apothecary" { return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite." }
+        default { return "A trader looks over Borzig's gear and starts naming coin." }
+    }
+}
+
+function Get-SaleAffinityMultiplier {
+    param(
+        [string]$BuyerType,
+        $Item
+    )
+
+    switch ($BuyerType) {
+        "GeneralBuyer" { return 0.5 }
+        "Market" {
+            if ($Item.Type -eq "Consumable") { return 0.5 }
+            if ($Item.Type -eq "Utility" -or $Item.Type -eq "Junk") { return 0.45 }
+            return 0.35
+        }
+        "Smithy" {
+            if ($Item.Type -in @("Weapon", "Armor")) { return 0.5 }
+            return 0.3
+        }
+        "Apothecary" {
+            if ($Item.Type -eq "Consumable") { return 0.5 }
+            return 0.3
+        }
+        default { return 0.4 }
+    }
+}
+
+function Get-SaleValueForBuyer {
+    param(
+        [string]$BuyerType,
+        $Item
+    )
+
+    $itemValue = 0
+
+    if ($null -ne $Item.PSObject.Properties["Value"]) {
+        $itemValue = [int]$Item.Value
+    }
+
+    $multiplier = Get-SaleAffinityMultiplier -BuyerType $BuyerType -Item $Item
+    return [Math]::Max(1, [Math]::Floor($itemValue * $multiplier))
+}
+
+function Get-SellableHeroItems {
+    param($Hero)
+
+    $sellableItems = @()
+
+    for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
+        $item = $Hero.Inventory[$i]
+
+        if ($item.Type -eq "Currency") {
+            continue
+        }
+
+        if ($item.Type -eq "Utility" -and $item.Name -eq "Backpack" -and (Get-BackpackUsedSlots -Hero $Hero) -gt 0) {
+            continue
+        }
+
+        $sellableItems += [PSCustomObject]@{
+            Storage = "Inventory"
+            Index = $i
+            Item = $item
+        }
+    }
+
+    for ($i = 0; $i -lt $Hero.BackpackInventory.Count; $i++) {
+        $item = $Hero.BackpackInventory[$i]
+
+        if ($item.Type -eq "Currency") {
+            continue
+        }
+
+        $sellableItems += [PSCustomObject]@{
+            Storage = "Backpack"
+            Index = $i
+            Item = $item
+        }
+    }
+
+    return $sellableItems
+}
+
+function Complete-SaleToBuyer {
+    param(
+        $Hero,
+        $Entry,
+        [string]$BuyerType
+    )
+
+    $item = $Entry.Item
+    $saleValue = Get-SaleValueForBuyer -BuyerType $BuyerType -Item $item
+
+    if ($null -ne $item.PSObject.Properties["Equipped"]) {
+        $item.Equipped = $false
+    }
+
+    Add-HeroCurrency -Hero $Hero -Denomination "CP" -Amount $saleValue | Out-Null
+
+    if ($Entry.Storage -eq "Inventory") {
+        Remove-InventoryItemAt -Hero $Hero -Index $Entry.Index
+    }
+    else {
+        Remove-BackpackItemAt -Hero $Hero -Index $Entry.Index
+    }
+
+    return $saleValue
+}
+
 function Try-BuyTownOffer {
     param(
         $Game,
@@ -179,6 +310,7 @@ function Try-BuyTownOffer {
     if (-not (Can-HeroCarryItem -Hero $Hero -Item $item) -and -not (Can-HeroStoreItemInBackpack -Hero $Hero -Item $item)) {
         return [PSCustomObject]@{
             Success = $false
+            SpaceIssue = $true
             Message = "$($Hero.Name) does not have enough room for $($item.Name). Visit the inn to stash gear, sell equipment, or clear space in the backpack."
         }
     }
@@ -189,6 +321,7 @@ function Try-BuyTownOffer {
     if (-not $spendResult.Success) {
         return [PSCustomObject]@{
             Success = $false
+            SpaceIssue = $false
             Message = "$($Hero.Name) cannot afford $($item.Name)."
         }
     }
@@ -205,6 +338,7 @@ function Try-BuyTownOffer {
 
     return [PSCustomObject]@{
         Success = $true
+        SpaceIssue = $false
         Item = $item
         Message = "$($Hero.Name) buys $($item.Name) for $priceText$discountText$carryText."
     }
@@ -216,7 +350,8 @@ function Show-TownShop {
         [string]$IntroText,
         $Game,
         $Hero,
-        [object[]]$Offers
+        [object[]]$Offers,
+        [string]$BuyerType = "GeneralBuyer"
     )
 
     while ($true) {
@@ -241,7 +376,7 @@ function Show-TownShop {
         $choice = (Read-Host "Choose").ToUpper()
 
         if ($choice -eq "S") {
-            Open-TownSellMenu -Hero $Hero
+            Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType
             continue
         }
 
@@ -265,30 +400,33 @@ function Show-TownShop {
 
         $result = Try-BuyTownOffer -Game $Game -Hero $Hero -Offer $Offers[$index]
         Write-Scene $result.Message
+
+        if (-not $result.Success -and $result.SpaceIssue) {
+            $buyerLabel = Get-TownBuyerLabel -BuyerType $BuyerType
+            $sellChoice = (Read-Host "Sell gear to the $buyerLabel to make room? (Y/N)").ToUpper()
+
+            if ($sellChoice -eq "Y") {
+                Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType
+            }
+        }
+
         Write-ColorLine ""
     }
 }
 
 function Open-TownSellMenu {
-    param($Hero)
+    param(
+        $Hero,
+        [string]$BuyerType = "GeneralBuyer"
+    )
 
     while ($true) {
-        Write-SectionTitle -Text "Sell Gear" -Color "Yellow"
-        Write-Scene "A trader eyes Borzig's spare equipment and starts naming prices before the dust has settled."
+        $buyerLabel = Get-TownBuyerLabel -BuyerType $BuyerType
+        Write-SectionTitle -Text "Sell to $buyerLabel" -Color "Yellow"
+        Write-Scene (Get-TownBuyerIntroText -BuyerType $BuyerType)
         Write-ColorLine ""
 
-        $sellableItems = @()
-
-        for ($i = 0; $i -lt $Hero.Inventory.Count; $i++) {
-            $item = $Hero.Inventory[$i]
-
-            if ($item.Type -ne "Currency") {
-                $sellableItems += [PSCustomObject]@{
-                    InventoryIndex = $i
-                    Item = $item
-                }
-            }
-        }
+        $sellableItems = @(Get-SellableHeroItems -Hero $Hero)
 
         if ($sellableItems.Count -eq 0) {
             Write-ColorLine "Borzig has nothing worth selling." "DarkGray"
@@ -298,8 +436,9 @@ function Open-TownSellMenu {
 
         for ($i = 0; $i -lt $sellableItems.Count; $i++) {
             $entry = $sellableItems[$i]
-            $saleValue = [Math]::Max(1, [Math]::Floor(([int]$entry.Item.Value) / 2))
-            Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $entry.Item) - sells for $(Convert-CopperToCurrencyText -Copper $saleValue)" "White"
+            $saleValue = Get-SaleValueForBuyer -BuyerType $BuyerType -Item $entry.Item
+            $storageLabel = if ($entry.Storage -eq "Backpack") { "backpack" } else { "on hand" }
+            Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $entry.Item) - $storageLabel - sells for $(Convert-CopperToCurrencyText -Copper $saleValue)" "White"
         }
 
         Write-ColorLine ""
@@ -328,14 +467,7 @@ function Open-TownSellMenu {
 
         $entry = $sellableItems[$selected]
         $item = $entry.Item
-        $saleValue = [Math]::Max(1, [Math]::Floor(([int]$item.Value) / 2))
-
-        if ($null -ne $item.PSObject.Properties["Equipped"]) {
-            $item.Equipped = $false
-        }
-
-        Add-HeroCurrency -Hero $Hero -Denomination "CP" -Amount $saleValue | Out-Null
-        Remove-InventoryItemAt -Hero $Hero -Index $entry.InventoryIndex
+        $saleValue = Complete-SaleToBuyer -Hero $Hero -Entry $entry -BuyerType $BuyerType
         Write-Scene "$($Hero.Name) sells $($item.Name) for $(Convert-CopperToCurrencyText -Copper $saleValue)."
         Write-ColorLine ""
     }

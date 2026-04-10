@@ -172,28 +172,28 @@ function Get-MonsterLoot {
         "skeleton" {
             return @(
                 (New-CurrencyItem -Name "Bone Coins" -Denomination "CP" -Amount 2 -Value 2)
-                (New-WeaponItem -Name "Rusty Sword" -Value 5 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -RequiredSTR 10 -SlotCost 2)
+                (New-WeaponItem -Name "Rusty Sword" -Value 12 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -RequiredSTR 10 -SlotCost 2)
             )
         }
 
         "goblin" {
             return @(
                 (New-CurrencyItem -Name "Goblin Coins" -Denomination "SP" -Amount 1 -Value 10)
-                (New-WeaponItem -Name "Dagger" -Value 6 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -Light $true -RequiredDEX 11 -SlotCost 1)
-                (New-ConsumableItem -Name "Small Healing Potion" -Value 10 -HealAmount 4 -SlotCost 1)
+                (New-WeaponItem -Name "Dagger" -Value 18 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -Light $true -RequiredDEX 11 -SlotCost 1)
+                (New-ConsumableItem -Name "Small Healing Potion" -Value 16 -HealAmount 4 -SlotCost 1)
             )
         }
 
         "zombie" {
             return @(
-                (New-ArmorItem -Name "Rotten Armor Scraps" -Value 3 -ArmorBonus 1 -SlotCost 2)
+                (New-ArmorItem -Name "Rotten Armor Scraps" -Value 12 -ArmorBonus 1 -SlotCost 2)
                 (New-CurrencyItem -Name "Old Coin" -Denomination "CP" -Amount 2 -Value 2)
             )
         }
 
         "giant rat" {
             return @(
-                [PSCustomObject]@{ Name = "Rat Tail"; Type = "Junk"; Value = 1; SlotCost = 1 }
+                [PSCustomObject]@{ Name = "Rat Tail"; Type = "Junk"; Value = 4; SlotCost = 1 }
             )
         }
 

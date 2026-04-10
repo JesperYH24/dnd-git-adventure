@@ -319,11 +319,12 @@ function Start-TownMenu {
         Write-ColorLine "2. Browse the market" "White"
         Write-ColorLine "3. Visit the smithy" "White"
         Write-ColorLine "4. Visit the apothecary" "White"
-        Write-ColorLine "5. Seek work" "White"
-        Write-ColorLine "6. Visit the fighting ring" "White"
-        Write-ColorLine "7. Visit your inn" "White"
-        Write-ColorLine "8. Check inventory" "White"
-        Write-ColorLine "9. Check quest log" "White"
+        Write-ColorLine "5. Find a buyer" "White"
+        Write-ColorLine "6. Seek work" "White"
+        Write-ColorLine "7. Visit the fighting ring" "White"
+        Write-ColorLine "8. Visit your inn" "White"
+        Write-ColorLine "9. Check inventory" "White"
+        Write-ColorLine "10. Check quest log" "White"
         if ($null -eq $Game.Town.ActiveInn) {
             Write-ColorLine "L. Find lodging for the night" "White"
         }
@@ -338,21 +339,24 @@ function Start-TownMenu {
                 Start-TownStreetScene -Game $Game
             }
             "2" {
-                Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game)
+                Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
             }
             "3" {
-                Show-TownShop -Title "Smithy" -IntroText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel." -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game)
+                Show-TownShop -Title "Smithy" -IntroText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel. The look he gives Borzig's older weaponry suggests he has already judged it rough, serviceable, and overdue for replacement." -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
             }
             "4" {
-                Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game)
+                Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
             }
             "5" {
-                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
+                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer"
             }
             "6" {
-                Start-FightingRing -Game $Game
+                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
             }
             "7" {
+                Start-FightingRing -Game $Game
+            }
+            "8" {
                 if ($null -ne $Game.Town.ActiveInn) {
                     $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
 
@@ -365,10 +369,10 @@ function Start-TownMenu {
                     Write-ColorLine ""
                 }
             }
-            "8" {
+            "9" {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
-            "9" {
+            "10" {
                 Show-QuestLog -Game $Game -Hero $Game.Hero
             }
             "L" {

@@ -114,6 +114,16 @@ function Test-LevelThreeNpcToneChangesAfterUnderstreet {
     Assert-True -Condition ($belor -like "*won't be small*") -Message "Belor should frame later work differently once Borzig has proven himself."
 }
 
+function Test-HadrikCommentsOnWornStartingAndCaveGear {
+    $hero = Get-Hero
+
+    $intro = Get-HadrikIntro -Hero $hero
+    $forgeTalk = Get-HadrikForgeTalk -Game (Initialize-Game)
+
+    Assert-True -Condition ($intro -like "*better steel*" -or $intro -like "*rust than craft*") -Message "Hadrik should comment on Borzig's worn starting gear."
+    Assert-True -Condition ($forgeTalk -like "*cave*" -or $forgeTalk -like "*dead men's leftovers*") -Message "Hadrik should frame tutorial loot as low-quality salvage."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
@@ -124,5 +134,6 @@ Test-StreetNpcFlavorTalkIsRemembered
 Test-StreetNpcExtraFlavorTalksExist
 Test-RingMasterHasExtendedConversationHooks
 Test-LevelThreeNpcToneChangesAfterUnderstreet
+Test-HadrikCommentsOnWornStartingAndCaveGear
 
 Write-Host "Town social tests passed." -ForegroundColor Green

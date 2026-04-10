@@ -135,11 +135,11 @@ function Get-HadrikIntro {
     $persona = Get-HeroTownPersona -Hero $Hero
 
     if ($Hero.Level -ge 3) {
-        return "Hadrik's grin comes faster now. 'So it is true. You broke the smugglers' den under the ward. Master's been saying steel feels different in the hands of someone the city finally believes in.'"
+        return "Hadrik's grin comes faster now. 'So it is true. You broke the smugglers' den under the ward. Master's been saying steel feels different in the hands of someone the city finally believes in, especially when he walked in the first time with half-patched kit and cave salvage on his belt.'"
     }
 
     if ($persona.IsBarbarian -or $persona.IsStrong) {
-        return "Hadrik wipes soot from his brow and grins at Borzig's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly.'"
+        return "Hadrik wipes soot from his brow and grins at Borzig's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly. Looking at that axe and those scraps, you could use better steel too.'"
     }
 
     if ($persona.IsBardLike -or $persona.IsCharming) {
@@ -150,7 +150,7 @@ function Get-HadrikIntro {
         return "Hadrik straightens a little before speaking. 'Master Rurik says a disciplined arm is worth twice the steel in it. Walk in there like that and he'll treat you seriously.'"
     }
 
-    return "Hadrik wipes soot from his brow and jerks a thumb toward the smithy. 'Master Rurik respects anyone who walks back from a dragon's shadow alive.'"
+    return "Hadrik wipes soot from his brow and jerks a thumb toward the smithy. 'Master Rurik respects anyone who walks back from a dragon's shadow alive. He also notices when a man is still carrying more rust than craft.'"
 }
 
 function Get-BelorIntro {
@@ -332,15 +332,15 @@ function Get-HadrikForgeTalk {
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["HadrikForgeTalk_Post"]) {
             $Game.Town.StreetFlags["HadrikForgeTalk_Post"] = $true
-            return "Hadrik jerks his chin toward the forge. 'Now that you've proved yourself under the city, Rurik's started talking about steel for named fighters, not just caravan bruisers.'"
+            return "Hadrik jerks his chin toward the forge. 'Now that you've proved yourself under the city, Rurik's started talking about steel for named fighters, not just caravan bruisers. Better than that cave-picked junk you first hauled in, anyway.'"
         }
 
-        return "Hadrik laughs under his breath. 'Funny how a forge gets more serious once the hero walking in has already broken a hidden war below the streets.'"
+        return "Hadrik laughs under his breath. 'Funny how a forge gets more serious once the hero walking in has already broken a hidden war below the streets instead of showing up with rust, cracks, and dead men's leftovers.'"
     }
 
     if (-not $Game.Town.StreetFlags["HadrikForgeTalk"]) {
         $Game.Town.StreetFlags["HadrikForgeTalk"] = $true
-        return "Hadrik jerks a thumb toward the sparks. 'Rurik says a blade tells you what kind of fool bought it. Fancy steel for nobles, practical steel for survivors, and heavy steel for people who solve things the hard way.'"
+        return "Hadrik jerks a thumb toward the sparks. 'Rurik says a blade tells you what kind of fool bought it. Fancy steel for nobles, practical steel for survivors, and heavy steel for people who solve things the hard way. The things pulled out of that cave mostly tell him nobody loved them before they died.'"
     }
 
     return "Hadrik grins through the soot. 'Forge is the same as ever. Too hot, too loud, and somehow still not finished by dusk.'"

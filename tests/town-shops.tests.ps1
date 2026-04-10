@@ -16,6 +16,46 @@ function Test-LevelThreeShopsUnlockBetterOffers {
     Assert-True -Condition ($apothecary.Id -contains "apothecary_battle_tonic") -Message "Level 3 Borzig should unlock a stronger apothecary tonic."
 }
 
+function Test-DedicatedBuyerMatchesSpecialistForOwnGoods {
+    $potion = New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1
+    $weapon = New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2
+
+    Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $potion) -Expected (Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $potion) -Message "The apothecary should match the dedicated buyer for potions."
+    Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $weapon) -Expected (Get-SaleValueForBuyer -BuyerType "Smithy" -Item $weapon) -Message "The smith should match the dedicated buyer for weapons."
+}
+
+function Test-OffSpecialtyBuyersPayLess {
+    $potion = New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1
+    $weapon = New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2
+
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Smithy" -Item $potion) -lt (Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $potion)) -Message "The smith should pay less for potions than the apothecary."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $weapon) -lt (Get-SaleValueForBuyer -BuyerType "Smithy" -Item $weapon)) -Message "The apothecary should pay less for weapons than the smith."
+}
+
+function Test-TutorialLootHasUsefulButModestSaleValue {
+    $skeletonLoot = Get-MonsterLoot -Monster @{ name = "skeleton" }
+    $goblinLoot = Get-MonsterLoot -Monster @{ name = "goblin" }
+    $zombieLoot = Get-MonsterLoot -Monster @{ name = "zombie" }
+    $ratLoot = Get-MonsterLoot -Monster @{ name = "giant rat" }
+
+    $rustySword = $skeletonLoot | Where-Object { $_.Name -eq "Rusty Sword" } | Select-Object -First 1
+    $dagger = $goblinLoot | Where-Object { $_.Name -eq "Dagger" } | Select-Object -First 1
+    $smallPotion = $goblinLoot | Where-Object { $_.Name -eq "Small Healing Potion" } | Select-Object -First 1
+    $scraps = $zombieLoot | Where-Object { $_.Name -eq "Rotten Armor Scraps" } | Select-Object -First 1
+    $tail = $ratLoot | Where-Object { $_.Name -eq "Rat Tail" } | Select-Object -First 1
+
+    $totalGeneralSale = `
+        (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $rustySword) + `
+        (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $dagger) + `
+        (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $smallPotion) + `
+        (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $scraps) + `
+        (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $tail)
+
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $rustySword) -gt 1) -Message "Rusty Sword should now sell for more than token coin."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $dagger) -gt 1) -Message "Goblin dagger should feel worth carrying home."
+    Assert-True -Condition ($totalGeneralSale -ge 25 -and $totalGeneralSale -le 40) -Message "Tutorial loot should be worth carrying without breaking the city's early economy."
+}
+
 function Test-HeroCanBuyFromTownShop {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -74,5 +114,8 @@ Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
 Test-ShopMentionsStashOrSellWhenFull
 Test-LevelThreeShopsUnlockBetterOffers
+Test-DedicatedBuyerMatchesSpecialistForOwnGoods
+Test-OffSpecialtyBuyersPayLess
+Test-TutorialLootHasUsefulButModestSaleValue
 
 Write-Host "Town shop tests passed." -ForegroundColor Green
