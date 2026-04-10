@@ -255,23 +255,34 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ## Next possible steps
 
+### Near-term priorities
+
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
-- deepen `The Understreet Complex` with more room variety, routing choices, and encounter variety
-- build the next post-Understreet story chain from the consequences of breaking the network under the city
+- build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
 - add a proper clue log or quest-notes system so gathered evidence can be reviewed in-character
 - introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
+- expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
+- let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
+
+### Medium-term world and progression work
+
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - add more day jobs that reinforce economy and city life without granting XP
-- let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
-- expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
+- deeper inn events, shady city routes, and economic info payoffs
+
+### Larger system expansions
+
+- deepen `The Understreet Complex` with more room variety, routing choices, and encounter variety
 - explore dual-wield as a later combat style once the broader city/day rhythm and clue systems are in place
 - more classes and class-specific dialogue, gear use, and social reactions
 - class features beyond level 3
-- deeper inn events, shady city routes, and economic info payoffs
 - resistances, elemental effects, and broader enemy mechanics
-- optional audio cues and simple visual scene flourishes such as ASCII art or external image moments
 - save/load support
+
+### Optional presentation and polish
+
+- optional audio cues and simple visual scene flourishes such as ASCII art or external image moments
