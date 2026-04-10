@@ -112,7 +112,8 @@ function Show-TownQuestSource {
             $quest = $quests[$i]
             $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
             Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
-            Write-ColorLine "   Type: $($quest.QuestType)" "DarkGray"
+            $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+            Write-ColorLine "   Type: $($quest.QuestType)$tierText" "DarkGray"
             Write-ColorLine "   $($quest.Description)" "DarkGray"
             Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
         }
@@ -215,7 +216,7 @@ function Start-TownQuestPreparationMenu {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
             "3" {
-                Show-QuestLog -Game $Game -Hero $Game.Hero
+                Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "4" {
                 return
@@ -373,7 +374,7 @@ function Start-TownMenu {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
             "10" {
-                Show-QuestLog -Game $Game -Hero $Game.Hero
+                Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "L" {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP

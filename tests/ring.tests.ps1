@@ -280,6 +280,28 @@ function Test-OffBalanceFallsBackToSimpleActions {
     Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "B") -Expected "B" -Message "Off-balance fighters should still be able to block."
 }
 
+function Test-FightingRingOptionOneStartsTournament {
+    $game = Initialize-Game
+    $game.Hero.CurrencyCopper = 200
+    $script:BrawlStarted = $false
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    function global:Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        $script:BrawlStarted = $true
+        return $false
+    }
+
+    Start-FightingRing -Game $game
+
+    Assert-Equal -Actual $script:BrawlStarted -Expected $true -Message "Choosing option 1 in the fighting ring should actually start the tournament."
+    Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $true -Message "Starting the ring should consume today's tournament attempt."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
@@ -293,6 +315,7 @@ Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
+Test-FightingRingOptionOneStartsTournament
 
 Write-Host "Ring tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

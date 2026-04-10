@@ -1068,11 +1068,16 @@ function Start-FightingRing {
         return
     }
 
+    $enterRing = $false
+
     while ($true) {
         $choice = Read-Host "Choose"
 
         switch ($choice) {
-            "1" { break }
+            "1" {
+                $enterRing = $true
+                break
+            }
             "2" {
                 Write-Scene (Get-RingMasterPitTalk -Hero $Game.Hero)
                 Write-ColorLine ""
@@ -1088,6 +1093,10 @@ function Start-FightingRing {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
                 Write-ColorLine ""
             }
+        }
+
+        if ($enterRing) {
+            break
         }
     }
 

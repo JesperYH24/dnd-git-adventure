@@ -84,6 +84,22 @@ function Test-BookedInnNightRestResetsDailySystems {
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "A booked-room rest should clear lingering buffs."
 }
 
+function Test-BookedInnNightRestTriggersLevelUp {
+    $game = Initialize-Game
+    $heroHP = 5
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+    $game.Town.ActiveInn = $inn
+    $game.Hero.CurrencyCopper = 500
+    $game.Hero.Level = 2
+    $game.Hero.LevelCap = 3
+    $game.Hero.XP = 900
+
+    Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+
+    Assert-Equal -Actual $game.Hero.Level -Expected 3 -Message "A long rest at the inn should apply the pending level 3 gain."
+    Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "The hero should wake with full HP after leveling during a long rest."
+}
+
 function Test-StashCanStoreAndRetrieveGear {
     $hero = Get-Hero
     $startingInventoryCount = $hero.Inventory.Count
@@ -178,6 +194,7 @@ Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
+Test-BookedInnNightRestTriggersLevelUp
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear

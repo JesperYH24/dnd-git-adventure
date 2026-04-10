@@ -548,6 +548,7 @@ function Resolve-InnWorkOffRoom {
         $Game.Town.DayJobDoneToday = $false
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
+        Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
 
         Write-Scene "Borzig drops into bed exhausted. The room is paid for, but the night leaves him too worn out for the fighting ring tomorrow."
 
@@ -566,6 +567,43 @@ function Resolve-InnWorkOffRoom {
         Write-ColorLine ""
         return $true
     }
+}
+
+function Resolve-InnLongRestLevelUp {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $hpMode = ""
+
+    if (Get-UiOutputSuppressed) {
+        $hpMode = "F"
+    }
+
+    $levelUpResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP -HPMode $hpMode
+
+    if (-not $levelUpResult.LeveledUp) {
+        return $levelUpResult
+    }
+
+    Write-SectionTitle -Text "Level Up" -Color "Green"
+
+    foreach ($result in $levelUpResult.Results) {
+        Write-EmphasisLine -Text "$($Game.Hero.Name) reaches level $($result.Level)." -Color "Green"
+
+        if ($result.Mode -eq "R") {
+            Write-Scene "He rolls a $($result.Roll) on the hit die and gains $($result.Gain) max HP."
+        }
+        else {
+            Write-Scene "He takes the fixed increase and gains $($result.Gain) max HP."
+        }
+    }
+
+    Write-Scene "$($Game.Hero.Name) wakes fully restored at $($Game.Hero.HP) max HP."
+    Write-ColorLine ""
+
+    return $levelUpResult
 }
 
 function Resolve-InnStay {
@@ -613,6 +651,7 @@ function Resolve-InnStay {
     $Game.Town.Ring.FoughtToday = $false
     $Game.Town.StoryQuestDoneToday = $false
     $Game.Town.DayJobDoneToday = $false
+    Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
         Write-Scene $Inn.RestText
     }
@@ -679,6 +718,7 @@ function Resolve-BookedInnNightRest {
     $Game.Town.Ring.FoughtToday = $false
     $Game.Town.StoryQuestDoneToday = $false
     $Game.Town.DayJobDoneToday = $false
+    Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     Write-Scene "A full night's rest restores Borzig to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""
 
@@ -1014,7 +1054,7 @@ function Start-InnMenu {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
             "3" {
-                Show-QuestLog -Game $Game -Hero $Game.Hero
+                Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "4" {
                 Start-InnEveningMenu -Game $Game
@@ -1030,6 +1070,7 @@ function Start-InnMenu {
                 }
             }
             "7" {
+                Start-TownStreetScene -Game $Game
                 return "BackToTown"
             }
             "T" {

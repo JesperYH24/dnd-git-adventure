@@ -164,6 +164,11 @@ function Invoke-StoryCombat {
         [string]$IntroText
     )
 
+    # Test hook so city quest coverage can drive story outcomes without dropping into the full combat input loop.
+    if ($null -ne $global:StoryCombatOverride) {
+        return (& $global:StoryCombatOverride $Game $HeroHP $Monster $Title $IntroText)
+    }
+
     $monsterHP = $Monster.hp
     $monsterOffBalance = $false
     $heroStarts = $false
@@ -195,6 +200,11 @@ function Invoke-StoryCombat {
         -MonsterStarts $monsterStarts
 
     if (-not $openingResult) {
+        if ($monsterHP -le 0) {
+            Write-Scene "$($Monster.definite) goes down and does not rise again."
+            Write-ColorLine ""
+        }
+
         return [PSCustomObject]@{
             Won = ($monsterHP -le 0)
             Defeated = ($HeroHP.Value -le 0)
@@ -210,6 +220,11 @@ function Invoke-StoryCombat {
         -HeroDroppedWeapon ([ref]$Game.HeroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
         -EncounterFled ([ref]$encounterFled)
+
+    if ($monsterHP -le 0) {
+        Write-Scene "$($Monster.definite) drops and the fight is finished."
+        Write-ColorLine ""
+    }
 
     return [PSCustomObject]@{
         Won = ($monsterHP -le 0)
@@ -1109,6 +1124,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                 else {
                     Write-Scene "The search turns rough, but Borzig still finds enough torn pages and margin codes to prove the ledger existed and who it served."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                 }
 
                 break
@@ -1124,6 +1140,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                 else {
                     Write-Scene "The room gives up only fragments, but the fragments are enough to preserve the evidence before the whole chain goes dark."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                 }
 
                 break
@@ -1139,6 +1156,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                 else {
                     Write-Scene "The clerk lies first and folds late, but Borzig still gets enough of the papers to keep the trail alive."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                 }
 
                 break
@@ -1332,6 +1350,7 @@ function Start-WhispersBeneathBentNailQuest {
                 }
                 else {
                     Write-Scene "Brin gives up less than Borzig wants, but enough slips loose to prove the Bent Nail has been feeding work into the same underground routes."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                     $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
@@ -1349,6 +1368,7 @@ function Start-WhispersBeneathBentNailQuest {
                 }
                 else {
                     Write-Scene "The coin buys patience more than honesty, but Borzig still learns that the same back-room names keep circling smuggled cargo."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                 }
 
@@ -1364,6 +1384,7 @@ function Start-WhispersBeneathBentNailQuest {
                 }
                 else {
                     Write-Scene "The tail is clumsy, but Borzig still sees enough to prove the Bent Nail is tied to the same cargo movement haunting the city."
+                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                 }
 

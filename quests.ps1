@@ -6,6 +6,7 @@ function New-TownQuest {
         [string]$Description,
         [string]$Objective,
         [string]$QuestType = "Story",
+        [int]$Tier = 0,
         [int]$RewardCopper = 0,
         [int]$RewardXP = 0,
         [string]$RewardItemName = "",
@@ -19,6 +20,7 @@ function New-TownQuest {
         Description = $Description
         Objective = $Objective
         QuestType = $QuestType
+        Tier = $Tier
         RewardCopper = $RewardCopper
         RewardXP = $RewardXP
         RewardItemName = $RewardItemName
@@ -31,15 +33,15 @@ function New-TownQuest {
 
 function Initialize-TownQuests {
     return @(
-        (New-TownQuest -Id "guard_night_watch" -Name "Night Watch Relief" -Source "Guard Station" -Description "The guards need a capable arm on a short night patrol through the outer district." -Objective "Report to the watch captain for an evening patrol." -QuestType "Story" -RewardCopper 180 -RewardXP 200)
-        (New-TownQuest -Id "patron_storehouse_rats" -Name "Storehouse Trouble" -Source "Quest Giver" -Description "A merchant patron wants someone to clear vermin and thieves from a locked riverside storehouse." -Objective "Meet the patron's clerk and investigate the storehouse." -QuestType "Story" -RewardCopper 150 -RewardXP 180 -RewardItemName "Healing Potion")
-        (New-TownQuest -Id "quest_board_missing_herbs" -Name "Missing Herb Satchel" -Source "Quest Board" -Description "A local herbalist needs a satchel recovered from the old road beyond the city wall." -Objective "Search the old road and return the satchel." -QuestType "Story" -RewardCopper 120 -RewardXP 120)
-        (New-TownQuest -Id "patron_ledger_of_ash" -Name "Ledger of Ash" -Source "Quest Giver" -Description "A merchant clerk suspects false entries and hush money in a ledger tied to missing goods." -Objective "Question the clerk, inspect the ledger, and trace the irregular payments." -QuestType "Story" -RewardCopper 140 -RewardXP 160)
-        (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -RewardCopper 170 -RewardXP 170)
-        (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
-        (New-TownQuest -Id "guard_night_courier" -Name "Night Courier Intercept" -Source "Guard Station" -Description "The watch believes a marked courier is moving messages between the city's surface contacts and the understreet routes." -Objective "Intercept the night courier and secure whatever they are carrying." -QuestType "Story" -RewardCopper 150 -RewardXP 160)
-        (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -RewardCopper 230 -RewardXP 240)
-        (New-TownQuest -Id "bent_nail_whispers" -Name "Whispers Beneath the Bent Nail" -Source "Bent Nail" -Description "A back-room fixer at the Bent Nail knows more about the city's quiet cargo routes than any honest merchant should." -Objective "Follow the broker lead inside the Bent Nail and learn where the smugglers are moving goods." -QuestType "Story" -RewardCopper 130 -RewardXP 150)
+        (New-TownQuest -Id "guard_night_watch" -Name "Night Watch Relief" -Source "Guard Station" -Description "The guards need a capable arm on a short night patrol through the outer district." -Objective "Report to the watch captain for an evening patrol." -QuestType "Story" -Tier 1 -RewardCopper 180 -RewardXP 200)
+        (New-TownQuest -Id "patron_storehouse_rats" -Name "Storehouse Trouble" -Source "Quest Giver" -Description "A merchant patron wants someone to clear vermin and thieves from a locked riverside storehouse." -Objective "Meet the patron's clerk and investigate the storehouse." -QuestType "Story" -Tier 1 -RewardCopper 150 -RewardXP 180 -RewardItemName "Healing Potion")
+        (New-TownQuest -Id "quest_board_missing_herbs" -Name "Missing Herb Satchel" -Source "Quest Board" -Description "A local herbalist needs a satchel recovered from the old road beyond the city wall." -Objective "Search the old road and return the satchel." -QuestType "Story" -Tier 1 -RewardCopper 120 -RewardXP 120)
+        (New-TownQuest -Id "patron_ledger_of_ash" -Name "Ledger of Ash" -Source "Quest Giver" -Description "A merchant clerk suspects false entries and hush money in a ledger tied to missing goods." -Objective "Question the clerk, inspect the ledger, and trace the irregular payments." -QuestType "Story" -Tier 2 -RewardCopper 140 -RewardXP 160)
+        (New-TownQuest -Id "guard_night_courier" -Name "Night Courier Intercept" -Source "Guard Station" -Description "The watch believes a marked courier is moving messages between the city's surface contacts and the understreet routes." -Objective "Intercept the night courier and secure whatever they are carrying." -QuestType "Story" -Tier 2 -RewardCopper 150 -RewardXP 160)
+        (New-TownQuest -Id "bent_nail_whispers" -Name "Whispers Beneath the Bent Nail" -Source "Bent Nail" -Description "A back-room fixer at the Bent Nail knows more about the city's quiet cargo routes than any honest merchant should." -Objective "Follow the broker lead inside the Bent Nail and learn where the smugglers are moving goods." -QuestType "Story" -Tier 2 -RewardCopper 130 -RewardXP 150)
+        (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -Tier 3 -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
+        (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 170)
+        (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before dawn." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90)
         (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100)
     )
@@ -94,7 +96,27 @@ function Get-TownQuestDailyLockText {
     return "Borzig has already spent today's real story effort. Another story quest will have to wait until after a night's rest."
 }
 
-function Is-TownQuestUnlocked {
+function Get-CurrentStoryQuestTier {
+    param($Game)
+
+    $storyQuests = @($Game.Town.Quests | Where-Object { $_.QuestType -eq "Story" })
+
+    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -ge 3 }).Count -gt 0) {
+        return 4
+    }
+
+    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -eq 2 }).Count -ge 2) {
+        return 3
+    }
+
+    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -eq 1 }).Count -ge 1) {
+        return 2
+    }
+
+    return 1
+}
+
+function Test-TownQuestBaseUnlock {
     param(
         $Game,
         $Quest
@@ -139,6 +161,28 @@ function Is-TownQuestUnlocked {
     }
 
     return (Get-StoryClueCount -Game $Game) -ge [int]$Quest.RequiredStoryClues
+}
+
+function Is-TownQuestUnlocked {
+    param(
+        $Game,
+        $Quest
+    )
+
+    if (-not (Test-TownQuestBaseUnlock -Game $Game -Quest $Quest)) {
+        return $false
+    }
+
+    if ($Quest.QuestType -ne "Story") {
+        return $true
+    }
+
+    if ($Quest.Completed -or $Quest.Accepted) {
+        return $true
+    }
+
+    $currentTier = Get-CurrentStoryQuestTier -Game $Game
+    return [int]$Quest.Tier -eq $currentTier
 }
 
 function Get-UnderstreetFinalEntryMessage {
@@ -300,7 +344,7 @@ function Start-TownQuestAttempt {
         $Game.Town.StoryQuestDoneToday = $true
     }
 
-    $quest.Started = $true
+        $quest.Started = $true
 
     return [PSCustomObject]@{
         Success = $true
@@ -424,7 +468,8 @@ function Show-QuestLog {
 
             foreach ($townQuest in $acceptedQuests) {
                 Write-ColorLine "- $($townQuest.Name) [$($townQuest.Source)]" "White"
-                Write-ColorLine "  Type: $($townQuest.QuestType)" "DarkGray"
+                $tierText = if ($townQuest.QuestType -eq "Story" -and [int]$townQuest.Tier -gt 0) { " | Tier $($townQuest.Tier)" } else { "" }
+                Write-ColorLine "  Type: $($townQuest.QuestType)$tierText" "DarkGray"
                 Write-ColorLine "  Objective: $($townQuest.Objective)" "DarkGray"
                 Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
             }
@@ -441,4 +486,60 @@ function Show-QuestLog {
     }
 
     Write-ColorLine ""
+}
+
+function Start-TownQuestLogMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
+        Show-QuestLog -Game $Game -Hero $Game.Hero
+
+        $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
+
+        if ($acceptedQuests.Count -eq 0) {
+            return
+        }
+
+        Write-ColorLine "Accepted quests you can manage now:" "Yellow"
+
+        for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
+            $quest = $acceptedQuests[$i]
+            $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+            Write-ColorLine "$($i + 1). $($quest.Name) [$($quest.Source)$tierText]" "White"
+        }
+
+        Write-ColorLine ""
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose a quest to prepare or start"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Choose a listed number." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $index = [int]$choice - 1
+
+        if ($index -lt 0 -or $index -ge $acceptedQuests.Count) {
+            Write-ColorLine "That quest is not listed." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        if ($null -ne $global:TownQuestPreparationOverride) {
+            & $global:TownQuestPreparationOverride $Game $HeroHP $acceptedQuests[$index]
+        }
+        else {
+            Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $acceptedQuests[$index]
+        }
+    }
 }

@@ -2,6 +2,26 @@
 
 Set-TestOutputStubs
 
+function Set-StoryTier {
+    param(
+        $Game,
+        [int]$Tier
+    )
+
+    if ($Tier -ge 2) {
+        (Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed = $true
+    }
+
+    if ($Tier -ge 3) {
+        (Find-TownQuest -Game $Game -QuestId "patron_ledger_of_ash").Completed = $true
+        (Find-TownQuest -Game $Game -QuestId "guard_night_courier").Completed = $true
+    }
+
+    if ($Tier -ge 4) {
+        (Find-TownQuest -Game $Game -QuestId "guard_broken_seal").Completed = $true
+    }
+}
+
 function Test-QuestSourcesListOpeningQuestsAndDayJobs {
     $game = Initialize-Game
 
@@ -11,11 +31,11 @@ function Test-QuestSourcesListOpeningQuestsAndDayJobs {
 
     Assert-Equal -Actual $questBoard.Count -Expected 2 -Message "The quest board should list one opening story quest and one day job."
     Assert-Equal -Actual $guard.Count -Expected 2 -Message "The guard station should list one opening story quest and one day job before deeper clues are found."
-    Assert-Equal -Actual $patron.Count -Expected 2 -Message "The quest giver should list two opening story quests."
+    Assert-Equal -Actual $patron.Count -Expected 1 -Message "The quest giver should list one opening tier-1 story quest before deeper tiers open."
 }
 
 function Use-StoryCombatWinStub {
-    function global:Invoke-StoryCombat {
+    $global:StoryCombatOverride = {
         param(
             $Game,
             [ref]$HeroHP,
@@ -145,6 +165,7 @@ function Test-BrokenSealPatrolUnlocksAfterTwoStoryClues {
     $initialGuard = @(Get-TownQuestList -Game $game -Source "Guard Station")
     $initialBrokenSeal = $initialGuard | Where-Object { $_.Id -eq "guard_broken_seal" } | Select-Object -First 1
 
+    Set-StoryTier -Game $game -Tier 3
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
 
@@ -161,6 +182,7 @@ function Test-BentNailWhispersUnlocksFromBentNailInfo {
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $initialBentNailQuest) -Expected $false -Message "Bent Nail whispers should stay hidden until Borzig has earned shady local information."
 
+    Set-StoryTier -Game $game -Tier 2
     $game.Town.InnFlags["BentNailBrokerInfo"] = $true
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $initialBentNailQuest) -Expected $true -Message "Bent Nail whispers should unlock once Borzig has broker access at the Bent Nail."
@@ -169,6 +191,7 @@ function Test-BentNailWhispersUnlocksFromBentNailInfo {
 function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
     $game.Town.InnFlags["BentNailBrokerInfo"] = $true
 
     Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
@@ -196,6 +219,7 @@ function Test-NightCourierUnlocksFromCourierLead {
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $courierQuest) -Expected $false -Message "Night Courier Intercept should stay locked before Borzig has a courier lead."
 
+    Set-StoryTier -Game $game -Tier 2
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $courierQuest) -Expected $true -Message "Night Courier Intercept should unlock once Borzig has a courier trail to follow."
@@ -204,6 +228,7 @@ function Test-NightCourierUnlocksFromCourierLead {
 function Test-NightCourierCompletesAndSetsCourierRoute {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
@@ -230,6 +255,7 @@ function Test-WarehouseLedgerUnlocksFromLedgerClues {
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $ledgerQuest) -Expected $false -Message "Warehouse Ledger Recovery should stay locked before Borzig has real ledger clues."
 
+    Set-StoryTier -Game $game -Tier 3
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $ledgerQuest) -Expected $true -Message "Warehouse Ledger Recovery should unlock after ledger irregularities are confirmed."
@@ -238,6 +264,7 @@ function Test-WarehouseLedgerUnlocksFromLedgerClues {
 function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 3
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
@@ -263,6 +290,7 @@ function Test-UnderstreetComplexStaysLockedWithoutTunnelAccess {
     $game = Initialize-Game
     $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["FoundCourierRoute"] = $true
 
@@ -273,6 +301,7 @@ function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
     $game = Initialize-Game
     $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["FoundCourierRoute"] = $true
@@ -283,6 +312,7 @@ function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
     $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
@@ -298,6 +328,7 @@ function Test-UnderstreetComplexCannotStartBeforeLevelThree {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
@@ -318,6 +349,7 @@ function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
@@ -355,6 +387,7 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
     $game = Initialize-Game
     $heroHP = 6
 
+    Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
@@ -377,6 +410,38 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Taking a short rest in a secured room should clear the current dungeon buff."
 }
 
+function Test-TierTwoHidesTierOneStoryQuestsFromWorkSources {
+    $game = Initialize-Game
+    Set-StoryTier -Game $game -Tier 2
+
+    $guard = @(Get-TownQuestList -Game $game -Source "Guard Station")
+    $patron = @(Get-TownQuestList -Game $game -Source "Quest Giver")
+    $board = @(Get-TownQuestList -Game $game -Source "Quest Board")
+
+    Assert-Equal -Actual (@($guard | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 1 -Message "Tier 2 should replace the opening guard story job with the current tier's guard work."
+    Assert-Equal -Actual (@($patron | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 1 -Message "Tier 2 should replace the opening patron story job with the current tier's patron work."
+    Assert-Equal -Actual (@($board | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 0 -Message "Tier 1 board story jobs should disappear from work once tier 2 opens."
+}
+
+function Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $script:PreparedQuestId = $null
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_watch" | Out-Null
+    Use-ReadHostSequence -Values @("1", "0")
+
+    $global:TownQuestPreparationOverride = {
+        param($Game, [ref]$HeroHP, $Quest)
+        $script:PreparedQuestId = $Quest.Id
+    }
+
+    Start-TownQuestLogMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $script:PreparedQuestId -Expected "guard_night_watch" -Message "The quest log should let Borzig reopen an accepted quest directly."
+    $global:TownQuestPreparationOverride = $null
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -397,5 +462,7 @@ Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
 Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
+Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
+Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 
 Write-Host "City quest tests passed." -ForegroundColor Green
