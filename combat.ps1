@@ -1,6 +1,22 @@
 . "$PSScriptRoot\roll.ps1"
 . "$PSScriptRoot\ui.ps1"
 
+function Get-BarbarianCriticalKillText {
+    param(
+        $Hero,
+        $Monster,
+        $Weapon
+    )
+
+    $weaponName = "weapon"
+
+    if ($null -ne $Weapon -and -not [string]::IsNullOrWhiteSpace($Weapon.Name)) {
+        $weaponName = $Weapon.Name.ToLower()
+    }
+
+    return "$($Hero.Name) tears through $($Monster.definite) in a savage finishing blow, driving the $weaponName clean through the kill!"
+}
+
 function Invoke-HeroAttack {
     param(
         $Hero,
@@ -35,6 +51,10 @@ function Invoke-HeroAttack {
         }
         else {
             Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus))" "Yellow"
+        }
+
+        if ($MonsterHP.Value -le 0 -and $Hero.Class -eq "Barbarian") {
+            Write-Scene (Get-BarbarianCriticalKillText -Hero $Hero -Monster $Monster -Weapon $weapon)
         }
     }
     elseif ($heroRoll -eq 1) {

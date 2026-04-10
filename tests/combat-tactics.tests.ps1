@@ -13,8 +13,9 @@ function Assert-Equal {
 }
 
 function Set-TestOutputStubs {
+    $global:CapturedScenes = @()
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
-    function global:Write-Scene { param([string]$Text) }
+    function global:Write-Scene { param([string]$Text) $global:CapturedScenes += $Text }
     function global:Write-Action { param([string]$Text, [string]$Color) }
     function global:Write-ColorLine { param([string]$Text, [string]$Color) }
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
@@ -74,7 +75,30 @@ function Test-BlockRaisesArmorClassAgainstNextAttack {
     Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Block should cause the next monster attack to miss if the bonus pushes AC high enough."
 }
 
+function Test-BarbarianCritKillGetsSavageFinisherText {
+    Set-TestOutputStubs
+
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 20 }
+        return 6
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $monsterHP = 5
+    $heroDroppedWeapon = $false
+
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+
+    if (-not ($global:CapturedScenes | Where-Object { $_ -like "*savage finishing blow*" })) {
+        throw "A barbarian crit kill should produce the savage finishing blow text."
+    }
+}
+
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
+Test-BarbarianCritKillGetsSavageFinisherText
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green

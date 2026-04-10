@@ -120,12 +120,14 @@ function Show-Status {
         $monsterColor = Get-MonsterHPColor -CurrentHP $MonsterHP -MaxHP $Monster.hp
     }
 
-    Write-ColorLine "Status:" "Cyan"
+    Write-SectionTitle -Text "Battle Status" -Color "Yellow"
     Start-Sleep -Milliseconds 750
 
+    Write-ColorLine "Borzig" "Green"
     Write-HeroStatusDetails -Hero $Hero -HeroHP $HeroHP -Snapshot $snapshot
 
     Start-Sleep -Milliseconds 750
+    Write-ColorLine "" "White"
 
     if ($monsterColor -eq "Red") {
         Write-BlinkingLine "$($Monster.definite): $MonsterHP HP"
@@ -135,6 +137,7 @@ function Show-Status {
     }
 
     $targetLabel = Get-CombatTargetLabel -Target $Monster
+    Write-ColorLine $targetLabel "DarkYellow"
     Write-ColorLine "$targetLabel AC: $($Monster.armorClass) | Attack bonus: $($Monster.attackBonus) | Damage: $(Get-MonsterDamageRollText -Monster $Monster)" "White"
     Start-Sleep -Milliseconds 750
 }

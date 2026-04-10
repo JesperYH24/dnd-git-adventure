@@ -127,7 +127,7 @@ function Resolve-RoomEncounter {
         }
 
         if ($monsterHP -le 0) {
-            Write-Scene "$($monster.definite) collapses to the ground. You win!"
+            Write-Scene "$($monster.definite) collapses to the ground. The path ahead is clear."
             Grant-HeroXP -Hero $Game.Hero -XP $monster.xp
             Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP."
             if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
@@ -157,7 +157,7 @@ function Resolve-RoomEncounter {
     }
 
     if ($monsterHP -le 0) {
-        Write-Scene "$($monster.definite) collapses to the ground. You win!"
+        Write-Scene "$($monster.definite) collapses to the ground. The path ahead is clear."
         Grant-HeroXP -Hero $Game.Hero -XP $monster.xp
         Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP."
         if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
