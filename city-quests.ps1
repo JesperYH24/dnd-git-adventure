@@ -69,7 +69,8 @@ function New-UnderstreetQuestRoom {
         [string]$EncounterFactory = "",
         [string]$EncounterTitle = "",
         [string]$EncounterIntro = "",
-        [bool]$BossRoom = $false
+        [bool]$BossRoom = $false,
+        [bool]$CanShortRest = $false
     )
 
     $room = New-Room -Id $Id -Name $Name -Description $Description -Exits $Exits -BossRoom $BossRoom
@@ -79,19 +80,100 @@ function New-UnderstreetQuestRoom {
     $room | Add-Member -NotePropertyName Secured -NotePropertyValue $false
     $room | Add-Member -NotePropertyName ShortRestTaken -NotePropertyValue $false
     $room | Add-Member -NotePropertyName RestHintShown -NotePropertyValue $false
+    $room | Add-Member -NotePropertyName CanShortRest -NotePropertyValue $CanShortRest
+    $room | Add-Member -NotePropertyName SearchHintText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName SearchPromptText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName SearchSuccessText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName SearchFailureText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName SearchDC -NotePropertyValue 0
+    $room | Add-Member -NotePropertyName SearchResolved -NotePropertyValue $false
+    $room | Add-Member -NotePropertyName HiddenLoot -NotePropertyValue @()
+    $room | Add-Member -NotePropertyName SearchRewardFlag -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName SearchRewardText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName LockedCacheName -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName LockedCacheHintText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName LockedCacheOpened -NotePropertyValue $false
+    $room | Add-Member -NotePropertyName LockedCacheForceDC -NotePropertyValue 0
+    $room | Add-Member -NotePropertyName LockedCachePickDC -NotePropertyValue 0
+    $room | Add-Member -NotePropertyName LockedCacheKeyFlag -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName LockedCacheLoot -NotePropertyValue @()
+    $room | Add-Member -NotePropertyName LockedCacheOpenText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName LockedCacheFailText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName EncounterRewardFlag -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName EncounterRewardText -NotePropertyValue ""
     return $room
 }
 
 function Get-UnderstreetComplexRooms {
     $rooms = @{
-        sealed_descent = (New-UnderstreetQuestRoom -Id "sealed_descent" -Name "Sealed Descent" -Description "Broken stone stairs fall away beneath the ward. Damp mortar and old guard sigils mark the last point where the city still pretended these routes were closed." -Exits @{ east = "contraband_hall" })
-        contraband_hall = (New-UnderstreetQuestRoom -Id "contraband_hall" -Name "Contraband Hall" -Description "False crates line the passage in crooked ranks. Cheap lamp oil, stamped cloth, and sealed packets have all been staged here for quick movement above." -Exits @{ west = "sealed_descent"; south = "cistern_refuge"; east = "record_chamber" } -EncounterFactory "Get-UnderstreetLookoutEnemy" -EncounterTitle "Contraband Hall" -EncounterIntro "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence.")
-        cistern_refuge = (New-UnderstreetQuestRoom -Id "cistern_refuge" -Name "Cistern Refuge" -Description "An old maintenance alcove opens beside a stagnant cistern. The space is cramped, but the stone lip and rusted grating make it defensible if Borzig takes the time to secure it." -Exits @{ north = "contraband_hall" })
-        record_chamber = (New-UnderstreetQuestRoom -Id "record_chamber" -Name "Record Chamber" -Description "Shelves of coded tallies and damp ledgers fill a long narrow room. The understreet network kept its memory here, hidden in dust and oilskin." -Exits @{ west = "contraband_hall"; east = "command_vault" } -EncounterFactory "Get-UnderstreetRecordKeeperEnemy" -EncounterTitle "Record Chamber" -EncounterIntro "A ledger-keeper slams shut a hidden folio, grabs a hooked blade, and throws himself between Borzig and the chamber's evidence.")
-        command_vault = (New-UnderstreetQuestRoom -Id "command_vault" -Name "Command Vault" -Description "The deepest chamber is half office, half bunker. Route maps, coin ledgers, and sealed orders cover a heavy table beneath a pair of guttering lanterns." -Exits @{ west = "record_chamber" } -EncounterFactory "Get-UnderstreetCaptainEnemy" -EncounterTitle "Command Vault" -EncounterIntro "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here." -BossRoom $true)
+        sealed_descent = (New-UnderstreetQuestRoom -Id "sealed_descent" -Name "Sealed Descent" -Description "Broken stone stairs fall away beneath the ward. Damp mortar and old guard sigils mark the last point where the city still pretended these routes were closed. Fresh scrape marks suggest heavy crates were dragged east in a hurry." -Exits @{ east = "contraband_hall" })
+        contraband_hall = (New-UnderstreetQuestRoom -Id "contraband_hall" -Name "Contraband Hall" -Description "False crates line the passage in crooked ranks. Cheap lamp oil, stamped cloth, and sealed packets have all been staged here for quick movement above. One stack leans at an angle that looks too deliberate to be accidental." -Exits @{ west = "sealed_descent"; south = "cistern_refuge"; east = "tally_crossing"; north = "sentry_turn" } -EncounterFactory "Get-UnderstreetLookoutEnemy" -EncounterTitle "Contraband Hall" -EncounterIntro "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence.")
+        cistern_refuge = (New-UnderstreetQuestRoom -Id "cistern_refuge" -Name "Cistern Refuge" -Description "An old maintenance alcove opens beside a stagnant cistern. The space is cramped, but the stone lip and rusted grating make it defensible if Borzig takes the time to secure it. Someone once hid here long enough to scratch warning marks into the lime." -Exits @{ north = "contraband_hall" } -CanShortRest $true)
+        sentry_turn = (New-UnderstreetQuestRoom -Id "sentry_turn" -Name "Sentry Turn" -Description "A bent corner widens just enough for a sentry post. A stool, a lantern hook, and a strip of chalked wall codes tell Borzig this turn was meant to watch three approaches at once." -Exits @{ south = "contraband_hall"; east = "flooded_switchback"; north = "collapsed_barracks" } -EncounterFactory "Get-UnderstreetSentryEnemy" -EncounterTitle "Sentry Turn" -EncounterIntro "A sentry with a hooked knife kicks the stool aside and comes at Borzig before he can read the wall codes.")
+        collapsed_barracks = (New-UnderstreetQuestRoom -Id "collapsed_barracks" -Name "Collapsed Barracks" -Description "Half the ceiling has given up here, crushing rotten bunks and leaving a crescent of dry ground near the back wall. A faded gambling rhyme and a cracked footlocker make the dead-end feel less abandoned than it should." -Exits @{ south = "sentry_turn" } -CanShortRest $true)
+        tally_crossing = (New-UnderstreetQuestRoom -Id "tally_crossing" -Name "Tally Crossing" -Description "Three passages knot together around a waist-high counting table scarred by blades and ink. Every path looks used, but not equally often. The south passage smells of sump water while the east smells of lampblack and old paper." -Exits @{ west = "contraband_hall"; north = "flooded_switchback"; east = "record_chamber"; south = "sump_gallery" })
+        flooded_switchback = (New-UnderstreetQuestRoom -Id "flooded_switchback" -Name "Flooded Switchback" -Description "The tunnel kinks twice around a flooded trench where dark water moves just fast enough to hide its depth. Bootprints crowd one ledge, and claw-marks score the stone near the bend." -Exits @{ west = "sentry_turn"; south = "tally_crossing"; east = "old_armory" } -EncounterFactory "Get-UnderstreetHoundEnemy" -EncounterTitle "Flooded Switchback" -EncounterIntro "A chain-scarred tunnel hound splashes up from the trench edge while its handler drives it toward Borzig with a curse.")
+        sump_gallery = (New-UnderstreetQuestRoom -Id "sump_gallery" -Name "Sump Gallery" -Description "The floor dips into a long wet gallery lined with runoff channels and rusted hooks. Someone has been using the dripping noise to hide whispered conversations. One section of wall bears a cleaner rectangle where something once hung." -Exits @{ north = "tally_crossing"; east = "whisper_cells" })
+        whisper_cells = (New-UnderstreetQuestRoom -Id "whisper_cells" -Name "Whisper Cells" -Description "A row of cramped holding cells sits behind warped bars. Most doors hang open, but one remains shut beside a niche where candles were burned down to wax claws. The place feels important in the way forgotten cruelty always does." -Exits @{ west = "sump_gallery" })
+        old_armory = (New-UnderstreetQuestRoom -Id "old_armory" -Name "Old Armory" -Description "Weapon racks stand stripped or bent, but a reinforced locker still clings to the wall under a rusted watch crest. The floor shows recent traffic. If the smugglers kept anything worth saving, it may be in here." -Exits @{ west = "flooded_switchback"; south = "record_chamber"; north = "smugglers_lockup" } -EncounterFactory "Get-UnderstreetArmoryWardenEnemy" -EncounterTitle "Old Armory" -EncounterIntro "An armored warden tears a pry-bar off the wall and charges before Borzig can test the locker.")
+        smugglers_lockup = (New-UnderstreetQuestRoom -Id "smugglers_lockup" -Name "Smugglers' Lockup" -Description "The lockup is a dead-end cage of chain, old manacles, and confiscated satchels. A key ring is missing from the board, but a single hook still bears fresh scratches and a scrap of red cloth." -Exits @{ south = "old_armory" } -EncounterFactory "Get-UnderstreetGaolerEnemy" -EncounterTitle "Smugglers' Lockup" -EncounterIntro "The lockup's gaoler steps out from the shadows with chain wrapped around one forearm and a cudgel in the other hand.")
+        record_chamber = (New-UnderstreetQuestRoom -Id "record_chamber" -Name "Record Chamber" -Description "Shelves of coded tallies and damp ledgers fill a long narrow room. The understreet network kept its memory here, hidden in dust and oilskin. Some shelves stand too far from the wall, as if the room was searched in a panic." -Exits @{ west = "tally_crossing"; north = "old_armory"; east = "command_vault" } -EncounterFactory "Get-UnderstreetRecordKeeperEnemy" -EncounterTitle "Record Chamber" -EncounterIntro "A ledger-keeper slams shut a hidden folio, grabs a hooked blade, and throws himself between Borzig and the chamber's evidence.")
+        command_vault = (New-UnderstreetQuestRoom -Id "command_vault" -Name "Command Vault" -Description "The deepest chamber is half office, half bunker. Route maps, coin ledgers, and sealed orders cover a heavy table beneath a pair of guttering lanterns. A locked war chest sits open just enough to prove Serik was ready to run." -Exits @{ west = "record_chamber" } -EncounterFactory "Get-UnderstreetCaptainEnemy" -EncounterTitle "Command Vault" -EncounterIntro "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here." -BossRoom $true)
     }
 
-    $rooms["record_chamber"].Loot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
+    $rooms["contraband_hall"].SearchHintText = "The slanted cargo stack looks wrong. There may be something worth searching if Borzig slows down."
+    $rooms["contraband_hall"].SearchPromptText = "Search the false cargo stacks for hidden spoils or route notes."
+    $rooms["contraband_hall"].SearchSuccessText = "Borzig shifts the false crates and finds a smuggler's drop pocket: a healing draught, loose coin, and a chalk map marking the hall as a transfer point."
+    $rooms["contraband_hall"].SearchFailureText = "Borzig checks the stacks, but the best hiding place was already skimmed clean before he spots it."
+    $rooms["contraband_hall"].SearchDC = 11
+    $rooms["contraband_hall"].HiddenLoot += (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1)
+    $rooms["contraband_hall"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 8)
+
+    $rooms["collapsed_barracks"].SearchHintText = "The cracked footlocker and gambling rhyme make this dead-end feel like it still holds a private stash."
+    $rooms["collapsed_barracks"].SearchPromptText = "Search the collapsed bunks and broken footlocker for anything the sentries hid here."
+    $rooms["collapsed_barracks"].SearchSuccessText = "Borzig pries open the crushed locker and finds a field note, a tucked-away potion, and a line about 'the red rag on the lockup board'."
+    $rooms["collapsed_barracks"].SearchFailureText = "Borzig turns the dead-end over, but the best hiding place stays buried under splintered bunks and stone."
+    $rooms["collapsed_barracks"].SearchDC = 12
+    $rooms["collapsed_barracks"].HiddenLoot += (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1)
+    $rooms["collapsed_barracks"].SearchRewardText = "Lore: the barracks note suggests the missing armory key was hung near the lockup under a strip of red cloth."
+
+    $rooms["sump_gallery"].SearchHintText = "The clean patch on the wall and the sound-cover of the runoff both suggest someone hid things here."
+    $rooms["sump_gallery"].SearchPromptText = "Search the runoff hooks and wall seams for anything hidden behind the noise."
+    $rooms["sump_gallery"].SearchSuccessText = "Borzig finds a wax-wrapped packet tucked into the wall seam: route ciphers, a little coin, and another hint that Serik kept backup exits ready."
+    $rooms["sump_gallery"].SearchFailureText = "Borzig checks the dripping wall, but the hiding place stays just out of reach."
+    $rooms["sump_gallery"].SearchDC = 12
+    $rooms["sump_gallery"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 12)
+    $rooms["sump_gallery"].SearchRewardText = "Lore: the ciphers describe fallback routes and emergency fires meant to erase the record chamber in minutes."
+
+    $rooms["whisper_cells"].SearchHintText = "The burned candle niche and the shut cell door make this dead-end feel like it was used for more than storage."
+    $rooms["whisper_cells"].SearchPromptText = "Search the cells and candle niche for overlooked evidence or hidden belongings."
+    $rooms["whisper_cells"].SearchSuccessText = "Under a loose stone in the candle niche, Borzig finds a narrow iron key wrapped in red cloth and a note recording prisoner names that never reached the watch."
+    $rooms["whisper_cells"].SearchFailureText = "Borzig searches the cells, but the walls keep their best secret."
+    $rooms["whisper_cells"].SearchDC = 12
+    $rooms["whisper_cells"].SearchRewardFlag = "UnderstreetArmoryKey"
+    $rooms["whisper_cells"].SearchRewardText = "Borzig recovers a red-wrapped key that should fit the old armory locker."
+
+    $rooms["old_armory"].LockedCacheName = "reinforced armory locker"
+    $rooms["old_armory"].LockedCacheHintText = "The reinforced locker is still intact. It could be forced with brute strength, picked carefully, or opened cleanly with the right key."
+    $rooms["old_armory"].LockedCacheForceDC = 15
+    $rooms["old_armory"].LockedCachePickDC = 13
+    $rooms["old_armory"].LockedCacheKeyFlag = "UnderstreetArmoryKey"
+    $rooms["old_armory"].LockedCacheOpenText = "The locker finally gives way with a metal crack. Inside are preserved supplies and one piece of gear the smugglers clearly kept for themselves."
+    $rooms["old_armory"].LockedCacheFailText = "The locker holds. Borzig will need a better touch, more force, or the proper key."
+    $rooms["old_armory"].LockedCacheLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
+    $rooms["old_armory"].LockedCacheLoot += (New-ArmorItem -Name "Braced Leather Vest" -Value 220 -ArmorBonus 1 -SlotCost 2)
+
+    $rooms["smugglers_lockup"].EncounterRewardText = "The gaoler drops a ring of cell keys and a pouch of emergency silver, but the armory hook beside the red cloth is already empty."
+    $rooms["smugglers_lockup"].Loot += (New-CurrencyItem -Denomination "SP" -Amount 10)
+
+    $rooms["record_chamber"].SearchHintText = "The shelves that stand away from the wall look recently disturbed. If anything else was hidden here, it may still be nearby."
+    $rooms["record_chamber"].SearchPromptText = "Search the displaced shelves and hidden folios for overlooked evidence."
+    $rooms["record_chamber"].SearchSuccessText = "Borzig finds a reserve folio behind the shifted shelf along with a sealed tonic and one more ledger ribbon tying Serik's orders to the city above."
+    $rooms["record_chamber"].SearchFailureText = "Borzig checks the shelves, but the best-hidden folio stays buried in dust and panic."
+    $rooms["record_chamber"].SearchDC = 13
+    $rooms["record_chamber"].HiddenLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
+    $rooms["record_chamber"].SearchRewardText = "Lore: the reserve folio confirms the understreet was only one branch of a larger smuggling network."
+
     return $rooms
 }
 
@@ -121,16 +203,96 @@ function Get-UnderstreetRecordKeeperEnemy {
         article = "A"
         definite = "The Ledger-Keeper"
         combatantType = "Opponent"
-        hp = 17
+        hp = 19
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 11
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetSentryEnemy {
+    return [PSCustomObject]@{
+        name = "understreet sentry"
+        article = "An"
+        definite = "The Understreet Sentry"
+        combatantType = "Opponent"
+        hp = 19
         xp = 0
         armorClass = 13
         attackBonus = 4
-        initiativeBonus = 2
+        initiativeBonus = 3
         damageDiceCount = 1
         damageDiceSides = 8
         damageBonus = 2
         damageMin = 3
         damageMax = 10
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetHoundEnemy {
+    return [PSCustomObject]@{
+        name = "tunnel hound"
+        article = "A"
+        definite = "The Tunnel Hound"
+        combatantType = "Opponent"
+        hp = 20
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 3
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 11
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetArmoryWardenEnemy {
+    return [PSCustomObject]@{
+        name = "armory warden"
+        article = "An"
+        definite = "The Armory Warden"
+        combatantType = "Opponent"
+        hp = 22
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 2
+        damageMin = 3
+        damageMax = 12
+        isBoss = $false
+    }
+}
+
+function Get-UnderstreetGaolerEnemy {
+    return [PSCustomObject]@{
+        name = "understreet gaoler"
+        article = "An"
+        definite = "The Understreet Gaoler"
+        combatantType = "Opponent"
+        hp = 21
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 13
         isBoss = $false
     }
 }
@@ -141,16 +303,16 @@ function Get-UnderstreetCaptainEnemy {
         article = ""
         definite = "Captain Serik"
         combatantType = "Opponent"
-        hp = 24
+        hp = 30
         xp = 0
-        armorClass = 14
-        attackBonus = 5
+        armorClass = 15
+        attackBonus = 6
         initiativeBonus = 3
         damageDiceCount = 1
         damageDiceSides = 10
-        damageBonus = 3
-        damageMin = 4
-        damageMax = 13
+        damageBonus = 4
+        damageMin = 5
+        damageMax = 14
         isBoss = $true
     }
 }
@@ -367,6 +529,16 @@ function Resolve-UnderstreetRoomEncounter {
 
     if ($combatResult.Won) {
         $Room.EncounterResolved = $true
+
+        if (-not [string]::IsNullOrWhiteSpace($Room.EncounterRewardFlag)) {
+            $Game.Town.StoryFlags[$Room.EncounterRewardFlag] = $true
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($Room.EncounterRewardText)) {
+            Write-Scene $Room.EncounterRewardText
+            Write-ColorLine ""
+        }
+
         return $(if ($Room.BossRoom) { "Victory" } else { "Won" })
     }
 
@@ -392,7 +564,15 @@ function Show-UnderstreetRoomActions {
         $exitIndex++
     }
 
-    if (-not $Room.BossRoom -and ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) -and -not $Room.ShortRestTaken) {
+    if (-not $Room.SearchResolved -and $Room.SearchDC -gt 0) {
+        Write-ColorLine "F. Search the room carefully (INT)" "White"
+    }
+
+    if (-not $Room.LockedCacheOpened -and $Room.LockedCacheLoot.Count -gt 0) {
+        Write-ColorLine "C. Open $($Room.LockedCacheName)" "White"
+    }
+
+    if ($Room.CanShortRest -and -not $Room.BossRoom -and ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) -and -not $Room.ShortRestTaken) {
         Write-ColorLine "R. Secure this room and take a short rest" "White"
     }
 
@@ -416,6 +596,14 @@ function Show-UnderstreetRoom {
         Write-Scene "You spot useful gear or hidden spoils left in the chamber."
     }
 
+    if (-not [string]::IsNullOrWhiteSpace($Room.SearchHintText) -and -not $Room.SearchResolved) {
+        Write-EmphasisLine -Text $Room.SearchHintText -Color "DarkYellow"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($Room.LockedCacheHintText) -and -not $Room.LockedCacheOpened) {
+        Write-EmphasisLine -Text $Room.LockedCacheHintText -Color "DarkYellow"
+    }
+
     if (-not $Room.Visited) {
         Write-Scene "The understreet air feels close and dangerous, as if the whole place is listening for one wrong step."
     }
@@ -437,7 +625,8 @@ function Show-UnderstreetRoom {
 function Get-UnderstreetRoomRestHintText {
     param($Room)
 
-    $canSecureForRest = -not $Room.BossRoom -and `
+    $canSecureForRest = $Room.CanShortRest -and `
+        -not $Room.BossRoom -and `
         -not $Room.ShortRestTaken -and `
         ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory))
 
@@ -459,7 +648,7 @@ function Secure-UnderstreetRoomAndRest {
         [ref]$HeroHP
     )
 
-    if ($Room.BossRoom -or $Room.ShortRestTaken) {
+    if ($Room.BossRoom -or $Room.ShortRestTaken -or -not $Room.CanShortRest) {
         return
     }
 
@@ -487,6 +676,122 @@ function Secure-UnderstreetRoomAndRest {
     }
 
     Write-ColorLine ""
+}
+
+function Search-UnderstreetRoom {
+    param(
+        $Game,
+        $Room
+    )
+
+    if ($Room.SearchResolved -or $Room.SearchDC -le 0) {
+        Write-Scene "There is nothing else here that Borzig can meaningfully search for."
+        Write-ColorLine ""
+        return
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC $Room.SearchDC -ActionText $Room.SearchPromptText
+    $Room.SearchResolved = $true
+
+    if ($success) {
+        Write-Scene $Room.SearchSuccessText
+
+        foreach ($item in $Room.HiddenLoot) {
+            $Room.Loot += $item
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($Room.SearchRewardFlag)) {
+            $Game.Town.StoryFlags[$Room.SearchRewardFlag] = $true
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($Room.SearchRewardText)) {
+            Write-EmphasisLine -Text $Room.SearchRewardText -Color "Yellow"
+        }
+    }
+    else {
+        Write-Scene $Room.SearchFailureText
+    }
+
+    $Room.HiddenLoot = @()
+    Write-ColorLine ""
+}
+
+function Resolve-UnderstreetLockedCache {
+    param(
+        $Game,
+        $Room
+    )
+
+    if ($Room.LockedCacheOpened -or $Room.LockedCacheLoot.Count -eq 0) {
+        Write-Scene "There is no unopened cache here."
+        Write-ColorLine ""
+        return
+    }
+
+    while ($true) {
+        Write-ColorLine ""
+        Write-ColorLine "===== LOCKED CACHE =====" "Yellow"
+        Write-ColorLine "1. Force it open (STR)" "White"
+        Write-ColorLine "2. Work the lock carefully (DEX)" "White"
+
+        if (-not [string]::IsNullOrWhiteSpace($Room.LockedCacheKeyFlag) -and [bool]$Game.Town.StoryFlags[$Room.LockedCacheKeyFlag]) {
+            Write-ColorLine "3. Use the recovered key" "White"
+        }
+
+        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        $opened = $false
+
+        switch ($choice) {
+            "1" {
+                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC $Room.LockedCacheForceDC -ActionText "Borzig plants his feet and tries to wrench the lock apart by force."
+            }
+            "2" {
+                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "DEX" -DC $Room.LockedCachePickDC -ActionText "Borzig works the old mechanism by feel, trying to tease the lock open without the proper tools."
+            }
+            "3" {
+                if (-not [string]::IsNullOrWhiteSpace($Room.LockedCacheKeyFlag) -and [bool]$Game.Town.StoryFlags[$Room.LockedCacheKeyFlag]) {
+                    Write-Scene "The recovered key turns with a grudging click."
+                    Write-ColorLine ""
+                    $opened = $true
+                }
+                else {
+                    Write-ColorLine "Borzig does not have the right key." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($opened) {
+            $Room.LockedCacheOpened = $true
+            Write-Scene $Room.LockedCacheOpenText
+
+            foreach ($item in $Room.LockedCacheLoot) {
+                $Room.Loot += $item
+            }
+
+            $Room.LockedCacheLoot = @()
+            Write-ColorLine ""
+            return
+        }
+
+        Write-Scene $Room.LockedCacheFailText
+        Write-ColorLine ""
+        return
+    }
 }
 
 function Start-UnderstreetComplexExploration {
@@ -539,6 +844,12 @@ function Start-UnderstreetComplexExploration {
             }
 
             switch ($choice) {
+                "F" {
+                    Search-UnderstreetRoom -Game $Game -Room $room
+                }
+                "C" {
+                    Resolve-UnderstreetLockedCache -Game $Game -Room $room
+                }
                 "R" {
                     Secure-UnderstreetRoomAndRest -Game $Game -Room $room -HeroHP $HeroHP
                 }

@@ -450,7 +450,7 @@ function Test-UnderstreetComplexCompletesAndMarksChapterTwo {
 
     Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
     Use-StoryCombatWinStub
-    Use-ReadHostSequence -Values @("1", "1", "1", "1")
+    Use-ReadHostSequence -Values @("1", "1", "1", "1", "1")
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_understreet_complex"
 
@@ -489,7 +489,7 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
 
     Accept-TownQuest -Game $game -QuestId "guard_understreet_complex" | Out-Null
     Use-StoryCombatWinStub
-    Use-ReadHostSequence -Values @("1", "1", "R", "1", "1")
+    Use-ReadHostSequence -Values @("1", "1", "3", "R", "1", "1", "1", "1")
 
     function global:Roll-Dice {
         param([int]$Sides)
@@ -500,6 +500,37 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
 
     Assert-True -Condition ($heroHP -gt 6) -Message "Securing a room in the Understreet Complex should heal Borzig during a short rest."
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Taking a short rest in a secured room should clear the current dungeon buff."
+}
+
+function Test-UnderstreetComplexIncludesExtendedMazeLayout {
+    $rooms = Get-UnderstreetComplexRooms
+
+    Assert-True -Condition ($rooms.Count -ge 10) -Message "The Understreet Complex should now contain a larger maze of rooms."
+    Assert-Equal -Actual $rooms["contraband_hall"].Exits["north"] -Expected "sentry_turn" -Message "Contraband Hall should branch north into the deeper maze."
+    Assert-Equal -Actual $rooms["tally_crossing"].Exits["south"] -Expected "sump_gallery" -Message "The central crossing should connect into the lower sump route."
+    Assert-Equal -Actual $rooms["old_armory"].Exits["north"] -Expected "smugglers_lockup" -Message "The armory should lead into an additional dead-end lockup branch."
+}
+
+function Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot {
+    $game = Initialize-Game
+    $rooms = Get-UnderstreetComplexRooms
+    $whisperCells = $rooms["whisper_cells"]
+    $oldArmory = $rooms["old_armory"]
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 20
+    }
+
+    Search-UnderstreetRoom -Game $game -Room $whisperCells
+
+    Assert-Equal -Actual $game.Town.StoryFlags["UnderstreetArmoryKey"] -Expected $true -Message "Searching the whisper cells should be able to reveal the armory key."
+
+    Use-ReadHostSequence -Values @("3")
+    Resolve-UnderstreetLockedCache -Game $game -Room $oldArmory
+
+    Assert-Equal -Actual $oldArmory.LockedCacheOpened -Expected $true -Message "The old armory locker should open once Borzig has the recovered key."
+    Assert-True -Condition ($oldArmory.Loot.Count -ge 2) -Message "Opening the armory locker should move its rewards into room loot."
 }
 
 function Test-TierTwoHidesTierOneStoryQuestsFromWorkSources {
@@ -631,6 +662,8 @@ Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
 Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
+Test-UnderstreetComplexIncludesExtendedMazeLayout
+Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
 Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence

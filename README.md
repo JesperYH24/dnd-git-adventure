@@ -83,7 +83,10 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - day jobs that pay coin but no XP
   - a playable finale in `The Understreet Complex`
   - a level 3 gate before the final assault begins
-  - navigable finale rooms with a safe-room short-rest mechanic
+  - a larger finale layout with branching routes, dead ends, and a stronger maze feel
+  - navigable finale rooms with searchable loot, hidden lore, and safe-room short-rest mechanics
+  - locked side caches that can be opened by force, finesse, or recovered keys
+  - tougher finale encounters that make potion use and short-rest timing matter
 - post-Chapter-Two city state with:
   - stronger NPC greetings and town tone once Borzig returns as a proven level 3 hero
   - improved shop inventory for a level 3 barbarian
@@ -196,7 +199,9 @@ The three main Chapter Two quest sources now read more clearly as a loose allian
 
 Borzig effectively becomes the bridge between those three angles, carrying hard proof and rumors back and forth until the city has enough to strike below the streets.
 
-The final quest now plays as a focused mini-dungeon with connected rooms, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
+The final quest now plays as a more involved mini-dungeon with branching rooms, dead ends, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
+
+Searching rooms in the Understreet now uses `INT`, and several chambers deliberately hint when something feels hidden, recently disturbed, or worth forcing open. That gives the finale more of a real dungeon rhythm where observation, route choice, loot pressure, and resource management matter alongside combat.
 
 ---
 
@@ -260,6 +265,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 - the current Chapter Two writing treats the watch, merchant-clerk, and Bent Nail leads as a loose shared investigation rather than disconnected quest boards
 - some systems are intentionally lightweight for now so they can be expanded later
 - several town information hooks are already in place as setup for later quest branches, payout modifiers, and post-Understreet story paths
+- the current Understreet finale already supports hidden-search text, key-and-lock side rewards, and room-specific exploration hooks that can be expanded further
 
 ---
 
@@ -286,7 +292,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 ### Larger system expansions
 
-- deepen `The Understreet Complex` with more room variety, routing choices, and encounter variety
+- deepen `The Understreet Complex` further with more bespoke room mechanics, puzzles, and enemy-specific dungeon interactions
 - explore dual-wield as a later combat style once the broader city/day rhythm and clue systems are in place
 - more classes and class-specific dialogue, gear use, and social reactions
 - class features beyond level 3
