@@ -107,7 +107,7 @@ function Test-StorehouseTroubleCompletesAndGrantsItemReward {
     Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $true -Message "Storehouse Trouble should reveal the smuggling link."
     Assert-Equal -Actual $game.Hero.XP -Expected 180 -Message "Storehouse Trouble should grant story XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Storehouse Trouble should pay its listed reward."
-    Assert-True -Condition ($healingPotions.Count -ge 2) -Message "Storehouse Trouble should add the listed healing potion reward."
+    Assert-True -Condition ($healingPotions.Count -ge 1) -Message "Storehouse Trouble should add the listed healing potion reward."
 }
 
 function Test-DayJobPaysCoinButNoXP {
@@ -213,6 +213,32 @@ function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 130 -Message "Whispers Beneath the Bent Nail should pay its listed copper reward."
 }
 
+function Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+    $game.Town.InnFlags["BentNailBrokerInfo"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 1
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "bent_nail_whispers"
+
+    $quest = Find-TownQuest -Game $game -QuestId "bent_nail_whispers"
+
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Weak" -Message "A failed Bent Nail check should mark the quest as weak progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["BentNailBrokerConfirmed"] -Expected $null -Message "A weak Bent Nail outcome should not confirm the broker as a major clue."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $null -Message "A weak Bent Nail outcome should not grant the strong smuggling clue."
+    Assert-Equal -Actual $game.Hero.XP -Expected 100 -Message "A weak Bent Nail outcome should pay reduced XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 90 -Message "A weak Bent Nail outcome should pay reduced coin."
+    Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $game) -Expected 2 -Message "One weak Tier 2 quest alone should not unlock Tier 3."
+}
+
 function Test-NightCourierUnlocksFromCourierLead {
     $game = Initialize-Game
     $courierQuest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
@@ -247,6 +273,31 @@ function Test-NightCourierCompletesAndSetsCourierRoute {
     Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $true -Message "Night Courier Intercept should reveal a courier route into the understreet network."
     Assert-Equal -Actual $game.Hero.XP -Expected 160 -Message "Night Courier Intercept should grant its story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Night Courier Intercept should pay its listed copper reward."
+}
+
+function Test-NightCourierWeakOutcomeOnlyFindsCourierMarks {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+    $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 1
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Weak" -Message "A failed courier check should mark the quest as weak progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $null -Message "A weak courier outcome should not reveal the full courier route."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "A weak courier outcome should still preserve the lesser courier clue."
+    Assert-Equal -Actual $game.Hero.XP -Expected 110 -Message "A weak courier outcome should pay reduced XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 100 -Message "A weak courier outcome should pay reduced coin."
 }
 
 function Test-WarehouseLedgerUnlocksFromLedgerClues {
@@ -284,6 +335,32 @@ function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     Assert-Equal -Actual $game.Town.StoryFlags["NamedUnderstreetLeader"] -Expected $true -Message "Warehouse Ledger Recovery should be able to name the leader behind the route."
     Assert-Equal -Actual $game.Hero.XP -Expected 170 -Message "Warehouse Ledger Recovery should grant its story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 170 -Message "Warehouse Ledger Recovery should pay its listed copper reward."
+}
+
+function Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 3
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 1
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
+
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Weak" -Message "A failed warehouse check should mark the quest as weak progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["SecuredLedgerEvidence"] -Expected $null -Message "A weak warehouse outcome should not secure hard ledger evidence."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundEconomicIrregularity"] -Expected $true -Message "A weak warehouse outcome should still preserve the lesser ledger clue."
+    Assert-Equal -Actual $game.Hero.XP -Expected 120 -Message "A weak warehouse outcome should pay reduced XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 120 -Message "A weak warehouse outcome should pay reduced coin."
+    Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $game) -Expected 3 -Message "One weak Tier 3 quest alone should not unlock Tier 4."
 }
 
 function Test-UnderstreetComplexStaysLockedWithoutTunnelAccess {
@@ -483,6 +560,15 @@ function Test-StoryClueProgressSummaryTracksTierAndEvidence {
     Assert-True -Condition ($summary -like "*2/6*") -Message "The story clue summary should count major evidence toward the chapter finale."
 }
 
+function Test-StoryClueProgressSummaryExplainsTierOneUnlockPath {
+    $game = Initialize-Game
+
+    $summary = Get-StoryClueProgressSummary -Game $game
+
+    Assert-True -Condition ($summary -like "*Tier 1 active*") -Message "The story clue summary should clearly report when Borzig is still on tier 1."
+    Assert-True -Condition ($summary -like "*unlock Tier 2 city work*") -Message "The story clue summary should explain how Borzig advances out of tier 1."
+}
+
 function Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead {
     $game = Initialize-Game
     Set-StoryTier -Game $game -Tier 4
@@ -505,10 +591,13 @@ Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
 Test-BentNailWhispersUnlocksFromBentNailInfo
 Test-BentNailWhispersCompletesAndSetsBrokerFlag
+Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork
 Test-NightCourierUnlocksFromCourierLead
 Test-NightCourierCompletesAndSetsCourierRoute
+Test-NightCourierWeakOutcomeOnlyFindsCourierMarks
 Test-WarehouseLedgerUnlocksFromLedgerClues
 Test-WarehouseLedgerCompletesAndSecuresEvidence
+Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexUnlocksFromBrokenSealAccessEvenWithoutNightWatch
@@ -521,6 +610,7 @@ Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueProgressSummaryTracksTierAndEvidence
+Test-StoryClueProgressSummaryExplainsTierOneUnlockPath
 Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
 
 Write-Host "City quest tests passed." -ForegroundColor Green

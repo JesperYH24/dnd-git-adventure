@@ -130,6 +130,10 @@ function Show-TownQuestSource {
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
 
+        $tierStatus = Get-StoryTierProgressStatus -Game $Game
+        Write-EmphasisLine -Text $tierStatus.StatusText -Color "Yellow"
+        Write-ColorLine ""
+
         if ($Game.Town.StoryQuestDoneToday) {
             Write-EmphasisLine -Text "Borzig has already pushed the main story forward today. Another story quest must wait until tomorrow." -Color "DarkYellow"
         }
@@ -299,6 +303,7 @@ function Start-QuestHubMenu {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
         Write-Scene "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems."
         Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
+        Write-EmphasisLine -Text ((Get-StoryTierProgressStatus -Game $Game).StatusText) -Color "Yellow"
         Write-ColorLine ""
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"

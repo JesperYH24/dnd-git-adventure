@@ -257,14 +257,39 @@ function Complete-StoryQuestAndReport {
         $Game,
         [string]$QuestId,
         [string]$CompletionText,
-        [string]$ProgressText = ""
+        [string]$ProgressText = "",
+        [Nullable[int]]$RewardCopperOverride = $null,
+        [Nullable[int]]$RewardXPOverride = $null,
+        [string]$RewardItemNameOverride = $null,
+        [string]$AdvanceOutcome = ""
     )
 
-    $completionResult = Complete-TownQuest -Game $Game -QuestId $QuestId
+    $oldTier = Get-CurrentStoryQuestTier -Game $Game
+    $completeParams = @{
+        Game = $Game
+        QuestId = $QuestId
+        AdvanceOutcome = $AdvanceOutcome
+    }
+
+    if ($null -ne $RewardCopperOverride) {
+        $completeParams["RewardCopperOverride"] = $RewardCopperOverride
+    }
+
+    if ($null -ne $RewardXPOverride) {
+        $completeParams["RewardXPOverride"] = $RewardXPOverride
+    }
+
+    if ($null -ne $RewardItemNameOverride) {
+        $completeParams["RewardItemNameOverride"] = $RewardItemNameOverride
+    }
+
+    $completionResult = Complete-TownQuest @completeParams
 
     if (-not $completionResult.Success) {
         return
     }
+
+    $newTier = Get-CurrentStoryQuestTier -Game $Game
 
     Write-Scene $CompletionText
 
@@ -282,6 +307,20 @@ function Complete-StoryQuestAndReport {
 
     if (-not [string]::IsNullOrWhiteSpace($ProgressText)) {
         Write-EmphasisLine -Text $ProgressText -Color "Yellow"
+    }
+
+    if ($newTier -gt $oldTier) {
+        switch ($newTier) {
+            2 {
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 1 is complete. Tier 2 story quests are now available." -Color "Yellow"
+            }
+            3 {
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 2 is complete. Tier 3 story quests are now available." -Color "Yellow"
+            }
+            4 {
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 3 is complete. Tier 4 story quests are now available." -Color "Yellow"
+            }
+        }
     }
 
     if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
@@ -725,6 +764,10 @@ function Start-MissingHerbSatchelQuest {
     Write-ColorLine "3. Search the road yourself and ignore them" "White"
     Write-ColorLine ""
 
+    $strongOutcome = $false
+
+    $strongOutcome = $false
+
     while ($true) {
         $choice = Read-Host "Choose"
 
@@ -735,10 +778,11 @@ function Start-MissingHerbSatchelQuest {
                 if ($success) {
                     Write-Scene "The scavengers surrender the satchel and blurt out that marked runners have been using the old road at night."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The scavengers bolt, but not before Borzig notices the same chalk courier mark they were staring at."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    Write-Scene "The scavengers bolt, leaving Borzig with the satchel but only half-heard panic about the road. He learns less than he wanted."
+                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                 }
 
                 break
@@ -749,10 +793,11 @@ function Start-MissingHerbSatchelQuest {
                 if ($success) {
                     Write-Scene "The scavengers explain they found the satchel after a courier dropped it while fleeing someone from the city."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "Borzig never gets much from them, but a chalk mark near the wheel still catches his eye."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    Write-Scene "Borzig gets the satchel back, but the scavengers never settle enough to say who they feared."
+                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                 }
 
                 break
@@ -763,6 +808,7 @@ function Start-MissingHerbSatchelQuest {
                 if ($success) {
                     Write-Scene "He spots the courier mark, the satchel, and a fresh heelprint pointing back toward the city."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    $strongOutcome = $true
                 }
                 else {
                     Write-Scene "The search is clumsy, but Borzig still recovers the satchel after turning half the roadside ditch upside down."
@@ -785,7 +831,25 @@ function Start-MissingHerbSatchelQuest {
         $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "quest_board_missing_herbs" -CompletionText "The herbalist clutches the satchel to her chest and thanks Borzig more than once before the relief settles in." -ProgressText "Story Progress: Borzig has found another sign that the city's trouble moves along hidden courier routes."
+    $progressText = if ($strongOutcome) {
+        "Story Progress: Borzig has found another sign that the city's trouble moves along hidden courier routes."
+    }
+    else {
+        "Story Progress: Borzig helped the victim, but came away with only a weak trail. Stronger Tier 1 results will open the next tier faster."
+    }
+
+    $completionText = if ($strongOutcome) {
+        "The herbalist clutches the satchel to her chest and thanks Borzig more than once before the relief settles in."
+    }
+    else {
+        "The herbalist gets her satchel back, but Borzig returns with more sympathy than certainty about who dropped it there."
+    }
+
+    $rewardXP = if ($strongOutcome) { $null } else { 80 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 80 }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "quest_board_missing_herbs" -CompletionText $completionText -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-LedgerOfAshQuest {
@@ -834,6 +898,8 @@ function Start-LedgerOfAshQuest {
     Write-ColorLine "3. Lean on merchant contacts for help reading the pattern" "White"
     Write-ColorLine ""
 
+    $strongOutcome = $false
+
     while ($true) {
         $choice = Read-Host "Choose"
 
@@ -843,6 +909,7 @@ function Start-LedgerOfAshQuest {
                 if ($success) {
                     Write-Scene "The clerk folds quickly and gives up a chain of payments tied to an under-street handler called Serik."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
                     Write-Scene "The clerk lies badly, but Borzig still gets enough names to prove the books were cooked."
@@ -856,6 +923,7 @@ function Start-LedgerOfAshQuest {
                 if ($success) {
                     Write-Scene "Three fake freight lines all point back to the same middleman. The name Serik surfaces again and again."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
                     Write-Scene "The ledger is a mess, but Borzig still proves the irregular payments are real."
@@ -869,6 +937,7 @@ function Start-LedgerOfAshQuest {
                 if ($success) {
                     Write-Scene "A contact quietly points Borzig to the same under-street name hidden behind the payments: Serik."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
                     Write-Scene "Even without a clean name, Borzig confirms the payments were not normal trade."
@@ -887,7 +956,25 @@ function Start-LedgerOfAshQuest {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_ledger_of_ash" -CompletionText "The clerk takes the marked names in both hands and looks sick. 'That is enough to sink careers,' he whispers." -ProgressText "Story Progress: Borzig has traced the money behind the city's disappearing goods."
+    $progressText = if ($strongOutcome) {
+        "Story Progress: Borzig has traced the money behind the city's disappearing goods."
+    }
+    else {
+        "Story Progress: Borzig proved the books were cooked, but did not get the clean name behind them. Another strong Tier 2 result may still be needed."
+    }
+
+    $completionText = if ($strongOutcome) {
+        "The clerk takes the marked names in both hands and looks sick. 'That is enough to sink careers,' he whispers."
+    }
+    else {
+        "The clerk reads the rough notes and pales anyway. It is enough to prove corruption, even if the hand behind it stays blurred."
+    }
+
+    $rewardXP = if ($strongOutcome) { $null } else { 110 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 100 }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_ledger_of_ash" -CompletionText $completionText -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-BrokenSealPatrolQuest {
@@ -1005,6 +1092,8 @@ function Start-NightCourierInterceptQuest {
     Write-ColorLine "3. Step into the open and force a panicked mistake" "White"
     Write-ColorLine "" 
 
+    $strongOutcome = $false
+
     while ($true) {
         $choice = Read-Host "Choose"
 
@@ -1016,10 +1105,11 @@ function Start-NightCourierInterceptQuest {
                     Write-Scene "The courier freezes for half a heartbeat too long. Borzig gets a hand on him, tears the satchel free, and sends him running empty into the dark."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.Relationships["Belor"] = "Trusting"
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier slips away, but not before dropping a marked wax strip and exposing the lane pattern the watch needed."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    Write-Scene "The courier slips away clean. Borzig keeps only a wax strip and a guessed lane pattern, enough to prove there is a courier game but not enough to own the route."
+                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
                 break
@@ -1031,10 +1121,11 @@ function Start-NightCourierInterceptQuest {
                     Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. Borzig does not get the man, but he gets the route and the signal mark."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier senses something and breaks early, but the path he chooses still tells Borzig which streets matter."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    Write-Scene "The courier senses something and breaks early. Borzig learns which mark to watch for, but not the full route."
+                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
                 break
@@ -1046,10 +1137,11 @@ function Start-NightCourierInterceptQuest {
                     Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in Borzig's hands."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier still escapes, but the route and the dropped signal token are enough to pin the run to the same network Borzig has been tracking."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                    Write-Scene "The courier still escapes, and Borzig gets only a signal token and another glimpse of the same marked network."
+                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
                 break
@@ -1064,7 +1156,25 @@ function Start-NightCourierInterceptQuest {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_courier" -CompletionText "Belor studies the recovered markings in silence, then gives Borzig a curt nod. 'Good. Now we've got their streets as well as their tunnels.'" -ProgressText "Story Progress: Borzig has identified a real courier route feeding the understreet network."
+    $progressText = if ($strongOutcome) {
+        "Story Progress: Borzig has identified a real courier route feeding the understreet network."
+    }
+    else {
+        "Story Progress: Borzig confirmed the courier marks, but the full route is still hazy. Another strong Tier 2 result may be needed."
+    }
+
+    $completionText = if ($strongOutcome) {
+        "Belor studies the recovered markings in silence, then gives Borzig a curt nod. 'Good. Now we've got their streets as well as their tunnels.'"
+    }
+    else {
+        "Belor studies the partial signs and exhales through his nose. 'Not clean enough yet,' he says, 'but it's still more than we had.'"
+    }
+
+    $rewardXP = if ($strongOutcome) { $null } else { 110 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 100 }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_courier" -CompletionText $completionText -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-WarehouseLedgerRecoveryQuest {
@@ -1113,6 +1223,8 @@ function Start-WarehouseLedgerRecoveryQuest {
     Write-ColorLine "3. Pressure the night clerk into giving up where the ledger was moved" "White"
     Write-ColorLine ""
 
+    $strongOutcome = $false
+
     while ($true) {
         $choice = Read-Host "Choose"
 
@@ -1124,11 +1236,11 @@ function Start-WarehouseLedgerRecoveryQuest {
                     Write-Scene "Behind a false shelf panel Borzig finds the true warehouse ledger, complete with hidden marks and payout names."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The search turns rough, but Borzig still finds enough torn pages and margin codes to prove the ledger existed and who it served."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    Write-Scene "The search turns rough. Borzig saves fragments and margin codes, but not the clean ledger itself."
+                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
@@ -1140,11 +1252,11 @@ function Start-WarehouseLedgerRecoveryQuest {
                     Write-Scene "A dragged stool and fresh dust line lead Borzig straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The room gives up only fragments, but the fragments are enough to preserve the evidence before the whole chain goes dark."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    Write-Scene "The room gives up only fragments. Borzig preserves enough to keep the suspicion alive, but not enough to own the case."
+                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
@@ -1156,11 +1268,11 @@ function Start-WarehouseLedgerRecoveryQuest {
                     Write-Scene "The clerk breaks and points Borzig to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The clerk lies first and folds late, but Borzig still gets enough of the papers to keep the trail alive."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                    Write-Scene "The clerk lies first and folds late. Borzig comes away with scraps and irregular entries, not the clean ledger he wanted."
+                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
@@ -1175,7 +1287,25 @@ function Start-WarehouseLedgerRecoveryQuest {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_warehouse_ledger" -CompletionText "The clerk reads the recovered pages once, swallows hard, and locks them away. 'That is enough to ruin careful men,' he says." -ProgressText "Story Progress: Borzig now holds hard ledger evidence tying the city's missing goods to the understreet operation."
+    $progressText = if ($strongOutcome) {
+        "Story Progress: Borzig now holds hard ledger evidence tying the city's missing goods to the understreet operation."
+    }
+    else {
+        "Story Progress: Borzig kept the ledger trail alive, but without hard proof. Another Tier 3 quest may still be needed before the finale opens."
+    }
+
+    $completionText = if ($strongOutcome) {
+        "The clerk reads the recovered pages once, swallows hard, and locks them away. 'That is enough to ruin careful men,' he says."
+    }
+    else {
+        "The clerk studies the fragments in silence. 'Enough to keep digging,' he says at last. 'Not enough to bury them yet.'"
+    }
+
+    $rewardXP = if ($strongOutcome) { $null } else { 120 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 120 }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_warehouse_ledger" -CompletionText $completionText -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-UnderstreetComplexQuest {
@@ -1352,11 +1482,10 @@ function Start-WhispersBeneathBentNailQuest {
                     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                     $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "Brin gives up less than Borzig wants, but enough slips loose to prove the Bent Nail has been feeding work into the same underground routes."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    Write-Scene "Brin gives up less than Borzig wants. Borzig leaves knowing the Bent Nail matters, but without the clean confirmation needed to lock the broker into the case."
                     $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
@@ -1370,11 +1499,11 @@ function Start-WhispersBeneathBentNailQuest {
                     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                     $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The coin buys patience more than honesty, but Borzig still learns that the same back-room names keep circling smuggled cargo."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    Write-Scene "The coin buys patience more than honesty. Borzig gets a smell of the route, but not the broker's clean confession."
+                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
                 break
@@ -1386,11 +1515,11 @@ function Start-WhispersBeneathBentNailQuest {
                     Write-Scene "Borzig shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
                     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The tail is clumsy, but Borzig still sees enough to prove the Bent Nail is tied to the same cargo movement haunting the city."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+                    Write-Scene "The tail is clumsy. Borzig confirms the room is nervous for a reason, but he loses the handoff before it becomes proof."
+                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
                 break
@@ -1405,7 +1534,25 @@ function Start-WhispersBeneathBentNailQuest {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "bent_nail_whispers" -CompletionText "Brin vanishes back into the Bent Nail's smoke before Borzig is even done thinking through the lead." -ProgressText "Story Progress: Borzig has turned Bent Nail whispers into usable understreet intelligence."
+    $progressText = if ($strongOutcome) {
+        "Story Progress: Borzig has turned Bent Nail whispers into usable understreet intelligence."
+    }
+    else {
+        "Story Progress: Borzig came away with rumor and tension, not a clean broker confirmation. Another strong Tier 2 result may still be needed."
+    }
+
+    $completionText = if ($strongOutcome) {
+        "Brin vanishes back into the Bent Nail's smoke before Borzig is even done thinking through the lead."
+    }
+    else {
+        "Brin disappears back into the smoke with most of his certainty intact, leaving Borzig with a rumor worth respecting but not yet proving."
+    }
+
+    $rewardXP = if ($strongOutcome) { $null } else { 100 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 90 }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "bent_nail_whispers" -CompletionText $completionText -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-MissingDeliveryDayJob {

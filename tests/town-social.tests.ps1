@@ -32,7 +32,8 @@ function Test-BentNailShadyInfoIsRemembered {
     $relationshipBefore = $game.Town.Relationships["UnderstreetBroker"]
     Resolve-BentNailEveningChoice -Game $game -Choice "1" | Out-Null
 
-    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $true -Message "Bent Nail shady information should set a persistent inn flag."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailShadyRumor"] -Expected $true -Message "Bent Nail rumor fishing should set an early persistent inn flag."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $null -Message "Tier 1 Bent Nail conversations should not unlock the deeper broker lead yet."
     Assert-Equal -Actual $game.Town.Relationships["UnderstreetBroker"] -Expected $relationshipBefore -Message "Repeated Bent Nail rumor fishing should not unlock extra broker progress."
 }
 

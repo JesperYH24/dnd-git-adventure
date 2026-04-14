@@ -29,6 +29,7 @@ function New-TownQuest {
         Started = $false
         Completed = $false
         Failed = $false
+        AdvanceOutcome = ""
     }
 }
 
@@ -130,7 +131,11 @@ function Get-StoryClueProgressSummary {
         return "Chapter Two Notes: Tier $currentTier active. Major evidence gathered: $majorEvidenceCount/6."
     }
 
-    return "Chapter Two Notes: Borzig has not yet uncovered his first real understreet lead."
+    if ($currentTier -le 1) {
+        return "Chapter Two Notes: Tier 1 active. Complete a Tier 1 story quest to unlock Tier 2 city work."
+    }
+
+    return "Chapter Two Notes: Tier $currentTier active. Borzig still needs a confirmed understreet access lead."
 }
 
 function Get-CompletedStoryQuestCount {
@@ -165,21 +170,104 @@ function Get-TownQuestDailyLockText {
 function Get-CurrentStoryQuestTier {
     param($Game)
 
-    $storyQuests = @($Game.Town.Quests | Where-Object { $_.QuestType -eq "Story" })
+    $tierThreeStrong = Get-StrongStoryQuestCountForTier -Game $Game -Tier 3
+    $tierThreeCompleted = Get-CompletedStoryQuestCountForTier -Game $Game -Tier 3
 
-    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -ge 3 }).Count -gt 0) {
+    if ($tierThreeStrong -ge 1 -or $tierThreeCompleted -ge 2) {
         return 4
     }
 
-    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -eq 2 }).Count -ge 2) {
+    $tierTwoStrong = Get-StrongStoryQuestCountForTier -Game $Game -Tier 2
+    $tierTwoCompleted = Get-CompletedStoryQuestCountForTier -Game $Game -Tier 2
+
+    if ($tierTwoStrong -ge 2 -or $tierTwoCompleted -ge 3) {
         return 3
     }
 
-    if (@($storyQuests | Where-Object { $_.Completed -and $_.Tier -eq 1 }).Count -ge 1) {
+    $tierOneStrong = Get-StrongStoryQuestCountForTier -Game $Game -Tier 1
+    $tierOneCompleted = Get-CompletedStoryQuestCountForTier -Game $Game -Tier 1
+
+    if ($tierOneStrong -ge 1 -or $tierOneCompleted -ge 2) {
         return 2
     }
 
     return 1
+}
+
+function Get-CompletedStoryQuestCountForTier {
+    param(
+        $Game,
+        [int]$Tier
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Quests) {
+        return 0
+    }
+
+    return @($Game.Town.Quests | Where-Object { $_.QuestType -eq "Story" -and $_.Completed -and [int]$_.Tier -eq $Tier }).Count
+}
+
+function Get-StrongStoryQuestCountForTier {
+    param(
+        $Game,
+        [int]$Tier
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Quests) {
+        return 0
+    }
+
+    return @($Game.Town.Quests | Where-Object {
+        $_.QuestType -eq "Story" -and
+        $_.Completed -and
+        [int]$_.Tier -eq $Tier -and
+        ($null -eq $_.PSObject.Properties["AdvanceOutcome"] -or $_.AdvanceOutcome -ne "Weak")
+    }).Count
+}
+
+function Get-StoryTierProgressStatus {
+    param($Game)
+
+    $currentTier = Get-CurrentStoryQuestTier -Game $Game
+
+    if ($currentTier -ge 4) {
+        return [PSCustomObject]@{
+            CurrentTier = 4
+            NextTier = $null
+            StrongCount = 0
+            CompletedCount = 0
+            StrongNeeded = 0
+            FallbackCompletedNeeded = 0
+            StatusText = "Story Tier 4 is active. Borzig has reached the chapter finale tier."
+        }
+    }
+
+    $strongNeeded = 1
+    $fallbackCompletedNeeded = 2
+
+    if ($currentTier -eq 2) {
+        $strongNeeded = 2
+        $fallbackCompletedNeeded = 3
+    }
+
+    $strongCount = Get-StrongStoryQuestCountForTier -Game $Game -Tier $currentTier
+    $completedCount = Get-CompletedStoryQuestCountForTier -Game $Game -Tier $currentTier
+    $nextTier = $currentTier + 1
+    $statusText = "Story Tier $currentTier is active. Strong progress on this tier: $strongCount/$strongNeeded."
+
+    if ($strongCount -lt $strongNeeded) {
+        $statusText += " Weak outcomes can still complete quests, but Borzig may need $fallbackCompletedNeeded total Tier $currentTier story quests to unlock Tier $nextTier."
+    }
+
+    return [PSCustomObject]@{
+        CurrentTier = $currentTier
+        NextTier = $nextTier
+        StrongCount = $strongCount
+        CompletedCount = $completedCount
+        StrongNeeded = $strongNeeded
+        FallbackCompletedNeeded = $fallbackCompletedNeeded
+        StatusText = $statusText
+    }
 }
 
 function Test-UnderstreetAccessUnlocked {
@@ -440,7 +528,11 @@ function Start-TownQuestAttempt {
 function Complete-TownQuest {
     param(
         $Game,
-        [string]$QuestId
+        [string]$QuestId,
+        [Nullable[int]]$RewardCopperOverride = $null,
+        [Nullable[int]]$RewardXPOverride = $null,
+        [string]$RewardItemNameOverride = $null,
+        [string]$AdvanceOutcome = ""
     )
 
     $quest = Find-TownQuest -Game $Game -QuestId $QuestId
@@ -462,8 +554,9 @@ function Complete-TownQuest {
 
     $quest.Completed = $true
     $quest.Started = $false
+    $quest.AdvanceOutcome = $AdvanceOutcome
 
-    $rewardCopper = Get-DayJobRewardCopper -Game $Game -Quest $quest
+    $rewardCopper = if ($null -ne $RewardCopperOverride) { [int]$RewardCopperOverride } else { Get-DayJobRewardCopper -Game $Game -Quest $quest }
 
     if ($rewardCopper -gt 0 -and $Game.Town.QuestPayoutBonusCopper -gt 0) {
         $rewardCopper += [int]$Game.Town.QuestPayoutBonusCopper
@@ -475,7 +568,7 @@ function Complete-TownQuest {
         $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper
     }
 
-    $rewardXP = [int]$quest.RewardXP
+    $rewardXP = if ($null -ne $RewardXPOverride) { [int]$RewardXPOverride } else { [int]$quest.RewardXP }
 
     if ($rewardXP -gt 0) {
         Grant-HeroXP -Hero $Game.Hero -XP $rewardXP
@@ -483,8 +576,10 @@ function Complete-TownQuest {
 
     $rewardItem = $null
 
-    if (-not [string]::IsNullOrWhiteSpace($quest.RewardItemName)) {
-        $rewardItem = New-TownQuestRewardItem -RewardItemName $quest.RewardItemName
+    $rewardItemName = if ($null -ne $RewardItemNameOverride) { $RewardItemNameOverride } else { $quest.RewardItemName }
+
+    if (-not [string]::IsNullOrWhiteSpace($rewardItemName)) {
+        $rewardItem = New-TownQuestRewardItem -RewardItemName $rewardItemName
 
         if ($null -ne $rewardItem -and (Can-HeroCarryItem -Hero $Game.Hero -Item $rewardItem)) {
             $Game.Hero.Inventory += $rewardItem
@@ -610,8 +705,9 @@ function Show-QuestLogSummary {
         $completedCount = @($Game.Town.Quests | Where-Object { $_.Completed }).Count
         $failedCount = @($Game.Town.Quests | Where-Object { $_.Failed }).Count
         $storyNotes = @(Get-StoryClueNotes -Game $Game)
+        $currentTier = Get-CurrentStoryQuestTier -Game $Game
 
-        Write-ColorLine "Accepted: $acceptedCount | Completed: $completedCount | Story Clues: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
+        Write-ColorLine "Story Tier: $currentTier | Accepted: $acceptedCount | Completed: $completedCount | Story Clues: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
     }
 
     Write-ColorLine ""

@@ -138,6 +138,22 @@ function Resolve-BentNailEveningChoice {
     )
 
     if ($Choice -eq "1") {
+        $currentTier = Get-CurrentStoryQuestTier -Game $Game
+
+        if ($currentTier -lt 2) {
+            if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
+                $Game.Town.InnFlags["BentNailShadyRumor"] = $true
+                Write-Scene "Borzig catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back only gives him one measuring look before the table closes around its own secrets."
+                Write-EmphasisLine -Text "The Bent Nail lead is noted. Come back once Tier 2 city work opens and the room has reason to take Borzig seriously." -Color "Yellow"
+            }
+            else {
+                Write-Scene "The same hard-eyed regulars are still here, but they are not ready to trust Borzig with more than dockside rumor yet."
+                Write-EmphasisLine -Text "The deeper Bent Nail lead should open once Tier 2 story quests are available." -Color "Yellow"
+            }
+
+            return
+        }
+
         if (-not $Game.Town.InnFlags["BentNailBrokerInfo"]) {
             $Game.Town.InnFlags["BentNailBrokerInfo"] = $true
             $Game.Town.Relationships["UnderstreetBroker"] = "Named"
@@ -314,6 +330,10 @@ function Start-InnEveningMenu {
             "bent_nail" {
                 if ($showIntro) {
                     Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+
+                    if ((Get-CurrentStoryQuestTier -Game $Game) -lt 2) {
+                        Write-EmphasisLine -Text "The back tables are watching Borzig, but the real Bent Nail whispers will likely open up once Tier 2 city work is unlocked." -Color "Yellow"
+                    }
                 }
                 Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
                 Write-ColorLine "2. Join a loud dice table" "White"

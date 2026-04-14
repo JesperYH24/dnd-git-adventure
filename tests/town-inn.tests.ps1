@@ -186,7 +186,8 @@ function Test-CommonRoomStaysOpenUntilBackedOut {
 
     Start-InnEveningMenu -Game $game
 
-    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $true -Message "Taking a common-room action should still resolve as normal."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailShadyRumor"] -Expected $true -Message "Taking a common-room action should still resolve as normal."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $null -Message "The Bent Nail should hold back the deeper broker lead until tier 2 opens."
     Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The common room should stay open until the player explicitly backs out."
 }
 
