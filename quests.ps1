@@ -400,6 +400,20 @@ function Get-QuestRewardText {
     return ($parts -join " + ")
 }
 
+function Get-TownQuestOutcomeText {
+    param($Quest)
+
+    if ($null -eq $Quest -or $Quest.QuestType -ne "Story" -or -not $Quest.Completed) {
+        return ""
+    }
+
+    if ($Quest.AdvanceOutcome -eq "Weak") {
+        return "Weak"
+    }
+
+    return "Strong"
+}
+
 function Get-DayJobRewardCopper {
     param(
         $Game,
@@ -663,7 +677,9 @@ function Show-QuestLog {
             Write-ColorLine "Completed Town Quests" "Yellow"
 
             foreach ($townQuest in $completedQuests) {
-                Write-ColorLine "- $($townQuest.Name)" "White"
+                $outcomeText = Get-TownQuestOutcomeText -Quest $townQuest
+                $labelSuffix = if ([string]::IsNullOrWhiteSpace($outcomeText)) { "" } else { " [$outcomeText]" }
+                Write-ColorLine "- $($townQuest.Name)$labelSuffix" "White"
             }
         }
 
@@ -745,7 +761,9 @@ function Show-CompletedTownQuestLog {
     $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
 
     if ($null -ne $Game.Quest -and $Game.Quest.Completed) {
-        Write-ColorLine "- $($Game.Quest.Name)" "White"
+        $mainOutcomeText = Get-TownQuestOutcomeText -Quest $Game.Quest
+        $mainLabelSuffix = if ([string]::IsNullOrWhiteSpace($mainOutcomeText)) { "" } else { " [$mainOutcomeText]" }
+        Write-ColorLine "- $($Game.Quest.Name)$mainLabelSuffix" "White"
     }
 
     if ($completedQuests.Count -eq 0) {
@@ -755,7 +773,9 @@ function Show-CompletedTownQuestLog {
     }
 
     foreach ($townQuest in $completedQuests) {
-        Write-ColorLine "- $($townQuest.Name)" "White"
+        $outcomeText = Get-TownQuestOutcomeText -Quest $townQuest
+        $labelSuffix = if ([string]::IsNullOrWhiteSpace($outcomeText)) { "" } else { " [$outcomeText]" }
+        Write-ColorLine "- $($townQuest.Name)$labelSuffix" "White"
     }
 
     Write-ColorLine ""

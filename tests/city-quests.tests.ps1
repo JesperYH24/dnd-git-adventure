@@ -582,6 +582,31 @@ function Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead {
     Assert-True -Condition ($summary -like "*3/6*") -Message "The story clue summary should still count major evidence when access came from Broken Seal Patrol."
 }
 
+function Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
+    $quest.Completed = $true
+
+    Assert-Equal -Actual (Get-TownQuestOutcomeText -Quest $quest) -Expected "Strong" -Message "Completed story quests should read as strong by default."
+}
+
+function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+    $quest.Completed = $true
+    $quest.AdvanceOutcome = "Weak"
+
+    Assert-Equal -Actual (Get-TownQuestOutcomeText -Quest $quest) -Expected "Weak" -Message "Weak story outcomes should stay visible in the quest log."
+}
+
+function Test-QuestOutcomeTextStaysBlankForDayJobs {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+    $quest.Completed = $true
+
+    Assert-Equal -Actual (Get-TownQuestOutcomeText -Quest $quest) -Expected "" -Message "Day jobs should not show strong or weak story labels."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -612,5 +637,8 @@ Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueProgressSummaryTracksTierAndEvidence
 Test-StoryClueProgressSummaryExplainsTierOneUnlockPath
 Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
+Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest
+Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest
+Test-QuestOutcomeTextStaysBlankForDayJobs
 
 Write-Host "City quest tests passed." -ForegroundColor Green
