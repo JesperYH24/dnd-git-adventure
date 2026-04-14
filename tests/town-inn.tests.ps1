@@ -190,6 +190,21 @@ function Test-CommonRoomStaysOpenUntilBackedOut {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The common room should stay open until the player explicitly backs out."
 }
 
+function Test-InnRoomReturnToTownDoesNotRouteThroughStreets {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    Set-TestReadHostSequence -Values @("7")
+
+    $result = Start-InnMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $result -Expected "BackToTown" -Message "Leaving the inn room should return directly to town."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "Returning to town from the inn room should not force the streets menu first."
+}
+
 Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
@@ -201,5 +216,6 @@ Test-CannotCancelInnBookingWithStoredGear
 Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-WorkOffRoomCoversNightAndBlocksRing
 Test-CommonRoomStaysOpenUntilBackedOut
+Test-InnRoomReturnToTownDoesNotRouteThroughStreets
 
 Write-Host "Town inn tests passed." -ForegroundColor Green

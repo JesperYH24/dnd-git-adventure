@@ -337,7 +337,7 @@ function Start-TownMenu {
 
         switch ($choice) {
             "1" {
-                Start-TownStreetScene -Game $Game
+                Start-TownStreetScene -Game $Game -ReturnLabel "Return to town"
             }
             "2" {
                 Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
@@ -349,7 +349,7 @@ function Start-TownMenu {
                 Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
             }
             "5" {
-                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer"
+                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
             }
             "6" {
                 Start-QuestHubMenu -Game $Game -HeroHP $HeroHP

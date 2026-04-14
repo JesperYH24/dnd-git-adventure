@@ -444,7 +444,7 @@ function Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit {
     $script:PreparedQuestId = $null
 
     Accept-TownQuest -Game $game -QuestId "guard_night_watch" | Out-Null
-    Use-ReadHostSequence -Values @("1", "0")
+    Use-ReadHostSequence -Values @("1", "1", "0", "0")
 
     $global:TownQuestPreparationOverride = {
         param($Game, [ref]$HeroHP, $Quest)

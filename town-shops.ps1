@@ -354,9 +354,14 @@ function Show-TownShop {
         [string]$BuyerType = "GeneralBuyer"
     )
 
+    $showIntro = $true
+
     while ($true) {
         Write-SectionTitle -Text $Title -Color "Yellow"
-        Write-Scene $IntroText
+        if ($showIntro) {
+            Write-Scene $IntroText
+            $showIntro = $false
+        }
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Hero)" "DarkYellow"
         Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "DarkCyan"
         Write-ColorLine ""
@@ -370,7 +375,7 @@ function Show-TownShop {
 
         Write-ColorLine ""
         Write-ColorLine "S. Sell gear" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Return to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose").ToUpper()
@@ -406,7 +411,7 @@ function Show-TownShop {
             $sellChoice = (Read-Host "Sell gear to the $buyerLabel to make room? (Y/N)").ToUpper()
 
             if ($sellChoice -eq "Y") {
-                Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType
+                Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType -ExitLabel "Return to shop"
             }
         }
 
@@ -417,14 +422,20 @@ function Show-TownShop {
 function Open-TownSellMenu {
     param(
         $Hero,
-        [string]$BuyerType = "GeneralBuyer"
+        [string]$BuyerType = "GeneralBuyer",
+        [string]$ExitLabel = "Return to town"
     )
+
+    $showIntro = $true
 
     while ($true) {
         $buyerLabel = Get-TownBuyerLabel -BuyerType $BuyerType
         Write-SectionTitle -Text "Sell to $buyerLabel" -Color "Yellow"
-        Write-Scene (Get-TownBuyerIntroText -BuyerType $BuyerType)
-        Write-ColorLine ""
+        if ($showIntro) {
+            Write-Scene (Get-TownBuyerIntroText -BuyerType $BuyerType)
+            Write-ColorLine ""
+            $showIntro = $false
+        }
 
         $sellableItems = @(Get-SellableHeroItems -Hero $Hero)
 
@@ -442,7 +453,7 @@ function Open-TownSellMenu {
         }
 
         Write-ColorLine ""
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. $ExitLabel" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"

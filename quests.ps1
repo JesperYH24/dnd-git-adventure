@@ -28,6 +28,7 @@ function New-TownQuest {
         Accepted = $false
         Started = $false
         Completed = $false
+        Failed = $false
     }
 }
 
@@ -516,7 +517,9 @@ function Show-QuestLog {
     Write-ColorLine ""
     Write-ColorLine "===== QUEST LOG =====" "Yellow"
 
-    if ($null -ne $mainQuest) {
+    $showMainQuestDetails = $null -ne $mainQuest -and (-not $mainQuest.Completed -or $null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Quests)
+
+    if ($showMainQuestDetails) {
         $status = "Active"
 
         if ($mainQuest.Completed) {
@@ -583,6 +586,106 @@ function Show-QuestLog {
     Write-ColorLine ""
 }
 
+function Show-QuestLogSummary {
+    param(
+        $Hero,
+        $Game
+    )
+
+    Write-ColorLine ""
+    Write-ColorLine "===== QUEST LOG =====" "Yellow"
+
+    if ($Hero) {
+        $nextLevelXP = Get-HeroNextLevelXPThreshold -Hero $Hero
+        $displayXP = [Math]::Min($Hero.XP, $nextLevelXP)
+        Write-ColorLine "XP: $displayXP/$nextLevelXP" "White"
+
+        if ((Get-HeroAvailableLevelUps -Hero $Hero) -gt 0) {
+            Write-ColorLine "Level Up Ready: Take a long rest to reach level $($Hero.Level + 1)." "Yellow"
+        }
+    }
+
+    if ($null -ne $Game -and $null -ne $Game.Town -and $null -ne $Game.Town.Quests) {
+        $acceptedCount = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed -and -not $_.Failed }).Count
+        $completedCount = @($Game.Town.Quests | Where-Object { $_.Completed }).Count
+        $failedCount = @($Game.Town.Quests | Where-Object { $_.Failed }).Count
+        $storyNotes = @(Get-StoryClueNotes -Game $Game)
+
+        Write-ColorLine "Accepted: $acceptedCount | Completed: $completedCount | Story Clues: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
+    }
+
+    Write-ColorLine ""
+}
+
+function Show-StoryClueLog {
+    param($Game)
+
+    Write-ColorLine ""
+    Write-ColorLine "===== STORY CLUES =====" "Yellow"
+
+    $storyNotes = @(Get-StoryClueNotes -Game $Game)
+
+    if ($storyNotes.Count -eq 0) {
+        Write-ColorLine "Borzig has not pieced together any real city clues yet." "DarkGray"
+        Write-ColorLine ""
+        return
+    }
+
+    Write-ColorLine (Get-StoryClueProgressSummary -Game $Game) "DarkYellow"
+
+    foreach ($note in $storyNotes) {
+        Write-ColorLine "- [$($note.Category)] $($note.Text)" "White"
+    }
+
+    Write-ColorLine ""
+}
+
+function Show-CompletedTownQuestLog {
+    param($Game)
+
+    Write-ColorLine ""
+    Write-ColorLine "===== COMPLETED QUESTS =====" "Yellow"
+
+    $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
+
+    if ($null -ne $Game.Quest -and $Game.Quest.Completed) {
+        Write-ColorLine "- $($Game.Quest.Name)" "White"
+    }
+
+    if ($completedQuests.Count -eq 0) {
+        Write-ColorLine "No town quests are completed yet." "DarkGray"
+        Write-ColorLine ""
+        return
+    }
+
+    foreach ($townQuest in $completedQuests) {
+        Write-ColorLine "- $($townQuest.Name)" "White"
+    }
+
+    Write-ColorLine ""
+}
+
+function Show-FailedTownQuestLog {
+    param($Game)
+
+    Write-ColorLine ""
+    Write-ColorLine "===== FAILED QUESTS =====" "Yellow"
+
+    $failedQuests = @($Game.Town.Quests | Where-Object { $_.Failed })
+
+    if ($failedQuests.Count -eq 0) {
+        Write-ColorLine "Borzig has not failed any town quests." "DarkGray"
+        Write-ColorLine ""
+        return
+    }
+
+    foreach ($townQuest in $failedQuests) {
+        Write-ColorLine "- $($townQuest.Name)" "White"
+    }
+
+    Write-ColorLine ""
+}
+
 function Start-TownQuestLogMenu {
     param(
         $Game,
@@ -590,51 +693,91 @@ function Start-TownQuestLogMenu {
     )
 
     while ($true) {
-        Show-QuestLog -Game $Game -Hero $Game.Hero
-
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
+        Show-QuestLogSummary -Game $Game -Hero $Game.Hero
 
-        if ($acceptedQuests.Count -eq 0) {
-            return
-        }
-
-        Write-ColorLine "Accepted quests you can manage now:" "Yellow"
-
-        for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
-            $quest = $acceptedQuests[$i]
-            $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
-            Write-ColorLine "$($i + 1). $($quest.Name) [$($quest.Source)$tierText]" "White"
-        }
-
-        Write-ColorLine ""
+        Write-ColorLine "1. Accepted quests" "White"
+        Write-ColorLine "2. Story clues" "White"
+        Write-ColorLine "3. Completed quests" "White"
+        Write-ColorLine "4. Failed quests" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose a quest to prepare or start"
+        $choice = Read-Host "Choose"
 
         if ($choice -eq "0") {
             return
         }
 
-        if ($choice -notmatch '^\d+$') {
-            Write-ColorLine "Choose a listed number." "DarkYellow"
-            Write-ColorLine ""
-            continue
-        }
+        switch ($choice) {
+            "1" {
+                if ($acceptedQuests.Count -eq 0) {
+                    Write-ColorLine ""
+                    Write-ColorLine "===== ACCEPTED QUESTS =====" "Yellow"
+                    Write-ColorLine "Borzig has no accepted town quests right now." "DarkGray"
+                    Write-ColorLine ""
+                    continue
+                }
 
-        $index = [int]$choice - 1
+                while ($true) {
+                    Write-ColorLine ""
+                    Write-ColorLine "===== ACCEPTED QUESTS =====" "Yellow"
 
-        if ($index -lt 0 -or $index -ge $acceptedQuests.Count) {
-            Write-ColorLine "That quest is not listed." "DarkYellow"
-            Write-ColorLine ""
-            continue
-        }
+                    for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
+                        $quest = $acceptedQuests[$i]
+                        $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+                        Write-ColorLine "$($i + 1). $($quest.Name) [$($quest.Source)$tierText]" "White"
+                        Write-ColorLine "   Objective: $($quest.Objective)" "DarkGray"
+                        Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
+                    }
 
-        if ($null -ne $global:TownQuestPreparationOverride) {
-            & $global:TownQuestPreparationOverride $Game $HeroHP $acceptedQuests[$index]
-        }
-        else {
-            Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $acceptedQuests[$index]
+                    Write-ColorLine ""
+                    Write-ColorLine "0. Return to quest log" "DarkGray"
+                    Write-ColorLine ""
+
+                    $acceptedChoice = Read-Host "Choose a quest to prepare or start"
+
+                    if ($acceptedChoice -eq "0") {
+                        break
+                    }
+
+                    if ($acceptedChoice -notmatch '^\d+$') {
+                        Write-ColorLine "Choose a listed number." "DarkYellow"
+                        Write-ColorLine ""
+                        continue
+                    }
+
+                    $index = [int]$acceptedChoice - 1
+
+                    if ($index -lt 0 -or $index -ge $acceptedQuests.Count) {
+                        Write-ColorLine "That quest is not listed." "DarkYellow"
+                        Write-ColorLine ""
+                        continue
+                    }
+
+                    if ($null -ne $global:TownQuestPreparationOverride) {
+                        & $global:TownQuestPreparationOverride $Game $HeroHP $acceptedQuests[$index]
+                    }
+                    else {
+                        Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $acceptedQuests[$index]
+                    }
+
+                    $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
+                }
+            }
+            "2" {
+                Show-StoryClueLog -Game $Game
+            }
+            "3" {
+                Show-CompletedTownQuestLog -Game $Game
+            }
+            "4" {
+                Show-FailedTownQuestLog -Game $Game
+            }
+            default {
+                Write-ColorLine "Choose a listed number." "DarkYellow"
+                Write-ColorLine ""
+            }
         }
     }
 }

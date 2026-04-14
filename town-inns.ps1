@@ -305,13 +305,16 @@ function Start-InnEveningMenu {
     )
 
     $inn = $Game.Town.ActiveInn
+    $showIntro = $true
 
     while ($true) {
         Write-SectionTitle -Text "Common Room" -Color "Yellow"
 
         switch ($inn.Id) {
             "bent_nail" {
-                Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                if ($showIntro) {
+                    Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                }
                 Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
                 Write-ColorLine "2. Join a loud dice table" "White"
                 $bentNailQuest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
@@ -322,20 +325,26 @@ function Start-InnEveningMenu {
                 }
             }
             "lantern_rest" {
-                Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
+                if ($showIntro) {
+                    Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
+                }
                 Write-ColorLine "1. Share supper with the merchants" "White"
                 Write-ColorLine "2. Sit with the guards and caravan hands" "White"
                 Write-ColorLine "3. Join the room's drinking song" "White"
             }
             "silver_kettle" {
-                Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
+                if ($showIntro) {
+                    Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
+                }
                 Write-ColorLine "1. Listen to the contract talk over wine" "White"
                 Write-ColorLine "2. Make a polished introduction to the upper tables" "White"
                 Write-ColorLine "3. Stay visible and see who takes offense" "White"
             }
         }
 
-        Write-ColorLine "0. Back" "DarkGray"
+        $showIntro = $false
+
+        Write-ColorLine "0. Return to the inn" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -924,7 +933,7 @@ function Start-InnBookingConversation {
         Write-ColorLine ""
         Write-ColorLine "1. Keep the room" "White"
         Write-ColorLine "2. Cancel the booking" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Return to the innkeeper" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -955,20 +964,24 @@ function Start-InnkeeperMenu {
     param($Game)
 
     $inn = $Game.Town.ActiveInn
+    $showIntro = $true
 
     while ($true) {
         Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
-        Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
-        $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
-        $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
-        Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
-        $Game.Town.InnFlags[$metInnkeeperKey] = $true
+        if ($showIntro) {
+            Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
+            $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
+            $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
+            Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
+            $Game.Town.InnFlags[$metInnkeeperKey] = $true
+            $showIntro = $false
+        }
         Write-ColorLine ""
         Write-ColorLine "1. Ask about the house" "White"
         Write-ColorLine "2. Ask what sort of people stay here" "White"
         Write-ColorLine "3. Ask what people have been saying lately" "White"
         Write-ColorLine "4. Discuss your room booking" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Return to the inn" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1034,7 +1047,7 @@ function Start-InnMenu {
         Write-ColorLine "4. Spend time in the common room" "White"
         Write-ColorLine "5. Manage stored gear" "White"
         Write-ColorLine "6. Speak with the innkeeper" "White"
-        Write-ColorLine "7. Return to the city streets" "White"
+        Write-ColorLine "7. Return to town" "White"
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
@@ -1070,7 +1083,6 @@ function Start-InnMenu {
                 }
             }
             "7" {
-                Start-TownStreetScene -Game $Game
                 return "BackToTown"
             }
             "T" {

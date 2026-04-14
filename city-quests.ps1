@@ -1428,14 +1428,15 @@ function Start-MissingDeliveryDayJob {
 
     Write-SectionTitle -Text "Missing Delivery" -Color "Yellow"
     if ($Game.Hero.Level -ge 3) {
-        Write-Scene "The market runner is visibly relieved when Borzig takes the job. A level 3 name means fewer arguments, fewer knives, and a better chance the crate comes back intact."
+        Write-Scene "A market runner needs one missing crate found before dawn. With Borzig taking the job, the man sounds more hopeful than frightened."
     }
     else {
-        Write-Scene "A crate of lamp oil and cheap cloth never reached its stall, and the market runner is desperate to get paid before sunrise."
+        Write-Scene "A market runner explains the problem quickly: one crate of lamp oil and cloth never reached its stall, and if it stays missing by dawn he eats the loss."
     }
-    Write-ColorLine "1. Intimidate the squatters using the alley as a shortcut" "White"
-    Write-ColorLine "2. Lift the jammed crate onto the cart yourself" "White"
-    Write-ColorLine "3. Talk the neighbors into helping sort out the mix-up" "White"
+    Write-Scene "Borzig only needs to get the crate moving again and avoid turning a late delivery into a street fight."
+    Write-ColorLine "1. Clear the alley by force" "White"
+    Write-ColorLine "2. Haul the crate back yourself" "White"
+    Write-ColorLine "3. Talk the locals into helping" "White"
     Write-ColorLine ""
 
     while ($true) {
@@ -1443,9 +1444,9 @@ function Start-MissingDeliveryDayJob {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig plants his feet and makes it clear the alley is not worth arguing over." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig gets his hands under the crate and solves the problem the direct way." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig forces himself to keep his temper and sort out who actually owes what to whom." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig steps into the alley and makes it clear the crate is moving now." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig gets both hands under the crate and muscles the job back on schedule." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
                 Write-ColorLine ""

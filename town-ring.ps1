@@ -414,14 +414,14 @@ function Invoke-HeroBrawlAttack {
         $bonusText += " against guarded AC"
     }
 
-    Write-Action "$($Hero.Name) throws a punch into ${TargetAction}: d20 roll $roll, total $total$bonusText vs AC $targetArmorClass" "Cyan"
+    Write-Action "$($Hero.Name) steps in with a hard punch." "Cyan"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
         $damage = [Math]::Max(1, $profile.DamageMax + $extraRoll + $profile.DamageBonus)
         $OpponentHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Hero.Name) lands a brutal hook for $damage damage! ($($profile.DamageMax) + $extraRoll + $($profile.DamageBonus))" "Yellow"
+        Write-Action "$($Hero.Name) lands a brutal hook that rocks $($Opponent.Definite)." "Yellow"
     }
     elseif ($roll -eq 1) {
         Write-Action "$($Hero.Name) overcommits and stumbles wide." "DarkGray"
@@ -430,10 +430,10 @@ function Invoke-HeroBrawlAttack {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $profile
         $damage = [Math]::Max(1, $damageRoll + $profile.DamageBonus)
         $OpponentHP.Value -= $damage
-        Write-Action "$($Hero.Name) hits for $damage damage! ($damageRoll + $($profile.DamageBonus))" "Yellow"
+        Write-Action "$($Hero.Name) lands cleanly and drives $($Opponent.Definite) back." "Yellow"
     }
     else {
-        Write-Action "$($Hero.Name) misses!" "DarkGray"
+        Write-Action "$($Opponent.Definite) slips the shot." "DarkGray"
     }
 
     if ($OpponentHP.Value -lt 0) {
@@ -467,14 +467,14 @@ function Invoke-OpponentBrawlAttack {
         $blockText += " (+$AttackBonusModifier focus)"
     }
 
-    Write-Action "$($Opponent.Definite) throws a punch into ${TargetAction}: d20 roll $roll, total $total vs AC $heroArmorClass$blockText" "DarkCyan"
+    Write-Action "$($Opponent.Definite) surges forward behind a swinging punch." "DarkCyan"
 
     if ($roll -eq 20) {
         $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
         $damage = $Opponent.DamageDiceSides + $secondDamage + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Opponent.Definite) crashes through Borzig's guard for $damage damage! ($($Opponent.DamageDiceSides) + $secondDamage + $($Opponent.DamageBonus))" "Yellow"
+        Write-Action "$($Opponent.Definite) crashes through Borzig's guard with a huge hit." "Yellow"
     }
     elseif ($roll -eq 1) {
         Write-Action "$($Opponent.Definite) slips and loses the angle." "DarkGray"
@@ -483,10 +483,10 @@ function Invoke-OpponentBrawlAttack {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
         $damage = $damageRoll + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
-        Write-Action "$($Opponent.Definite) hits for $damage damage! ($damageRoll + $($Opponent.DamageBonus))" "Yellow"
+        Write-Action "$($Opponent.Definite) clips Borzig with a solid shot." "Yellow"
     }
     else {
-        Write-Action "$($Opponent.Definite) misses!" "DarkGray"
+        Write-Action "$($Hero.Name) slips clear." "DarkGray"
     }
 
     if ($HeroHP.Value -lt 0) {
@@ -518,15 +518,14 @@ function Resolve-OpponentBrawlGrapple {
     $heroTotal = $heroRoll + $heroModifier + $trainingBonus
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
-    Write-Action "$($Opponent.Definite) lunges for a takedown: d20 roll $opponentRoll, total $opponentTotal" "DarkCyan"
-    Write-Action "$($Hero.Name) braces against it: d20 roll $heroRoll, total $heroTotal" "Cyan"
+    Write-Action "$($Opponent.Definite) dives in for a takedown and Borzig braces hard against it." "DarkCyan"
 
     if ($opponentRoll -eq 20 -or ($heroRoll -ne 20 -and $opponentTotal -ge $heroTotal)) {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
         $controlDamage = [Math]::Max(1, $damageRoll + $Opponent.DamageBonus)
         $HeroHP.Value -= $controlDamage
         $HeroOffBalance.Value = $true
-        Write-Action "$($Opponent.Definite) drags Borzig down for $controlDamage damage! ($damageRoll + $($Opponent.DamageBonus))" "Yellow"
+        Write-Action "$($Opponent.Definite) drags Borzig down into the sand and leaves him scrambling up." "Yellow"
 
         if ($HeroHP.Value -lt 0) {
             $HeroHP.Value = 0
@@ -536,7 +535,7 @@ function Resolve-OpponentBrawlGrapple {
         return $true
     }
 
-    Write-Action "$($Opponent.Definite) fails to secure the hold." "DarkGray"
+    Write-Action "Borzig fights free before the hold can settle." "DarkGray"
     Write-ColorLine ""
     return $false
 }
@@ -713,8 +712,7 @@ function Resolve-BrawlGrappleAttempt {
     $defenderTotal = $defenderRoll + $defenderBonus
     $defenderBonusText = if ($defenderBonus -gt 0) { " (+$defenderBonus)" } else { "" }
 
-    Write-Action "${initiatorName} commits to ${initiatorActionLabel}: d20 roll $initiatorRoll, total $initiatorTotal" "Cyan"
-    Write-Action "${defenderName} answers with ${defenderActionLabel}: d20 roll $defenderRoll, total $defenderTotal$defenderBonusText" "DarkCyan"
+    Write-Action "$initiatorName shoots in for a clinch while $defenderName answers on instinct." "Cyan"
 
     if ($initiatorRoll -eq 20 -or ($defenderRoll -ne 20 -and $initiatorTotal -gt $defenderTotal)) {
         if ($HeroInitiates) {
@@ -727,7 +725,7 @@ function Resolve-BrawlGrappleAttempt {
             }
 
             $OpponentOffBalance.Value = $true
-            Write-Action "$($Hero.Name) forces the hold through for $controlDamage damage! ($damageRoll + $([Math]::Max(0, $heroGrappleBonus))) $($Opponent.Definite) is left off balance for the next round." "Yellow"
+            Write-Action "$($Hero.Name) muscles the clinch through and leaves $($Opponent.Definite) stumbling into the next exchange." "Yellow"
         }
         else {
             $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
@@ -739,14 +737,14 @@ function Resolve-BrawlGrappleAttempt {
             }
 
             $HeroOffBalance.Value = $true
-            Write-Action "$($Opponent.Definite) forces the hold through for $controlDamage damage! ($damageRoll + $([Math]::Max(0, [int]$Opponent.GrappleBonus))) $($Hero.Name) is left off balance for the next round." "Yellow"
+            Write-Action "$($Opponent.Definite) forces the clinch through and leaves Borzig off balance for the next exchange." "Yellow"
         }
 
         Write-ColorLine ""
         return "Initiator"
     }
 
-    Write-Action "$defenderName slips the grapple attempt before it can settle." "DarkGray"
+    Write-Action "$defenderName slips the takedown before it can settle." "DarkGray"
 
     switch ($DefenderAction) {
         "Punch" {
@@ -762,12 +760,12 @@ function Resolve-BrawlGrappleAttempt {
         "Focus" {
             if ($HeroInitiates) {
                 $OpponentFocusAttackBonus.Value = 2
-                Write-Action "$($Opponent.Definite) turns the failed clinch into a read on Borzig's rhythm and gains +2 to hit on the next punch." "Yellow"
+                Write-Action "$($Opponent.Definite) turns the scramble into a better read on the fight." "Yellow"
                 Write-ColorLine ""
             }
             else {
                 $HeroFocusAttackBonus.Value = 2
-                Write-Action "$($Hero.Name) turns the failed clinch into a read on the fight and gains +2 to hit on the next punch." "Yellow"
+                Write-Action "$($Hero.Name) turns the scramble into a better read on the fight." "Yellow"
                 Write-ColorLine ""
             }
         }
@@ -814,15 +812,14 @@ function Resolve-HeroBrawlGrapple {
     $heroTotal = $heroRoll + $heroModifier + $trainingBonus
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
-    Write-Action "$($Hero.Name) shoots in for a grapple: d20 roll $heroRoll, total $heroTotal" "Cyan"
-    Write-Action "$($Opponent.Definite) braces against it: d20 roll $opponentRoll, total $opponentTotal" "DarkCyan"
+    Write-Action "$($Hero.Name) dives for a takedown while $($Opponent.Definite) braces hard against it." "Cyan"
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
         $damageRoll = Roll-Dice -Sides 4
         $controlDamage = [Math]::Max(1, $damageRoll + $heroModifier + $trainingBonus)
         $OpponentHP.Value -= $controlDamage
         $OpponentOffBalance.Value = $true
-        Write-Action "$($Hero.Name) drags $($Opponent.Definite) to the ground for $controlDamage damage! ($damageRoll + $($heroModifier + $trainingBonus))" "Yellow"
+        Write-Action "$($Hero.Name) drags $($Opponent.Definite) down and comes up in control." "Yellow"
 
         if ($OpponentHP.Value -lt 0) {
             $OpponentHP.Value = 0
@@ -832,7 +829,7 @@ function Resolve-HeroBrawlGrapple {
         return $true
     }
 
-    Write-Action "$($Hero.Name) fails to secure the hold." "DarkGray"
+    Write-Action "$($Opponent.Definite) slips away before Borzig can settle the hold." "DarkGray"
     Write-ColorLine ""
     return $false
 }
@@ -858,10 +855,10 @@ function Start-BrawlLoop {
 
     while ($heroBrawlHP -gt 0 -and $opponentHP -gt 0) {
         Write-ColorLine "Borzig: $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
-        Write-ColorLine "P. Punch" "White"
-        Write-ColorLine "G. Grapple" "White"
-        Write-ColorLine "B. Block" "White"
-        Write-ColorLine "F. Focus" "White"
+        Write-ColorLine "P. Throw hands" "White"
+        Write-ColorLine "G. Go for a takedown" "White"
+        Write-ColorLine "B. Cover up" "White"
+        Write-ColorLine "F. Read the next move" "White"
         Write-ColorLine "C. Concede" "White"
         Write-ColorLine ""
 
@@ -887,7 +884,7 @@ function Start-BrawlLoop {
             $heroAdjusted = $heroChoice -ne $choice
 
             if ($heroAdjusted) {
-                Write-Scene "$($Hero.Name) is off balance and cannot commit to a clean focus or takedown this round."
+                Write-Scene "$($Hero.Name) is still recovering and cannot commit fully this round."
             }
         }
 
@@ -899,13 +896,9 @@ function Start-BrawlLoop {
             $opponentAdjusted = $opponentDisplayChoice -ne $opponentChoice
 
             if ($opponentAdjusted) {
-                Write-Scene "$($Opponent.Definite) is still off balance and falls back to a simpler exchange."
+                Write-Scene "$($Opponent.Definite) is still scrambling for footing and settles for something simpler."
             }
         }
-
-        Write-Action "$($Hero.Name) commits to $(Get-BrawlActionLabel -Action $heroChoice)." "Cyan"
-        Write-Action "$($Opponent.Definite) commits to $(Get-BrawlActionLabel -Action $opponentDisplayChoice)." "DarkCyan"
-        Write-ColorLine ""
 
         $heroOffBalance = $false
         $opponentOffBalance = $false
@@ -921,7 +914,7 @@ function Start-BrawlLoop {
                     }
                 }
                 "P/B" {
-                    Write-Scene "$($Opponent.Definite) reads the attack and brings the guard up in time."
+                    Write-Scene "$($Opponent.Definite) reads the swing and shells up in time."
                     Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus 2 -TargetAction "Block"
                     $heroFocusAttackBonus = 0
                 }
@@ -931,47 +924,47 @@ function Start-BrawlLoop {
                     $opponentFocusAttackBonus = 0
                 }
                 "P/F" {
-                    Write-Scene "$($Opponent.Definite) tries to read the rhythm, but that leaves an opening."
+                    Write-Scene "$($Opponent.Definite) hesitates for a read and gives Borzig the cleaner opening."
                     Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Focus"
                     $heroFocusAttackBonus = 0
 
                     if ($opponentHP -gt 0) {
                         $opponentFocusAttackBonus = 2
-                        Write-Action "$($Opponent.Definite) still gains +2 to hit on the next punch." "Yellow"
+                        Write-Action "$($Opponent.Definite) still comes away with a sharper read for the next exchange." "Yellow"
                         Write-ColorLine ""
                     }
                 }
                 "F/P" {
-                    Write-Scene "$($Hero.Name) tries to read the rhythm, but that leaves an opening."
+                    Write-Scene "$($Hero.Name) waits for the read a moment too long and gives up the cleaner opening."
                     Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Focus"
                     $opponentFocusAttackBonus = 0
 
                     if ($heroBrawlHP -gt 0) {
                         $heroFocusAttackBonus = 2
-                        Write-Action "$($Hero.Name) still gains +2 to hit on the next punch." "Yellow"
+                        Write-Action "$($Hero.Name) still comes away with a sharper read for the next exchange." "Yellow"
                         Write-ColorLine ""
                     }
                 }
                 "B/B" {
-                    Write-Scene "Both fighters settle behind careful guards and give the crowd a tense but harmless round."
+                    Write-Scene "Both fighters stay disciplined, circle, and make the crowd wait for the next real opening."
                     Write-ColorLine ""
                 }
                 "F/F" {
                     $heroFocusAttackBonus = 2
                     $opponentFocusAttackBonus = 2
-                    Write-Scene "Both fighters spend the round reading timing and distance, each building toward the next exchange."
+                    Write-Scene "Both fighters slow the pace, study each other, and build toward a sharper next exchange."
                     Write-ColorLine ""
                 }
                 "F/B" {
                     $heroFocusAttackBonus = 2
-                    Write-Scene "$($Hero.Name) uses the guarded pause to study the rhythm of the fight."
-                    Write-Action "$($Hero.Name) gains +2 to hit on the next punch." "Yellow"
+                    Write-Scene "$($Hero.Name) uses the guarded lull to get a better read."
+                    Write-Action "$($Hero.Name) is set up better for the next clean strike." "Yellow"
                     Write-ColorLine ""
                 }
                 "B/F" {
                     $opponentFocusAttackBonus = 2
-                    Write-Scene "$($Opponent.Definite) uses the guarded pause to study the rhythm of the fight."
-                    Write-Action "$($Opponent.Definite) gains +2 to hit on the next punch." "Yellow"
+                    Write-Scene "$($Opponent.Definite) uses the guarded lull to get a better read."
+                    Write-Action "$($Opponent.Definite) is set up better for the next clean strike." "Yellow"
                     Write-ColorLine ""
                 }
                 "G/G" {
@@ -1029,7 +1022,7 @@ function Start-FightingRing {
     Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
     Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
-    Write-Scene "Each round is read in the same breath: both fighters commit first, then the pit learns who guessed right."
+    Write-Scene "Each exchange happens fast: pick a style, commit to it, and see who controls the moment."
     Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"

@@ -409,8 +409,13 @@ function Get-BelorDistrictRumorTalk {
 function Start-WidowEliraConversation {
     param($Game)
 
+    $showIntro = $true
+
     while ($true) {
-        Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
+        if ($showIntro) {
+            Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
+            $showIntro = $false
+        }
         Write-ColorLine "1. Ask after her family" "White"
         Write-ColorLine "2. Ask how the district is holding up" "White"
         Write-ColorLine "3. Tell her no thanks are needed" "White"
@@ -451,8 +456,13 @@ function Start-WidowEliraConversation {
 function Start-HadrikConversation {
     param($Game)
 
+    $showIntro = $true
+
     while ($true) {
-        Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
+        if ($showIntro) {
+            Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
+            $showIntro = $false
+        }
         Write-ColorLine "1. Ask about the forge and its steel" "White"
         Write-ColorLine "2. Ask how business in the city has changed" "White"
         Write-ColorLine "3. Ask if the forge has anything worth carrying into the wilds" "White"
@@ -493,8 +503,13 @@ function Start-HadrikConversation {
 function Start-BelorConversation {
     param($Game)
 
+    $showIntro = $true
+
     while ($true) {
-        Write-Scene (Get-BelorIntro -Hero $Game.Hero)
+        if ($showIntro) {
+            Write-Scene (Get-BelorIntro -Hero $Game.Hero)
+            $showIntro = $false
+        }
         Write-ColorLine "1. Ask where a capable fighter can find decent work" "White"
         Write-ColorLine "2. Ask what has the watch worried" "White"
         Write-ColorLine "3. Ask which part of the city feels wrong" "White"
@@ -533,25 +548,32 @@ function Start-BelorConversation {
 }
 
 function Start-TownStreetScene {
-    param($Game)
+    param(
+        $Game,
+        [string]$ReturnLabel = "Return to town"
+    )
+
+    $showIntro = $true
 
     while ($true) {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
 
-        if (-not $Game.Town.StreetFlags["StreetSceneVisited"]) {
+        if ($showIntro -and -not $Game.Town.StreetFlags["StreetSceneVisited"]) {
             Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
             Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
             $Game.Town.StreetFlags["StreetSceneVisited"] = $true
         }
-        else {
+        elseif ($showIntro) {
             Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
         }
+
+        $showIntro = $false
 
         Write-ColorLine ""
         Write-ColorLine "1. Speak with Widow Elira" "White"
         Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
         Write-ColorLine "3. Speak with Watchman Belor" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. $ReturnLabel" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
