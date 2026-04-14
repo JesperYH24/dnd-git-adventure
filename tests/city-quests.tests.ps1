@@ -290,11 +290,14 @@ function Test-UnderstreetComplexStaysLockedWithoutTunnelAccess {
     $game = Initialize-Game
     $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
 
-    Set-StoryTier -Game $game -Tier 4
+    (Find-TownQuest -Game $game -QuestId "guard_night_watch").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "patron_ledger_of_ash").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "guard_night_courier").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger").Completed = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["FoundCourierRoute"] = $true
 
-    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $false -Message "The Understreet Complex should stay locked until Borzig confirms tunnel access."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $false -Message "The Understreet Complex should stay locked until Borzig confirms real tunnel access."
 }
 
 function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
@@ -307,6 +310,18 @@ function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
     $game.Town.StoryFlags["FoundCourierRoute"] = $true
 
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $true -Message "The Understreet Complex should unlock once Borzig has tunnel access and at least two major story clues."
+}
+
+function Test-UnderstreetComplexUnlocksFromBrokenSealAccessEvenWithoutNightWatch {
+    $game = Initialize-Game
+    $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $true -Message "The Understreet Complex should unlock for saves that reached Broken Seal Patrol without the tier-1 guard quest."
 }
 
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
@@ -468,6 +483,19 @@ function Test-StoryClueProgressSummaryTracksTierAndEvidence {
     Assert-True -Condition ($summary -like "*2/6*") -Message "The story clue summary should count major evidence toward the chapter finale."
 }
 
+function Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead {
+    $game = Initialize-Game
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+
+    $summary = Get-StoryClueProgressSummary -Game $game
+
+    Assert-True -Condition ($summary -like "*Tier 4 active*") -Message "The story clue summary should treat Broken Seal access as a real understreet lead."
+    Assert-True -Condition ($summary -like "*3/6*") -Message "The story clue summary should still count major evidence when access came from Broken Seal Patrol."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -483,6 +511,7 @@ Test-WarehouseLedgerUnlocksFromLedgerClues
 Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
+Test-UnderstreetComplexUnlocksFromBrokenSealAccessEvenWithoutNightWatch
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
@@ -492,5 +521,6 @@ Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueProgressSummaryTracksTierAndEvidence
+Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
 
 Write-Host "City quest tests passed." -ForegroundColor Green

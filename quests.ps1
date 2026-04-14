@@ -125,7 +125,7 @@ function Get-StoryClueProgressSummary {
         return "Chapter Two Notes: The understreet network has been broken, but the fallout is still moving through the city."
     }
 
-    if ([bool]$Game.Town.StoryFlags["FoundTunnelAccess"]) {
+    if (Test-UnderstreetAccessUnlocked -Game $Game) {
         return "Chapter Two Notes: Tier $currentTier active. Major evidence gathered: $majorEvidenceCount/6."
     }
 
@@ -181,6 +181,25 @@ function Get-CurrentStoryQuestTier {
     return 1
 }
 
+function Test-UnderstreetAccessUnlocked {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    if ([bool]$Game.Town.StoryFlags["FoundTunnelAccess"]) {
+        return $true
+    }
+
+    if ([bool]$Game.Town.StoryFlags["ConfirmedUndergroundRoute"]) {
+        return $true
+    }
+
+    $brokenSealQuest = Find-TownQuest -Game $Game -QuestId "guard_broken_seal"
+    return ($null -ne $brokenSealQuest -and $brokenSealQuest.Completed)
+}
+
 function Test-TownQuestBaseUnlock {
     param(
         $Game,
@@ -204,7 +223,7 @@ function Test-TownQuestBaseUnlock {
     }
 
     if ($Quest.Id -eq "guard_understreet_complex") {
-        if (-not [bool]$Game.Town.StoryFlags["FoundTunnelAccess"]) {
+        if (-not (Test-UnderstreetAccessUnlocked -Game $Game)) {
             return $false
         }
 

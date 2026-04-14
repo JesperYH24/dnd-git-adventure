@@ -953,6 +953,7 @@ function Start-BrokenSealPatrolQuest {
     Write-ColorLine ""
 
     $Game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
+    $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_broken_seal" -CompletionText "Halden listens to the report in silence, then orders the map room opened. 'Good. Now we stop guessing and start hunting.'" -ProgressText "Story Progress: Borzig has confirmed an active understreet route beneath the city."
 }
 
