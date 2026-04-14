@@ -10,6 +10,57 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Get-ChapterTwoAllianceStatusText {
+    param(
+        [string]$Source,
+        $Game
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return ""
+    }
+
+    $hasGuardLead = [bool]$Game.Town.StoryFlags["FoundTunnelAccess"] -or [bool]$Game.Town.StoryFlags["ConfirmedUndergroundRoute"]
+    $hasClerkLead = [bool]$Game.Town.StoryFlags["FoundEconomicIrregularity"] -or [bool]$Game.Town.StoryFlags["SecuredLedgerEvidence"] -or [bool]$Game.Town.StoryFlags["NamedUnderstreetLeader"]
+    $hasBrokerLead = [bool]$Game.Town.StoryFlags["BentNailBrokerConfirmed"] -or [bool]$Game.Town.StoryFlags["FoundSmugglingLink"]
+
+    switch ($Source) {
+        "Guard Station" {
+            if ($hasClerkLead -and $hasBrokerLead) {
+                return "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Borzig keeps bringing in."
+            }
+
+            if ($hasClerkLead) {
+                return "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, even if no one says so loudly."
+            }
+
+            if ($hasBrokerLead) {
+                return "The guards pretend they are only following patrol work, but Borzig can tell the river-quarter whispers have reached this hall already."
+            }
+        }
+        "Quest Giver" {
+            if ($hasGuardLead -and $hasBrokerLead) {
+                return "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are all starting to describe the same hidden network."
+            }
+
+            if ($hasGuardLead) {
+                return "The clerk keeps one eye on his papers and one on the watch. Whatever Borzig brought back from the patrols has made these ledgers feel more dangerous."
+            }
+
+            if ($hasBrokerLead) {
+                return "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Borzig hears in rougher rooms."
+            }
+        }
+        "Quest Board" {
+            if ($hasGuardLead -or $hasClerkLead -or $hasBrokerLead) {
+                return "Even the public notices feel different now. Small jobs still pay coin, but the city behind them is starting to look like one tangled knot instead of separate troubles."
+            }
+        }
+    }
+
+    return ""
+}
+
 function Show-PostUnderstreetHook {
     param($Game)
 
@@ -43,6 +94,12 @@ function Get-TownQuestSourceIntroText {
             "Guard Station" { return "The watch hall changes tone when Borzig enters now. Some guards step aside out of respect, and the harder jobs are no longer hidden from him." }
             "Quest Giver" { return "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." }
         }
+    }
+
+    $allianceText = Get-ChapterTwoAllianceStatusText -Source $Source -Game $Game
+
+    if (-not [string]::IsNullOrWhiteSpace($allianceText)) {
+        return $allianceText
     }
 
     if (-not $isRepeatVisit) {
@@ -241,6 +298,7 @@ function Start-QuestHubMenu {
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
         Write-Scene "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems."
+        Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
         Write-ColorLine ""
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"

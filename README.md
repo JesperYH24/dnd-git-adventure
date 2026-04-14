@@ -19,7 +19,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - brutal barbarian crit-finish text on lethal takedowns
 - cave exploration with connected rooms, backtracking, room loot, and encounters
 - tutorial boss warning flow with a Shadow Sanctum reward choice
-- quest log with tutorial progression, XP tracking, accepted town quests, and story notes / clue tracking for Chapter Two
+- quest log with XP tracking plus separate views for accepted quests, completed quests, failed quests, and Chapter Two story clues
 - inventory with:
   - `8` ready-use personal slots
   - a separate backpack storage layer
@@ -51,7 +51,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
 - class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
-  - `Punch`, `Grapple`, `Block`, and `Focus`
+  - more narrative round-to-round ring text with lighter rules-facing combat chatter
   - matchup-style ring rounds where both fighters commit before the exchange is resolved
   - distinct opponents with different styles such as pressure fighters, clinch hunters, defensive readers, and heavy hitters
   - opponent rivalries that remember Borzig's record against specific fighters
@@ -79,6 +79,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
     - `1 story quest per day`
     - `1 day job per day`
   - story flags for the city mystery under the streets
+  - a loose alliance structure between the watch, the patron's clerk, and Bent Nail broker leads, with Borzig acting as the link between official, mercantile, and criminal angles on the same investigation
   - day jobs that pay coin but no XP
   - a playable finale in `The Understreet Complex`
   - a level 3 gate before the final assault begins
@@ -187,6 +188,14 @@ The Chapter Two quest chain is now playable from its opening clues through the c
 
 `Night Watch Relief`, `Storehouse Trouble`, `Missing Herb Satchel`, and `Ledger of Ash` form the opening layer of Chapter Two. Those clues can branch into `Broken Seal Patrol`, `Whispers Beneath the Bent Nail`, `Night Courier Intercept`, and `Warehouse Ledger Recovery`, and enough gathered evidence now unlocks `The Understreet Complex` as the Chapter Two finale beneath the city.
 
+The three main Chapter Two quest sources now read more clearly as a loose alliance investigating the same smugglers' network from different directions:
+
+- the `Guard Station` follows breaches, patrol violence, courier movement, and tunnel access
+- the `Quest Giver` / clerk follows ledgers, missing stock, hidden payments, and merchant pressure
+- the `Bent Nail` and related shady contacts expose route names, handlers, and criminal whispers the other two sides cannot reach directly
+
+Borzig effectively becomes the bridge between those three angles, carrying hard proof and rumors back and forth until the city has enough to strike below the streets.
+
 The final quest now plays as a focused mini-dungeon with connected rooms, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
 
 ---
@@ -248,6 +257,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
 
 - the game is currently built around a tutorial arc, a full city hub, and a first complete Chapter Two story chain
 - Chapter Two is now playable from its opening story layer through its finale, with multiple replay-friendly clue paths and first day jobs implemented
+- the current Chapter Two writing treats the watch, merchant-clerk, and Bent Nail leads as a loose shared investigation rather than disconnected quest boards
 - some systems are intentionally lightweight for now so they can be expanded later
 - several town information hooks are already in place as setup for later quest branches, payout modifiers, and post-Understreet story paths
 

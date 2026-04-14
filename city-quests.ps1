@@ -573,7 +573,7 @@ function Start-NightWatchReliefQuest {
 
     Write-SectionTitle -Text "Night Watch Relief" -Color "Yellow"
     Write-Scene "Captain Halden meets Borzig under a guttering lantern and speaks without wasting a word."
-    Write-Scene "'Outer district. Broken seal. Strange movement near the old drains. Walk the line, see what scared my people, and come back with something better than rumors.'"
+    Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'And now merchants are whispering about missing stock on top of it. Walk the line, see what scared my people, and come back with something better than rumors.'"
     Write-Scene "Borzig joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
     Write-ColorLine ""
     Write-Scene "At the edge of the district they find a smashed city seal, muddy footprints, and drag marks leading to a storm grate half-pried from the street."
@@ -606,7 +606,7 @@ function Start-NightWatchReliefQuest {
 
     $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $Game.Town.Relationships["NightCaptain"] = "Respectful"
-    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_watch" -CompletionText "'Good,' Halden says when Borzig reports back. 'Now we know this city's rot goes below the streets.'" -ProgressText "Story Progress: Borzig has confirmed a real tunnel route beneath the city."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_watch" -CompletionText "'Good,' Halden says when Borzig reports back. 'Now we know this city's rot goes below the streets. If the merchants are seeing the same pattern in their missing stock, this just got bigger.'" -ProgressText "Story Progress: Borzig has confirmed a real tunnel route beneath the city."
 }
 
 function Start-StorehouseTroubleQuest {
@@ -647,7 +647,8 @@ function Start-StorehouseTroubleQuest {
 
     Write-SectionTitle -Text "Storehouse Trouble" -Color "Yellow"
     Write-Scene "The patron's clerk presses a cold iron key into Borzig's hand and points him toward the river quarter."
-    Write-Scene "Inside the locked storehouse he finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
+    Write-Scene "'The watch keeps asking about tunnels and night movement,' the clerk mutters. 'I want to know where the goods are going.'"
+    Write-Scene "Inside the locked storehouse Borzig finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
     Write-Scene "Someone has been using the place as a transfer point, not just a hiding place."
     Write-ColorLine ""
 
@@ -676,7 +677,7 @@ function Start-StorehouseTroubleQuest {
 
     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $Game.Town.Relationships["MerchantPatron"] = "Grateful"
-    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_storehouse_rats" -CompletionText "The clerk goes pale when Borzig returns the rerouting list. 'So that is where the missing stock went,' he mutters." -ProgressText "Story Progress: Borzig has linked the city's thefts to a real smuggling operation."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_storehouse_rats" -CompletionText "The clerk goes pale when Borzig returns the rerouting list. 'So that is where the missing stock went,' he mutters. 'If the watch is right about movement under the streets, then we're looking at the same beast from two sides.'" -ProgressText "Story Progress: Borzig has linked the city's thefts to a real smuggling operation."
 }
 
 function Start-MissingHerbSatchelQuest {
@@ -826,6 +827,7 @@ function Start-LedgerOfAshQuest {
     Write-SectionTitle -Text "Ledger of Ash" -Color "Yellow"
     Write-Scene "The patron's clerk spreads a smoke-smudged ledger across a narrow desk and shows Borzig which entries do not add up."
     Write-Scene "Some payments are too clean. Some names repeat in different hands. Someone is paying to move goods without asking what they are."
+    Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful.'"
     Write-ColorLine ""
     Write-ColorLine "1. Intimidate the dock clerk named in the ledger" "White"
     Write-ColorLine "2. Study the ledger line by line" "White"
@@ -927,6 +929,7 @@ function Start-BrokenSealPatrolQuest {
     Write-SectionTitle -Text "Broken Seal Patrol" -Color "Yellow"
     Write-Scene "Captain Halden sends Borzig with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
     Write-Scene "The lock is split, the stones are marked, and the air from below smells like wet mortar and torch smoke."
+    Write-Scene "'Your merchant clerk was right about organized movement,' one watchman mutters. 'No one protects a dead tunnel like this unless coin is riding through it.'"
     Write-ColorLine ""
 
     $combatResult = Invoke-StoryCombat `
@@ -954,7 +957,7 @@ function Start-BrokenSealPatrolQuest {
 
     $Game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
     $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
-    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_broken_seal" -CompletionText "Halden listens to the report in silence, then orders the map room opened. 'Good. Now we stop guessing and start hunting.'" -ProgressText "Story Progress: Borzig has confirmed an active understreet route beneath the city."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "guard_broken_seal" -CompletionText "Halden listens to the report in silence, then orders the map room opened. 'Good. Now we stop guessing and start hunting. The merchants have their ledger trail, we have the route, and both point underground.'" -ProgressText "Story Progress: Borzig has confirmed an active understreet route beneath the city."
 }
 
 function Start-NightCourierInterceptQuest {
@@ -995,7 +998,7 @@ function Start-NightCourierInterceptQuest {
 
     Write-SectionTitle -Text "Night Courier Intercept" -Color "Yellow"
     Write-Scene "Belor marks three back lanes on a scrap of guard paper and taps the last one with a callused finger."
-    Write-Scene "'Runner moves light, keeps to shadow, and never uses the same lane twice unless he thinks no one is watching. Tonight we make him wrong.'"
+    Write-Scene "'Runner moves light, keeps to shadow, and never uses the same lane twice unless he thinks no one is watching,' Belor says. 'The clerk's books say messages are moving with the goods. Tonight we make that runner prove it.'"
     Write-ColorLine ""
     Write-ColorLine "1. Set a hard ambush and block the lane with brute presence" "White"
     Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point" "White"
@@ -1102,7 +1105,7 @@ function Start-WarehouseLedgerRecoveryQuest {
 
     Write-SectionTitle -Text "Warehouse Ledger Recovery" -Color "Yellow"
     Write-Scene "The patron's clerk meets Borzig in a side passage and keeps his voice low."
-    Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter.'"
+    Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter. And if the watch is about to move underground, I want them moving with proof in hand.'"
     Write-Scene "The warehouse office is dark, shuttered, and recently searched. Someone knew the papers were worth hiding."
     Write-ColorLine ""
     Write-ColorLine "1. Force the office lock and search fast" "White"
@@ -1225,7 +1228,7 @@ function Start-UnderstreetComplexQuest {
 
     Write-SectionTitle -Text "The Understreet Complex" -Color "Yellow"
     Write-Scene "Captain Halden spreads Borzig's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, and broker whispers that all point below the same streets."
-    Write-Scene "'This is it,' he says. 'No more scattered errands. No more guessing. We know enough to strike the complex under the ward.'"
+    Write-Scene "'This is it,' he says. 'No more scattered errands. No more guessing. The watch has the route, the clerk has the paper trail, and the river whispers filled in the rest. We know enough to strike the complex under the ward.'"
     Write-Scene "The watch begins its quiet preparations while Borzig looks over tunnel sketches showing a sealed descent, a contraband hall, and the command vault at the heart of the route."
     Write-ColorLine ""
     Write-ColorLine "1. Descend with the watch through the broken maintenance shaft" "White"
@@ -1330,6 +1333,7 @@ function Start-WhispersBeneathBentNailQuest {
     Write-SectionTitle -Text "Whispers Beneath the Bent Nail" -Color "Yellow"
     Write-Scene "Past the loud tables and dice cups, a scarred broker finally admits Borzig into the Bent Nail's back booths."
     Write-Scene "The man calls himself Brin and talks like every sentence costs him something. 'You didn't hear this from me,' he mutters. 'But plenty of folk are moving cargo that never sees a legal ledger.'"
+    Write-Scene "'Funny thing,' Brin adds. 'The watch asks about tunnels, the merchants ask about missing goods, and they're both really asking about the same people.'"
     Write-ColorLine ""
     Write-ColorLine "1. Press Brin hard and demand the route names" "White"
     Write-ColorLine "2. Buy him a drink and let him talk on his own terms" "White"
