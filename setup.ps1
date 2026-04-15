@@ -15,8 +15,12 @@
 . "$PSScriptRoot\exploration.ps1"
 
 function Initialize-Game {
+    param(
+        [string]$Class = "Barbarian"
+    )
 
-    $hero = Get-Hero
+    $hero = Get-Hero -Class $Class
+    Set-UiHeroName -Name $hero.Name
     $heroHP = $hero.HP
 
     $rooms = Get-CaveRooms

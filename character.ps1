@@ -394,12 +394,23 @@ function Resolve-HeroShortRest {
 
     if ($HeroHP.Value -ge $Hero.HP) {
         Clear-HeroBuff -Hero $Hero
+        $restoredBardicInspiration = 0
+
+        if ($Hero.Class -eq "Bard") {
+            $beforeDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
+            $prepared = Prepare-HeroBardicInspiration -Hero $Hero
+
+            if ($prepared.Success) {
+                $restoredBardicInspiration = [Math]::Max(0, [int]$Hero.CurrentBardicInspirationDice - $beforeDice)
+            }
+        }
 
         return [PSCustomObject]@{
             Healed = 0
             Roll = $null
             Modifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
             ClearedBuff = $true
+            RestoredBardicInspiration = $restoredBardicInspiration
         }
     }
 
@@ -409,12 +420,23 @@ function Resolve-HeroShortRest {
     $oldHP = $HeroHP.Value
     $HeroHP.Value = [Math]::Min($Hero.HP, $HeroHP.Value + $healing)
     Clear-HeroBuff -Hero $Hero
+    $restoredBardicInspiration = 0
+
+    if ($Hero.Class -eq "Bard") {
+        $beforeDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
+        $prepared = Prepare-HeroBardicInspiration -Hero $Hero
+
+        if ($prepared.Success) {
+            $restoredBardicInspiration = [Math]::Max(0, [int]$Hero.CurrentBardicInspirationDice - $beforeDice)
+        }
+    }
 
     return [PSCustomObject]@{
         Healed = ($HeroHP.Value - $oldHP)
         Roll = $roll
         Modifier = $constitutionModifier
         ClearedBuff = $true
+        RestoredBardicInspiration = $restoredBardicInspiration
     }
 }
 
@@ -555,10 +577,21 @@ function Get-HeroArmorClass {
     param($Hero)
 
     $armorBonus = 0
+    $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
 
     foreach ($item in $Hero.Inventory) {
         if ($item.Type -eq "Armor" -and $item.Equipped -and $null -ne $item.ArmorBonus) {
             $armorBonus += [int]$item.ArmorBonus
+
+            if ($null -ne $item.PSObject.Properties["AddsDexModifier"] -and $item.AddsDexModifier) {
+                $dexBonus = $dexterityModifier
+
+                if ($null -ne $item.PSObject.Properties["DexBonusCap"] -and [int]$item.DexBonusCap -ge 0) {
+                    $dexBonus = [Math]::Min($dexBonus, [int]$item.DexBonusCap)
+                }
+
+                $armorBonus += [Math]::Max(0, $dexBonus)
+            }
         }
     }
 
@@ -580,6 +613,178 @@ function Get-HeroBrawlAbility {
     }
 
     return "STR"
+}
+
+function Get-HeroWeaponAbility {
+    param(
+        $Hero,
+        $Weapon
+    )
+
+    if ($null -eq $Weapon) {
+        return "STR"
+    }
+
+    $strengthModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "STR"
+    $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+    $canUseDexterity = $null -ne $Weapon.PSObject.Properties["RequiredDEX"] -and [int]$Weapon.RequiredDEX -gt 0
+
+    if ($canUseDexterity -and $dexterityModifier -gt $strengthModifier) {
+        return "DEX"
+    }
+
+    return "STR"
+}
+
+function Get-HeroAbilityCheckModifier {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    $modifier = Get-HeroAbilityModifier -Hero $Hero -Ability $Ability
+    $classBonus = 0
+
+    if ($Hero.Class -eq "Bard" -and $Ability -eq "CHA") {
+        $classBonus = 2
+    }
+
+    return [PSCustomObject]@{
+        AbilityModifier = $modifier
+        ClassBonus = $classBonus
+        TotalModifier = $modifier + $classBonus
+    }
+}
+
+function Get-HeroSpellSaveDC {
+    param($Hero)
+
+    if ($Hero.Class -eq "Bard") {
+        return 8 + (Get-HeroProficiencyBonus -Hero $Hero) + (Get-HeroAbilityModifier -Hero $Hero -Ability "CHA")
+    }
+
+    return 8 + (Get-HeroProficiencyBonus -Hero $Hero)
+}
+
+function Get-HeroBardicInspirationMaxDice {
+    param($Hero)
+
+    if ($Hero.Class -ne "Bard") {
+        return 0
+    }
+
+    return 1 + [Math]::Max(0, (Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"))
+}
+
+function Get-HeroInstrument {
+    param($Hero)
+
+    $candidates = @()
+
+    foreach ($item in $Hero.Inventory) {
+        if ($item.Type -eq "Utility" -and $null -ne $item.PSObject.Properties["InspirationBonus"] -and [int]$item.InspirationBonus -gt 0) {
+            $candidates += $item
+        }
+    }
+
+    if ($candidates.Count -eq 0 -and $null -ne $Hero.PSObject.Properties["BackpackInventory"]) {
+        foreach ($item in $Hero.BackpackInventory) {
+            if ($item.Type -eq "Utility" -and $null -ne $item.PSObject.Properties["InspirationBonus"] -and [int]$item.InspirationBonus -gt 0) {
+                $candidates += $item
+            }
+        }
+    }
+
+    if ($candidates.Count -eq 0) {
+        return $null
+    }
+
+    return ($candidates | Sort-Object @{ Expression = { [int]$_.InspirationBonus }; Descending = $true }, Name | Select-Object -First 1)
+}
+
+function Get-HeroBardicInspirationStatus {
+    param($Hero)
+
+    if ($Hero.Class -ne "Bard") {
+        return $null
+    }
+
+    $instrument = Get-HeroInstrument -Hero $Hero
+
+    return [PSCustomObject]@{
+        CurrentDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
+        MaxDice = Get-HeroBardicInspirationMaxDice -Hero $Hero
+        DieSides = if ($null -ne $Hero.PSObject.Properties["BardicInspirationDieSides"]) { [int]$Hero.BardicInspirationDieSides } else { 6 }
+        Instrument = $instrument
+        InstrumentBonus = if ($null -ne $instrument) { [int]$instrument.InspirationBonus } else { 0 }
+    }
+}
+
+function Prepare-HeroBardicInspiration {
+    param($Hero)
+
+    if ($Hero.Class -ne "Bard") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = ""
+            DicePrepared = 0
+        }
+    }
+
+    $instrument = Get-HeroInstrument -Hero $Hero
+    $maxDice = Get-HeroBardicInspirationMaxDice -Hero $Hero
+
+    if ($null -eq $instrument) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) needs a musical instrument on hand to prepare bardic inspiration."
+            DicePrepared = 0
+        }
+    }
+
+    if ($maxDice -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) lacks the force of presence to build a battle-ready refrain."
+            DicePrepared = 0
+        }
+    }
+
+    $Hero.CurrentBardicInspirationDice = $maxDice
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) plays the $($instrument.Name.ToLower()) and carries $maxDice bardic inspiration d$($Hero.BardicInspirationDieSides) into the next danger."
+        DicePrepared = $maxDice
+    }
+}
+
+function Use-HeroBardicInspirationDie {
+    param($Hero)
+
+    $status = Get-HeroBardicInspirationStatus -Hero $Hero
+
+    if ($null -eq $status -or $status.CurrentDice -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            TotalBonus = 0
+            Roll = 0
+            InstrumentBonus = 0
+            InstrumentName = ""
+        }
+    }
+
+    $roll = Roll-Dice -Sides $status.DieSides
+    $totalBonus = $roll + $status.InstrumentBonus
+    $Hero.CurrentBardicInspirationDice = [Math]::Max(0, $status.CurrentDice - 1)
+
+    return [PSCustomObject]@{
+        Success = $true
+        TotalBonus = $totalBonus
+        Roll = $roll
+        InstrumentBonus = $status.InstrumentBonus
+        InstrumentName = if ($null -ne $status.Instrument) { $status.Instrument.Name } else { "" }
+    }
 }
 
 function Get-HeroUnarmedProfile {
@@ -680,15 +885,18 @@ function Get-HeroWeaponProfile {
     param($Hero)
 
     $weapon = Get-EquippedWeapon -Hero $Hero
-    $strengthModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "STR"
     $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
 
     if ($weapon) {
+        $attackAbility = Get-HeroWeaponAbility -Hero $Hero -Weapon $weapon
+        $attackAbilityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $attackAbility
+
         return [PSCustomObject]@{
             Name              = $weapon.Name
+            Ability           = $attackAbility
             AttackBonus       = [int]$weapon.AttackBonus
-            TotalAttackBonus  = $proficiencyBonus + $strengthModifier + [int]$weapon.AttackBonus
-            DamageBonus       = $strengthModifier
+            TotalAttackBonus  = $proficiencyBonus + $attackAbilityModifier + [int]$weapon.AttackBonus
+            DamageBonus       = $attackAbilityModifier
             DamageDiceCount   = [int]$weapon.DamageDiceCount
             DamageDiceSides   = [int]$weapon.DamageDiceSides
             DamageMin         = [int]$weapon.DamageMin
@@ -696,8 +904,8 @@ function Get-HeroWeaponProfile {
             BonusDamageDiceCount = [int]$weapon.BonusDamageDiceCount
             BonusDamageDiceSides = [int]$weapon.BonusDamageDiceSides
             BonusDamageType  = $weapon.BonusDamageType
-            TotalDamageMin    = [Math]::Max(1, [int]$weapon.DamageMin + $strengthModifier)
-            TotalDamageMax    = [Math]::Max(1, [int]$weapon.DamageMax + $strengthModifier + ([int]$weapon.BonusDamageDiceCount * [int]$weapon.BonusDamageDiceSides))
+            TotalDamageMin    = [Math]::Max(1, [int]$weapon.DamageMin + $attackAbilityModifier)
+            TotalDamageMax    = [Math]::Max(1, [int]$weapon.DamageMax + $attackAbilityModifier + ([int]$weapon.BonusDamageDiceCount * [int]$weapon.BonusDamageDiceSides))
         }
     }
 
@@ -847,37 +1055,88 @@ function Can-DropItem {
 }
 
 function Get-Hero {
-    $hero = [PSCustomObject]@{
-        Name               = "Borzig"
-        Class              = "Barbarian"
-        Level              = 1
-        LevelCap           = 2
-        XP                 = 0
-        GoldPouchCapacityGP = 150
-        CurrencyCopper     = 0
-        ActiveBuff         = $null
-        UnarmedTrainingLevel = 0
-        RingWinsTotal      = 0
-        RingVisits         = 0
-        RingRivalries      = @{}
-        HitDie             = 12
-        STR                = 15
-        DEX                = 14
-        CON                = 15
-        INT                = 8
-        WIS                = 10
-        CHA                = 8
-        BaseArmorClass     = 10
-        BaseInventorySlots = 8
-        BackpackCapacitySlots = 4
-        BackpackInventory  = @()
-        StashedInventory   = @()
-        Inventory          = @(
-            (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
-            (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
-            (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
-            (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
-        )
+    param(
+        [string]$Class = "Barbarian"
+    )
+
+    switch ($Class) {
+        "Bard" {
+            $hero = [PSCustomObject]@{
+                Name               = "Gariand"
+                Class              = "Bard"
+                Level              = 1
+                LevelCap           = 2
+                XP                 = 0
+                GoldPouchCapacityGP = 150
+                CurrencyCopper     = 0
+                ActiveBuff         = $null
+                CurrentBardicInspirationDice = 0
+                BardicInspirationDieSides = 6
+                TutorialCampfireHintShown = $false
+                TutorialCombatHintShown = $false
+                UnarmedTrainingLevel = 0
+                RingWinsTotal      = 0
+                RingVisits         = 0
+                RingRivalries      = @{}
+                HitDie             = 8
+                STR                = 8
+                DEX                = 14
+                CON                = 12
+                INT                = 10
+                WIS                = 10
+                CHA                = 15
+                BaseArmorClass     = 10
+                BaseInventorySlots = 8
+                BackpackCapacitySlots = 4
+                BackpackInventory  = @()
+                StashedInventory   = @()
+                Inventory          = @(
+                    (New-WeaponItem -Name "Rapier" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredDEX 12 -SlotCost 1 -Equipped $true)
+                    (New-ArmorItem -Name "Leather Armor" -Value 0 -ArmorBonus 1 -AddsDexModifier $true -SlotCost 1 -Equipped $true)
+                    (New-UtilityItem -Name "Travel Lute" -Value 0 -InspirationBonus 1 -SlotCost 1 -Equipped $true)
+                    (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
+                    (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
+                )
+            }
+        }
+        default {
+            $hero = [PSCustomObject]@{
+                Name               = "Borzig"
+                Class              = "Barbarian"
+                Level              = 1
+                LevelCap           = 2
+                XP                 = 0
+                GoldPouchCapacityGP = 150
+                CurrencyCopper     = 0
+                ActiveBuff         = $null
+                CurrentBardicInspirationDice = 0
+                BardicInspirationDieSides = 6
+                TutorialCampfireHintShown = $false
+                TutorialCombatHintShown = $false
+                UnarmedTrainingLevel = 0
+                RingWinsTotal      = 0
+                RingVisits         = 0
+                RingRivalries      = @{}
+                HitDie             = 12
+                STR                = 15
+                DEX                = 14
+                CON                = 15
+                INT                = 8
+                WIS                = 10
+                CHA                = 8
+                BaseArmorClass     = 10
+                BaseInventorySlots = 8
+                BackpackCapacitySlots = 4
+                BackpackInventory  = @()
+                StashedInventory   = @()
+                Inventory          = @(
+                    (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
+                    (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
+                    (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
+                    (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
+                )
+            }
+        }
     }
 
     $hero | Add-Member -NotePropertyName HP -NotePropertyValue (Get-HeroMaxHP -Hero $hero)

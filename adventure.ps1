@@ -1,6 +1,7 @@
 . "$PSScriptRoot\Setup.ps1"
 
-$game = Initialize-Game
+$selectedClass = Start-ClassSelection
+$game = Initialize-Game -Class $selectedClass
 $heroHP = $game.HeroHP
 $heroDroppedWeapon = $game.HeroDroppedWeapon
 

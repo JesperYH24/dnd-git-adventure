@@ -10,6 +10,15 @@ function Format-InventoryItemLine {
     }
     elseif ($Item.Type -eq "Armor") {
         $tags += "AC +$($Item.ArmorBonus)"
+
+        if ($null -ne $Item.PSObject.Properties["AddsDexModifier"] -and $Item.AddsDexModifier) {
+            if ($null -ne $Item.PSObject.Properties["DexBonusCap"] -and [int]$Item.DexBonusCap -ge 0) {
+                $tags += "DEX to AC (max +$($Item.DexBonusCap))"
+            }
+            else {
+                $tags += "DEX to AC"
+            }
+        }
     }
     elseif ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
         $tags += "+$($Item.HealAmount) HP"
@@ -22,6 +31,9 @@ function Format-InventoryItemLine {
     }
     elseif ($Item.Type -eq "Utility" -and $Item.Name -eq "Backpack") {
         $tags += "separate storage"
+    }
+    elseif ($Item.Type -eq "Utility" -and $null -ne $Item.PSObject.Properties["InspirationBonus"] -and [int]$Item.InspirationBonus -gt 0) {
+        $tags += "inspiration +$($Item.InspirationBonus)"
     }
 
     $slotCost = Get-ItemSlotCost -Item $Item

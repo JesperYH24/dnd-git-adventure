@@ -105,19 +105,25 @@ function Invoke-MonsterAttack {
         $Monster,
         [ref]$HeroHP,
         [ref]$MonsterOffBalance,
-        [int]$BlockArmorBonus = 0
+        [int]$BlockArmorBonus = 0,
+        [int]$AttackPenaltyModifier = 0
     )
 
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $attackRoll = Roll-Dice -Sides 20
-    $attackTotal = $attackRoll + [int]$Monster.attackBonus
+    $attackTotal = $attackRoll + [int]$Monster.attackBonus - $AttackPenaltyModifier
     $blockText = ""
+    $penaltyText = ""
 
     if ($BlockArmorBonus -gt 0) {
         $blockText = " (including +$BlockArmorBonus block)"
     }
 
-    Write-Action "$($Monster.definite) attacks: d20 roll $attackRoll, total $attackTotal vs AC $heroArmorClass$blockText" "DarkCyan"
+    if ($AttackPenaltyModifier -gt 0) {
+        $penaltyText = " (-$AttackPenaltyModifier distract)"
+    }
+
+    Write-Action "$($Monster.definite) attacks: d20 roll $attackRoll, total $attackTotal$penaltyText vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
@@ -134,6 +140,18 @@ function Invoke-MonsterAttack {
         $MonsterOffBalance.Value = $true
     }
     elseif ($attackTotal -ge $heroArmorClass) {
+        $cuttingWordsResult = Try-Resolve-BardCuttingWords `
+            -Hero $Hero `
+            -Monster $Monster `
+            -AttackTotal ([ref]$attackTotal) `
+            -TargetArmorClass $heroArmorClass
+
+        if ($cuttingWordsResult.PreventedHit) {
+            Write-Action "$($Monster.definite) misses after the bard's cutting words throw off the strike!" "DarkGray"
+            Write-ColorLine ""
+            return
+        }
+
         $monsterDamage = Roll-MonsterDamage -Monster $Monster
         $HeroHP.Value -= $monsterDamage
 
@@ -148,6 +166,204 @@ function Invoke-MonsterAttack {
     }
 
     Write-ColorLine ""
+}
+
+function Resolve-HeroInspirationBoost {
+    param(
+        $Hero,
+        [string]$PrimaryAction,
+        [ref]$HeroAttackBonus,
+        [ref]$HeroBlockArmorBonus,
+        [ref]$HeroFocusAttackBonus
+    )
+
+    if ($Hero.Class -ne "Bard") {
+        return
+    }
+
+    $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+
+    if ($null -eq $bardicStatus -or $bardicStatus.CurrentDice -le 0) {
+        return
+    }
+
+    if ($PrimaryAction -eq "A") {
+        $boostLabel = "boost this attack"
+    }
+    elseif ($PrimaryAction -eq "B") {
+        $boostLabel = "strengthen this block"
+    }
+    elseif ($PrimaryAction -eq "F") {
+        $boostLabel = "sharpen this focus"
+    }
+    else {
+        return
+    }
+
+    Write-ColorLine "Spend bardic inspiration to ${boostLabel}?" "Cyan"
+    Write-ColorLine "1. Yes ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides) ready)" "White"
+    Write-ColorLine "2. No" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "2") {
+            Write-ColorLine ""
+            return
+        }
+
+        if ($choice -eq "1") {
+            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+
+            if (-not $inspiration.Success) {
+                Write-ColorLine "No prepared bardic inspiration remains." "DarkYellow"
+                Write-ColorLine ""
+                return
+            }
+
+            if ($PrimaryAction -eq "A") {
+                $HeroAttackBonus.Value += $inspiration.TotalBonus
+                Write-Scene "$($Hero.Name) snaps into tempo on the $($inspiration.InstrumentName.ToLower()), drawing a sharper opening out of the moment."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) to hit." "Yellow"
+            }
+            elseif ($PrimaryAction -eq "B") {
+                $HeroBlockArmorBonus.Value += $inspiration.TotalBonus
+                Write-Scene "$($Hero.Name) lifts the rhythm at just the right instant and turns defense into a tighter guard."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) AC on this block." "Yellow"
+            }
+            else {
+                $HeroFocusAttackBonus.Value += $inspiration.TotalBonus
+                Write-Scene "$($Hero.Name) lets the $($inspiration.InstrumentName.ToLower()) carry a quick refrain that hangs in the air for the next clean opening."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) to the next attack." "Yellow"
+            }
+
+            Write-ColorLine ""
+            return
+        }
+
+        Write-ColorLine "Choose 1 or 2." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
+function Resolve-HeroBonusAction {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$MonsterHP
+    )
+
+    if ($Hero.Class -ne "Bard" -or $MonsterHP.Value -le 0) {
+        return
+    }
+
+    Write-ColorLine "Bonus action?" "Cyan"
+    Write-ColorLine "M. Vicious Mockery" "White"
+    Write-ColorLine "N. No bonus action" "DarkGray"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = (Read-Host "Choose bonus action").ToUpper()
+
+        if ($choice -eq "N") {
+            Write-ColorLine ""
+            return
+        }
+
+        if ($choice -eq "M") {
+            $spellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
+            $wisdomSaveBonus = 0
+
+            if ($null -ne $Monster.PSObject.Properties["wisdomSaveBonus"]) {
+                $wisdomSaveBonus = [int]$Monster.wisdomSaveBonus
+            }
+
+            $saveRoll = Roll-Dice -Sides 20
+            $saveTotal = $saveRoll + $wisdomSaveBonus
+
+            Write-Scene "$($Hero.Name) spits a vicious line that lands like a blade between the ribs of the mind."
+            Write-Action "$($Monster.definite) makes a Wisdom save: d20 roll $saveRoll $(Format-AbilityModifier -Modifier $wisdomSaveBonus) = $saveTotal vs DC $spellSaveDC." "DarkCyan"
+
+            if ($saveTotal -lt $spellSaveDC) {
+                $damage = Roll-Dice -Sides 4
+                $MonsterHP.Value = [Math]::Max(0, $MonsterHP.Value - $damage)
+                Write-Action "Vicious Mockery deals $damage psychic damage." "Yellow"
+            }
+            else {
+                Write-Action "$($Monster.definite) shakes off the mockery and takes no damage." "DarkGray"
+            }
+
+            Write-ColorLine ""
+            return
+        }
+
+        Write-ColorLine "Choose M or N." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
+function Try-Resolve-BardCuttingWords {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$AttackTotal,
+        [int]$TargetArmorClass
+    )
+
+    $result = [PSCustomObject]@{
+        Used = $false
+        PreventedHit = $false
+    }
+
+    if ($Hero.Class -ne "Bard") {
+        return $result
+    }
+
+    $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+
+    if ($null -eq $bardicStatus -or $bardicStatus.CurrentDice -le 0) {
+        return $result
+    }
+
+    Write-ColorLine "Reaction? The attack would hit." "Cyan"
+    Write-ColorLine "1. Use Cutting Words ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides) ready)" "White"
+    Write-ColorLine "2. Let the hit land" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "2") {
+            Write-ColorLine ""
+            return $result
+        }
+
+        if ($choice -eq "1") {
+            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+
+            if (-not $inspiration.Success) {
+                Write-ColorLine "No prepared bardic inspiration remains." "DarkYellow"
+                Write-ColorLine ""
+                return $result
+            }
+
+            $AttackTotal.Value -= $inspiration.TotalBonus
+            $result.Used = $true
+            Write-Scene "$($Hero.Name) lashes out with cutting words, breaking the enemy's rhythm mid-swing."
+            Write-Action "Cutting Words: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = -$($inspiration.TotalBonus) to hit." "Yellow"
+
+            if ($AttackTotal.Value -lt $TargetArmorClass) {
+                $result.PreventedHit = $true
+            }
+
+            Write-ColorLine ""
+            return $result
+        }
+
+        Write-ColorLine "Choose 1 or 2." "DarkYellow"
+        Write-ColorLine ""
+    }
 }
 
 function Resolve-DroppedWeaponTurn {
@@ -225,6 +441,32 @@ function Resolve-DroppedWeaponTurn {
     }
 }
 
+function Show-BardTutorialCombatHint {
+    param($Hero)
+
+    if ($Hero.Class -ne "Bard" -or [int]$Hero.Level -ne 1) {
+        return
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["TutorialCombatHintShown"]) {
+        $Hero | Add-Member -NotePropertyName TutorialCombatHintShown -NotePropertyValue $false
+    }
+
+    if ($Hero.TutorialCombatHintShown) {
+        return
+    }
+
+    $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+
+    if ($null -eq $bardicStatus -or $bardicStatus.CurrentDice -le 0) {
+        return
+    }
+
+    Write-Scene "Prepared bardic inspiration can strengthen Attack, Block, or Focus after you choose the action. Vicious Mockery is your bonus action, and Cutting Words can interrupt a hit as a reaction."
+    Write-ColorLine ""
+    $Hero.TutorialCombatHintShown = $true
+}
+
 function Start-CombatLoop {
     param(
         $Hero,
@@ -247,6 +489,7 @@ function Start-CombatLoop {
         }
 
         $showStatus = $true
+        Show-BardTutorialCombatHint -Hero $Hero
 
         if ($HeroDroppedWeapon.Value) {
             Resolve-DroppedWeaponTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance
@@ -260,6 +503,7 @@ function Start-CombatLoop {
         }
 
         $choice = (Read-Host "What do you want to do? (A/B/F/I/R/T) - Attack, Block, Focus, Inventory, Run or Toggle text speed").ToUpper()
+        $turnHeroAttackBonus = 0
 
         if ($choice -eq "I") {
             Write-ColorLine ""
@@ -293,11 +537,27 @@ function Start-CombatLoop {
             Toggle-TextSpeed | Out-Null
             continue
         }
-        elseif ($choice -eq "B") {
+
+        if ($choice -in @("A", "B", "F")) {
+            Resolve-HeroInspirationBoost `
+                -Hero $Hero `
+                -PrimaryAction $choice `
+                -HeroAttackBonus ([ref]$turnHeroAttackBonus) `
+                -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) `
+                -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
+        }
+
+        if ($choice -eq "B") {
             Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
-            $heroBlockArmorBonus = 2
+            $heroBlockArmorBonus += 2
             Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
             Write-ColorLine ""
+
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
+
+            if ($MonsterHP.Value -le 0) {
+                break
+            }
 
             if (-not $MonsterOffBalance.Value) {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
@@ -316,9 +576,15 @@ function Start-CombatLoop {
         }
         elseif ($choice -eq "F") {
             Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
-            $heroFocusAttackBonus = 2
+            $heroFocusAttackBonus += 2
             Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
             Write-ColorLine ""
+
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
+
+            if ($MonsterHP.Value -le 0) {
+                break
+            }
 
             if (-not $MonsterOffBalance.Value) {
                 Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
@@ -337,8 +603,14 @@ function Start-CombatLoop {
         }
         elseif ($choice -eq "A") {
             Write-ColorLine ""
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier $heroFocusAttackBonus
+            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($heroFocusAttackBonus + $turnHeroAttackBonus)
             $heroFocusAttackBonus = 0
+
+            if ($MonsterHP.Value -le 0) {
+                break
+            }
+
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
 
             if ($MonsterHP.Value -le 0) {
                 break

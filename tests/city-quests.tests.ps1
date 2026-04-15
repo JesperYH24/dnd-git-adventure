@@ -621,6 +621,26 @@ function Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest {
     Assert-Equal -Actual (Get-TownQuestOutcomeText -Quest $quest) -Expected "Strong" -Message "Completed story quests should read as strong by default."
 }
 
+function Test-BardicInspirationCanBoostQuestChecks {
+    $hero = Get-Hero -Class "Bard"
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Use-ReadHostSequence -Values @("1")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 6) { return 4 }
+        return 1
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 10 -ActionText "Borzig leans into a calm, practiced line."
+
+    Assert-Equal -Actual $success -Expected $true -Message "A bard should be able to spend bardic inspiration to push a quest check over the DC."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Spending bardic inspiration on a quest check should consume one prepared die."
+}
+
 function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
     $game = Initialize-Game
     $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
@@ -673,5 +693,6 @@ Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
 Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest
 Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest
 Test-QuestOutcomeTextStaysBlankForDayJobs
+Test-BardicInspirationCanBoostQuestChecks
 
 Write-Host "City quest tests passed." -ForegroundColor Green

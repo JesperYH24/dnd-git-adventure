@@ -24,10 +24,11 @@ function Assert-True {
 }
 
 function Set-TestOutputStubs {
+    $global:CapturedScenes = @()
     $script:readHostResponses = @("1")
     $script:readHostIndex = 0
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
-    function global:Write-Scene { param([string]$Text) }
+    function global:Write-Scene { param([string]$Text) $global:CapturedScenes += $Text }
     function global:Write-Action { param([string]$Text, [string]$Color) }
     function global:Write-ColorLine { param([string]$Text, [string]$Color) }
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
@@ -70,6 +71,56 @@ function Test-DeepChamberForcesRetreatWithoutCompletingQuest {
     Assert-Equal -Actual $game.Quest.Completed -Expected $false -Message "The quest should not complete until the hero reports back to town."
 }
 
+function Test-BardCanPrepareAtCampfireBeforeEnteringTutorialCave {
+    Set-TestOutputStubs
+
+    $script:readHostResponses = @("2", "1")
+    $script:readHostIndex = 0
+
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+
+    $result = Start-CampfireMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $result -Expected "EnterCave" -Message "A bard should still be able to enter the cave directly from the campfire menu."
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected 3 -Message "Choosing to prepare before the tutorial cave should ready the bard's full inspiration pool."
+}
+
+function Test-BardTutorialCombatExplainsBonusActionFlow {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "R"
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $heroHP = $hero.HP
+    $monsterHP = 8
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+    $monster = [PSCustomObject]@{
+        name = "tutorial goblin"
+        definite = "The Tutorial Goblin"
+        hp = 8
+        armorClass = 12
+        attackBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 4
+        damageBonus = 0
+        isBoss = $false
+    }
+
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-True -Condition $hero.TutorialCombatHintShown -Message "The bard should be taught about bonus-action inspiration during the tutorial fights."
+}
+
 Test-DeepChamberForcesRetreatWithoutCompletingQuest
+Test-BardCanPrepareAtCampfireBeforeEnteringTutorialCave
+Test-BardTutorialCombatExplainsBonusActionFlow
 
 Write-Host "Dragon tutorial tests passed." -ForegroundColor Green

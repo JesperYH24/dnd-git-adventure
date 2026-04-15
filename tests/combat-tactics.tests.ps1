@@ -12,6 +12,17 @@ function Assert-Equal {
     }
 }
 
+function Assert-True {
+    param(
+        [bool]$Condition,
+        [string]$Message
+    )
+
+    if (-not $Condition) {
+        throw $Message
+    }
+}
+
 function Set-TestOutputStubs {
     $global:CapturedScenes = @()
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
@@ -92,9 +103,158 @@ function Test-BarbarianCritKillGetsSavageFinisherText {
     }
 }
 
+function Test-BardInspirationBoostsCurrentAttack {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 6) { return 4 }
+        return 11
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $attackBonus = 0
+    $blockBonus = 0
+    $focusBonus = 0
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Resolve-HeroInspirationBoost `
+        -Hero $hero `
+        -PrimaryAction "A" `
+        -HeroAttackBonus ([ref]$attackBonus) `
+        -HeroBlockArmorBonus ([ref]$blockBonus) `
+        -HeroFocusAttackBonus ([ref]$focusBonus)
+
+    Assert-Equal -Actual $attackBonus -Expected 5 -Message "A bard should be able to spend a prepared inspiration die plus instrument bonus on the current attack."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration in combat should spend one prepared die."
+    Assert-Equal -Actual $blockBonus -Expected 0 -Message "Attack inspiration should not improve block."
+    Assert-Equal -Actual $focusBonus -Expected 0 -Message "Current-round Inspire should not spill into future attacks."
+}
+
+function Test-BardInspirationCanBoostBlock {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 6) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $attackBonus = 0
+    $blockBonus = 0
+    $focusBonus = 0
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Resolve-HeroInspirationBoost `
+        -Hero $hero `
+        -PrimaryAction "B" `
+        -HeroAttackBonus ([ref]$attackBonus) `
+        -HeroBlockArmorBonus ([ref]$blockBonus) `
+        -HeroFocusAttackBonus ([ref]$focusBonus)
+
+    Assert-Equal -Actual $attackBonus -Expected 0 -Message "Block inspiration should not boost attack."
+    Assert-Equal -Actual $blockBonus -Expected 4 -Message "A bard should be able to spend a prepared inspiration die plus instrument bonus to strengthen a block."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration to block should spend one prepared die."
+}
+
+function Test-BardViciousMockeryBonusActionDealsPsychicDamage {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "M"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $monsterHP -Expected 17 -Message "Vicious Mockery should deal a small amount of psychic damage as a bonus action."
+}
+
+function Test-BardViciousMockeryCanBeSavedAgainst {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "M"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 18 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $monsterHP -Expected 20 -Message "Vicious Mockery should deal no damage when the target passes its Wisdom save."
+}
+
+function Test-BardCuttingWordsCanTurnHitIntoMiss {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 6) { return 4 }
+        return 11
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+    Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Cutting Words should be able to turn a hit into a miss."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Cutting Words should consume one bardic inspiration die."
+}
+
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
 Test-BarbarianCritKillGetsSavageFinisherText
+Test-BardInspirationBoostsCurrentAttack
+Test-BardInspirationCanBoostBlock
+Test-BardViciousMockeryBonusActionDealsPsychicDamage
+Test-BardViciousMockeryCanBeSavedAgainst
+Test-BardCuttingWordsCanTurnHitIntoMiss
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

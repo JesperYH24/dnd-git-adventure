@@ -403,12 +403,52 @@ function Start-NonCombatQuestCheck {
         [string]$ActionText
     )
 
-    $modifier = Get-HeroAbilityModifier -Hero $Hero -Ability $Ability
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Ability
     $roll = Roll-Dice -Sides 20
-    $total = $roll + $modifier
+    $bardicBonus = 0
+    $bonusText = ""
+
+    if ($checkProfile.ClassBonus -gt 0) {
+        $bonusText = " + $($checkProfile.ClassBonus) bard"
+    }
+
+    if ($Hero.Class -eq "Bard") {
+        $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+
+        if ($null -ne $bardicStatus -and $bardicStatus.CurrentDice -gt 0) {
+            Write-ColorLine "Spend bardic inspiration on this check?" "Cyan"
+            Write-ColorLine "1. Yes ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides) ready)" "White"
+            Write-ColorLine "2. No" "White"
+            Write-ColorLine ""
+
+            while ($true) {
+                $inspirationChoice = Read-Host "Choose"
+
+                if ($inspirationChoice -eq "1") {
+                    $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+
+                    if ($inspiration.Success) {
+                        $bardicBonus = $inspiration.TotalBonus
+                        $bonusText = "$bonusText + $bardicBonus inspiration"
+                    }
+
+                    break
+                }
+
+                if ($inspirationChoice -eq "2") {
+                    break
+                }
+
+                Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+
+    $total = $roll + $checkProfile.TotalModifier + $bardicBonus
 
     Write-Scene $ActionText
-    Write-Action "$($Hero.Name) tests ${Ability}: roll $roll $(Format-AbilityModifier -Modifier $modifier) = $total vs DC $DC" "Cyan"
+    Write-Action "$($Hero.Name) tests ${Ability}: roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier)$bonusText = $total vs DC $DC" "Cyan"
     Write-ColorLine ""
 
     return ($total -ge $DC)
@@ -673,6 +713,10 @@ function Secure-UnderstreetRoomAndRest {
 
     if ($restResult.ClearedBuff) {
         Write-Scene "Any active combat tonic burns out as the short rest settles in."
+    }
+
+    if ($restResult.RestoredBardicInspiration -gt 0) {
+        Write-Scene "$($Game.Hero.Name) also rebuilds $($restResult.RestoredBardicInspiration) bardic inspiration die through the short rest."
     }
 
     Write-ColorLine ""

@@ -1,14 +1,41 @@
+function Start-ClassSelection {
+    while ($true) {
+        Clear-Host
+        Write-SectionTitle -Text "A Call To Adventure" -Color "Magenta"
+        Write-Scene "Beyond the last warm hearth and the final lantern on the road, the world yawns wide with ruined keeps, buried vaults, oathbound steel, and songs older than any kingdom now standing."
+        Write-Scene "This is an age of road dust, dragonfire, sacred relics, and whispered bargains made beneath taverns, towers, and tomb doors sealed by forgotten hands."
+        Write-Scene "Tonight, one soul steps from the edge of ordinary life and into that wider legend, where hunger, glory, terror, and triumph all wait beneath the same dark sky."
+        Write-Scene "Choose the shape your story takes, and let the realm remember the class that first answered the call."
+        Write-ColorLine ""
+        Write-ColorLine "1. Barbarian" "White"
+        Write-ColorLine "2. Bard" "White"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" { return "Barbarian" }
+            "2" { return "Bard" }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-Intro {
     param(
         $Hero,
         [ref]$HeroHP
     )
 
-    Write-Scene "Night hangs heavy over the forest."
-    Write-Scene "$($Hero.Name) sits by the campfire outside a dark cave."
-    Write-Scene "The fire crackles softly while the wind slips through the trees."
-    Write-Scene "$($Hero.Name) is a level $($Hero.Level) $($Hero.Class) with $($HeroHP.Value)/$($Hero.HP) HP."
-    Write-Scene "Somewhere in the depths, danger waits..."
+    Write-SectionTitle -Text "The First Night" -Color "Yellow"
+    Write-Scene "Night hangs heavy over the forest, and the wild dark presses close around the little circle of firelight."
+    Write-Scene "$($Hero.Name) sits beside the campfire outside a black-mouthed cave, with steel, breath, and fate gathering in the hush before danger."
+    Write-Scene "Old roads, hungry ruins, and the promise of hard-won glory all seem to narrow toward this one moment."
+    Write-Scene "$($Hero.Name) stands at level $($Hero.Level) as a $($Hero.Class), carrying $($HeroHP.Value)/$($Hero.HP) HP into whatever waits below."
+    Write-Scene "Somewhere in the depths, the first true trial of the adventure stirs."
     Write-ColorLine ""
 }
 
@@ -32,6 +59,68 @@ function Ensure-TutorialArrivalStarterFunds {
     return [PSCustomObject]@{
         CopperGranted = $missingCopper
         Inn = $cheapestInn
+    }
+}
+
+function Show-BardTutorialCampfireHint {
+    param($Game)
+
+    if ($Game.Hero.Class -ne "Bard" -or $Game.Quest.Completed) {
+        return
+    }
+
+    if ($null -eq $Game.Hero.PSObject.Properties["TutorialCampfireHintShown"]) {
+        $Game.Hero | Add-Member -NotePropertyName TutorialCampfireHintShown -NotePropertyValue $false
+    }
+
+    if ($Game.Hero.TutorialCampfireHintShown) {
+        return
+    }
+
+    Write-Scene "$($Game.Hero.Name) carries a musician's edge into the cave. At the campfire, the instrument can be used to prepare bardic inspiration before danger begins."
+    Write-Scene "Prepared inspiration can boost attack, block, or focus, and it also fuels Cutting Words. It comes back on a short rest, so it is worth readying before the first descent."
+    Write-ColorLine ""
+    $Game.Hero.TutorialCampfireHintShown = $true
+}
+
+function Confirm-BardTutorialPreparation {
+    param($Game)
+
+    if ($Game.Hero.Class -ne "Bard" -or $Game.Quest.Completed) {
+        return
+    }
+
+    $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
+
+    if ($null -eq $bardicStatus -or $null -eq $bardicStatus.Instrument -or $bardicStatus.CurrentDice -gt 0) {
+        return
+    }
+
+    Write-Scene "$($Game.Hero.Name) can take one last breath by the fire and ready bardic inspiration on the $($bardicStatus.Instrument.Name.ToLower()) before entering the cave."
+    Write-ColorLine "1. Prepare bardic inspiration now" "White"
+    Write-ColorLine "2. Enter the cave without preparing" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $preparation = Prepare-HeroBardicInspiration -Hero $Game.Hero
+                Write-Scene $preparation.Message
+                Write-ColorLine ""
+                return
+            }
+            "2" {
+                Write-Scene "$($Game.Hero.Name) lets the last note fade and steps into danger without a prepared refrain."
+                Write-ColorLine ""
+                return
+            }
+            default {
+                Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
     }
 }
 
@@ -124,6 +213,7 @@ function Start-CampfireMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== CAMPFIRE =====" "Yellow"
+        Show-BardTutorialCampfireHint -Game $Game
         Write-Scene "The campfire is a rare moment of safety. Borzig can gather his thoughts here."
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
@@ -131,6 +221,11 @@ function Start-CampfireMenu {
         Write-ColorLine "2. Enter the cave" "White"
         Write-ColorLine "3. Head to town" "White"
         Write-ColorLine "4. Check quest log" "White"
+        if ($Game.Hero.Class -eq "Bard") {
+            $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
+            $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
+            Write-ColorLine "5. Prepare bardic inspiration with $instrumentName ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) ready)" "White"
+        }
         Write-TextSpeedOption
         Write-ColorLine ""
 
@@ -147,6 +242,7 @@ function Start-CampfireMenu {
             }
 
             "2" {
+                Confirm-BardTutorialPreparation -Game $Game
                 Write-Scene "$($Game.Hero.Name) rises, grips the weapon, and walks toward the cave entrance..."
                 Write-Scene "Darkness closes in around him."
                 Write-ColorLine ""
@@ -175,6 +271,17 @@ function Start-CampfireMenu {
 
             "4" {
                 Show-QuestLog -Game $Game -Hero $Game.Hero
+            }
+            "5" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $preparation = Prepare-HeroBardicInspiration -Hero $Game.Hero
+                    Write-Scene $preparation.Message
+                    Write-ColorLine ""
+                }
+                else {
+                    Write-ColorLine "Invalid choice. Try again." "Red"
+                    Write-ColorLine ""
+                }
             }
             "T" {
                 Toggle-TextSpeed | Out-Null

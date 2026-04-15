@@ -263,6 +263,12 @@ function Start-TownQuestPreparationMenu {
         Write-ColorLine "2. Check inventory and gear" "White"
         Write-ColorLine "3. Check quest log" "White"
         Write-ColorLine "4. Return to town without starting" "White"
+        if ($Game.Hero.Class -eq "Bard") {
+            $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
+            $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
+            Write-ColorLine "5. Prepare bardic inspiration with $instrumentName" "White"
+            Write-ColorLine "   Current: $($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides)" "DarkGray"
+        }
         Write-TextSpeedOption
         Write-ColorLine ""
 
@@ -281,6 +287,17 @@ function Start-TownQuestPreparationMenu {
             }
             "4" {
                 return
+            }
+            "5" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $preparation = Prepare-HeroBardicInspiration -Hero $Game.Hero
+                    Write-Scene $preparation.Message
+                    Write-ColorLine ""
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                }
             }
             "T" {
                 Toggle-TextSpeed | Out-Null

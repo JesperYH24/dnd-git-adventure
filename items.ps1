@@ -49,17 +49,21 @@ function New-ArmorItem {
         [string]$Name,
         [int]$Value,
         [int]$ArmorBonus,
+        [bool]$AddsDexModifier = $false,
+        [int]$DexBonusCap = -1,
         [int]$SlotCost = 1,
         [bool]$Equipped = $false
     )
 
     return [PSCustomObject]@{
-        Name       = $Name
-        Type       = "Armor"
-        Value      = $Value
-        ArmorBonus = $ArmorBonus
-        SlotCost   = $SlotCost
-        Equipped   = $Equipped
+        Name            = $Name
+        Type            = "Armor"
+        Value           = $Value
+        ArmorBonus      = $ArmorBonus
+        AddsDexModifier = $AddsDexModifier
+        DexBonusCap     = $DexBonusCap
+        SlotCost        = $SlotCost
+        Equipped        = $Equipped
     }
 }
 
@@ -109,17 +113,19 @@ function New-UtilityItem {
         [string]$Name,
         [int]$Value,
         [int]$SlotBonus = 0,
+        [int]$InspirationBonus = 0,
         [int]$SlotCost = 1,
         [bool]$Equipped = $false
     )
 
     return [PSCustomObject]@{
-        Name      = $Name
-        Type      = "Utility"
-        Value     = $Value
-        SlotBonus = $SlotBonus
-        SlotCost  = $SlotCost
-        Equipped  = $Equipped
+        Name              = $Name
+        Type              = "Utility"
+        Value             = $Value
+        SlotBonus         = $SlotBonus
+        InspirationBonus  = $InspirationBonus
+        SlotCost          = $SlotCost
+        Equipped          = $Equipped
     }
 }
 

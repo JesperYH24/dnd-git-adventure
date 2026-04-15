@@ -18,6 +18,41 @@ function Get-UiOutputSuppressed {
     return [bool]$global:SuppressUiOutput
 }
 
+function Set-UiHeroName {
+    param([string]$Name)
+
+    if ([string]::IsNullOrWhiteSpace($Name)) {
+        $global:UiHeroName = "Borzig"
+        return
+    }
+
+    $global:UiHeroName = $Name
+}
+
+function Get-UiHeroName {
+    if ([string]::IsNullOrWhiteSpace($global:UiHeroName)) {
+        return "Borzig"
+    }
+
+    return [string]$global:UiHeroName
+}
+
+function Resolve-UiHeroText {
+    param([string]$Text)
+
+    if ([string]::IsNullOrEmpty($Text)) {
+        return $Text
+    }
+
+    $heroName = Get-UiHeroName
+
+    if ($heroName -eq "Borzig") {
+        return $Text
+    }
+
+    return $Text.Replace("Borzig", $heroName)
+}
+
 function Get-FastTextEnabled {
     if ($null -eq $global:FastTextEnabled) {
         $global:FastTextEnabled = $false
@@ -144,6 +179,8 @@ function Write-TypeLine {
         return ""
     }
 
+    $Text = Resolve-UiHeroText -Text $Text
+
     if ((Get-FastTextEnabled) -or (Get-TransientTextSkipEnabled)) {
         Write-Host $Text -ForegroundColor $Color
         return ""
@@ -238,6 +275,8 @@ function Write-EmphasisLine {
         return
     }
 
+    $Text = Resolve-UiHeroText -Text $Text
+
     foreach ($line in Split-DisplayText -Text $Text) {
         Write-Host ("  " + $line) -ForegroundColor $Color
     }
@@ -252,6 +291,7 @@ function Write-Scene {
         return
     }
 
+    $Text = Resolve-UiHeroText -Text $Text
     $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
     Write-TypeBlock -Lines $lines -Delay 35 -Color "Gray"
 }
@@ -266,6 +306,7 @@ function Write-Action {
         return
     }
 
+    $Text = Resolve-UiHeroText -Text $Text
     $lines = @(Split-DisplayText -Text $Text | ForEach-Object { "  " + $_ })
     Write-TypeBlock -Lines $lines -Delay 16 -Color $Color
 }
@@ -280,6 +321,7 @@ function Write-ColorLine {
         return
     }
 
+    $Text = Resolve-UiHeroText -Text $Text
     Write-Host $Text -ForegroundColor $Color
 }
 
@@ -294,6 +336,8 @@ function Write-BlinkingLine {
     if (Get-UiOutputSuppressed) {
         return
     }
+
+    $Text = Resolve-UiHeroText -Text $Text
 
     for ($i = 0; $i -lt $Times; $i++) {
         Write-Host "`r$Text" -ForegroundColor $Color1 -NoNewline

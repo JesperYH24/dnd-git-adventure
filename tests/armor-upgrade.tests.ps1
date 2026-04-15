@@ -60,6 +60,69 @@ function Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP {
     Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 4 -Message "The hero's total attack bonus should include Strength, proficiency, and weapon modifier."
 }
 
+function Test-BardStartsWithLightCombatProfileAndCharismaEdge {
+    $hero = Get-Hero -Class "Bard"
+    $weapon = Get-HeroWeaponProfile -Hero $hero
+    $check = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA"
+    $armorClass = Get-HeroArmorClass -Hero $hero
+    $instrument = Get-HeroInstrument -Hero $hero
+
+    Assert-Equal -Actual $hero.Class -Expected "Bard" -Message "Get-Hero should be able to create a bard profile."
+    Assert-Equal -Actual $hero.Name -Expected "Gariand" -Message "The bard should use the class-specific hero name."
+    Assert-Equal -Actual $hero.HP -Expected 9 -Message "A level 1 bard should start with d8 hit points plus Constitution modifier."
+    Assert-Equal -Actual $hero.CHA -Expected 15 -Message "The bard should start with strong Charisma."
+    Assert-Equal -Actual $weapon.Name -Expected "Rapier" -Message "The bard should start with a lighter one-handed weapon."
+    Assert-Equal -Actual $weapon.Ability -Expected "DEX" -Message "Dexterity-based weapons should use the hero's better finesse stat."
+    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 4 -Message "The bard's rapier should still be accurate enough to fight with."
+    Assert-Equal -Actual $armorClass -Expected 13 -Message "The bard's leather armor should add Dexterity to armor class."
+    Assert-Equal -Actual $check.TotalModifier -Expected 4 -Message "The bard should get a small class bonus on Charisma ability checks."
+    Assert-Equal -Actual $instrument.Name -Expected "Travel Lute" -Message "The bard should begin with a starter instrument for bardic inspiration."
+    Assert-Equal -Actual $instrument.InspirationBonus -Expected 1 -Message "The starter instrument should add a fixed bonus to bardic inspiration."
+}
+
+function Test-InitializeGameCanStartWithChosenClass {
+    $game = Initialize-Game -Class "Bard"
+
+    Assert-Equal -Actual $game.Hero.Class -Expected "Bard" -Message "Initialize-Game should honor the selected class."
+    Assert-Equal -Actual $game.Hero.Name -Expected "Gariand" -Message "Initialize-Game should carry the bard's class-specific name into the game state."
+}
+
+function Test-UiHeroTextUsesCurrentHeroName {
+    Set-UiHeroName -Name "Gariand"
+    $resolved = Resolve-UiHeroText -Text "Borzig walks into town."
+    Set-UiHeroName -Name "Borzig"
+
+    Assert-Equal -Actual $resolved -Expected "Gariand walks into town." -Message "UI text should swap the default hero name for the active hero name."
+}
+
+function Test-BardCanPrepareInspirationFromInstrument {
+    $hero = Get-Hero -Class "Bard"
+
+    $result = Prepare-HeroBardicInspiration -Hero $hero
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A bard with an instrument should be able to prepare bardic inspiration before danger."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "Prepared bardic inspiration should equal 1 plus the bard's Charisma modifier."
+}
+
+function Test-ShortRestRestoresPreparedBardicInspiration {
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 6) { return 3 }
+        return 4
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $heroHP = 5
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+    Use-HeroBardicInspirationDie -Hero $hero | Out-Null
+
+    $restResult = Resolve-HeroShortRest -Hero $hero -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "A short rest should restore the bard's prepared inspiration dice."
+    Assert-Equal -Actual $restResult.RestoredBardicInspiration -Expected 1 -Message "Short rest feedback should report how many inspiration dice came back."
+}
+
 function Test-TutorialMonsterArmorClassStaysForgiving {
     $monsters = Get-MonsterList | Where-Object { -not $_.isBoss }
 
@@ -156,6 +219,11 @@ function Test-LevelUpCanUseRolledHPGain {
 Test-BetterArmorRaisesArmorClass
 Test-GreatAxeDamageProfile
 Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
+Test-BardStartsWithLightCombatProfileAndCharismaEdge
+Test-InitializeGameCanStartWithChosenClass
+Test-UiHeroTextUsesCurrentHeroName
+Test-BardCanPrepareInspirationFromInstrument
+Test-ShortRestRestoresPreparedBardicInspiration
 Test-TutorialMonsterArmorClassStaysForgiving
 Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength
 Test-TutorialXPLevelsHeroToTwo

@@ -52,6 +52,8 @@ function Get-HeroStatusSnapshot {
         $unarmedTrainingLevel = [int]$Hero.UnarmedTrainingLevel
     }
 
+    $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+
     return [PSCustomObject]@{
         HPColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
         Weapon = $weapon
@@ -63,10 +65,12 @@ function Get-HeroStatusSnapshot {
         INTMod = Get-HeroAbilityModifier -Hero $Hero -Ability "INT"
         WISMod = Get-HeroAbilityModifier -Hero $Hero -Ability "WIS"
         CHAMod = Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"
+        SpellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
         DisplayXP = $displayXP
         NextLevelXP = $nextLevelXP
         UnarmedTrainingLevel = $unarmedTrainingLevel
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
+        BardicInspiration = $bardicInspirationStatus
     }
 }
 
@@ -103,6 +107,11 @@ function Write-HeroStatusDetails {
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"
     Write-ColorLine "Active Buff: $($Snapshot.ActiveBuff)" "DarkYellow"
 
+    if ($null -ne $Snapshot.BardicInspiration) {
+        $instrumentText = if ($null -ne $Snapshot.BardicInspiration.Instrument) { "$($Snapshot.BardicInspiration.Instrument.Name) (+$($Snapshot.BardicInspiration.InstrumentBonus))" } else { "No instrument" }
+        Write-ColorLine "Bardic Inspiration: $($Snapshot.BardicInspiration.CurrentDice)/$($Snapshot.BardicInspiration.MaxDice) d$($Snapshot.BardicInspiration.DieSides) | Spell Save DC: $($Snapshot.SpellSaveDC) | Instrument: $instrumentText" "DarkYellow"
+    }
+
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {
         Write-ColorLine "Unarmed Training: Tier $($Snapshot.UnarmedTrainingLevel) (+$($Snapshot.UnarmedTrainingLevel) to hit and damage)" "DarkYellow"
     }
@@ -128,7 +137,7 @@ function Show-Status {
     Write-SectionTitle -Text "Battle Status" -Color "Yellow"
     Start-Sleep -Milliseconds 750
 
-    Write-ColorLine "Borzig" "Green"
+    Write-ColorLine $Hero.Name "Green"
     Write-HeroStatusDetails -Hero $Hero -HeroHP $HeroHP -Snapshot $snapshot
 
     Start-Sleep -Milliseconds 750
