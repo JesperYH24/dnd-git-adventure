@@ -260,6 +260,30 @@ The remaining bard work is mostly polish and breadth rather than missing foundat
 - future gear/shop expansion for instruments and lighter armor
 - later spell and class-depth work beyond the current `v1`
 
+### 5. Class parity snapshot
+
+The current build now supports both `Barbarian` and `Bard` as real starting classes, but they are not yet equally deep in every part of the game.
+
+Right now the class split looks roughly like this:
+
+- `Barbarian` feels strongest in raw combat, ring identity, physical intimidation, and the blunt-force version of the adventure
+- `Bard` feels strongest in town reactivity, social problem-solving, performance economy, and class-aware city flavor
+
+That means both classes are playable and distinct, but they are not yet equally authored across every pillar of the game. The bard currently has more bespoke city-content, while the barbarian still has the clearer combat-first fantasy.
+
+The current parity goal for the next barbarian pass is:
+
+- give `Barbarian` more city-specific advantages that are not just the default route
+- add more barbarian-specific quest outcomes where force, threat, toughness, or reputation solve problems in their own way
+- give more NPCs class-specific rewards or trust hooks for `Barbarian`, the way several now do for `Bard`
+- make sure the barbarian has a stronger non-ring city identity, so `Bard` is not the only class with a clearly special loop in town
+
+In short:
+
+- `Bard v1` is now close to feature-complete for this milestone
+- `Barbarian` is still fully playable and coherent
+- the next class-balance polish should focus more on `Barbarian parity` than on adding brand-new bard systems
+
 ---
 
 ## Core scripts
