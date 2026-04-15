@@ -33,6 +33,16 @@ function New-TownQuest {
     }
 }
 
+function Get-QuestHeroName {
+    param($Game)
+
+    if ($null -ne $Game -and $null -ne $Game.Hero -and $null -ne $Game.Hero.PSObject.Properties["Name"] -and -not [string]::IsNullOrWhiteSpace([string]$Game.Hero.Name)) {
+        return [string]$Game.Hero.Name
+    }
+
+    return "Borzig"
+}
+
 function Initialize-TownQuests {
     return @(
         (New-TownQuest -Id "guard_night_watch" -Name "Night Watch Relief" -Source "Guard Station" -Description "The guards need a capable arm on a short night patrol through the outer district." -Objective "Report to the watch captain for an evening patrol." -QuestType "Story" -Tier 1 -RewardCopper 180 -RewardXP 200)
@@ -135,7 +145,7 @@ function Get-StoryClueProgressSummary {
         return "Chapter Two Notes: Tier 1 active. Complete a Tier 1 story quest to unlock Tier 2 city work."
     }
 
-    return "Chapter Two Notes: Tier $currentTier active. Borzig still needs a confirmed understreet access lead."
+    return "Chapter Two Notes: Tier $currentTier active. $(Get-QuestHeroName -Game $Game) still needs a confirmed understreet access lead."
 }
 
 function Get-CompletedStoryQuestCount {
@@ -158,13 +168,18 @@ function Get-TownQuestDailyLimitReached {
 }
 
 function Get-TownQuestDailyLockText {
-    param($Quest)
+    param(
+        $Quest,
+        $Game = $null
+    )
+
+    $heroName = Get-QuestHeroName -Game $Game
 
     if ($Quest.QuestType -eq "DayJob") {
-        return "Borzig has already taken on a paid side job today. Another day job will have to wait until tomorrow."
+        return "$heroName has already taken on a paid side job today. Another day job will have to wait until tomorrow."
     }
 
-    return "Borzig has already spent today's real story effort. Another story quest will have to wait until after a night's rest."
+    return "$heroName has already spent today's real story effort. Another story quest will have to wait until after a night's rest."
 }
 
 function Get-CurrentStoryQuestTier {
@@ -238,7 +253,7 @@ function Get-StoryTierProgressStatus {
             CompletedCount = 0
             StrongNeeded = 0
             FallbackCompletedNeeded = 0
-            StatusText = "Story Tier 4 is active. Borzig has reached the chapter finale tier."
+            StatusText = "Story Tier 4 is active. $(Get-QuestHeroName -Game $Game) has reached the chapter finale tier."
         }
     }
 
@@ -256,7 +271,7 @@ function Get-StoryTierProgressStatus {
     $statusText = "Story Tier $currentTier is active. Strong progress on this tier: $strongCount/$strongNeeded."
 
     if ($strongCount -lt $strongNeeded) {
-        $statusText += " Weak outcomes can still complete quests, but Borzig may need $fallbackCompletedNeeded total Tier $currentTier story quests to unlock Tier $nextTier."
+        $statusText += " Weak outcomes can still complete quests, but $(Get-QuestHeroName -Game $Game) may need $fallbackCompletedNeeded total Tier $currentTier story quests to unlock Tier $nextTier."
     }
 
     return [PSCustomObject]@{
@@ -366,10 +381,10 @@ function Get-UnderstreetFinalEntryMessage {
     }
 
     if ((Get-HeroAvailableLevelUps -Hero $Hero) -gt 0) {
-        return "Borzig is not ready to descend yet. He needs a long rest at the inn to reach level 3 before taking on the Understreet Complex."
+        return "$($Hero.Name) is not ready to descend yet. He needs a long rest at the inn to reach level 3 before taking on the Understreet Complex."
     }
 
-    return "Borzig is not ready to descend yet. He needs to grow stronger and reach level 3 before taking on the Understreet Complex."
+    return "$($Hero.Name) is not ready to descend yet. He needs to grow stronger and reach level 3 before taking on the Understreet Complex."
 }
 
 function Get-QuestRewardText {
@@ -475,7 +490,7 @@ function Accept-TownQuest {
     if (-not (Is-TownQuestUnlocked -Game $Game -Quest $quest)) {
         return [PSCustomObject]@{
             Success = $false
-            Message = "Borzig does not have enough clues to take that quest yet."
+            Message = "$(Get-QuestHeroName -Game $Game) does not have enough clues to take that quest yet."
         }
     }
 
@@ -489,7 +504,7 @@ function Accept-TownQuest {
     if ($quest.Accepted) {
         return [PSCustomObject]@{
             Success = $false
-            Message = "$($quest.Name) is already in Borzig's quest log."
+            Message = "$($quest.Name) is already in $(Get-QuestHeroName -Game $Game)'s quest log."
         }
     }
 
@@ -497,7 +512,7 @@ function Accept-TownQuest {
 
     return [PSCustomObject]@{
         Success = $true
-        Message = "$($quest.Name) is added to Borzig's quest log."
+        Message = "$($quest.Name) is added to $(Get-QuestHeroName -Game $Game)'s quest log."
         Quest = $quest
     }
 }
@@ -520,7 +535,7 @@ function Start-TownQuestAttempt {
     if (Get-TownQuestDailyLimitReached -Game $Game -Quest $quest) {
         return [PSCustomObject]@{
             Success = $false
-            Message = (Get-TownQuestDailyLockText -Quest $quest)
+            Message = (Get-TownQuestDailyLockText -Quest $quest -Game $Game)
         }
     }
 
@@ -738,7 +753,7 @@ function Show-StoryClueLog {
     $storyNotes = @(Get-StoryClueNotes -Game $Game)
 
     if ($storyNotes.Count -eq 0) {
-        Write-ColorLine "Borzig has not pieced together any real city clues yet." "DarkGray"
+        Write-ColorLine "$(Get-QuestHeroName -Game $Game) has not pieced together any real city clues yet." "DarkGray"
         Write-ColorLine ""
         return
     }
@@ -790,7 +805,7 @@ function Show-FailedTownQuestLog {
     $failedQuests = @($Game.Town.Quests | Where-Object { $_.Failed })
 
     if ($failedQuests.Count -eq 0) {
-        Write-ColorLine "Borzig has not failed any town quests." "DarkGray"
+        Write-ColorLine "$(Get-QuestHeroName -Game $Game) has not failed any town quests." "DarkGray"
         Write-ColorLine ""
         return
     }
@@ -830,7 +845,7 @@ function Start-TownQuestLogMenu {
                 if ($acceptedQuests.Count -eq 0) {
                     Write-ColorLine ""
                     Write-ColorLine "===== ACCEPTED QUESTS =====" "Yellow"
-                    Write-ColorLine "Borzig has no accepted town quests right now." "DarkGray"
+                    Write-ColorLine "$(Get-QuestHeroName -Game $Game) has no accepted town quests right now." "DarkGray"
                     Write-ColorLine ""
                     continue
                 }

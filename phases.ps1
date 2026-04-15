@@ -133,7 +133,7 @@ function Complete-TutorialAndEnterTown {
 
     if ($DebugSkip) {
         Write-SectionTitle -Text "Tutorial Skip" -Color "Yellow"
-        Write-Scene "A hidden shortcut pulls Borzig past the early trial and straight toward the city's next chapter."
+        Write-Scene "A hidden shortcut pulls $($Game.Hero.Name) past the early trial and straight toward the city's next chapter."
         Write-Scene "The cave's warning is treated as known, and the road to town opens for testing."
         Write-ColorLine ""
         $Game.Quest.SeenDragon = $true
@@ -152,7 +152,7 @@ function Complete-TutorialAndEnterTown {
     }
 
     Write-Scene "'Report first,' one of them says. 'Tell the captain what you saw in that cave.'"
-    Write-Scene "The guards exchange uneasy looks, then hurry Borzig through the gates."
+    Write-Scene "The guards exchange uneasy looks, then hurry $($Game.Hero.Name) through the gates."
     Write-Scene "They lead him straight to the quest giver so the warning can be heard at once."
     Write-Scene "$($Game.Hero.Name) delivers the warning about the dragon, and the city finally listens."
     $Game.Hero.LevelCap = 3
@@ -167,11 +167,11 @@ function Complete-TutorialAndEnterTown {
     $starterFunds = Ensure-TutorialArrivalStarterFunds -Game $Game
 
     if ($null -ne $starterFunds) {
-        Write-Scene "Seeing Borzig nearly coinless, the quest giver presses just enough travel silver into his hand to cover the cheapest bed in town."
+        Write-Scene "Seeing $($Game.Hero.Name) nearly coinless, the quest giver presses just enough travel silver into his hand to cover the cheapest bed in town."
         Write-Scene "$($Game.Hero.Name) gains $(Convert-CopperToCurrencyText -Copper $starterFunds.CopperGranted), enough for a room at $($starterFunds.Inn.Name)."
     }
 
-    Write-Scene "At last, Borzig is given food, warmth, and a real night's sleep behind the city walls."
+    Write-Scene "At last, $($Game.Hero.Name) is given food, warmth, and a real night's sleep behind the city walls."
     $levelUpMode = ""
 
     if ($DebugSkip) {
@@ -198,7 +198,7 @@ function Complete-TutorialAndEnterTown {
     }
 
     Write-SectionTitle -Text "Tutorial Complete" -Color "Green"
-    Write-EmphasisLine -Text "Borzig survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
+    Write-EmphasisLine -Text "$($Game.Hero.Name) survives the cave, delivers the warning, and completes the tutorial adventure." -Color "Green"
     Write-Scene "Now the city opens around him, with shops, rumors, and new roads waiting beyond the tutorial."
     Write-ColorLine ""
     return "EnterTown"
@@ -214,7 +214,7 @@ function Start-CampfireMenu {
         Write-ColorLine ""
         Write-ColorLine "===== CAMPFIRE =====" "Yellow"
         Show-BardTutorialCampfireHint -Game $Game
-        Write-Scene "The campfire is a rare moment of safety. Borzig can gather his thoughts here."
+        Write-Scene "The campfire is a rare moment of safety. $($Game.Hero.Name) can gather his thoughts here."
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Check inventory" "White"
@@ -263,7 +263,7 @@ function Start-CampfireMenu {
                     continue
                 }
 
-                Write-Scene "The guards recognize the urgency in Borzig's face and let him through."
+                    Write-Scene "The guards recognize the urgency in $($Game.Hero.Name)'s face and let him through."
                 Write-Scene "$($Game.Hero.Name) returns to town with hard-earned knowledge from the cave."
                 Write-ColorLine ""
                 return "EnterTown"

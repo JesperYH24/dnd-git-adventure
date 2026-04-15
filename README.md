@@ -1,13 +1,16 @@
 # DnD Git Adventure
 
-A text-based fantasy adventure in PowerShell where you play as Borzig, a barbarian who survives a dangerous tutorial expedition, reaches town, and begins uncovering a larger threat beneath the city.
+A text-based fantasy adventure in PowerShell where you choose a class, survive a dangerous tutorial expedition, reach town, and begin uncovering a larger threat beneath the city.
 
 ---
 
 ## Current features
 
 - DnD-inspired hero stats: `STR`, `DEX`, `CON`, `INT`, `WIS`, `CHA`
-- barbarian progression with XP, level-up readiness, and long-rest leveling from level 1 to level 3
+- playable class selection at the start of the adventure with:
+  - `Barbarian` as `Borzig`
+  - `Bard` as `Gariand`
+- level-up readiness and long-rest leveling from level 1 to level 3
 - turn-based combat with:
   - initiative rolls
   - critical hits and critical fails
@@ -15,10 +18,26 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - armor class
   - `Block` and `Focus`
   - dropped-weapon recovery for the barbarian
+  - bard spell/save support with a visible `Spell Save DC`
+  - bard reactions and bonus offense through:
+    - `Bardic Inspiration`
+    - `Cutting Words`
+    - `Vicious Mockery`
   - a cleaner battle-status layout with clearer separation between Borzig and the enemy
   - brutal barbarian crit-finish text on lethal takedowns
+- class-specific combat identity for the bard:
+  - `Bardic Inspiration` prepared before danger with an instrument
+  - inspiration dice equal to `1 + CHA modifier`
+  - inspiration dice used after `Attack`, `Block`, or `Focus`
+  - `Vicious Mockery` using a `WIS` save instead of guaranteed damage
+  - `Cutting Words` as a reaction that spends bardic inspiration
+  - short-rest recovery of prepared bardic inspiration
 - cave exploration with connected rooms, backtracking, room loot, and encounters
 - tutorial boss warning flow with a Shadow Sanctum reward choice
+- tutorial support for the bard with:
+  - class-aware intro and campfire hints
+  - bardic inspiration preparation before the first dungeon
+  - smoother tutorial combat onboarding for bard actions
 - quest log with XP tracking plus separate views for accepted quests, completed quests, failed quests, and Chapter Two story clues
 - inventory with:
   - `8` ready-use personal slots
@@ -30,7 +49,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
 - weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
 - town hub with:
   - first-night inn choice after the tutorial
-  - guaranteed coin for the cheapest first-night room if Borzig reaches town broke
+  - guaranteed coin for the cheapest first-night room if the hero reaches town broke
   - `work off the room` fallback when money runs short
   - locked inn booking until the player cancels it with the innkeeper
   - inn-first navigation where the player enters the inn before choosing room or common-room activities
@@ -47,8 +66,11 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - small NPC rewards, information hooks, and discounts
   - deeper innkeeper and street-NPC conversations with repeat-aware dialogue
   - specialist selling prices depending on who Borzig sells to
-  - comments and flavor around Borzig's worn starting gear and rough cave salvage
-- class-aware town NPC reactions that already distinguish the current barbarian from future hero archetypes
+  - comments and flavor around worn starting gear and rough cave salvage
+- class-aware town and NPC reactions with:
+  - different greetings, rewards, and utility hooks for barbarian and bard
+  - bard-aware intros in quest sources, shops, streets, inns, and quest log text
+  - cleaner use of `Gariand` / current hero name across tutorial, town, inn, and performance text
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
   - more narrative round-to-round ring text with lighter rules-facing combat chatter
@@ -80,6 +102,7 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
     - `1 day job per day`
   - story flags for the city mystery under the streets
   - a loose alliance structure between the watch, the patron's clerk, and Bent Nail broker leads, with Borzig acting as the link between official, mercantile, and criminal angles on the same investigation
+  - bard-aware quest routes and briefings in the early city story, including alternate social or performance-flavored solutions
   - day jobs that pay coin but no XP
   - a playable finale in `The Understreet Complex`
   - a level 3 gate before the final assault begins
@@ -92,6 +115,18 @@ A text-based fantasy adventure in PowerShell where you play as Borzig, a barbari
   - improved shop inventory for a level 3 barbarian
   - tougher fighting ring progression after champion status
   - better-paying day jobs for a proven veteran without granting XP
+- bard city identity with:
+  - `Find an audience and perform for coin`
+  - up to `3` performances per day at different venues
+  - venue progression through:
+    - `Market Square`
+    - `Bent Nail`
+    - `Lantern Rest`
+    - `Silver Kettle`
+    - `Private Patron Salon`
+  - performance rewards that do not consume the normal day-job slot
+  - first-night inn events and social standing that can support the bard's audience/invitation loop
+  - better fit with `Lantern Rest` and `Silver Kettle` as the bard's natural city homes
 
 ---
 
@@ -142,7 +177,7 @@ or:
 This hidden shortcut:
 
 - completes the tutorial immediately
-- delivers Borzig to the city
+- delivers the current hero to the city
 - applies the level 2 long-rest level up with fixed HP gain
 - restores him to full HP
 - always takes the reduced Shadow Sanctum gold reward path of `2 GP`
@@ -156,7 +191,7 @@ The current build is split into two major phases:
 
 ### 1. Tutorial cave
 
-Borzig begins outside the cave at a campfire.
+The hero begins outside the cave at a campfire.
 
 From there the player can:
 
@@ -169,7 +204,7 @@ The city remains blocked until the tutorial quest is completed.
 
 ### 2. Town
 
-After the warning is delivered, the game opens into a simple town hub where Borzig can:
+After the warning is delivered, the game opens into a simple town hub where the hero can:
 
 - choose an inn for the first night in the city
 - keep or cancel a room booking through the innkeeper
@@ -184,6 +219,7 @@ After the warning is delivered, the game opens into a simple town hub where Borz
 - sell gear either to a dedicated town buyer or to specialists who value some item types more than others
 - keep extra gear in the backpack, then move items onto Borzig's person before combat if they need to be used in battle
 - begin the Chapter Two city story through the first guard quest chain
+- if playing `Bard`, perform for coin and build standing with audiences, patrons, and better venues
 
 ### 3. Chapter Two
 
@@ -199,9 +235,30 @@ The three main Chapter Two quest sources now read more clearly as a loose allian
 
 Borzig effectively becomes the bridge between those three angles, carrying hard proof and rumors back and forth until the city has enough to strike below the streets.
 
+When playing as `Bard`, several early city quests now support a different feel from the barbarian route. The bard can lean harder on `CHA`, crowd control, staged performances, merchant ego, and polished lies in places where Borzig would more often force, pressure, or outlast the same obstacle.
+
 The final quest now plays as a more involved mini-dungeon with branching rooms, dead ends, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
 
 Searching rooms in the Understreet now uses `INT`, and several chambers deliberately hint when something feels hidden, recently disturbed, or worth forcing open. That gives the finale more of a real dungeon rhythm where observation, route choice, loot pressure, and resource management matter alongside combat.
+
+### 4. Bard v1
+
+The bard is now a real alternate playthrough rather than just a combat variant.
+
+`Gariand` currently has:
+
+- distinct tutorial onboarding
+- distinct combat tools and resource management
+- a separate money loop through performances
+- early city quest alternatives
+- class-aware inn, NPC, shop, and quest-source reactions
+
+The remaining bard work is mostly polish and breadth rather than missing foundations:
+
+- more full-playthrough testing from tutorial through Tier 2 city quests
+- more scattered bard-specific dialogue and quest variants
+- future gear/shop expansion for instruments and lighter armor
+- later spell and class-depth work beyond the current `v1`
 
 ---
 
@@ -254,6 +311,14 @@ Examples:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tests\town-shop.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\currency-and-buff.tests.ps1
+```
+
+Useful current suites include:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\city-quests.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
 ```
 
 ---

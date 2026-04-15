@@ -32,6 +32,16 @@ function Get-HeroTownPersona {
     }
 }
 
+function Get-HeroTownName {
+    param($Hero)
+
+    if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["Name"] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) {
+        return [string]$Hero.Name
+    }
+
+    return "Borzig"
+}
+
 function Get-InnKeeperGreeting {
     param(
         $Inn,
@@ -67,7 +77,7 @@ function Get-InnKeeperGreeting {
             }
 
             if ($persona.IsBardLike -or $persona.IsCharming) {
-                return "Oren's smile comes easier as he sizes Borzig up. 'A good room, a better meal, and company willing to listen if you speak like you mean it. That is what the Lantern Rest is for.'"
+                return "Oren's smile comes easier as he sizes $(Get-HeroTownName -Hero $Hero) up. 'A good room, a better meal, and company willing to listen if you speak like you mean it. That is what the Lantern Rest is for.'"
             }
 
             if ($persona.IsKnightLike) {
@@ -109,13 +119,14 @@ function Get-WidowEliraIntro {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $heroName = Get-HeroTownName -Hero $Hero
 
     if ($Hero.Level -ge 3) {
-        return "Widow Elira squeezes Borzig's forearm and smiles with more pride than fear now. 'They say you went under the city and came back with the dark broken behind you. Folk sleep easier for it.'"
+        return "Widow Elira squeezes $heroName's forearm and smiles with more pride than fear now. 'They say you went under the city and came back with the dark broken behind you. Folk sleep easier for it.'"
     }
 
     if ($persona.IsBardLike -or $persona.IsCharming) {
-        return "Widow Elira reaches for Borzig's hand with watery eyes. 'The city said you carried yourself gently, and now I see why. Your warning brought my son home before sunset.'"
+        return "Widow Elira reaches for $heroName's hand with watery eyes. 'The city said you carried yourself gently, and now I see why. Your warning brought my son home before sunset.'"
     }
 
     if ($persona.IsKnightLike) {
@@ -123,27 +134,28 @@ function Get-WidowEliraIntro {
     }
 
     if ($persona.IsBarbarian -or $persona.IsStrong) {
-        return "Widow Elira grips Borzig's wrist with surprising strength. 'I feared a hard man would bring only hard news, but your warning brought my son home before sunset.'"
+        return "Widow Elira grips $heroName's wrist with surprising strength. 'I feared a hard man would bring only hard news, but your warning brought my son home before sunset.'"
     }
 
-    return "Widow Elira grips Borzig's wrist with surprising strength. 'My son was on the road when the dragon panic started. Your warning brought him home before sunset.'"
+    return "Widow Elira grips $heroName's wrist with surprising strength. 'My son was on the road when the dragon panic started. Your warning brought him home before sunset.'"
 }
 
 function Get-HadrikIntro {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $heroName = Get-HeroTownName -Hero $Hero
 
     if ($Hero.Level -ge 3) {
         return "Hadrik's grin comes faster now. 'So it is true. You broke the smugglers' den under the ward. Master's been saying steel feels different in the hands of someone the city finally believes in, especially when he walked in the first time with half-patched kit and cave salvage on his belt.'"
     }
 
     if ($persona.IsBarbarian -or $persona.IsStrong) {
-        return "Hadrik wipes soot from his brow and grins at Borzig's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly. Looking at that axe and those scraps, you could use better steel too.'"
+        return "Hadrik wipes soot from his brow and grins at $heroName's build. 'Master Rurik respects shoulders like those. Anyone who walks back from a dragon's shadow alive is worth arming properly. Looking at that axe and those scraps, you could use better steel too.'"
     }
 
     if ($persona.IsBardLike -or $persona.IsCharming) {
-        return "Hadrik wipes soot from his brow and gives Borzig a curious look. 'You do not look like the forge's usual customer, but anyone who comes back from a dragon's shadow deserves a fair word with Rurik.'"
+        return "Hadrik wipes soot from his brow and gives $heroName a curious look. 'You do not look like the forge's usual customer, but anyone who comes back from a dragon's shadow deserves a fair word with Rurik. Even a performer needs buckles that hold and armor that does not fall apart under bad luck.'"
     }
 
     if ($persona.IsKnightLike) {
@@ -157,17 +169,18 @@ function Get-BelorIntro {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $heroName = Get-HeroTownName -Hero $Hero
 
     if ($Hero.Level -ge 3) {
         return "Watchman Belor's nod is small but real. 'The halls under the ward are yours now, as far as the watch is concerned. Means the next work we hand you won't be small.'"
     }
 
     if ($persona.IsKnightLike) {
-        return "Watchman Belor gives Borzig the kind of look guards save for people they might one day salute. 'If the cave held one ancient thing, do not assume it held only one.'"
+        return "Watchman Belor gives $heroName the kind of look guards save for people they might one day salute. 'If the cave held one ancient thing, do not assume it held only one.'"
     }
 
     if ($persona.IsBardLike -or $persona.IsCharming) {
-        return "Watchman Belor studies Borzig a moment longer than most guards bother to. 'You speak well enough to be listened to. Use that well if the cave's trouble spreads further.'"
+        return "Watchman Belor studies $heroName a moment longer than most guards bother to. 'You speak well enough to be listened to. Use that well if the cave's trouble spreads further. The watch has use for people who can get the truth before steel has to.'"
     }
 
     if ($persona.IsBarbarian -or $persona.IsStrong) {
@@ -229,7 +242,7 @@ function Resolve-WidowEliraChoice {
     )
 
     if ($Game.Town.StreetFlags["WidowEliraResolved"]) {
-        return "Elira folds Borzig's hand between both of hers. 'You made your answer already, hero. I remember kindness when I see it.'"
+        return "Elira folds $(Get-HeroTownName -Hero $Game.Hero)'s hand between both of hers. 'You made your answer already, hero. I remember kindness when I see it.'"
     }
 
     $Game.Town.StreetFlags["WidowEliraResolved"] = $true
@@ -237,7 +250,7 @@ function Resolve-WidowEliraChoice {
     if ($Choice -eq "2") {
         Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 4 | Out-Null
         $Game.Town.StreetFlags["WidowGiftClaimed"] = $true
-        return "Elira presses a tiny cloth purse into Borzig's palm before he can object. Borzig receives 4 SP from the widow's grateful gift."
+        return "Elira presses a tiny cloth purse into $(Get-HeroTownName -Hero $Game.Hero)'s palm before he can object. $(Get-HeroTownName -Hero $Game.Hero) receives 4 SP from the widow's grateful gift."
     }
 
     $Game.Town.StreetFlags["WidowGiftDeclined"] = $true
@@ -250,6 +263,8 @@ function Resolve-HadrikChoice {
         [string]$Choice
     )
 
+    $persona = Get-HeroTownPersona -Hero $Game.Hero
+
     if ($Game.Town.StreetFlags["HadrikResolved"]) {
         return "Hadrik jerks a thumb toward the forge. 'Already told you what I know. Rurik won't hear a better word from me.'"
     }
@@ -257,6 +272,12 @@ function Resolve-HadrikChoice {
     $Game.Town.StreetFlags["HadrikResolved"] = $true
 
     if ($Choice -eq "1") {
+        if ($persona.IsBardLike -or $persona.IsCharming) {
+            $Game.Town.StreetFlags["HadrikInstrumentDiscountUnlocked"] = $true
+            Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 60
+            return "Hadrik rubs soot into one palm and nods toward the market. 'Rurik does not sell lutes, but he fits brass pegs and bridge pins for Toma's stage pieces. Tell the stringwright I sent you and he'll shave the price on a Stage Lute.' A 6 SP discount is now available on the Stage Lute in the market."
+        }
+
         $Game.Town.StreetFlags["SmithyDiscountUnlocked"] = $true
         Set-TownOfferDiscount -Game $Game -OfferId "smithy_greataxe" -DiscountCopper 60
         return "Hadrik lowers his voice. 'Tell Rurik I sent you. He'll shave the price on the Steel Great Axe.' A 6 SP discount is now available on the Steel Great Axe at the smithy."
@@ -272,13 +293,21 @@ function Resolve-BelorChoice {
         [string]$Choice
     )
 
+    $persona = Get-HeroTownPersona -Hero $Game.Hero
+
     if ($Game.Town.StreetFlags["BelorResolved"]) {
-        return "Belor gives Borzig a short nod. 'Told you what mattered. The rest is on you.'"
+        return "Belor gives $(Get-HeroTownName -Hero $Game.Hero) a short nod. 'Told you what mattered. The rest is on you.'"
     }
 
     $Game.Town.StreetFlags["BelorResolved"] = $true
 
     if ($Choice -eq "1") {
+        if ($persona.IsBardLike -or $persona.IsCharming) {
+            $Game.Town.StreetFlags["BelorSquarePermit"] = $true
+            $Game.Town.Relationships["Belor"] = "Respectful"
+            return "Belor glances over the market and grunts. 'If your tongue and hands can hold a crowd, do it where the watch can see you. Tell the square wardens I cleared you to work the market. They'll give you better space and leave the hat alone.' $(Get-HeroTownName -Hero $Game.Hero) gains a market performance permit from the watch."
+        }
+
         $Game.Town.Relationships["Belor"] = "Trusting"
         return "Belor leans in and points across the square. 'The guard station pays steady coin for ugly work. If you want honest jobs, start there.'"
     }
@@ -465,7 +494,8 @@ function Start-HadrikConversation {
         }
         Write-ColorLine "1. Ask about the forge and its steel" "White"
         Write-ColorLine "2. Ask how business in the city has changed" "White"
-        Write-ColorLine "3. Ask if the forge has anything worth carrying into the wilds" "White"
+        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "3. Ask if the forge knows anyone outfitting duelists and performers" } else { "3. Ask if the forge has anything worth carrying into the wilds" }
+        Write-ColorLine $workQuestion "White"
         Write-ColorLine "4. Shrug him off and keep walking" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
@@ -510,7 +540,8 @@ function Start-BelorConversation {
             Write-Scene (Get-BelorIntro -Hero $Game.Hero)
             $showIntro = $false
         }
-        Write-ColorLine "1. Ask where a capable fighter can find decent work" "White"
+        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "1. Ask where someone with presence can find honest coin" } else { "1. Ask where a capable fighter can find decent work" }
+        Write-ColorLine $workQuestion "White"
         Write-ColorLine "2. Ask what has the watch worried" "White"
         Write-ColorLine "3. Ask which part of the city feels wrong" "White"
         Write-ColorLine "4. Thank him and move on" "White"
@@ -559,12 +590,23 @@ function Start-TownStreetScene {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
 
         if ($showIntro -and -not $Game.Town.StreetFlags["StreetSceneVisited"]) {
-            Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
-            Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "Gariand moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers and curious tavern retellings."
+                Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble, certain he can talk his way into rooms they cannot reach."
+            }
+            else {
+                Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
+                Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
+            }
             $Game.Town.StreetFlags["StreetSceneVisited"] = $true
         }
         elseif ($showIntro) {
-            Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, each hoping to be remembered when the city's whispers need carrying somewhere useful."
+            }
+            else {
+                Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
+            }
         }
 
         $showIntro = $false

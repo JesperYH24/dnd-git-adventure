@@ -77,8 +77,15 @@ function Resolve-InnEvent {
             if ($EventRoll -le 55) {
                 if (-not $Game.Town.InnFlags["LanternMerchantDiscount"]) {
                     $Game.Town.InnFlags["LanternMerchantDiscount"] = $true
-                    Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
-                    Write-Scene "A caravan factor shares road gossip over supper, then tells the market to give Borzig a better rate on basic healing supplies."
+                    if ($Game.Hero.Class -eq "Bard") {
+                        $Game.Town.Relationships["LanternAudience"] = "Warm"
+                        Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
+                        Write-Scene "A caravan factor shares road gossip over supper, then decides Gariand belongs in better company than the back corner. By dessert, the market stringwright has been told to shave the price on a Stage Lute."
+                    }
+                    else {
+                        Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
+                        Write-Scene "A caravan factor shares road gossip over supper, then tells the market to give Borzig a better rate on basic healing supplies."
+                    }
                 }
                 else {
                     Write-Scene "Travelers trade the latest road rumors across the room, but nothing sharper than that reaches Borzig tonight."
@@ -114,9 +121,17 @@ function Resolve-InnEvent {
             if ($EventRoll -le 70) {
                 if (-not $Game.Town.InnFlags["SilverKettleContact"]) {
                     $Game.Town.InnFlags["SilverKettleContact"] = $true
-                    $Game.Town.Relationships["MagistrateClerk"] = "Introduced"
-                    Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
-                    Write-Scene "Between candlelight and quiet music, a magistrate's clerk takes notice of Borzig and offers a proper introduction to more respectable circles."
+                    if ($Game.Hero.Class -eq "Bard") {
+                        $Game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
+                        $Game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
+                        $Game.Town.Relationships["MerchantPatron"] = "Favorable"
+                        Write-Scene "Between candlelight and quiet music, a patron at the upper tables takes notice of Gariand and quietly decides he belongs in smaller, richer rooms. Before the night is done, a private salon invitation is left waiting with the bill."
+                    }
+                    else {
+                        $Game.Town.Relationships["MagistrateClerk"] = "Introduced"
+                        Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
+                        Write-Scene "Between candlelight and quiet music, a magistrate's clerk takes notice of Borzig and offers a proper introduction to more respectable circles."
+                    }
                 }
                 else {
                     Write-Scene "The upper tables continue their soft, expensive gossip. Borzig is watched now with recognition instead of suspicion."
@@ -207,12 +222,25 @@ function Resolve-LanternRestEveningChoice {
     if ($Choice -eq "1") {
         if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
             $Game.Town.InnFlags["LanternTradeAdvice"] = $true
-            Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
-            Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
-            Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
+            if ($Game.Hero.Class -eq "Bard") {
+                Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
+                $Game.Town.Relationships["LanternAudience"] = "Warm"
+                Write-Scene "Merchants and factors wave $($Game.Hero.Name) into the better half of the room, compare supper-room tastes, and quietly point him toward the market stringwright who outfits performers that travelers actually remember."
+                Write-EmphasisLine -Text "$($Game.Hero.Name) earns warm standing at the Lantern Rest. The Stage Lute is now cheaper at the market." -Color "Yellow"
+            }
+            else {
+                Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
+                Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
+                Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
+            }
         }
         else {
-            Write-Scene "The merchant tables are good company, but their useful advice has already been spent once."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "The merchant tables still make room for $($Game.Hero.Name), and more than one traveler asks whether he will be taking the room's song again tomorrow."
+            }
+            else {
+                Write-Scene "The merchant tables are good company, but their useful advice has already been spent once."
+            }
         }
 
         return
@@ -222,11 +250,22 @@ function Resolve-LanternRestEveningChoice {
         if (-not $Game.Town.InnFlags["LanternGuardRumor"]) {
             $Game.Town.InnFlags["LanternGuardRumor"] = $true
             $Game.Town.Relationships["NightCaptain"] = "Mentioned"
-            Write-Scene "Caravan guards swap route warnings with watchmen and mention a captain who pays well for reliable steel on dirty night work."
-            Write-EmphasisLine -Text "Borzig hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "Caravan guards and watch hands admit that a smooth tongue settles almost as many roadside problems as a drawn blade. Before the cups empty, they point $($Game.Hero.Name) toward captains who remember a face that can hold a room without starting a riot."
+                Write-EmphasisLine -Text "$($Game.Hero.Name) hears guard-station rumors that suit a bard's public touch as much as a fighter's nerve." -Color "Yellow"
+            }
+            else {
+                Write-Scene "Caravan guards swap route warnings with watchmen and mention a captain who pays well for reliable steel on dirty night work."
+                Write-EmphasisLine -Text "Borzig hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
+            }
         }
         else {
-            Write-Scene "The guards nod to Borzig like a familiar face now, but tonight they have no fresh work to whisper about."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "The guards greet $($Game.Hero.Name) like a man who might solve a bad scene before it becomes a report, but tonight they have no fresher rumor than that."
+            }
+            else {
+                Write-Scene "The guards nod to Borzig like a familiar face now, but tonight they have no fresh work to whisper about."
+            }
         }
 
         return
@@ -266,11 +305,23 @@ function Resolve-SilverKettleEveningChoice {
         if (-not $Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
             $Game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
             $Game.Town.QuestPayoutBonusCopper = 20
-            Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
-            Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
+            if ($Game.Hero.Class -eq "Bard") {
+                $Game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
+                Write-Scene "Under silver lamps and careful laughter, $($Game.Hero.Name) listens while patrons discuss salon fees, private invitations, and which houses pay best for talent they can call their own for an evening."
+                Write-EmphasisLine -Text "$($Game.Hero.Name) learns how upper-room patrons spend. Future city payouts can improve, and the Silver Kettle starts treating him like an artist worth remembering." -Color "Yellow"
+            }
+            else {
+                Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
+                Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
+            }
         }
         else {
-            Write-Scene "The contract talk is still there if Borzig wants it, but the useful part has already been learned."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "The contract talk has changed now that $($Game.Hero.Name) is known. The room speaks around him less like hired muscle and more like expensive company."
+            }
+            else {
+                Write-Scene "The contract talk is still there if Borzig wants it, but the useful part has already been learned."
+            }
         }
 
         return
@@ -280,12 +331,25 @@ function Resolve-SilverKettleEveningChoice {
         if (-not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
             $Game.Town.InnFlags["SilverKettlePatronFavor"] = $true
             $Game.Town.Relationships["MerchantPatron"] = "Favorable"
-            Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
-            Write-Scene "A wealthy patron takes to Borzig's plain honesty and leaves 5 SP with Madam Seraphine to cover his next meal and wine."
-            Write-EmphasisLine -Text "Borzig earns a small favor among the upper tables." -Color "Yellow"
+            if ($Game.Hero.Class -eq "Bard") {
+                Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
+                $Game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
+                Write-Scene "A patron with taste, money, and too much free time decides $($Game.Hero.Name) belongs closer to the candlelight than the wall. By the end of the introduction, Madam Seraphine is holding 5 SP in room credit and a private card for a future salon."
+                Write-EmphasisLine -Text "$($Game.Hero.Name) earns upper-table favor and an early private invitation." -Color "Yellow"
+            }
+            else {
+                Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
+                Write-Scene "A wealthy patron takes to Borzig's plain honesty and leaves 5 SP with Madam Seraphine to cover his next meal and wine."
+                Write-EmphasisLine -Text "Borzig earns a small favor among the upper tables." -Color "Yellow"
+            }
         }
         else {
-            Write-Scene "The upper room remembers Borzig well enough now, and that alone opens more doors than a second introduction would."
+            if ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "The upper room remembers $($Game.Hero.Name) well enough now that introductions come easier than requests. The Silver Kettle clearly expects to see him again."
+            }
+            else {
+                Write-Scene "The upper room remembers Borzig well enough now, and that alone opens more doors than a second introduction would."
+            }
         }
 
         return
@@ -337,6 +401,9 @@ function Start-InnEveningMenu {
                 }
                 Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
                 Write-ColorLine "2. Join a loud dice table" "White"
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-ColorLine "4. Play a rough set for the room" "White"
+                }
                 $bentNailQuest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
 
                 if ($null -ne $bentNailQuest -and (Is-TownQuestUnlocked -Game $Game -Quest $bentNailQuest) -and -not $bentNailQuest.Completed) {
@@ -346,19 +413,35 @@ function Start-InnEveningMenu {
             }
             "lantern_rest" {
                 if ($showIntro) {
-                    Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
+                    if ($Game.Hero.Class -eq "Bard") {
+                        Write-Scene "The Lantern Rest feels built for a working bard: warm light, decent listeners, and enough merchants under one roof to turn a good evening into tomorrow's invitation."
+                    }
+                    else {
+                        Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
+                    }
                 }
                 Write-ColorLine "1. Share supper with the merchants" "White"
                 Write-ColorLine "2. Sit with the guards and caravan hands" "White"
                 Write-ColorLine "3. Join the room's drinking song" "White"
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-ColorLine "4. Take over the room with a traveler's set" "White"
+                }
             }
             "silver_kettle" {
                 if ($showIntro) {
-                    Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
+                    if ($Game.Hero.Class -eq "Bard") {
+                        Write-Scene "The Silver Kettle hums with polished manners, private money, and the dangerous possibility that the right performance could lift $($Game.Hero.Name) into rooms the rest of the city only serves."
+                    }
+                    else {
+                        Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
+                    }
                 }
                 Write-ColorLine "1. Listen to the contract talk over wine" "White"
                 Write-ColorLine "2. Make a polished introduction to the upper tables" "White"
                 Write-ColorLine "3. Stay visible and see who takes offense" "White"
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-ColorLine "4. Offer a polished evening performance" "White"
+                }
             }
         }
 
@@ -375,6 +458,12 @@ function Start-InnEveningMenu {
 
         switch ($inn.Id) {
             "bent_nail" {
+                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                    Resolve-BardPerformance -Game $Game -VenueId "bent_nail_stage" | Out-Null
+                    Write-ColorLine ""
+                    continue
+                }
+
                 if ($choice -eq "3") {
                     $quest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
 
@@ -422,8 +511,24 @@ function Start-InnEveningMenu {
 
                 Resolve-BentNailEveningChoice -Game $Game -Choice $choice
             }
-            "lantern_rest" { Resolve-LanternRestEveningChoice -Game $Game -Choice $choice }
-            "silver_kettle" { Resolve-SilverKettleEveningChoice -Game $Game -Choice $choice }
+            "lantern_rest" {
+                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                    Resolve-BardPerformance -Game $Game -VenueId "lantern_rest_stage" | Out-Null
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Resolve-LanternRestEveningChoice -Game $Game -Choice $choice
+            }
+            "silver_kettle" {
+                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                    Resolve-BardPerformance -Game $Game -VenueId "silver_kettle_stage" | Out-Null
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Resolve-SilverKettleEveningChoice -Game $Game -Choice $choice
+            }
         }
 
         Write-ColorLine ""
@@ -575,6 +680,8 @@ function Resolve-InnWorkOffRoom {
         $Game.Town.Ring.FoughtToday = $true
         $Game.Town.StoryQuestDoneToday = $false
         $Game.Town.DayJobDoneToday = $false
+        $Game.Town.PerformanceCountToday = 0
+        $Game.Town.PerformanceVenuesToday = @{}
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
         Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
@@ -680,20 +787,22 @@ function Resolve-InnStay {
     $Game.Town.Ring.FoughtToday = $false
     $Game.Town.StoryQuestDoneToday = $false
     $Game.Town.DayJobDoneToday = $false
+    $Game.Town.PerformanceCountToday = 0
+    $Game.Town.PerformanceVenuesToday = @{}
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
-        Write-Scene $Inn.RestText
+        Write-Scene (Format-InnHeroText -Text $Inn.RestText -Hero $Game.Hero)
     }
     else {
-        Write-Scene (Get-InnRepeatRestText -Inn $Inn)
+        Write-Scene (Get-InnRepeatRestText -Inn $Inn -Hero $Game.Hero)
     }
-    Write-Scene "A full night's rest restores Borzig to full health, and any lingering combat tonic fades with the morning."
+    Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, and any lingering combat tonic fades with the morning."
     Write-ColorLine ""
 
     if (-not $Game.Town.ChapterOneComplete) {
         $Game.Town.ChapterOneComplete = $true
         Write-SectionTitle -Text "Chapter One Complete" -Color "Green"
-        Write-EmphasisLine -Text "Borzig survives the cave, reaches the city, and earns his first true night behind safe walls." -Color "Green"
+        Write-EmphasisLine -Text "$($Game.Hero.Name) survives the cave, reaches the city, and earns his first true night behind safe walls." -Color "Green"
         Write-Scene "The tutorial ends not at a lonely campfire, but in a rented room above the noise of a living city."
         Write-ColorLine ""
     }
@@ -710,7 +819,7 @@ function Resolve-BookedInnNightRest {
     $inn = $Game.Town.ActiveInn
 
     if ($null -eq $inn) {
-        Write-Scene "Borzig has no room to return to tonight."
+        Write-Scene "$($Game.Hero.Name) has no room to return to tonight."
         Write-ColorLine ""
         return $false
     }
@@ -740,15 +849,17 @@ function Resolve-BookedInnNightRest {
     }
 
     Write-Scene "$($Game.Hero.Name) closes the shutters, pays for another night, and lets the city fade to a muffled hum beyond the walls."
-    Write-Scene (Get-InnRepeatRestText -Inn $inn)
+    Write-Scene (Get-InnRepeatRestText -Inn $inn -Hero $Game.Hero)
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
     $Game.Town.WorkedForRoomToday = $false
     $Game.Town.Ring.FoughtToday = $false
     $Game.Town.StoryQuestDoneToday = $false
     $Game.Town.DayJobDoneToday = $false
+    $Game.Town.PerformanceCountToday = 0
+    $Game.Town.PerformanceVenuesToday = @{}
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
-    Write-Scene "A full night's rest restores Borzig to full health, clears the day from his head, and resets the city for morning."
+    Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""
 
     return $true
@@ -760,7 +871,7 @@ function Resolve-InnBookingCancellation {
     $inn = $Game.Town.ActiveInn
 
     if ($null -eq $inn) {
-        Write-Scene "Borzig does not currently have a room booked."
+        Write-Scene "$($Game.Hero.Name) does not currently have a room booked."
         Write-ColorLine ""
         return $false
     }
@@ -772,7 +883,7 @@ function Resolve-InnBookingCancellation {
         return $false
     }
 
-    Write-Scene "$($inn.Keeper) nods once and scratches Borzig's name off the room ledger."
+    Write-Scene "$($inn.Keeper) nods once and scratches $($Game.Hero.Name)'s name off the room ledger."
     Write-Scene "$($Game.Hero.Name) is no longer booked at $($inn.Name)."
     Write-ColorLine ""
     $Game.Town.ActiveInn = $null
@@ -1051,11 +1162,11 @@ function Start-InnMenu {
         $roomVisitKey = "InnRoomVisited_$($inn.Id)"
 
         if (-not $Game.Town.InnFlags[$roomVisitKey]) {
-            Write-Scene "Borzig's room at $($inn.Name) is modestly lit, closed off from the street below, and blessedly still."
+            Write-Scene "$($Game.Hero.Name)'s room at $($inn.Name) is modestly lit, closed off from the street below, and blessedly still."
             $Game.Town.InnFlags[$roomVisitKey] = $true
         }
         else {
-            Write-Scene "Borzig's room at $($inn.Name) waits in welcome silence above the city's noise."
+            Write-Scene "$($Game.Hero.Name)'s room at $($inn.Name) waits in welcome silence above the city's noise."
         }
 
         Write-ColorLine "Inn: $($inn.Name) | Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"

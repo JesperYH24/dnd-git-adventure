@@ -16,6 +16,19 @@ function Test-LevelThreeShopsUnlockBetterOffers {
     Assert-True -Condition ($apothecary.Id -contains "apothecary_battle_tonic") -Message "Level 3 Borzig should unlock a stronger apothecary tonic."
 }
 
+function Test-MarketStocksAnInstrumentUpgradeForBards {
+    $game = Initialize-Game -Class "Bard"
+    $offers = @(Get-MarketOffers -Game $game)
+    $stageLuteOffer = $offers | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+
+    Assert-True -Condition ($null -ne $stageLuteOffer) -Message "The market should stock an upgraded instrument for bard characters."
+
+    $item = New-TownItemFromOfferId -OfferId "market_stage_lute"
+
+    Assert-Equal -Actual $item.Type -Expected "Utility" -Message "The Stage Lute should be created as a utility item."
+    Assert-Equal -Actual $item.InspirationBonus -Expected 2 -Message "The Stage Lute should improve bardic inspiration more than the starting lute."
+}
+
 function Test-DedicatedBuyerMatchesSpecialistForOwnGoods {
     $potion = New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1
     $weapon = New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2
@@ -114,6 +127,7 @@ Test-HeroCannotBuyWithoutEnoughGold
 Test-TownDiscountLowersShopPrice
 Test-ShopMentionsStashOrSellWhenFull
 Test-LevelThreeShopsUnlockBetterOffers
+Test-MarketStocksAnInstrumentUpgradeForBards
 Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
 Test-TutorialLootHasUsefulButModestSaleValue

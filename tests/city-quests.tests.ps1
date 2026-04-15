@@ -197,10 +197,7 @@ function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
     Use-ReadHostSequence -Values @("1")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 15
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "bent_nail_whispers"
 
@@ -222,10 +219,7 @@ function Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork {
     Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
     Use-ReadHostSequence -Values @("1")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 1
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "bent_nail_whispers"
 
@@ -260,10 +254,7 @@ function Test-NightCourierCompletesAndSetsCourierRoute {
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
     Use-ReadHostSequence -Values @("2")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 14
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 14 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
 
@@ -284,10 +275,7 @@ function Test-NightCourierWeakOutcomeOnlyFindsCourierMarks {
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
     Use-ReadHostSequence -Values @("2")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 1
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
 
@@ -298,6 +286,101 @@ function Test-NightCourierWeakOutcomeOnlyFindsCourierMarks {
     Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "A weak courier outcome should still preserve the lesser courier clue."
     Assert-Equal -Actual $game.Hero.XP -Expected 110 -Message "A weak courier outcome should pay reduced XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 100 -Message "A weak courier outcome should pay reduced coin."
+}
+
+function Test-BardCanUsePerformanceStyleToSolveMissingHerbSatchel {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "quest_board_missing_herbs" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "quest_board_missing_herbs"
+
+    $quest = Find-TownQuest -Game $game -QuestId "quest_board_missing_herbs"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A bard should be able to finish Missing Herb Satchel through the class-specific calming option."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The bard's calming performance route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "The bard's class-specific satchel route should still uncover the courier clue."
+}
+
+function Test-BardCanCharmSeriksNameOutOfLedgerContacts {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+
+    Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_ledger_of_ash"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_ledger_of_ash"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A bard should be able to complete Ledger of Ash through the class-specific social route."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The bard's ledger-flattery route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["NamedUnderstreetLeader"] -Expected $true -Message "The bard's ledger route should still identify Serik as a strong clue."
+}
+
+function Test-BardCanUseStreetPerformanceToCatchNightCourier {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+    $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A bard should be able to finish Night Courier with the staged street-performance option."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The bard's courier performance route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $true -Message "The bard's courier route should still reveal the real courier lane."
+}
+
+function Test-BardCanTalkWarehouseClerkIntoCorrectingALie {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 3
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A bard should be able to complete Warehouse Ledger Recovery through the class-specific bluff route."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The bard's warehouse bluff route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["SecuredLedgerEvidence"] -Expected $true -Message "The bard's warehouse route should still secure the hard ledger evidence."
+}
+
+function Test-BardCanResolveMissingDeliveryWithPublicShowmanship {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
+
+    $quest = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A bard should be able to finish Missing Delivery through public showmanship."
+    Assert-Equal -Actual $game.Hero.XP -Expected 0 -Message "The bard's day-job route should still grant no XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 90 -Message "The bard's day-job route should still pay the normal day-job rate."
 }
 
 function Test-WarehouseLedgerUnlocksFromLedgerClues {
@@ -321,10 +404,7 @@ function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
     Use-ReadHostSequence -Values @("2")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 16
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 16 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
 
@@ -346,10 +426,7 @@ function Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself {
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
     Use-ReadHostSequence -Values @("2")
 
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 1
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
 
@@ -478,6 +555,7 @@ function Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce {
 function Test-UnderstreetShortRestHealsAndClearsBuff {
     $game = Initialize-Game
     $heroHP = 6
+    $global:RollDiceOverride = $null
 
     Set-StoryTier -Game $game -Tier 4
     $game.Town.StoryFlags["FoundTunnelAccess"] = $true
@@ -516,11 +594,7 @@ function Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot {
     $rooms = Get-UnderstreetComplexRooms
     $whisperCells = $rooms["whisper_cells"]
     $oldArmory = $rooms["old_armory"]
-
-    function global:Roll-Dice {
-        param([int]$Sides)
-        return 20
-    }
+    $global:RollDiceOverride = { param([int]$Sides) return 20 }
 
     Search-UnderstreetRoom -Game $game -Room $whisperCells
 
@@ -613,6 +687,15 @@ function Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead {
     Assert-True -Condition ($summary -like "*3/6*") -Message "The story clue summary should still count major evidence when access came from Broken Seal Patrol."
 }
 
+function Test-BardStoryClueProgressSummaryUsesHeroName {
+    $game = Initialize-Game -Class "Bard"
+    Set-StoryTier -Game $game -Tier 3
+
+    $summary = Get-StoryClueProgressSummary -Game $game
+
+    Assert-True -Condition ($summary -like "*Gariand*") -Message "The story clue summary should use the bard's hero name when calling out missing progress."
+}
+
 function Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest {
     $game = Initialize-Game
     $quest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
@@ -627,9 +710,8 @@ function Test-BardicInspirationCanBoostQuestChecks {
 
     Use-ReadHostSequence -Values @("1")
 
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides)
-
         if ($Sides -eq 20) { return 5 }
         if ($Sides -eq 6) { return 4 }
         return 1
@@ -639,6 +721,15 @@ function Test-BardicInspirationCanBoostQuestChecks {
 
     Assert-Equal -Actual $success -Expected $true -Message "A bard should be able to spend bardic inspiration to push a quest check over the DC."
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Spending bardic inspiration on a quest check should consume one prepared die."
+}
+
+function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
+    $game = Initialize-Game -Class "Bard"
+
+    $result = Accept-TownQuest -Game $game -QuestId "guard_night_watch"
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "The bard should still be able to accept town quests normally."
+    Assert-True -Condition ($result.Message -like "*Gariand*") -Message "Quest acceptance text should use the current hero's name in the quest log message."
 }
 
 function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
@@ -671,6 +762,11 @@ Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork
 Test-NightCourierUnlocksFromCourierLead
 Test-NightCourierCompletesAndSetsCourierRoute
 Test-NightCourierWeakOutcomeOnlyFindsCourierMarks
+Test-BardCanUsePerformanceStyleToSolveMissingHerbSatchel
+Test-BardCanCharmSeriksNameOutOfLedgerContacts
+Test-BardCanUseStreetPerformanceToCatchNightCourier
+Test-BardCanTalkWarehouseClerkIntoCorrectingALie
+Test-BardCanResolveMissingDeliveryWithPublicShowmanship
 Test-WarehouseLedgerUnlocksFromLedgerClues
 Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself
@@ -690,9 +786,12 @@ Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueProgressSummaryTracksTierAndEvidence
 Test-StoryClueProgressSummaryExplainsTierOneUnlockPath
 Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
+Test-BardStoryClueProgressSummaryUsesHeroName
 Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest
 Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest
 Test-QuestOutcomeTextStaysBlankForDayJobs
 Test-BardicInspirationCanBoostQuestChecks
+Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 
 Write-Host "City quest tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null

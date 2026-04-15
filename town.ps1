@@ -10,6 +10,47 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Get-ClassAwareTownText {
+    param(
+        $Hero,
+        [string]$BarbarianText,
+        [string]$BardText
+    )
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Bard" -and -not [string]::IsNullOrWhiteSpace($BardText)) {
+        return $BardText
+    }
+
+    return $BarbarianText
+}
+
+function Get-TownShopIntroText {
+    param(
+        [string]$Shop,
+        $Hero
+    )
+
+    switch ($Shop) {
+        "Market" {
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." `
+                -BardText "Canvas stalls crowd the square. Traders call Gariand over with travel gear, strings, ribbons, lamp oil, and opportunistic smiles. The market reads him as the sort of traveler who can turn polish and timing into coin if his kit is worthy of the room.")
+        }
+        "Smithy" {
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel. The look he gives Borzig's older weaponry suggests he has already judged it rough, serviceable, and overdue for replacement." `
+                -BardText "Heat and sparks pour from the forge while the smith judges Gariand with a craftsman's patience. Even here the eye goes first to buckles, light armor, and anything that might keep a quick-handed performer alive without ruining his poise.")
+        }
+        "Apothecary" {
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." `
+                -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice.")
+        }
+    }
+
+    return ""
+}
+
 function Get-ChapterTwoAllianceStatusText {
     param(
         [string]$Source,
@@ -27,28 +68,40 @@ function Get-ChapterTwoAllianceStatusText {
     switch ($Source) {
         "Guard Station" {
             if ($hasClerkLead -and $hasBrokerLead) {
-                return "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Borzig keeps bringing in."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Borzig keeps bringing in." `
+                    -BardText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Gariand has been carrying between rooms that normally never speak to one another.")
             }
 
             if ($hasClerkLead) {
-                return "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, even if no one says so loudly."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, even if no one says so loudly." `
+                    -BardText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, and Gariand can hear how carefully the guards choose their words around it.")
             }
 
             if ($hasBrokerLead) {
-                return "The guards pretend they are only following patrol work, but Borzig can tell the river-quarter whispers have reached this hall already."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The guards pretend they are only following patrol work, but Borzig can tell the river-quarter whispers have reached this hall already." `
+                    -BardText "The guards pretend they are only following patrol work, but Gariand can tell the river-quarter whispers have reached this hall already. Even here, the city's rumor-song is changing key.")
             }
         }
         "Quest Giver" {
             if ($hasGuardLead -and $hasBrokerLead) {
-                return "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are all starting to describe the same hidden network."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are all starting to describe the same hidden network." `
+                    -BardText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers Gariand keeps drawing together are all starting to describe the same hidden network.")
             }
 
             if ($hasGuardLead) {
-                return "The clerk keeps one eye on his papers and one on the watch. Whatever Borzig brought back from the patrols has made these ledgers feel more dangerous."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The clerk keeps one eye on his papers and one on the watch. Whatever Borzig brought back from the patrols has made these ledgers feel more dangerous." `
+                    -BardText "The clerk keeps one eye on his papers and one on the watch. Whatever Gariand has coaxed out of patrol routes and tense conversations has made these ledgers feel more dangerous.")
             }
 
             if ($hasBrokerLead) {
-                return "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Borzig hears in rougher rooms."
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Borzig hears in rougher rooms." `
+                    -BardText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Gariand hears in rougher rooms and better salons alike.")
             }
         }
         "Quest Board" {
@@ -90,9 +143,21 @@ function Get-TownQuestSourceIntroText {
 
     if ($Game.Town.ChapterTwoComplete) {
         switch ($Source) {
-            "Quest Board" { return "Fresh notices have started appearing now that Borzig's name carries more weight. Some want coin-work. Some want the man who broke the understreet to look into worse things." }
-            "Guard Station" { return "The watch hall changes tone when Borzig enters now. Some guards step aside out of respect, and the harder jobs are no longer hidden from him." }
-            "Quest Giver" { return "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." }
+            "Quest Board" {
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "Fresh notices have started appearing now that Borzig's name carries more weight. Some want coin-work. Some want the man who broke the understreet to look into worse things." `
+                    -BardText "Fresh notices have started appearing now that Gariand's name carries more weight. Some want coin-work. Some want the man who sang his way through closed rooms and walked back out of the understreet to look into worse things.")
+            }
+            "Guard Station" {
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The watch hall changes tone when Borzig enters now. Some guards step aside out of respect, and the harder jobs are no longer hidden from him." `
+                    -BardText "The watch hall changes tone when Gariand enters now. Some guards still distrust a polished tongue, but none of them mistake him for a lightweight anymore, and the harder jobs are no longer hidden from him.")
+            }
+            "Quest Giver" {
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." `
+                    -BardText "The patron's clerk has stopped treating Gariand like charming decoration. Now the work is more careful, more valuable, and offered with the uneasy respect reserved for someone who can move between ledgers, guard posts, and whispered rooms.")
+            }
         }
     }
 
@@ -110,7 +175,11 @@ function Get-TownQuestSourceIntroText {
     switch ($Source) {
         "Quest Board" { return "The board looks thinner now, but there is still work on it for anyone willing to take the coin." }
         "Guard Station" { return "The watch hall is busier than it looks. Hard jobs are passed quietly from one tired hand to the next." }
-        "Quest Giver" { return "The patron's clerk recognizes Borzig now and reaches for the stack of private work without wasting words." }
+        "Quest Giver" {
+            return (Get-ClassAwareTownText -Hero $Game.Hero `
+                -BarbarianText "The patron's clerk recognizes Borzig now and reaches for the stack of private work without wasting words." `
+                -BardText "The patron's clerk recognizes Gariand now and reaches for the stack of private work without wasting words. He speaks like a man who has accepted that a polished performer can also be the sharpest knife in the room.")
+        }
         default { return $DefaultIntroText }
     }
 }
@@ -254,7 +323,9 @@ function Start-TownQuestPreparationMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Prepare for Quest" -Color "Yellow"
-        Write-Scene "$($Quest.Name) waits when Borzig is ready. He can make final adjustments before stepping out."
+        Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
+            -BarbarianText "$($Quest.Name) waits when Borzig is ready. He can make final adjustments before stepping out." `
+            -BardText "$($Quest.Name) waits when Gariand is ready. He can make final adjustments, steady his nerves, and choose how he wants to carry himself before stepping out.")
         Write-ColorLine "Quest: $($Quest.Name)" "White"
         Write-ColorLine "Objective: $($Quest.Objective)" "DarkGray"
         Write-ColorLine "Reward: $(Get-QuestRewardText -Quest $Quest)" "DarkGray"
@@ -310,6 +381,284 @@ function Start-TownQuestPreparationMenu {
     }
 }
 
+function Get-BardPerformanceVenue {
+    param([string]$VenueId)
+
+    switch ($VenueId) {
+        "market_square" {
+            return [PSCustomObject]@{
+                Id = "market_square"
+                Name = "Market Square"
+                CheckDC = 10
+                IntroText = "Bardic work in the market means gathering a crowd before it drifts, turning noise into rhythm, and making sure the hat fills before the merchants chase everyone onward."
+                PoorRewardCopper = 8
+                GoodRewardCopper = 18
+                GreatRewardCopper = 35
+                SuccessText = "The crowd stays. Coins start to ring against the hat, and even the traders have to admit the square sounds better with the set in it."
+                GreatSuccessText = "The whole square turns toward the performance. Traders clap time against wagon rails, children dance between boots, and Borzig leaves with the kind of heavy purse that only comes from owning the room."
+                FailureText = "The square gives Borzig a few polite looks and a thin scatter of coin, but the set never fully catches."
+            }
+        }
+        "bent_nail_stage" {
+            return [PSCustomObject]@{
+                Id = "bent_nail_stage"
+                Name = "Bent Nail Common Room"
+                CheckDC = 11
+                IntroText = "The Bent Nail does not reward polish. It rewards nerve, timing, and the kind of set that can cut through smoke, bets, and bad tempers without getting laughed off the floor."
+                PoorRewardCopper = 10
+                GoodRewardCopper = 22
+                GreatRewardCopper = 40
+                SuccessText = "The room pounds tables in rough approval, and the tips come in from gamblers who appreciate anyone bold enough to hold the Bent Nail's attention."
+                GreatSuccessText = "The whole room swings behind the set. Even the hard-eyed regulars grin into their cups, and the hat comes back heavy with rough silver."
+                FailureText = "The room listens just enough to toss a few coins, but the Bent Nail never fully gives itself over."
+            }
+        }
+        "lantern_rest_stage" {
+            return [PSCustomObject]@{
+                Id = "lantern_rest_stage"
+                Name = "Lantern Rest Common Room"
+                CheckDC = 10
+                IntroText = "At the Lantern Rest, a good performance means reading travelers, lifting road-weary shoulders, and choosing songs that feel familiar enough to earn a second round of drink."
+                PoorRewardCopper = 9
+                GoodRewardCopper = 20
+                GreatRewardCopper = 38
+                SuccessText = "The room joins in by the second chorus, and Borzig comes away with warm applause and a respectable stack of tips."
+                GreatSuccessText = "Merchants, guards, and teamsters take the whole room up in song. By the end of it, the tips are generous and Borzig's name is being repeated with easy affection."
+                FailureText = "The room is kind enough, but the set fades into the usual tavern noise and only earns a few spare coins."
+            }
+        }
+        "silver_kettle_stage" {
+            return [PSCustomObject]@{
+                Id = "silver_kettle_stage"
+                Name = "Silver Kettle Salon"
+                CheckDC = 13
+                IntroText = "The Silver Kettle expects grace, confidence, and the sort of performance that makes rich patrons feel they discovered something worth boasting about tomorrow."
+                PoorRewardCopper = 12
+                GoodRewardCopper = 28
+                GreatRewardCopper = 55
+                SuccessText = "The upper tables reward the performance with measured applause and good silver, the polite sort that still spends beautifully."
+                GreatSuccessText = "The room falls perfectly still for the final note, then breaks into the kind of applause that carries money, introductions, and invitations behind it."
+                FailureText = "The Silver Kettle remains polite, but the room's applause never warms and the tips stay thin."
+            }
+        }
+        "private_patron_salons" {
+            return [PSCustomObject]@{
+                Id = "private_patron_salons"
+                Name = "Private Patron Salon"
+                CheckDC = 14
+                IntroText = "Private salons pay for precision, wit, and control. Here the wrong note is remembered, but the right set can travel through merchant houses faster than rumor."
+                PoorRewardCopper = 18
+                GoodRewardCopper = 40
+                GreatRewardCopper = 70
+                SuccessText = "The private room opens by the end of the set. Several patrons stay behind, smiling in that expensive, thoughtful way that usually means more work is coming."
+                GreatSuccessText = "The salon gives itself over completely. By the final bow, Borzig has coin, invitations, and the quiet certainty that richer doors will keep opening if he wants them."
+                FailureText = "The room stays courteous but cool. The purse is still respectable, but the performance never fully claims the evening."
+            }
+        }
+    }
+
+    return $null
+}
+
+function Start-BardPerformanceCheck {
+    param(
+        $Game,
+        $Venue,
+        [int]$CheckDC = 0
+    )
+
+    if ($CheckDC -le 0) {
+        $CheckDC = [int]$Venue.CheckDC
+    }
+
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Game.Hero -Ability "CHA"
+    $instrument = Get-HeroInstrument -Hero $Game.Hero
+    $instrumentBonus = if ($null -ne $instrument -and $null -ne $instrument.PSObject.Properties["InspirationBonus"]) { [int]$instrument.InspirationBonus } else { 0 }
+    $roll = Roll-Dice -Sides 20
+    $bardicBonus = 0
+
+    if ($Game.Hero.Class -eq "Bard") {
+        $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
+
+        if ($null -ne $bardicStatus -and $bardicStatus.CurrentDice -gt 0) {
+            Write-ColorLine "Spend bardic inspiration on the performance?" "Cyan"
+            Write-ColorLine "1. Yes ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides) ready)" "White"
+            Write-ColorLine "2. No" "White"
+            Write-ColorLine ""
+
+            while ($true) {
+                $choice = Read-Host "Choose"
+
+                if ($choice -eq "1") {
+                    $inspiration = Use-HeroBardicInspirationDie -Hero $Game.Hero
+
+                    if ($inspiration.Success) {
+                        $bardicBonus = $inspiration.TotalBonus
+                    }
+
+                    break
+                }
+
+                if ($choice -eq "2") {
+                    break
+                }
+
+                Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+
+    $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus
+
+    Write-Scene $Venue.IntroText
+    Write-Action "$($Game.Hero.Name) performs: d20 roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier) + $($checkProfile.ClassBonus) class + $instrumentBonus instrument + $bardicBonus inspiration = $total vs DC $CheckDC" "Cyan"
+    Write-ColorLine ""
+
+    return $total
+}
+
+function Resolve-BardPerformance {
+    param(
+        $Game,
+        [string]$VenueId
+    )
+
+    if ($Game.Hero.Class -ne "Bard") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = ""
+        }
+    }
+
+    if ($Game.Town.PerformanceCountToday -ge 3) {
+        Write-Scene "Borzig has already played three paying sets today. His voice, hands, and audience luck will have to wait for tomorrow."
+        Write-ColorLine ""
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Performance limit reached."
+        }
+    }
+
+    $venue = Get-BardPerformanceVenue -VenueId $VenueId
+
+    if ($null -eq $venue) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = ""
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($VenueId) -and [bool]$Game.Town.PerformanceVenuesToday[$VenueId]) {
+        Write-Scene "$($venue.Name) has already had Borzig's set today. If he wants more coin before nightfall, he needs a different room."
+        Write-ColorLine ""
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Venue already used today."
+        }
+    }
+
+    if ($VenueId -eq "private_patron_salons" -and -not [bool]$Game.Town.InnFlags["SilverKettlePrivateInvite"]) {
+        Write-Scene "No private salon has sent for $($Game.Hero.Name) yet. He needs stronger upper-room attention before that kind of invitation starts arriving."
+        Write-ColorLine ""
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Private venue locked."
+        }
+    }
+
+    $effectiveCheckDC = [int]$venue.CheckDC
+    $permitRewardCopper = 0
+
+    if ($VenueId -eq "market_square" -and [bool]$Game.Town.StreetFlags["BelorSquarePermit"]) {
+        $effectiveCheckDC = [Math]::Max(5, $effectiveCheckDC - 1)
+        $permitRewardCopper = 6
+    }
+
+    $total = Start-BardPerformanceCheck -Game $Game -Venue $venue -CheckDC $effectiveCheckDC
+    $rewardCopper = 0
+    $outcome = "Poor"
+
+    if ($total -ge ($effectiveCheckDC + 5)) {
+        $rewardCopper = [int]$venue.GreatRewardCopper
+        $outcome = "Great"
+        Write-Scene ($venue.GreatSuccessText.Replace("Borzig", $Game.Hero.Name))
+    }
+    elseif ($total -ge $effectiveCheckDC) {
+        $rewardCopper = [int]$venue.GoodRewardCopper
+        $outcome = "Good"
+        Write-Scene ($venue.SuccessText.Replace("Borzig", $Game.Hero.Name))
+    }
+    else {
+        $rewardCopper = [int]$venue.PoorRewardCopper
+        Write-Scene ($venue.FailureText.Replace("Borzig", $Game.Hero.Name))
+    }
+
+    if ($permitRewardCopper -gt 0 -and $outcome -ne "Poor") {
+        $rewardCopper += $permitRewardCopper
+        Write-EmphasisLine -Text "Belor's market permit keeps the wardens off the set and the tip hat fuller." -Color "Yellow"
+    }
+
+    Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null
+    $Game.Town.PerformanceCountToday = [int]$Game.Town.PerformanceCountToday + 1
+    $Game.Town.PerformanceVenuesToday[$VenueId] = $true
+
+    if ($VenueId -eq "market_square" -and $outcome -ne "Poor") {
+        $Game.Town.Relationships["SquareAudience"] = if ($outcome -eq "Great") { "Delighted" } else { "Warm" }
+    }
+
+    if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great" -and -not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
+        $Game.Town.InnFlags["SilverKettlePatronFavor"] = $true
+        $Game.Town.Relationships["MerchantPatron"] = "Favorable"
+        Write-EmphasisLine -Text "A patron remembers the set and starts asking after Borzig by name." -Color "Yellow"
+    }
+
+    if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great") {
+        $Game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
+    }
+
+    Write-EmphasisLine -Text "$($Game.Hero.Name) earns $(Convert-CopperToCurrencyText -Copper $rewardCopper) from the performance." -Color "Yellow"
+    Write-ColorLine ""
+
+    return [PSCustomObject]@{
+        Success = $true
+        Outcome = $outcome
+        RewardCopper = $rewardCopper
+    }
+}
+
+function Start-BardPerformanceMenu {
+    param($Game)
+
+    while ($true) {
+        Write-SectionTitle -Text "Find an Audience" -Color "Yellow"
+        Write-Scene "A bard can make coin in this city without lifting a blade, if the room is right and the performance lands."
+        Write-EmphasisLine -Text "Performances today: $($Game.Town.PerformanceCountToday)/3" -Color "Yellow"
+        Write-ColorLine "1. Perform in the market square" "White"
+        Write-ColorLine "2. Book a private patron salon" "White"
+        Write-ColorLine "0. Return to town" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Resolve-BardPerformance -Game $Game -VenueId "market_square" | Out-Null
+            }
+            "2" {
+                Resolve-BardPerformance -Game $Game -VenueId "private_patron_salons" | Out-Null
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-QuestHubMenu {
     param(
         $Game,
@@ -318,7 +667,9 @@ function Start-QuestHubMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
-        Write-Scene "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems."
+        Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
+            -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
+            -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act.")
         Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
         Write-EmphasisLine -Text ((Get-StoryTierProgressStatus -Game $Game).StatusText) -Color "Yellow"
         Write-ColorLine ""
@@ -406,6 +757,9 @@ function Start-TownMenu {
         Write-ColorLine "8. Visit your inn" "White"
         Write-ColorLine "9. Check inventory" "White"
         Write-ColorLine "10. Check quest log" "White"
+        if ($Game.Hero.Class -eq "Bard") {
+            Write-ColorLine "P. Find an audience and perform for coin" "White"
+        }
         if ($null -eq $Game.Town.ActiveInn) {
             Write-ColorLine "L. Find lodging for the night" "White"
         }
@@ -420,13 +774,13 @@ function Start-TownMenu {
                 Start-TownStreetScene -Game $Game -ReturnLabel "Return to town"
             }
             "2" {
-                Show-TownShop -Title "Market" -IntroText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
+                Show-TownShop -Title "Market" -IntroText (Get-TownShopIntroText -Shop "Market" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
             }
             "3" {
-                Show-TownShop -Title "Smithy" -IntroText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel. The look he gives Borzig's older weaponry suggests he has already judged it rough, serviceable, and overdue for replacement." -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
+                Show-TownShop -Title "Smithy" -IntroText (Get-TownShopIntroText -Shop "Smithy" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
             }
             "4" {
-                Show-TownShop -Title "Apothecary" -IntroText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
+                Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
             }
             "5" {
                 Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
@@ -455,6 +809,15 @@ function Start-TownMenu {
             }
             "10" {
                 Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
+            }
+            "P" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    Start-BardPerformanceMenu -Game $Game
+                }
+                else {
+                    Write-ColorLine "Invalid choice. Try again." "Red"
+                    Write-ColorLine ""
+                }
             }
             "L" {
                 $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP

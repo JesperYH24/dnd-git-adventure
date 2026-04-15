@@ -163,7 +163,7 @@ function Test-WorkOffRoomCoversNightAndBlocksRing {
     $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
     $game.Hero.CurrencyCopper = 0
     Set-TestReadHostSequence -Values @("1", "1")
-    function global:Roll-Dice { param([int]$Sides) return 10 }
+    $global:RollDiceOverride = { param([int]$Sides) return 10 }
 
     $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99
 
@@ -189,6 +189,32 @@ function Test-CommonRoomStaysOpenUntilBackedOut {
     Assert-Equal -Actual $game.Town.InnFlags["BentNailShadyRumor"] -Expected $true -Message "Taking a common-room action should still resolve as normal."
     Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $null -Message "The Bent Nail should hold back the deeper broker lead until tier 2 opens."
     Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The common room should stay open until the player explicitly backs out."
+}
+
+function Test-LanternRestFirstNightSupportsBardAudienceLoop {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 40 | Out-Null
+    $stageLuteOffer = (Get-MarketOffers -Game $game) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.Relationships["LanternAudience"] -Expected "Warm" -Message "A bard's first Lantern Rest event should warm the room to him."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "A bard's first Lantern Rest event should support the Stage Lute path instead of old potion discounts."
+}
+
+function Test-SilverKettleFirstNightCanOpenPrivateBardVenue {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 1000
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 40 | Out-Null
+
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettleArtistWelcome"] -Expected $true -Message "A bard's first Silver Kettle event should mark him as artistically welcome."
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePrivateInvite"] -Expected $true -Message "A bard's first Silver Kettle event should be able to unlock the private salon path."
+    Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A bard's first Silver Kettle event should improve patron standing."
 }
 
 function Test-InnRoomReturnToTownDoesNotRouteThroughStreets {
@@ -217,6 +243,10 @@ Test-CannotCancelInnBookingWithStoredGear
 Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-WorkOffRoomCoversNightAndBlocksRing
 Test-CommonRoomStaysOpenUntilBackedOut
+Test-LanternRestFirstNightSupportsBardAudienceLoop
+Test-SilverKettleFirstNightCanOpenPrivateBardVenue
 Test-InnRoomReturnToTownDoesNotRouteThroughStreets
+
+$global:RollDiceOverride = $null
 
 Write-Host "Town inn tests passed." -ForegroundColor Green

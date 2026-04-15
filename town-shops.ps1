@@ -37,7 +37,7 @@ function Get-TownInns {
             Quality = "Comfortable"
             Description = "Warm stew, clean sheets, and polished wood. It is the kind of inn built for traders and mercenaries with coin to spare."
             KeeperText = "Oren smooths his apron and bows his head. 'A fair bed, a hot meal, and no questions you don't want asked. That's what your coin buys here.'"
-            RestText = "The room is calm, warm, and properly kept. Borzig sleeps deeply for the first time since the cave."
+            RestText = "The room is calm, warm, and properly kept. {HeroName} sleeps deeply for the first time since the cave."
         }
         [PSCustomObject]@{
             Id = "silver_kettle"
@@ -56,14 +56,33 @@ function Get-CheapestTownInn {
     return (Get-TownInns | Sort-Object PriceCopper | Select-Object -First 1)
 }
 
+function Format-InnHeroText {
+    param(
+        [string]$Text,
+        $Hero
+    )
+
+    $heroName = if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["Name"] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) {
+        [string]$Hero.Name
+    }
+    else {
+        "Borzig"
+    }
+
+    return $Text.Replace("{HeroName}", $heroName).Replace("Borzig", $heroName)
+}
+
 function Get-InnRepeatRestText {
-    param($Inn)
+    param(
+        $Inn,
+        $Hero = $null
+    )
 
     switch ($Inn.Id) {
-        "bent_nail" { return "The room is rough but serviceable, and by now Borzig knows exactly which floorboards groan before sunrise." }
-        "lantern_rest" { return "The room is calm, warm, and properly kept. Borzig settles in like a paying regular instead of a desperate traveler." }
-        "silver_kettle" { return "Fresh linen, quiet service, and practiced comfort make the night feel expensive in all the ways Madam Seraphine intended." }
-        default { return "The room offers shelter, privacy, and a night without interruption." }
+        "bent_nail" { return (Format-InnHeroText -Text "The room is rough but serviceable, and by now Borzig knows exactly which floorboards groan before sunrise." -Hero $Hero) }
+        "lantern_rest" { return (Format-InnHeroText -Text "The room is calm, warm, and properly kept. {HeroName} settles in like a paying regular instead of a desperate traveler." -Hero $Hero) }
+        "silver_kettle" { return (Format-InnHeroText -Text "Fresh linen, quiet service, and practiced comfort make the night feel expensive in all the ways Madam Seraphine intended." -Hero $Hero) }
+        default { return (Format-InnHeroText -Text "The room offers shelter, privacy, and a night without interruption." -Hero $Hero) }
     }
 }
 
@@ -99,6 +118,7 @@ function Get-MarketOffers {
         (New-TownOffer -Id "market_healing_potion" -Name "Healing Potion" -Category "Consumable" -Description "A simple red tonic that restores 8 HP." -PriceCopper 60)
         (New-TownOffer -Id "market_dagger" -Name "Dagger" -Category "Weapon" -Description "A light backup blade with a sharp edge and a quick draw. Requires DEX 11." -PriceCopper 90)
         (New-TownOffer -Id "market_handaxe" -Name "Hand Axe" -Category "Weapon" -Description "A practical one-handed axe for close quarters. Requires STR 11." -PriceCopper 140)
+        (New-TownOffer -Id "market_stage_lute" -Name "Stage Lute" -Category "Utility" -Description "A better-balanced lute with clean tuning pegs and a richer body. Adds +2 inspiration instead of the rough travel standard." -PriceCopper 220)
     )
 
     if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
@@ -147,6 +167,7 @@ function New-TownItemFromOfferId {
         "market_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
         "market_dagger" { return (New-WeaponItem -Name "Dagger" -Value 90 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -Light $true -RequiredDEX 11 -SlotCost 1) }
         "market_handaxe" { return (New-WeaponItem -Name "Hand Axe" -Value 140 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 11 -SlotCost 1) }
+        "market_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
         "market_throwing_axe" { return (New-WeaponItem -Name "Balanced Throwing Axe" -Value 190 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 12 -SlotCost 1) }
         "smithy_longsword" { return (New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }

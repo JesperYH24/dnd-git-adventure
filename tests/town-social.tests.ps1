@@ -46,6 +46,53 @@ function Test-SilverKettleEconomicInfoSetsFutureHook {
     Assert-Equal -Actual $game.Town.QuestPayoutBonusCopper -Expected 20 -Message "Silver Kettle information should prime a future quest payout bonus."
 }
 
+function Test-LanternRestMerchantsFavorBardToolsForBards {
+    $game = Initialize-Game -Class "Bard"
+
+    Resolve-LanternRestEveningChoice -Game $game -Choice "1"
+    $stageLuteOffer = (Get-MarketOffers -Game $game) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "Lantern Rest merchants should steer a bard toward better instruments instead of an axe discount."
+    Assert-Equal -Actual $game.Town.Relationships["LanternAudience"] -Expected "Warm" -Message "Lantern Rest should recognize the bard as a good fit for the room."
+}
+
+function Test-SilverKettleUpperTablesAdvanceBardSocialStanding {
+    $game = Initialize-Game -Class "Bard"
+
+    Resolve-SilverKettleEveningChoice -Game $game -Choice "2"
+
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePatronFavor"] -Expected $true -Message "A bard's Silver Kettle introduction should still grant patron favor."
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePrivateInvite"] -Expected $true -Message "A bard's upper-table introduction should be able to unlock a private invitation even before a full performance."
+    Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A bard's Silver Kettle introduction should improve upper-table standing."
+}
+
+function Test-BardQuestSourceTextReflectsSocialAllianceRole {
+    $game = Initialize-Game -Class "Bard"
+    $game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+
+    $guardText = Get-ChapterTwoAllianceStatusText -Source "Guard Station" -Game $game
+    $clerkText = Get-ChapterTwoAllianceStatusText -Source "Quest Giver" -Game $game
+    $repeatClerkText = Get-TownQuestSourceIntroText -Source "Quest Giver" -DefaultIntroText "unused" -Game $game
+
+    Assert-True -Condition ($guardText -like "*Gariand*") -Message "Guard Station alliance text should acknowledge the bard as the one carrying information between rooms."
+    Assert-True -Condition ($clerkText -like "*Gariand*") -Message "Quest giver alliance text should acknowledge the bard's connective role in the investigation."
+    Assert-True -Condition ($repeatClerkText -like "*polished performer*" -or $repeatClerkText -like "*Gariand*") -Message "Repeat clerk intros should stop reading like they only fit a heavy bruiser."
+}
+
+function Test-BardTownShopsUseDifferentIntroTone {
+    $game = Initialize-Game -Class "Bard"
+
+    $marketText = Get-TownShopIntroText -Shop "Market" -Hero $game.Hero
+    $smithyText = Get-TownShopIntroText -Shop "Smithy" -Hero $game.Hero
+    $apothecaryText = Get-TownShopIntroText -Shop "Apothecary" -Hero $game.Hero
+
+    Assert-True -Condition ($marketText -like "*Gariand*" -or $marketText -like "*strings*") -Message "Market intro should speak to the bard as more than a weapon buyer."
+    Assert-True -Condition ($smithyText -like "*light armor*" -or $smithyText -like "*quick-handed performer*") -Message "Smithy intro should recognize the bard's lighter kit needs."
+    Assert-True -Condition ($apothecaryText -like "*performer*" -or $apothecaryText -like "*steady nerves*") -Message "Apothecary intro should feel more bard-aware than simple battle-tonic flavor."
+}
+
 function Test-InnkeeperGreetingChangesWithHeroStyle {
     $barbarian = Get-Hero
     $bard = Get-Hero
@@ -58,6 +105,18 @@ function Test-InnkeeperGreetingChangesWithHeroStyle {
 
     Assert-True -Condition ($barbarianGreeting -like "*wolf invited into a ballroom*") -Message "Silver Kettle should greet a barbarian with a rougher tone."
     Assert-True -Condition ($bardGreeting -like "*understands the value of presentation*") -Message "Silver Kettle should greet a bard more warmly."
+}
+
+function Test-StreetNpcIntrosRecognizeBardAsGariand {
+    $bard = Get-Hero -Class "Bard"
+
+    $widowIntro = Get-WidowEliraIntro -Hero $bard
+    $hadrikIntro = Get-HadrikIntro -Hero $bard
+    $belorIntro = Get-BelorIntro -Hero $bard
+
+    Assert-True -Condition ($widowIntro -like "*Gariand*") -Message "Widow Elira should address the bard by his own name."
+    Assert-True -Condition ($hadrikIntro -like "*Gariand*" -and $hadrikIntro -like "*forge's usual customer*") -Message "Hadrik should frame the bard as an unusual but valid customer."
+    Assert-True -Condition ($belorIntro -like "*Gariand*" -and $belorIntro -like "*truth before steel*") -Message "Belor should recognize the bard as useful before a fight starts."
 }
 
 function Test-InnkeeperSmallTalkChangesAfterFirstAsk {
@@ -125,16 +184,201 @@ function Test-HadrikCommentsOnWornStartingAndCaveGear {
     Assert-True -Condition ($forgeTalk -like "*cave*" -or $forgeTalk -like "*dead men's leftovers*") -Message "Hadrik should frame tutorial loot as low-quality salvage."
 }
 
+function Test-HadrikRewardsDifferentClassesDifferently {
+    $barbarianGame = Initialize-Game
+    $bardGame = Initialize-Game -Class "Bard"
+
+    $barbarianResult = Resolve-HadrikChoice -Game $barbarianGame -Choice "1"
+    $bardResult = Resolve-HadrikChoice -Game $bardGame -Choice "1"
+
+    $greataxeOffer = (Get-SmithyOffers -Game $barbarianGame) | Where-Object { $_.Id -eq "smithy_greataxe" } | Select-Object -First 1
+    $stageLuteOffer = (Get-MarketOffers -Game $bardGame) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+
+    Assert-True -Condition ([bool]$barbarianGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Barbarians should still get Hadrik's smithy weapon discount."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $barbarianGame -Offer $greataxeOffer) -Expected 200 -Message "Hadrik's barbarian discount should lower the Steel Great Axe price."
+    Assert-True -Condition ($barbarianResult -like "*Steel Great Axe*") -Message "Hadrik should still point martial heroes toward the great axe."
+
+    Assert-True -Condition ([bool]$bardGame.Town.StreetFlags["HadrikInstrumentDiscountUnlocked"]) -Message "Bards should get Hadrik's instrument recommendation instead of a heavy axe pitch."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 160 -Message "Hadrik's bard recommendation should lower the Stage Lute price."
+    Assert-True -Condition (-not [bool]$bardGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Bards should not spend their one-time Hadrik reward on an axe discount they are unlikely to use."
+    Assert-True -Condition ($bardResult -like "*Stage Lute*") -Message "Hadrik should name the instrument lead clearly for a bard."
+}
+
+function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 4 }
+
+    $withoutPermit = Initialize-Game -Class "Bard"
+    $beforePermit = Resolve-BardPerformance -Game $withoutPermit -VenueId "market_square"
+
+    $withPermit = Initialize-Game -Class "Bard"
+    Resolve-BelorChoice -Game $withPermit -Choice "1" | Out-Null
+    $afterPermit = Resolve-BardPerformance -Game $withPermit -VenueId "market_square"
+
+    Assert-Equal -Actual $beforePermit.Outcome -Expected "Poor" -Message "Without Belor's help, a middling square performance should still come up short."
+    Assert-Equal -Actual $afterPermit.Outcome -Expected "Good" -Message "Belor's square permit should make the market more workable for a bard."
+    Assert-Equal -Actual $withPermit.Town.StreetFlags["BelorSquarePermit"] -Expected $true -Message "Belor should record the bard's market permit."
+    Assert-True -Condition ($afterPermit.RewardCopper -gt $beforePermit.RewardCopper) -Message "Belor's permit should improve the bard's practical market payout, not just the flavor text."
+}
+
+function Test-BardCanEarnCoinByPerformingInMarketSquare {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+    $beforeXP = $game.Hero.XP
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "market_square"
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A bard should be able to perform for coin in the market square."
+    Assert-True -Condition ($result.RewardCopper -gt 0) -Message "A successful square performance should pay coin."
+    Assert-Equal -Actual $game.Town.PerformanceCountToday -Expected 1 -Message "A performance should count against the bard's own daily performance limit."
+    Assert-Equal -Actual $game.Hero.XP -Expected $beforeXP -Message "Street performances should not grant XP."
+}
+
+function Test-BardCannotPerformTwiceAtSameVenueInOneDay {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+
+    Resolve-BardPerformance -Game $game -VenueId "market_square" | Out-Null
+    $beforeCopper = $game.Hero.CurrencyCopper
+    $secondResult = Resolve-BardPerformance -Game $game -VenueId "market_square"
+
+    Assert-Equal -Actual $secondResult.Success -Expected $false -Message "A bard should not be able to repeat the same venue on the same day."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected $beforeCopper -Message "A blocked repeat venue should not pay extra coin."
+}
+
+function Test-BardCanPerformAtDifferentVenuesOnSameDay {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+
+    $first = Resolve-BardPerformance -Game $game -VenueId "market_square"
+    $second = Resolve-BardPerformance -Game $game -VenueId "lantern_rest_stage"
+
+    Assert-Equal -Actual $first.Success -Expected $true -Message "The first venue should pay normally."
+    Assert-Equal -Actual $second.Success -Expected $true -Message "A bard should be able to take a second performance at a different venue on the same day."
+    Assert-Equal -Actual $game.Town.PerformanceCountToday -Expected 2 -Message "Different venues should count toward the separate three-performance cap."
+}
+
+function Test-BardHasThreePerformanceSlotsPerDay {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+
+    Resolve-BardPerformance -Game $game -VenueId "market_square" | Out-Null
+    Resolve-BardPerformance -Game $game -VenueId "lantern_rest_stage" | Out-Null
+    Resolve-BardPerformance -Game $game -VenueId "bent_nail_stage" | Out-Null
+    $beforeCopper = $game.Hero.CurrencyCopper
+    $fourth = Resolve-BardPerformance -Game $game -VenueId "silver_kettle_stage"
+
+    Assert-Equal -Actual $game.Town.PerformanceCountToday -Expected 3 -Message "The bard should cap at three performances in one day."
+    Assert-Equal -Actual $fourth.Success -Expected $false -Message "A fourth paid performance should be blocked until tomorrow."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected $beforeCopper -Message "A blocked fourth performance should not pay extra coin."
+}
+
+function Test-SilverKettlePerformanceCanEarnPatronFavor {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 18 }
+
+    $game = Initialize-Game -Class "Bard"
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "silver_kettle_stage"
+
+    Assert-Equal -Actual $result.Outcome -Expected "Great" -Message "A strong Silver Kettle performance should count as a great success."
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePatronFavor"] -Expected $true -Message "A standout Silver Kettle performance should be able to win patron favor."
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePrivateInvite"] -Expected $true -Message "A standout Silver Kettle performance should unlock private patron venue invitations."
+    Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A great salon performance should improve the bard's standing with wealthy patrons."
+}
+
+function Test-PrivateSalonPerformanceRequiresInvite {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+    $beforeCopper = $game.Hero.CurrencyCopper
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Private salons should stay locked before the bard earns an invitation."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected $beforeCopper -Message "A locked private salon should not pay out."
+}
+
+function Test-PrivateSalonPerformancePaysAfterInvite {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 18 }
+
+    $game = Initialize-Game -Class "Bard"
+    $game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "Private salons should become playable after the bard earns an invitation."
+    Assert-True -Condition ($result.RewardCopper -ge 40) -Message "Private salon performances should pay meaningfully better than open street work."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
 Test-SilverKettleEconomicInfoSetsFutureHook
+Test-LanternRestMerchantsFavorBardToolsForBards
+Test-SilverKettleUpperTablesAdvanceBardSocialStanding
+Test-BardQuestSourceTextReflectsSocialAllianceRole
+Test-BardTownShopsUseDifferentIntroTone
 Test-InnkeeperGreetingChangesWithHeroStyle
+Test-StreetNpcIntrosRecognizeBardAsGariand
 Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
 Test-StreetNpcExtraFlavorTalksExist
 Test-RingMasterHasExtendedConversationHooks
 Test-LevelThreeNpcToneChangesAfterUnderstreet
 Test-HadrikCommentsOnWornStartingAndCaveGear
+Test-HadrikRewardsDifferentClassesDifferently
+Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch
+Test-BardCanEarnCoinByPerformingInMarketSquare
+Test-BardCannotPerformTwiceAtSameVenueInOneDay
+Test-BardCanPerformAtDifferentVenuesOnSameDay
+Test-BardHasThreePerformanceSlotsPerDay
+Test-SilverKettlePerformanceCanEarnPatronFavor
+Test-PrivateSalonPerformanceRequiresInvite
+Test-PrivateSalonPerformancePaysAfterInvite
+
+$global:RollDiceOverride = $null
 
 Write-Host "Town social tests passed." -ForegroundColor Green
