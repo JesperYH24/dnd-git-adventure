@@ -47,6 +47,7 @@ function Initialize-Game {
             StoryQuestDoneToday = $false
             DayJobDoneToday = $false
             PerformanceCountToday = 0
+            PerformanceCountTotal = 0
             PerformanceVenuesToday = @{}
             QuestPayoutBonusCopper = 0
             Quests = (Initialize-TownQuests)

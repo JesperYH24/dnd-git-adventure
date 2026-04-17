@@ -173,7 +173,7 @@ function Resolve-BentNailEveningChoice {
             $Game.Town.InnFlags["BentNailBrokerInfo"] = $true
             $Game.Town.Relationships["UnderstreetBroker"] = "Named"
             Write-Scene "Borzig keeps his head down and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
-            Write-EmphasisLine -Text "Borzig gains understreet information that can be built into shady city quests later." -Color "Yellow"
+            Write-EmphasisLine -Text "Borzig leaves the table with a cleaner read on who in the Bent Nail still knows the understreet routes by name." -Color "Yellow"
         }
         else {
             Write-Scene "The same smugglers are still talking around Borzig, but tonight they offer nothing sharper than what he already knows."
@@ -467,13 +467,20 @@ function Start-InnEveningMenu {
 
         $showIntro = $false
 
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Return to the inn" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose"
+        $choice = (Read-Host "Choose").ToUpper()
 
         if ($choice -eq "0") {
             return
+        }
+
+        if ($choice -eq "S") {
+            Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            Write-ColorLine ""
+            continue
         }
 
         switch ($inn.Id) {
@@ -499,30 +506,11 @@ function Start-InnEveningMenu {
                         Write-ColorLine ""
 
                         if ($questResult.Success) {
-                            while ($true) {
-                                Write-ColorLine "1. Start now" "White"
-                                Write-ColorLine "2. Prepare in town first" "White"
-                                Write-ColorLine "" "White"
-
-                                $followUpChoice = Read-Host "Choose"
-
-                                if ($followUpChoice -eq "1") {
-                                    Start-TownQuest -Game $Game -HeroHP $HeroHP -QuestId $quest.Id
-                                    break
-                                }
-
-                                if ($followUpChoice -eq "2") {
-                                    Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $quest
-                                    break
-                                }
-
-                                Write-ColorLine "Choose 1 or 2." "DarkYellow"
-                                Write-ColorLine ""
-                            }
+                            Write-EmphasisLine -Text "This lead is now in the quest log. Start it or prepare for it there." -Color "Yellow"
                         }
                     }
                     else {
-                        Start-TownQuestPreparationMenu -Game $Game -HeroHP $HeroHP -Quest $quest
+                        Write-EmphasisLine -Text "This lead is handled from the quest log. Start it or prepare for it there." -Color "Yellow"
                     }
 
                     Write-ColorLine ""
@@ -555,6 +543,52 @@ function Start-InnEveningMenu {
     }
 }
 
+function Get-InnAmbientVisitText {
+    param(
+        $Game,
+        $Inn
+    )
+
+    $flagKey = "InnAmbientIndex_$($Inn.Id)"
+    $currentIndex = if ($null -ne $Game.Town.InnFlags[$flagKey]) { [int]$Game.Town.InnFlags[$flagKey] } else { 0 }
+    $isBard = $Game.Hero.Class -eq "Bard"
+
+    $lines = switch ($Inn.Id) {
+        "bent_nail" {
+            @(
+                "The Bent Nail leans into the hour with rough laughter, chipped mugs, and the feeling that half the room has heard something useful and plans to sell it badly.",
+                "Tonight the Bent Nail sounds like dice, boots, and low arguments that never quite become fights.",
+                $(if ($isBard) { "A few eyes follow $($Game.Hero.Name) with the half-grin reserved for someone this room already considers worth hearing." } else { "A few hard cases glance Borzig's way and then think better of turning curiosity into a challenge." })
+            )
+        }
+        "lantern_rest" {
+            @(
+                "The Lantern Rest feels bright in a practical way: warm plates, steady voices, and travelers trying to believe tomorrow's road will be kinder than the last one.",
+                "Caravan talk and merchant gossip weave through the Lantern Rest tonight, easy enough to listen to without ever fully trusting.",
+                $(if ($isBard) { "At the Lantern Rest, the room seems glad to have $($Game.Hero.Name) under the same roof again, as if good company might yet turn into a good evening." } else { "At the Lantern Rest, the room gives Borzig the respectful space reserved for someone who looks capable of finishing bad business without making more of it." })
+            )
+        }
+        "silver_kettle" {
+            @(
+                "The Silver Kettle carries itself with polished calm, all measured voices and the soft certainty that somebody important is always one table away from overhearing everything.",
+                "Soft glass, lower laughter, and carefully aimed conversation make the Silver Kettle feel expensive long before the bill arrives.",
+                $(if ($isBard) { "More than one table at the Silver Kettle seems to notice $($Game.Hero.Name) on arrival and quietly adjust the room around that fact." } else { "The Silver Kettle still studies Borzig like an unusual guest, but by now even its finer tables do so with more curiosity than doubt." })
+            )
+        }
+        default {
+            @("The inn settles around the night in its own rhythm, offering shelter, noise, and the promise of a door that closes behind it all.")
+        }
+    }
+
+    if ($lines.Count -eq 0) {
+        return ""
+    }
+
+    $selectedLine = $lines[$currentIndex % $lines.Count]
+    $Game.Town.InnFlags[$flagKey] = $currentIndex + 1
+    return $selectedLine
+}
+
 function Start-InnVisitMenu {
     param(
         $Game,
@@ -572,13 +606,20 @@ function Start-InnVisitMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== $($inn.Name.ToUpper()) =====" "Yellow"
-        Write-Scene "$($inn.Name) wraps around Borzig like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
+        if (-not [bool]$Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"]) {
+            Write-Scene "$($inn.Name) wraps around Borzig like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
+            $Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"] = $true
+        }
+        else {
+            Write-Scene (Get-InnAmbientVisitText -Game $Game -Inn $inn)
+        }
         Write-ColorLine "Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Go to your room" "White"
         Write-ColorLine "2. Spend time in the common room" "White"
         Write-ColorLine "3. Speak with the innkeeper" "White"
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Return to town" "DarkGray"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
@@ -592,6 +633,10 @@ function Start-InnVisitMenu {
                 if ($innMenuResult -eq "EndGame") {
                     return "EndGame"
                 }
+
+                if ($innMenuResult -eq "BackToInn") {
+                    continue
+                }
             }
             "2" {
                 Start-InnEveningMenu -Game $Game -HeroHP $HeroHP
@@ -602,6 +647,9 @@ function Start-InnVisitMenu {
                 if ($innkeeperResult -eq "Cancelled") {
                     return "BookingCancelled"
                 }
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
             }
             "0" {
                 return "BackToTown"
@@ -702,6 +750,7 @@ function Resolve-InnWorkOffRoom {
         $Game.Town.DayJobDoneToday = $false
         $Game.Town.PerformanceCountToday = 0
         $Game.Town.PerformanceVenuesToday = @{}
+        Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
         Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
@@ -809,6 +858,7 @@ function Resolve-InnStay {
     $Game.Town.DayJobDoneToday = $false
     $Game.Town.PerformanceCountToday = 0
     $Game.Town.PerformanceVenuesToday = @{}
+    Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
         Write-Scene (Format-InnHeroText -Text $Inn.RestText -Hero $Game.Hero)
@@ -868,7 +918,7 @@ function Resolve-BookedInnNightRest {
         }
     }
 
-    Write-Scene "$($Game.Hero.Name) closes the shutters, pays for another night, and lets the city fade to a muffled hum beyond the walls."
+    Write-Scene "$($Game.Hero.Name) closes the shutters, pays $(Convert-CopperToCurrencyText -Copper $inn.PriceCopper) for another night, and lets the city fade to a muffled hum beyond the walls."
     Write-Scene (Get-InnRepeatRestText -Inn $inn -Hero $Game.Hero)
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
@@ -878,6 +928,7 @@ function Resolve-BookedInnNightRest {
     $Game.Town.DayJobDoneToday = $false
     $Game.Town.PerformanceCountToday = 0
     $Game.Town.PerformanceVenuesToday = @{}
+    Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""
@@ -1190,15 +1241,15 @@ function Start-InnMenu {
         }
 
         Write-ColorLine "Inn: $($inn.Name) | Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
+        Write-ColorLine "Next night here: $(Convert-CopperToCurrencyText -Copper $inn.PriceCopper)" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
         Write-ColorLine "1. Rest for the night" "White"
         Write-ColorLine "2. Check inventory" "White"
         Write-ColorLine "3. Check quest log" "White"
-        Write-ColorLine "4. Spend time in the common room" "White"
-        Write-ColorLine "5. Manage stored gear" "White"
-        Write-ColorLine "6. Speak with the innkeeper" "White"
-        Write-ColorLine "7. Return to town" "White"
+        Write-ColorLine "4. Manage stored gear" "White"
+        Write-ColorLine "5. Status" "White"
+        Write-ColorLine "6. Return to inn" "White"
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
@@ -1221,20 +1272,13 @@ function Start-InnMenu {
                 Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "4" {
-                Start-InnEveningMenu -Game $Game
-            }
-            "5" {
                 Start-InnStorageMenu -Hero $Game.Hero
             }
-            "6" {
-                $innkeeperResult = Start-InnkeeperMenu -Game $Game
-
-                if ($innkeeperResult -eq "Cancelled") {
-                    return "BookingCancelled"
-                }
+            "5" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
             }
-            "7" {
-                return "BackToTown"
+            "6" {
+                return "BackToInn"
             }
             "T" {
                 Toggle-TextSpeed | Out-Null

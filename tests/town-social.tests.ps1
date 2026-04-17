@@ -202,16 +202,18 @@ function Test-HadrikRewardsDifferentClassesDifferently {
     $bardResult = Resolve-HadrikChoice -Game $bardGame -Choice "1"
 
     $greataxeOffer = (Get-SmithyOffers -Game $barbarianGame) | Where-Object { $_.Id -eq "smithy_greataxe" } | Select-Object -First 1
+    $rapierOffer = (Get-SmithyOffers -Game $bardGame) | Where-Object { $_.Id -eq "smithy_rapier" } | Select-Object -First 1
     $stageLuteOffer = (Get-MarketOffers -Game $bardGame) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
 
     Assert-True -Condition ([bool]$barbarianGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Barbarians should still get Hadrik's smithy weapon discount."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $barbarianGame -Offer $greataxeOffer) -Expected 200 -Message "Hadrik's barbarian discount should lower the Steel Great Axe price."
     Assert-True -Condition ($barbarianResult -like "*Steel Great Axe*") -Message "Hadrik should still point martial heroes toward the great axe."
 
-    Assert-True -Condition ([bool]$bardGame.Town.StreetFlags["HadrikInstrumentDiscountUnlocked"]) -Message "Bards should get Hadrik's instrument recommendation instead of a heavy axe pitch."
-    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 160 -Message "Hadrik's bard recommendation should lower the Stage Lute price."
+    Assert-True -Condition ([bool]$bardGame.Town.StreetFlags["HadrikRapierDiscountUnlocked"]) -Message "Bards should get Hadrik's rapier recommendation instead of a heavy axe pitch."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $rapierOffer) -Expected 140 -Message "Hadrik's bard recommendation should lower the Rapier price."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 220 -Message "Hadrik should no longer duplicate the Stage Lute discount from the streets."
     Assert-True -Condition (-not [bool]$bardGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Bards should not spend their one-time Hadrik reward on an axe discount they are unlikely to use."
-    Assert-True -Condition ($bardResult -like "*Stage Lute*") -Message "Hadrik should name the instrument lead clearly for a bard."
+    Assert-True -Condition ($bardResult -like "*Rapier*") -Message "Hadrik should name the rapier lead clearly for a bard."
 }
 
 function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {

@@ -737,8 +737,11 @@ function Show-QuestLogSummary {
         $failedCount = @($Game.Town.Quests | Where-Object { $_.Failed }).Count
         $storyNotes = @(Get-StoryClueNotes -Game $Game)
         $currentTier = Get-CurrentStoryQuestTier -Game $Game
+        $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
+        $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
 
         Write-ColorLine "Story Tier: $currentTier | Accepted: $acceptedCount | Completed: $completedCount | Story Clues: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
+        Write-ColorLine "Story Quest Today: $storyQuestStatus | Day Job Today: $dayJobStatus" "DarkYellow"
     }
 
     Write-ColorLine ""
@@ -831,16 +834,20 @@ function Start-TownQuestLogMenu {
         Write-ColorLine "2. Story clues" "White"
         Write-ColorLine "3. Completed quests" "White"
         Write-ColorLine "4. Failed quests" "White"
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose"
+        $choice = (Read-Host "Choose").ToUpper()
 
         if ($choice -eq "0") {
             return
         }
 
         switch ($choice) {
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            }
             "1" {
                 if ($acceptedQuests.Count -eq 0) {
                     Write-ColorLine ""

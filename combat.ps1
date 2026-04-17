@@ -214,7 +214,7 @@ function Resolve-HeroInspirationBoost {
         }
 
         if ($choice -eq "1") {
-            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero -UseInstrumentBonus $false
 
             if (-not $inspiration.Success) {
                 Write-ColorLine "No prepared bardic inspiration remains." "DarkYellow"
@@ -224,18 +224,18 @@ function Resolve-HeroInspirationBoost {
 
             if ($PrimaryAction -eq "A") {
                 $HeroAttackBonus.Value += $inspiration.TotalBonus
-                Write-Scene "$($Hero.Name) snaps into tempo on the $($inspiration.InstrumentName.ToLower()), drawing a sharper opening out of the moment."
-                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) to hit." "Yellow"
+                Write-Scene "$($Hero.Name) snaps into tempo and draws a sharper opening out of the moment."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = +$($inspiration.TotalBonus) to hit." "Yellow"
             }
             elseif ($PrimaryAction -eq "B") {
                 $HeroBlockArmorBonus.Value += $inspiration.TotalBonus
                 Write-Scene "$($Hero.Name) lifts the rhythm at just the right instant and turns defense into a tighter guard."
-                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) AC on this block." "Yellow"
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = +$($inspiration.TotalBonus) AC on this block." "Yellow"
             }
             else {
                 $HeroFocusAttackBonus.Value += $inspiration.TotalBonus
-                Write-Scene "$($Hero.Name) lets the $($inspiration.InstrumentName.ToLower()) carry a quick refrain that hangs in the air for the next clean opening."
-                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = +$($inspiration.TotalBonus) to the next attack." "Yellow"
+                Write-Scene "$($Hero.Name) lets a quick refrain hang in the air for the next clean opening."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = +$($inspiration.TotalBonus) to the next attack." "Yellow"
             }
 
             Write-ColorLine ""
@@ -339,7 +339,7 @@ function Try-Resolve-BardCuttingWords {
         }
 
         if ($choice -eq "1") {
-            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+            $inspiration = Use-HeroBardicInspirationDie -Hero $Hero -UseInstrumentBonus $false
 
             if (-not $inspiration.Success) {
                 Write-ColorLine "No prepared bardic inspiration remains." "DarkYellow"
@@ -350,7 +350,7 @@ function Try-Resolve-BardCuttingWords {
             $AttackTotal.Value -= $inspiration.TotalBonus
             $result.Used = $true
             Write-Scene "$($Hero.Name) lashes out with cutting words, breaking the enemy's rhythm mid-swing."
-            Write-Action "Cutting Words: d$($bardicStatus.DieSides) roll $($inspiration.Roll) + $($inspiration.InstrumentBonus) instrument = -$($inspiration.TotalBonus) to hit." "Yellow"
+            Write-Action "Cutting Words: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = -$($inspiration.TotalBonus) to hit." "Yellow"
 
             if ($AttackTotal.Value -lt $TargetArmorClass) {
                 $result.PreventedHit = $true

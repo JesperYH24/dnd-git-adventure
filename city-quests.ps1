@@ -384,7 +384,7 @@ function Start-NonCombatQuestCheck {
     $bonusText = ""
 
     if ($checkProfile.ClassBonus -gt 0) {
-        $bonusText = " + $($checkProfile.ClassBonus) bard"
+        $bonusText = " + $($checkProfile.ClassBonus) proficiency"
     }
 
     if ($Hero.Class -eq "Bard") {
@@ -400,7 +400,7 @@ function Start-NonCombatQuestCheck {
                 $inspirationChoice = Read-Host "Choose"
 
                 if ($inspirationChoice -eq "1") {
-                    $inspiration = Use-HeroBardicInspirationDie -Hero $Hero
+                    $inspiration = Use-HeroBardicInspirationDie -Hero $Hero -UseInstrumentBonus $false
 
                     if ($inspiration.Success) {
                         $bardicBonus = $inspiration.TotalBonus
@@ -1107,7 +1107,7 @@ function Start-MissingHerbSatchelQuest {
     Write-ColorLine "2. Calm them down and hear what frightened them (CHA)" "White"
     Write-ColorLine "3. Search the road yourself and ignore them (WIS)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Play a calming refrain and coax the truth out gently (CHA)" "White"
+        Write-ColorLine "4. Play a calming refrain and coax the truth out gently (Performance)" "White"
     }
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Hold the road and wait the fear out until someone finally talks (CON)" "White"
@@ -1541,7 +1541,7 @@ function Start-NightCourierInterceptQuest {
     Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point (WIS)" "White"
     Write-ColorLine "3. Step into the open and force a panicked mistake (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Draw the courier off-rhythm with a staged street performance (CHA)" "White"
+        Write-ColorLine "4. Draw the courier off-rhythm with a staged street performance (Performance)" "White"
     }
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Run the courier down and break the route open by sheer pursuit (CON)" "White"
@@ -2137,7 +2137,7 @@ function Start-MissingDeliveryDayJob {
     Write-ColorLine "2. Haul the crate back yourself (STR)" "White"
     Write-ColorLine "3. Talk the locals into helping (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the delay into a public bit and shame everyone into helping (CHA)" "White"
+        Write-ColorLine "4. Turn the delay into a public bit and shame everyone into helping (Performance)" "White"
     }
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Shoulder the whole mess yourself and dare anyone to block the lane (CON)" "White"

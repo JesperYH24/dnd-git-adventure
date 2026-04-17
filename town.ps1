@@ -476,6 +476,7 @@ function Start-BardPerformanceCheck {
     $instrumentBonus = if ($null -ne $instrument -and $null -ne $instrument.PSObject.Properties["InspirationBonus"]) { [int]$instrument.InspirationBonus } else { 0 }
     $roll = Roll-Dice -Sides 20
     $bardicBonus = 0
+    $bardicInstrumentBonus = 0
 
     if ($Game.Hero.Class -eq "Bard") {
         $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
@@ -490,10 +491,14 @@ function Start-BardPerformanceCheck {
                 $choice = Read-Host "Choose"
 
                 if ($choice -eq "1") {
-                    $inspiration = Use-HeroBardicInspirationDie -Hero $Game.Hero
+                    $inspiration = Use-HeroBardicInspirationDie -Hero $Game.Hero -UseInstrumentBonus $false
 
                     if ($inspiration.Success) {
-                        $bardicBonus = $inspiration.TotalBonus
+                        $bardicBonus = $inspiration.Roll
+
+                        if ($instrumentBonus -gt 0) {
+                            $bardicInstrumentBonus = $instrumentBonus
+                        }
                     }
 
                     break
@@ -509,13 +514,74 @@ function Start-BardPerformanceCheck {
         }
     }
 
-    $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus
+    $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus + $bardicInstrumentBonus
 
     Write-Scene $Venue.IntroText
-    Write-Action "$($Game.Hero.Name) performs: d20 roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier) + $($checkProfile.ClassBonus) class + $instrumentBonus instrument + $bardicBonus inspiration = $total vs DC $CheckDC" "Cyan"
+    $performanceBreakdown = "d20 roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier) + $($checkProfile.ClassBonus) proficiency"
+
+    if ($instrumentBonus -gt 0) {
+        $performanceBreakdown += " + $instrumentBonus instrument"
+    }
+
+    if ($bardicBonus -gt 0) {
+        $performanceBreakdown += " + $bardicBonus inspiration"
+    }
+
+    if ($bardicInstrumentBonus -gt 0) {
+        $performanceBreakdown += " + $bardicInstrumentBonus instrument+"
+    }
+
+    Write-Action "$($Game.Hero.Name) performs: $performanceBreakdown = $total" "Cyan"
     Write-ColorLine ""
 
     return $total
+}
+
+function Get-BardPerformanceRecognitionText {
+    param(
+        $Game,
+        $Venue
+    )
+
+    $performanceCountTotal = [int]$Game.Town.PerformanceCountTotal
+
+    if ($performanceCountTotal -lt 3) {
+        return ""
+    }
+
+    switch ($Venue.Id) {
+        "market_square" {
+            if ($performanceCountTotal -ge 8) {
+                return "Several faces in the square recognize $($Game.Hero.Name) before the first note lands, and the crowd starts gathering with the easy confidence reserved for someone who has already earned the street's attention."
+            }
+
+            return "A few people in the square notice $($Game.Hero.Name) setting up and drift closer early, already expecting a real performance instead of background noise."
+        }
+        "lantern_rest_stage" {
+            if ($performanceCountTotal -ge 8) {
+                return "By now the Lantern Rest treats $($Game.Hero.Name) like a welcome fixture. Tankards lift, tables turn, and the room readies itself for something warm and lively."
+            }
+
+            return "A few regulars at the Lantern Rest recognize $($Game.Hero.Name) and make space with the pleased look of people hoping the room will turn brighter for a while."
+        }
+        "silver_kettle_stage" {
+            if ($performanceCountTotal -ge 8) {
+                return "At the Silver Kettle, recognition arrives as composed glances and chairs angled just so. The room already expects polish from $($Game.Hero.Name), and expectation here is its own form of status."
+            }
+
+            return "Some of the Silver Kettle's better tables recognize $($Game.Hero.Name) and settle in with quiet, curious attention before the set even begins."
+        }
+        "bent_nail_stage" {
+            if ($performanceCountTotal -ge 8) {
+                return "The Bent Nail answers recognition its own way: a few cheers, a few bangs on tabletops, and the sense that $($Game.Hero.Name) has earned a rough kind of name in this room."
+            }
+
+            return "A couple of Bent Nail regulars clock $($Game.Hero.Name) early and start grinning like they know the room is about to get louder."
+        }
+        default {
+            return ""
+        }
+    }
 }
 
 function Resolve-BardPerformance {
@@ -575,6 +641,13 @@ function Resolve-BardPerformance {
         $permitRewardCopper = 6
     }
 
+    $recognitionText = Get-BardPerformanceRecognitionText -Game $Game -Venue $venue
+
+    if (-not [string]::IsNullOrWhiteSpace($recognitionText)) {
+        Write-Scene $recognitionText
+        Write-ColorLine ""
+    }
+
     $total = Start-BardPerformanceCheck -Game $Game -Venue $venue -CheckDC $effectiveCheckDC
     $rewardCopper = 0
     $outcome = "Poor"
@@ -601,6 +674,7 @@ function Resolve-BardPerformance {
 
     Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null
     $Game.Town.PerformanceCountToday = [int]$Game.Town.PerformanceCountToday + 1
+    $Game.Town.PerformanceCountTotal = [int]$Game.Town.PerformanceCountTotal + 1
     $Game.Town.PerformanceVenuesToday[$VenueId] = $true
 
     if ($VenueId -eq "market_square" -and $outcome -ne "Poor") {
@@ -636,6 +710,7 @@ function Start-BardPerformanceMenu {
         Write-EmphasisLine -Text "Performances today: $($Game.Town.PerformanceCountToday)/3" -Color "Yellow"
         Write-ColorLine "1. Perform in the market square" "White"
         Write-ColorLine "2. Book a private patron salon" "White"
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Return to town" "DarkGray"
         Write-ColorLine ""
 
@@ -647,6 +722,9 @@ function Start-BardPerformanceMenu {
             }
             "2" {
                 Resolve-BardPerformance -Game $Game -VenueId "private_patron_salons" | Out-Null
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $Game.Hero.HP
             }
             "0" {
                 return
@@ -676,6 +754,7 @@ function Start-QuestHubMenu {
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"
         Write-ColorLine "3. Speak with the quest giver's clerk" "White"
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
@@ -690,6 +769,9 @@ function Start-QuestHubMenu {
             }
             "3" {
                 Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game -HeroHP $HeroHP
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
             }
             "0" {
                 return
@@ -739,11 +821,10 @@ function Start-TownMenu {
             $Game.Town.StreetFlags["TownMenuVisited"] = $true
         }
         elseif ($Game.Town.ChapterTwoComplete) {
-            Write-Scene "The city watches Borzig differently now. Some faces carry relief, some calculation, and some the tight unease of people wondering what his next target might be."
-            Write-Scene "Level 3 has changed the way the streets receive him: with more respect, better offers, and harder eyes from anyone still hiding something."
+            Write-Scene "The city watches Borzig differently now, with more respect and sharper attention."
         }
         else {
-            Write-Scene "The city is awake around Borzig again, full of noise, work, and the feeling that something below it still has not settled."
+            Write-Scene "The city is awake around Borzig again, full of noise, work, and unfinished business."
         }
         Write-ColorLine ""
         Write-ColorLine "What do you want to do?" "Cyan"
@@ -757,6 +838,7 @@ function Start-TownMenu {
         Write-ColorLine "8. Visit your inn" "White"
         Write-ColorLine "9. Check inventory" "White"
         Write-ColorLine "10. Check quest log" "White"
+        Write-ColorLine "S. Status" "White"
         if ($Game.Hero.Class -eq "Bard") {
             Write-ColorLine "P. Find an audience and perform for coin" "White"
         }
@@ -809,6 +891,9 @@ function Start-TownMenu {
             }
             "10" {
                 Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
             }
             "P" {
                 if ($Game.Hero.Class -eq "Bard") {

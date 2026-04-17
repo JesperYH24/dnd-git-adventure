@@ -133,6 +133,7 @@ function Get-SmithyOffers {
 
     $offers = @(
         (New-TownOffer -Id "smithy_longsword" -Name "Longsword" -Category "Weapon" -Description "A balanced soldier's blade for dependable strikes. Requires STR 11." -PriceCopper 180)
+        (New-TownOffer -Id "smithy_rapier" -Name "Rapier" -Category "Weapon" -Description "A quick, precise blade built for timing, nerve, and dexterous hands. Requires DEX 12." -PriceCopper 200)
         (New-TownOffer -Id "smithy_warhammer" -Name "Warhammer" -Category "Weapon" -Description "A brutal hammer built to crush armor and bone. Requires STR 13." -PriceCopper 220)
         (New-TownOffer -Id "smithy_greataxe" -Name "Steel Great Axe" -Category "Weapon" -Description "A heavier axe with a cleaner edge than Borzig's old camp weapon. Two-Handed. Requires STR 15." -PriceCopper 260)
     )
@@ -170,6 +171,7 @@ function New-TownItemFromOfferId {
         "market_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
         "market_throwing_axe" { return (New-WeaponItem -Name "Balanced Throwing Axe" -Value 190 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 12 -SlotCost 1) }
         "smithy_longsword" { return (New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2) }
+        "smithy_rapier" { return (New-WeaponItem -Name "Rapier" -Value 200 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredDEX 12 -SlotCost 1) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_greataxe" { return (New-WeaponItem -Name "Steel Great Axe" -Value 260 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 15 -SlotCost 2) }
         "smithy_executioner_axe" { return (New-WeaponItem -Name "Executioner Axe" -Value 420 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 16 -SlotCost 2) }

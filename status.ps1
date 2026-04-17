@@ -53,6 +53,19 @@ function Get-HeroStatusSnapshot {
     }
 
     $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+    $currencyText = Get-HeroCurrencyText -Hero $Hero
+    $storyQuestStatus = "Unknown"
+    $dayJobStatus = "Unknown"
+    $performanceStatus = ""
+
+    if ($null -ne $Game -and $null -ne $Game.Town) {
+        $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
+        $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
+
+        if ($Hero.Class -eq "Bard") {
+            $performanceStatus = "$([int]$Game.Town.PerformanceCountToday)/3 today"
+        }
+    }
 
     return [PSCustomObject]@{
         HPColor = Get-HeroHPColor -CurrentHP $HeroHP -MaxHP $Hero.HP
@@ -71,6 +84,10 @@ function Get-HeroStatusSnapshot {
         UnarmedTrainingLevel = $unarmedTrainingLevel
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
+        CurrencyText = $currencyText
+        StoryQuestStatus = $storyQuestStatus
+        DayJobStatus = $dayJobStatus
+        PerformanceStatus = $performanceStatus
     }
 }
 
@@ -100,6 +117,7 @@ function Write-HeroStatusDetails {
 
     Write-ColorLine "Level: $($Hero.Level) | AC: $($Snapshot.ArmorClass) | Weapon: $($Snapshot.Weapon.Name) | To Hit: +$($Snapshot.Weapon.TotalAttackBonus) | Damage: $(Get-WeaponDamageRollText -WeaponProfile $Snapshot.Weapon) + $($Snapshot.Weapon.DamageBonus) ($($Snapshot.Weapon.TotalDamageMin)-$($Snapshot.Weapon.TotalDamageMax)) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
     Write-ColorLine "XP: $($Snapshot.DisplayXP)/$($Snapshot.NextLevelXP)" "White"
+    Write-ColorLine "Currency: $($Snapshot.CurrencyText) | Story Quest Today: $($Snapshot.StoryQuestStatus) | Day Job Today: $($Snapshot.DayJobStatus)" "White"
     if ($Snapshot.StoryClueCount -gt 0) {
         Write-ColorLine "Story Clues Logged: $($Snapshot.StoryClueCount)" "DarkYellow"
     }
@@ -110,6 +128,10 @@ function Write-HeroStatusDetails {
     if ($null -ne $Snapshot.BardicInspiration) {
         $instrumentText = if ($null -ne $Snapshot.BardicInspiration.Instrument) { "$($Snapshot.BardicInspiration.Instrument.Name) (+$($Snapshot.BardicInspiration.InstrumentBonus))" } else { "No instrument" }
         Write-ColorLine "Bardic Inspiration: $($Snapshot.BardicInspiration.CurrentDice)/$($Snapshot.BardicInspiration.MaxDice) d$($Snapshot.BardicInspiration.DieSides) | Spell Save DC: $($Snapshot.SpellSaveDC) | Instrument: $instrumentText" "DarkYellow"
+
+        if (-not [string]::IsNullOrWhiteSpace($Snapshot.PerformanceStatus)) {
+            Write-ColorLine "Performances: $($Snapshot.PerformanceStatus)" "DarkYellow"
+        }
     }
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {
@@ -154,4 +176,18 @@ function Show-Status {
     Write-ColorLine $targetLabel "DarkYellow"
     Write-ColorLine "$targetLabel AC: $($Monster.armorClass) | Attack bonus: $($Monster.attackBonus) | Damage: $(Get-MonsterDamageRollText -Monster $Monster)" "White"
     Start-Sleep -Milliseconds 750
+}
+
+function Show-AdventureStatus {
+    param(
+        $Game,
+        [int]$HeroHP
+    )
+
+    $snapshot = Get-HeroStatusSnapshot -Hero $Game.Hero -HeroHP $HeroHP -Game $Game
+
+    Write-ColorLine ""
+    Write-SectionTitle -Text "Status" -Color "Yellow"
+    Write-HeroStatusDetails -Hero $Game.Hero -HeroHP $HeroHP -Snapshot $snapshot
+    Write-ColorLine ""
 }

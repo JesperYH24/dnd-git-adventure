@@ -273,9 +273,9 @@ function Resolve-HadrikChoice {
 
     if ($Choice -eq "1") {
         if ($persona.IsBardLike -or $persona.IsCharming) {
-            $Game.Town.StreetFlags["HadrikInstrumentDiscountUnlocked"] = $true
-            Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 60
-            return "Hadrik rubs soot into one palm and nods toward the market. 'Rurik does not sell lutes, but he fits brass pegs and bridge pins for Toma's stage pieces. Tell the stringwright I sent you and he'll shave the price on a Stage Lute.' A 6 SP discount is now available on the Stage Lute in the market."
+            $Game.Town.StreetFlags["HadrikRapierDiscountUnlocked"] = $true
+            Set-TownOfferDiscount -Game $Game -OfferId "smithy_rapier" -DiscountCopper 60
+            return "Hadrik rubs soot into one palm and nods toward the forge. 'Rurik has a slim rapier in the back that never fit the caravan guards. For someone quick with timing, it'd do better than a butcher's blade. Tell him I sent you and he'll shave the price.' A 6 SP discount is now available on the Rapier at the smithy."
         }
 
         $Game.Town.StreetFlags["SmithyDiscountUnlocked"] = $true
@@ -647,7 +647,12 @@ function Start-TownStreetScene {
         }
         elseif ($showIntro) {
             if ($Game.Hero.Class -eq "Bard") {
-                Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, each hoping to be remembered when the city's whispers need carrying somewhere useful."
+                if ([int]$Game.Town.PerformanceCountTotal -ge 6) {
+                    Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, and more than one passerby recognizes the city's working performer before the next whisper even starts."
+                }
+                else {
+                    Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, each hoping to be remembered when the city's whispers need carrying somewhere useful."
+                }
             }
             else {
                 Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
@@ -660,10 +665,11 @@ function Start-TownStreetScene {
         Write-ColorLine "1. Speak with Widow Elira" "White"
         Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
         Write-ColorLine "3. Speak with Watchman Belor" "White"
+        Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. $ReturnLabel" "DarkGray"
         Write-ColorLine ""
 
-        $choice = Read-Host "Choose"
+        $choice = (Read-Host "Choose").ToUpper()
 
         switch ($choice) {
             "1" {
@@ -674,6 +680,9 @@ function Start-TownStreetScene {
             }
             "3" {
                 Start-BelorConversation -Game $Game
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $Game.Hero.HP
             }
             "0" {
                 return

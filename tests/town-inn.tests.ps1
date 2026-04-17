@@ -84,6 +84,20 @@ function Test-BookedInnNightRestResetsDailySystems {
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "A booked-room rest should clear lingering buffs."
 }
 
+function Test-BookedInnNightRestRestoresPreparedBardicInspiration {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 600
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    $game.Hero.CurrentBardicInspirationDice = 1
+
+    Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected (Get-HeroBardicInspirationMaxDice -Hero $game.Hero) -Message "A full inn rest should restore bardic inspiration to max even if some dice were unused."
+}
+
 function Test-BookedInnNightRestTriggersLevelUp {
     $game = Initialize-Game
     $heroHP = 5
@@ -217,25 +231,26 @@ function Test-SilverKettleFirstNightCanOpenPrivateBardVenue {
     Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A bard's first Silver Kettle event should improve patron standing."
 }
 
-function Test-InnRoomReturnToTownDoesNotRouteThroughStreets {
+function Test-InnRoomReturnsToInnWithoutJumpingToTown {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
     $game.Hero.CurrencyCopper = 500
     $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
 
     Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
-    Set-TestReadHostSequence -Values @("7")
+    Set-TestReadHostSequence -Values @("6")
 
     $result = Start-InnMenu -Game $game -HeroHP ([ref]$heroHP)
 
-    Assert-Equal -Actual $result -Expected "BackToTown" -Message "Leaving the inn room should return directly to town."
-    Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "Returning to town from the inn room should not force the streets menu first."
+    Assert-Equal -Actual $result -Expected "BackToInn" -Message "Leaving the inn room should now return to the inn wrapper, not directly to town."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "Returning from the room should happen in one quick step."
 }
 
 Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
+Test-BookedInnNightRestRestoresPreparedBardicInspiration
 Test-BookedInnNightRestTriggersLevelUp
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
@@ -245,7 +260,7 @@ Test-WorkOffRoomCoversNightAndBlocksRing
 Test-CommonRoomStaysOpenUntilBackedOut
 Test-LanternRestFirstNightSupportsBardAudienceLoop
 Test-SilverKettleFirstNightCanOpenPrivateBardVenue
-Test-InnRoomReturnToTownDoesNotRouteThroughStreets
+Test-InnRoomReturnsToInnWithoutJumpingToTown
 
 $global:RollDiceOverride = $null
 

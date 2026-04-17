@@ -131,7 +131,7 @@ function Test-BardInspirationBoostsCurrentAttack {
         -HeroBlockArmorBonus ([ref]$blockBonus) `
         -HeroFocusAttackBonus ([ref]$focusBonus)
 
-    Assert-Equal -Actual $attackBonus -Expected 5 -Message "A bard should be able to spend a prepared inspiration die plus instrument bonus on the current attack."
+    Assert-Equal -Actual $attackBonus -Expected 4 -Message "A bard should be able to spend a prepared inspiration die on the current attack."
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration in combat should spend one prepared die."
     Assert-Equal -Actual $blockBonus -Expected 0 -Message "Attack inspiration should not improve block."
     Assert-Equal -Actual $focusBonus -Expected 0 -Message "Current-round Inspire should not spill into future attacks."
@@ -166,7 +166,7 @@ function Test-BardInspirationCanBoostBlock {
         -HeroFocusAttackBonus ([ref]$focusBonus)
 
     Assert-Equal -Actual $attackBonus -Expected 0 -Message "Block inspiration should not boost attack."
-    Assert-Equal -Actual $blockBonus -Expected 4 -Message "A bard should be able to spend a prepared inspiration die plus instrument bonus to strengthen a block."
+    Assert-Equal -Actual $blockBonus -Expected 3 -Message "A bard should be able to spend a prepared inspiration die to strengthen a block."
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration to block should spend one prepared die."
 }
 

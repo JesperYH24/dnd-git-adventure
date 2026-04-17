@@ -759,8 +759,21 @@ function Prepare-HeroBardicInspiration {
     }
 }
 
-function Use-HeroBardicInspirationDie {
+function Restore-HeroBardicInspiration {
     param($Hero)
+
+    if ($Hero.Class -ne "Bard") {
+        return $null
+    }
+
+    return (Prepare-HeroBardicInspiration -Hero $Hero)
+}
+
+function Use-HeroBardicInspirationDie {
+    param(
+        $Hero,
+        [bool]$UseInstrumentBonus = $false
+    )
 
     $status = Get-HeroBardicInspirationStatus -Hero $Hero
 
@@ -775,14 +788,15 @@ function Use-HeroBardicInspirationDie {
     }
 
     $roll = Roll-Dice -Sides $status.DieSides
-    $totalBonus = $roll + $status.InstrumentBonus
+    $appliedInstrumentBonus = if ($UseInstrumentBonus) { $status.InstrumentBonus } else { 0 }
+    $totalBonus = $roll + $appliedInstrumentBonus
     $Hero.CurrentBardicInspirationDice = [Math]::Max(0, $status.CurrentDice - 1)
 
     return [PSCustomObject]@{
         Success = $true
         TotalBonus = $totalBonus
         Roll = $roll
-        InstrumentBonus = $status.InstrumentBonus
+        InstrumentBonus = $appliedInstrumentBonus
         InstrumentName = if ($null -ne $status.Instrument) { $status.Instrument.Name } else { "" }
     }
 }
