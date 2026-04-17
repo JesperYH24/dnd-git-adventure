@@ -1103,11 +1103,14 @@ function Start-MissingHerbSatchelQuest {
     Write-Scene "The satchel turns up quickly enough on the old road, wedged under a splintered cart wheel beside scattered bundles of dried leaf."
     Write-Scene "A pair of hungry scavengers lurk nearby, more scared than cruel, and one of them keeps glancing at a chalk mark cut into the stones beside the road."
     Write-ColorLine ""
-    Write-ColorLine "1. Intimidate the scavengers into handing everything over" "White"
-    Write-ColorLine "2. Calm them down and hear what frightened them" "White"
-    Write-ColorLine "3. Search the road yourself and ignore them" "White"
+    Write-ColorLine "1. Intimidate the scavengers into handing everything over (STR)" "White"
+    Write-ColorLine "2. Calm them down and hear what frightened them (CHA)" "White"
+    Write-ColorLine "3. Search the road yourself and ignore them (WIS)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Play a calming refrain and coax the truth out gently" "White"
+        Write-ColorLine "4. Play a calming refrain and coax the truth out gently (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Hold the road and wait the fear out until someone finally talks (CON)" "White"
     }
     Write-ColorLine ""
 
@@ -1165,25 +1168,42 @@ function Start-MissingHerbSatchelQuest {
                 break
             }
             "4" {
-                if ($Game.Hero.Class -ne "Bard") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) eases the tension with a low, steady refrain and lets the scavengers talk before fear hardens again."
+
+                    if ($success) {
+                        Write-Scene "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The tune softens the moment, but not enough to get a clean story before the scavengers scatter."
+                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) plants his feet in the road, blocks every way out, and waits until fear and exhaustion finally crack the silence."
+
+                    if ($success) {
+                        Write-Scene "Unable to slip past the iron patience in front of them, the scavengers finally admit they saw a marked courier drop the satchel while running for the city."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "They break and run in the end, leaving the satchel behind but only fragments about a marked man and a night road."
+                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                    }
+
+                    break
+                }
+                else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
-
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) eases the tension with a low, steady refrain and lets the scavengers talk before fear hardens again."
-
-                if ($success) {
-                    Write-Scene "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The tune softens the moment, but not enough to get a clean story before the scavengers scatter."
-                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                }
-
-                break
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -1268,11 +1288,14 @@ function Start-LedgerOfAshQuest {
         Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful.'"
     }
     Write-ColorLine ""
-    Write-ColorLine "1. Intimidate the dock clerk named in the ledger" "White"
-    Write-ColorLine "2. Study the ledger line by line" "White"
-    Write-ColorLine "3. Lean on merchant contacts for help reading the pattern" "White"
+    Write-ColorLine "1. Intimidate the dock clerk named in the ledger (STR)" "White"
+    Write-ColorLine "2. Study the ledger line by line (INT)" "White"
+    Write-ColorLine "3. Lean on merchant contacts for help reading the pattern (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Work the room, flatter egos, and tease the hidden name loose" "White"
+        Write-ColorLine "4. Work the room, flatter egos, and tease the hidden name loose (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Break the dockside bluff until the hidden name finally slips (CON)" "White"
     }
     Write-ColorLine ""
 
@@ -1325,24 +1348,39 @@ function Start-LedgerOfAshQuest {
                 break
             }
             "4" {
-                if ($Game.Hero.Class -ne "Bard") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns charm, gossip, and merchant vanity into a cleaner reading of who is really profiting."
+                    if ($success) {
+                        Write-Scene "Three people contradict each other in exactly the right way. By the time the talk settles, the name Serik sits plainly behind the false payments."
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The gossip yields only half-truths, but even half-truths are enough to prove the ledger was built to hide corruption."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) looms over the dockside liar until swagger turns to sweat and the story starts breaking in his mouth."
+                    if ($success) {
+                        Write-Scene "The bluff collapses in pieces. By the time the clerk stops backpedaling, Serik's name is out in the open and everyone in the room knows it."
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The clerk holds the clean name back, but the panic in his answers still proves the payments were built to hide corruption."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
-
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns charm, gossip, and merchant vanity into a cleaner reading of who is really profiting."
-                if ($success) {
-                    Write-Scene "Three people contradict each other in exactly the right way. By the time the talk settles, the name Serik sits plainly behind the false payments."
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The gossip yields only half-truths, but even half-truths are enough to prove the ledger was built to hide corruption."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -1499,11 +1537,14 @@ function Start-NightCourierInterceptQuest {
         Write-Scene "'Runner moves light, keeps to shadow, and never uses the same lane twice unless he thinks no one is watching,' Belor says. 'The clerk's books say messages are moving with the goods. Tonight we make that runner prove it.'"
     }
     Write-ColorLine ""
-    Write-ColorLine "1. Set a hard ambush and block the lane with brute presence" "White"
-    Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point" "White"
-    Write-ColorLine "3. Step into the open and force a panicked mistake" "White"
+    Write-ColorLine "1. Set a hard ambush and block the lane with brute presence (STR)" "White"
+    Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point (WIS)" "White"
+    Write-ColorLine "3. Step into the open and force a panicked mistake (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Draw the courier off-rhythm with a staged street performance" "White"
+        Write-ColorLine "4. Draw the courier off-rhythm with a staged street performance (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Run the courier down and break the route open by sheer pursuit (CON)" "White"
     }
     Write-ColorLine "" 
 
@@ -1562,27 +1603,45 @@ function Start-NightCourierInterceptQuest {
                 break
             }
             "4" {
-                if ($Game.Hero.Class -ne "Bard") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window."
+
+                    if ($success) {
+                        Write-Scene "The courier misreads the lane, slows for the wrong doorway, and loses both message case and route advantage in one bad step."
+                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $Game.Town.Relationships["Belor"] = "Trusting"
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The ploy buys a glimpse of the signal marks, but the courier still slips the net before the handoff is exposed."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the runner head-on, forcing the whole chase into a test of lungs, legs, and stubbornness."
+
+                    if ($success) {
+                        Write-Scene "The courier cannot shake him. By the time the runner stumbles, the message case, route signs, and one bad handoff point all belong to the watch."
+                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $Game.Town.Relationships["Belor"] = "Trusting"
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The runner slips away at the last turn, but not before dropping a signal strip that proves the marked route is real."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    }
+
+                    break
+                }
+                else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
-
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window."
-
-                if ($success) {
-                    Write-Scene "The courier misreads the lane, slows for the wrong doorway, and loses both message case and route advantage in one bad step."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $Game.Town.Relationships["Belor"] = "Trusting"
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The ploy buys a glimpse of the signal marks, but the courier still slips the net before the handoff is exposed."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                }
-
-                break
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -1662,11 +1721,14 @@ function Start-WarehouseLedgerRecoveryQuest {
     }
     Write-Scene "The warehouse office is dark, shuttered, and recently searched. Someone knew the papers were worth hiding."
     Write-ColorLine ""
-    Write-ColorLine "1. Force the office lock and search fast" "White"
-    Write-ColorLine "2. Piece the hiding place together from the disturbed room" "White"
-    Write-ColorLine "3. Pressure the night clerk into giving up where the ledger was moved" "White"
+    Write-ColorLine "1. Force the office lock and search fast (STR)" "White"
+    Write-ColorLine "2. Piece the hiding place together from the disturbed room (WIS)" "White"
+    Write-ColorLine "3. Pressure the night clerk into giving up where the ledger was moved (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Walk the clerk through a polished lie until he corrects it for you" "White"
+        Write-ColorLine "4. Walk the clerk through a polished lie until he corrects it for you (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Tear the office apart until the real hiding place gives itself away (STR)" "White"
     }
     Write-ColorLine ""
 
@@ -1725,26 +1787,43 @@ function Start-WarehouseLedgerRecoveryQuest {
                 break
             }
             "4" {
-                if ($Game.Hero.Class -ne "Bard") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) feeds the clerk a polished false version of the books and waits for vanity and fear to make the man correct it."
+
+                    if ($success) {
+                        Write-Scene "The clerk snaps at the lie, then realizes too late that he has pointed straight at the hidden compartment and the real ledger inside."
+                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The clerk holds longer than expected. Borzig still comes away with scraps and accounting tells, but not the whole book."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) turns the office upside down with such force that the room starts confessing before the clerk does."
+
+                    if ($success) {
+                        Write-Scene "A false backing cracks under the search. Behind it sits the real ledger, still hidden with the names that tie the warehouse route to Serik's chain."
+                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The office comes apart noisily, and Borzig saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
-
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) feeds the clerk a polished false version of the books and waits for vanity and fear to make the man correct it."
-
-                if ($success) {
-                    Write-Scene "The clerk snaps at the lie, then realizes too late that he has pointed straight at the hidden compartment and the real ledger inside."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The clerk holds longer than expected. Borzig still comes away with scraps and accounting tells, but not the whole book."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -1832,7 +1911,7 @@ function Start-UnderstreetComplexQuest {
     Write-ColorLine ""
     Write-ColorLine "1. Descend with the watch through the broken maintenance shaft" "White"
     Write-ColorLine "2. Use the broker's lower route and go in fast" "White"
-    Write-ColorLine "3. Study the route a moment longer before moving" "White"
+    Write-ColorLine "3. Study the route a moment longer before moving (WIS)" "White"
     Write-ColorLine ""
 
     while ($true) {
@@ -1934,9 +2013,9 @@ function Start-WhispersBeneathBentNailQuest {
     Write-Scene "The man calls himself Brin and talks like every sentence costs him something. 'You didn't hear this from me,' he mutters. 'But plenty of folk are moving cargo that never sees a legal ledger.'"
     Write-Scene "'Funny thing,' Brin adds. 'The watch asks about tunnels, the merchants ask about missing goods, and they're both really asking about the same people.'"
     Write-ColorLine ""
-    Write-ColorLine "1. Press Brin hard and demand the route names" "White"
-    Write-ColorLine "2. Buy him a drink and let him talk on his own terms" "White"
-    Write-ColorLine "3. Leave the booth and shadow the next handoff yourself" "White"
+    Write-ColorLine "1. Press Brin hard and demand the route names (STR)" "White"
+    Write-ColorLine "2. Buy him a drink and let him talk on his own terms (CHA)" "White"
+    Write-ColorLine "3. Leave the booth and shadow the next handoff yourself (WIS)" "White"
     Write-ColorLine ""
 
     while ($true) {
@@ -2054,11 +2133,14 @@ function Start-MissingDeliveryDayJob {
         Write-Scene "A market runner explains the problem quickly: one crate of lamp oil and cloth never reached its stall, and if it stays missing by dawn he eats the loss."
     }
     Write-Scene "Borzig only needs to get the crate moving again and avoid turning a late delivery into a street fight."
-    Write-ColorLine "1. Clear the alley by force" "White"
-    Write-ColorLine "2. Haul the crate back yourself" "White"
-    Write-ColorLine "3. Talk the locals into helping" "White"
+    Write-ColorLine "1. Clear the alley by force (STR)" "White"
+    Write-ColorLine "2. Haul the crate back yourself (STR)" "White"
+    Write-ColorLine "3. Talk the locals into helping (CHA)" "White"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the delay into a public bit and shame everyone into helping" "White"
+        Write-ColorLine "4. Turn the delay into a public bit and shame everyone into helping (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Shoulder the whole mess yourself and dare anyone to block the lane (CON)" "White"
     }
     Write-ColorLine ""
 
@@ -2071,12 +2153,17 @@ function Start-MissingDeliveryDayJob {
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig gets both hands under the crate and muscles the job back on schedule." }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." }
             "4" {
-                if ($Game.Hero.Class -ne "Bard") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate."
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) heaves the crate up, takes the whole lane with him, and makes daring him to stop look like a poor plan."
+                }
+                else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate."
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -2088,6 +2175,9 @@ function Start-MissingDeliveryDayJob {
         if ($success) {
             if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
                 Write-Scene "By the time the bit is over, three bystanders are already rolling the crate forward and the runner is grinning through his panic."
+            }
+            elseif ($choice -eq "4" -and $Game.Hero.Class -eq "Barbarian") {
+                Write-Scene "By the time the shouting catches up, the crate is already moving and nobody in the lane wants to be the one foolish enough to stand in front of it."
             }
             else {
                 Write-Scene "The runner gets the crate back in one piece and pays quickly before anyone changes their mind."
@@ -2132,9 +2222,9 @@ function Start-GateDutyOverflowDayJob {
     else {
         Write-Scene "At the east gate, freight has jammed the archway and three drivers are one insult away from a riot."
     }
-    Write-ColorLine "1. Bark the line straight with sheer force of presence" "White"
-    Write-ColorLine "2. Shoulder the worst wagon clear yourself" "White"
-    Write-ColorLine "3. Calm the loudest driver before it spreads" "White"
+    Write-ColorLine "1. Bark the line straight with sheer force of presence (STR)" "White"
+    Write-ColorLine "2. Shoulder the worst wagon clear yourself (CON)" "White"
+    Write-ColorLine "3. Calm the loudest driver before it spreads (CHA)" "White"
     Write-ColorLine ""
 
     while ($true) {

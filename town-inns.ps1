@@ -219,20 +219,34 @@ function Resolve-LanternRestEveningChoice {
         [int]$RiskRoll = 0
     )
 
-    if ($Choice -eq "1") {
-        if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
-            $Game.Town.InnFlags["LanternTradeAdvice"] = $true
-            if ($Game.Hero.Class -eq "Bard") {
-                Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
-                $Game.Town.Relationships["LanternAudience"] = "Warm"
-                Write-Scene "Merchants and factors wave $($Game.Hero.Name) into the better half of the room, compare supper-room tastes, and quietly point him toward the market stringwright who outfits performers that travelers actually remember."
-                Write-EmphasisLine -Text "$($Game.Hero.Name) earns warm standing at the Lantern Rest. The Stage Lute is now cheaper at the market." -Color "Yellow"
-            }
-            else {
-                Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
-                Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
-                Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
-            }
+        if ($Choice -eq "1") {
+            if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
+                $Game.Town.InnFlags["LanternTradeAdvice"] = $true
+                if ($Game.Hero.Class -eq "Bard") {
+                    Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
+                    $Game.Town.Relationships["LanternAudience"] = "Warm"
+                    Write-Scene "Merchants and factors wave $($Game.Hero.Name) into the better half of the room, compare supper-room tastes, and quietly point him toward the market stringwright who outfits performers that travelers actually remember."
+                    Write-EmphasisLine -Text "$($Game.Hero.Name) earns warm standing at the Lantern Rest. The Stage Lute is now cheaper at the market." -Color "Yellow"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $Game.Town.Relationships["LanternMercenaries"] = "Warm"
+
+                    if ($Game.Hero.Level -ge 3) {
+                        Set-TownOfferDiscount -Game $Game -OfferId "market_throwing_axe" -DiscountCopper 30
+                        Write-Scene "The caravan guards make room for Borzig, compare bruises, and point him toward a trader carrying balanced axes meant for fighters who expect a chase before the real violence starts."
+                        Write-EmphasisLine -Text "Borzig earns warm standing among the Lantern Rest mercenaries. The Balanced Throwing Axe is now cheaper at the market." -Color "Yellow"
+                    }
+                    else {
+                        Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
+                        Write-Scene "Merchants and caravan guards swap practical road talk with Borzig and end up pointing him toward a market hand axe that suits ugly work in alleys, wagons, and close quarters."
+                        Write-EmphasisLine -Text "Borzig earns practical market favor at the Lantern Rest. The Hand Axe is now cheaper at the market." -Color "Yellow"
+                    }
+                }
+                else {
+                    Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
+                    Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
+                    Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
+                }
         }
         else {
             if ($Game.Hero.Class -eq "Bard") {
@@ -301,19 +315,25 @@ function Resolve-SilverKettleEveningChoice {
         [int]$RiskRoll = 0
     )
 
-    if ($Choice -eq "1") {
-        if (-not $Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
-            $Game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
-            $Game.Town.QuestPayoutBonusCopper = 20
-            if ($Game.Hero.Class -eq "Bard") {
-                $Game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
-                Write-Scene "Under silver lamps and careful laughter, $($Game.Hero.Name) listens while patrons discuss salon fees, private invitations, and which houses pay best for talent they can call their own for an evening."
-                Write-EmphasisLine -Text "$($Game.Hero.Name) learns how upper-room patrons spend. Future city payouts can improve, and the Silver Kettle starts treating him like an artist worth remembering." -Color "Yellow"
-            }
-            else {
-                Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
-                Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
-            }
+        if ($Choice -eq "1") {
+            if (-not $Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+                $Game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
+                $Game.Town.QuestPayoutBonusCopper = 20
+                if ($Game.Hero.Class -eq "Bard") {
+                    $Game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
+                    Write-Scene "Under silver lamps and careful laughter, $($Game.Hero.Name) listens while patrons discuss salon fees, private invitations, and which houses pay best for talent they can call their own for an evening."
+                    Write-EmphasisLine -Text "$($Game.Hero.Name) learns how upper-room patrons spend. Future city payouts can improve, and the Silver Kettle starts treating him like an artist worth remembering." -Color "Yellow"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
+                    Set-TownOfferDiscount -Game $Game -OfferId "apothecary_battle_tonic" -DiscountCopper 40
+                    Write-Scene "Borzig listens while quiet money talks about hard work no clerk can be seen asking for. Before the glasses are empty, one patron has already named the apothecary who keeps stronger restoratives aside for fighters expected to finish ugly contracts."
+                    Write-EmphasisLine -Text "Borzig gains upper-room contract insight. Future city payouts can improve, and stronger healing supplies are now easier to afford." -Color "Yellow"
+                }
+                else {
+                    Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
+                    Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
+                }
         }
         else {
             if ($Game.Hero.Class -eq "Bard") {

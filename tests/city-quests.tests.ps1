@@ -383,6 +383,101 @@ function Test-BardCanResolveMissingDeliveryWithPublicShowmanship {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 90 -Message "The bard's day-job route should still pay the normal day-job rate."
 }
 
+function Test-BarbarianCanHoldTheRoadForMissingHerbSatchel {
+    $game = Initialize-Game -Class "Barbarian"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "quest_board_missing_herbs" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "quest_board_missing_herbs"
+
+    $quest = Find-TownQuest -Game $game -QuestId "quest_board_missing_herbs"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A barbarian should be able to finish Missing Herb Satchel through the class-specific road-holding option."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The barbarian's satchel endurance route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "The barbarian's satchel route should still uncover the courier clue."
+}
+
+function Test-BarbarianCanBreakLedgerBluffForSeriksName {
+    $game = Initialize-Game -Class "Barbarian"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+
+    Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_ledger_of_ash"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_ledger_of_ash"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A barbarian should be able to complete Ledger of Ash through the class-specific pressure route."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The barbarian's ledger pressure route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["NamedUnderstreetLeader"] -Expected $true -Message "The barbarian's ledger route should still identify Serik as a strong clue."
+}
+
+function Test-BarbarianCanRunDownNightCourier {
+    $game = Initialize-Game -Class "Barbarian"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+    $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_courier"
+
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A barbarian should be able to finish Night Courier by running the courier down."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The barbarian's courier pursuit route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $true -Message "The barbarian's courier route should still reveal the real courier lane."
+}
+
+function Test-BarbarianCanRipWarehouseOfficeOpen {
+    $game = Initialize-Game -Class "Barbarian"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 3
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_warehouse_ledger"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A barbarian should be able to complete Warehouse Ledger Recovery through the class-specific office-smashing route."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The barbarian's warehouse smash route should count as strong progress."
+    Assert-Equal -Actual $game.Town.StoryFlags["SecuredLedgerEvidence"] -Expected $true -Message "The barbarian's warehouse route should still secure the hard ledger evidence."
+}
+
+function Test-BarbarianCanResolveMissingDeliveryByBruteCarry {
+    $game = Initialize-Game -Class "Barbarian"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
+
+    $quest = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A barbarian should be able to finish Missing Delivery through the class-specific brute-carry route."
+    Assert-Equal -Actual $game.Hero.XP -Expected 0 -Message "The barbarian's day-job route should still grant no XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 90 -Message "The barbarian's day-job route should still pay the normal day-job rate."
+}
+
 function Test-WarehouseLedgerUnlocksFromLedgerClues {
     $game = Initialize-Game
     $ledgerQuest = Find-TownQuest -Game $game -QuestId "patron_warehouse_ledger"
@@ -767,6 +862,11 @@ Test-BardCanCharmSeriksNameOutOfLedgerContacts
 Test-BardCanUseStreetPerformanceToCatchNightCourier
 Test-BardCanTalkWarehouseClerkIntoCorrectingALie
 Test-BardCanResolveMissingDeliveryWithPublicShowmanship
+Test-BarbarianCanHoldTheRoadForMissingHerbSatchel
+Test-BarbarianCanBreakLedgerBluffForSeriksName
+Test-BarbarianCanRunDownNightCourier
+Test-BarbarianCanRipWarehouseOfficeOpen
+Test-BarbarianCanResolveMissingDeliveryByBruteCarry
 Test-WarehouseLedgerUnlocksFromLedgerClues
 Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself

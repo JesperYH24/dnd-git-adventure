@@ -308,6 +308,15 @@ function Resolve-BelorChoice {
             return "Belor glances over the market and grunts. 'If your tongue and hands can hold a crowd, do it where the watch can see you. Tell the square wardens I cleared you to work the market. They'll give you better space and leave the hat alone.' $(Get-HeroTownName -Hero $Game.Hero) gains a market performance permit from the watch."
         }
 
+        if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
+            $Game.Town.StreetFlags["BelorWatchFavor"] = $true
+            $Game.Town.Relationships["Belor"] = "Trusting"
+            Set-TownOfferDiscount -Game $Game -OfferId "apothecary_healing_potion" -DiscountCopper 15
+            Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 20
+            Set-TownOfferDiscount -Game $Game -OfferId "apothecary_battle_tonic" -DiscountCopper 40
+            return "Belor jerks a thumb toward the apothecary and lowers his voice. 'If you're taking the kind of work that ends bloody, tell Nessa the watch sent you. She keeps better bottles behind the shelf for people we expect to come back standing.' $(Get-HeroTownName -Hero $Game.Hero) gains a quiet watch favor for healing supplies."
+        }
+
         $Game.Town.Relationships["Belor"] = "Trusting"
         return "Belor leans in and points across the square. 'The guard station pays steady coin for ugly work. If you want honest jobs, start there.'"
     }
@@ -378,10 +387,20 @@ function Get-HadrikForgeTalk {
 function Get-HadrikCityTalk {
     param($Game)
 
+    $persona = Get-HeroTownPersona -Hero $Game.Hero
+
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["HadrikCityTalk_Post"]) {
             $Game.Town.StreetFlags["HadrikCityTalk_Post"] = $true
+            if ($persona.IsBarbarian -or $persona.IsStrong) {
+                return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken, and the rougher ones keep asking what Borzig carries when he expects a real fight. City's gone from frightened to opportunistic in record time.'"
+            }
+
             return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken. The city has gone from frightened to opportunistic in record time.'"
+        }
+
+        if ($persona.IsBarbarian -or $persona.IsStrong) {
+            return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel. Folk see Borzig now and think of contracts, not cave salvage.'"
         }
 
         return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel.'"
@@ -389,7 +408,15 @@ function Get-HadrikCityTalk {
 
     if (-not $Game.Town.StreetFlags["HadrikCityTalk"]) {
         $Game.Town.StreetFlags["HadrikCityTalk"] = $true
+        if ($persona.IsBarbarian -or $persona.IsStrong) {
+            return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need Borzig or someone built like him before the week is out.'"
+        }
+
         return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need steel before the week is out.'"
+    }
+
+    if ($persona.IsBarbarian -or $persona.IsStrong) {
+        return "Hadrik scratches soot from his jaw. 'City still wants steel, and folk glance at Borzig like proof of why. Means the forge sleeps last.'"
     }
 
     return "Hadrik scratches soot from his jaw. 'City still wants steel. City always wants steel. Means the forge sleeps last.'"
@@ -398,10 +425,20 @@ function Get-HadrikCityTalk {
 function Get-BelorWatchTalk {
     param($Game)
 
+    $persona = Get-HeroTownPersona -Hero $Game.Hero
+
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["BelorWatchTalk_Post"]) {
             $Game.Town.StreetFlags["BelorWatchTalk_Post"] = $true
+            if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
+                return "Belor keeps his eyes on the gate. 'You broke the understreet and now the watch has proof the rot was organized. Means the next enemy will hide smarter, hit dirtier, and need someone stubborn enough to stand there when the line bends.'"
+            }
+
             return "Belor keeps his eyes on the gate. 'You broke the understreet and now the watch has proof the rot was organized. Means the next enemy will hide smarter.'"
+        }
+
+        if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
+            return "Belor's mouth tightens. 'The city trusts the walls more today, but walls still need hard people willing to be the part that does not move.'"
         }
 
         return "Belor's mouth tightens. 'The city trusts the walls more today, but walls only matter if we learn faster than the next lot of liars.'"
@@ -409,7 +446,15 @@ function Get-BelorWatchTalk {
 
     if (-not $Game.Town.StreetFlags["BelorWatchTalk"]) {
         $Game.Town.StreetFlags["BelorWatchTalk"] = $true
+        if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
+            return "Belor keeps his eyes on the gate as he talks. 'People think walls keep danger out. Truth is, walls only help if someone broad enough and mean enough can hold the bad lane when it finally turns ugly.'"
+        }
+
         return "Belor keeps his eyes on the gate as he talks. 'People think walls keep danger out. Truth is, walls only help if tired men on watch still know what to look for.'"
+    }
+
+    if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
+        return "Belor's mouth tightens. 'Too many small problems in a city turn into one large one unless someone stands in the right doorway and refuses to move.'"
     }
 
     return "Belor's mouth tightens. 'Too many small problems in a city turn into one large one if nobody stays awake long enough to connect them.'"

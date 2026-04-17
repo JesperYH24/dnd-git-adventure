@@ -140,6 +140,16 @@ function Test-StreetNpcFlavorTalkIsRemembered {
     Assert-True -Condition ($second -like "*Too many small problems*") -Message "Belor should shift to a shorter repeat warning on later talks."
 }
 
+function Test-BarbarianStreetTalkUsesBorzigsPhysicalRole {
+    $game = Initialize-Game -Class "Barbarian"
+
+    $hadrik = Get-HadrikCityTalk -Game $game
+    $belor = Get-BelorWatchTalk -Game $game
+
+    Assert-True -Condition ($hadrik -like "*Borzig*" -or $hadrik -like "*built like him*") -Message "Hadrik's city talk should frame Borzig as part of the city's practical demand for hard fighters."
+    Assert-True -Condition ($belor -like "*broad enough*" -or $belor -like "*refuses to move*" -or $belor -like "*hard people*") -Message "Belor's watch talk should recognize Borzig as the kind of body the line depends on."
+}
+
 function Test-StreetNpcExtraFlavorTalksExist {
     $game = Initialize-Game
 
@@ -223,6 +233,41 @@ function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {
     Assert-Equal -Actual $afterPermit.Outcome -Expected "Good" -Message "Belor's square permit should make the market more workable for a bard."
     Assert-Equal -Actual $withPermit.Town.StreetFlags["BelorSquarePermit"] -Expected $true -Message "Belor should record the bard's market permit."
     Assert-True -Condition ($afterPermit.RewardCopper -gt $beforePermit.RewardCopper) -Message "Belor's permit should improve the bard's practical market payout, not just the flavor text."
+}
+
+function Test-BelorCanHelpBarbarianPrepareForGuardWork {
+    $game = Initialize-Game -Class "Barbarian"
+
+    $result = Resolve-BelorChoice -Game $game -Choice "1"
+    $healingOffer = (Get-ApothecaryOffers -Game $game) | Where-Object { $_.Id -eq "apothecary_healing_potion" } | Select-Object -First 1
+    $greaterOffer = (Get-ApothecaryOffers -Game $game) | Where-Object { $_.Id -eq "apothecary_greater_healing_potion" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.StreetFlags["BelorWatchFavor"] -Expected $true -Message "Belor should be able to give a barbarian a concrete watch favor, not just directions."
+    Assert-Equal -Actual $game.Town.Relationships["Belor"] -Expected "Trusting" -Message "Belor should trust a barbarian he is willing to back for ugly work."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $healingOffer) -Expected 45 -Message "Belor's watch favor should make basic healing cheaper for a barbarian."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $greaterOffer) -Expected 160 -Message "Belor's watch favor should also help with stronger healing supplies."
+    Assert-True -Condition ($result -like "*healing supplies*") -Message "Belor should explain the barbarian reward as practical preparation, not social polish."
+}
+
+function Test-LanternRestMerchantsFavorBarbarianTravelSteel {
+    $game = Initialize-Game -Class "Barbarian"
+
+    Resolve-LanternRestEveningChoice -Game $game -Choice "1"
+    $handaxeOffer = (Get-MarketOffers -Game $game) | Where-Object { $_.Id -eq "market_handaxe" } | Select-Object -First 1
+
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $handaxeOffer) -Expected 120 -Message "Lantern Rest should still steer a barbarian toward practical close-quarters steel."
+    Assert-Equal -Actual $game.Town.Relationships["LanternMercenaries"] -Expected "Warm" -Message "Lantern Rest should give a barbarian some standing with the room's mercenary crowd."
+}
+
+function Test-SilverKettleContractTalkCanSupportBarbarianRecovery {
+    $game = Initialize-Game -Class "Barbarian"
+
+    Resolve-SilverKettleEveningChoice -Game $game -Choice "1"
+    $greaterOffer = (Get-ApothecaryOffers -Game $game) | Where-Object { $_.Id -eq "apothecary_greater_healing_potion" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettleEconomicInsight"] -Expected $true -Message "Silver Kettle contract talk should still set the persistent economic insight flag for a barbarian."
+    Assert-Equal -Actual $game.Town.QuestPayoutBonusCopper -Expected 20 -Message "Silver Kettle contract talk should keep the future quest payout bonus for a barbarian."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $greaterOffer) -Expected 150 -Message "Silver Kettle patrons should also help a barbarian afford stronger recovery supplies."
 }
 
 function Test-BardCanEarnCoinByPerformingInMarketSquare {
