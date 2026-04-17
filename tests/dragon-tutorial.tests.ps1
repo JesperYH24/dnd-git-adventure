@@ -89,9 +89,14 @@ function Test-BardCanPrepareAtCampfireBeforeEnteringTutorialCave {
 function Test-BardTutorialCombatExplainsBonusActionFlow {
     Set-TestOutputStubs
 
+    $script:responses = @("2", "N", "1", "R")
+    $script:index = 0
     function global:Read-Host {
         param([string]$Prompt)
-        return "R"
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
     }
 
     $hero = Get-Hero -Class "Bard"

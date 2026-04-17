@@ -13,6 +13,8 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
 - level-up readiness and long-rest leveling from level 1 to level 3
 - turn-based combat with:
   - initiative rolls
+  - true initiative order where the winner actually takes the first turn inside the normal combat loop
+  - no scripted free opening attack before the combat menu begins
   - critical hits and critical fails
   - weapon damage dice
   - armor class
@@ -24,11 +26,13 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
     - `Cutting Words`
     - `Vicious Mockery`
   - a cleaner battle-status layout with clearer separation between Borzig and the enemy
+  - a class-ready turn menu with separate `Action` and `Bonus Action` entry points for future expansion
   - brutal barbarian crit-finish text on lethal takedowns
 - class-specific combat identity for the bard:
   - `Bardic Inspiration` prepared before danger with an instrument
   - inspiration dice equal to `1 + CHA modifier`
   - inspiration dice used after `Attack`, `Block`, or `Focus`
+  - a dedicated `Bonus Action` menu inside combat rounds
   - `Vicious Mockery` using a `WIS` save instead of guaranteed damage
   - `Cutting Words` as a reaction that spends bardic inspiration
   - short-rest recovery of prepared bardic inspiration
@@ -240,6 +244,8 @@ When playing as `Bard`, several early city quests now support a different feel f
 The final quest now plays as a more involved mini-dungeon with branching rooms, dead ends, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
 
 Searching rooms in the Understreet now uses `INT`, and several chambers deliberately hint when something feels hidden, recently disturbed, or worth forcing open. That gives the finale more of a real dungeon rhythm where observation, route choice, loot pressure, and resource management matter alongside combat.
+
+Combat initiative now behaves more cleanly across the whole game: the opposed initiative roll decides who truly acts first in the standard combat loop, instead of creating a separate scripted opening attack phase before normal choices appear.
 
 ### 4. Bard v1
 

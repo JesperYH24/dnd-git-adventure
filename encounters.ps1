@@ -95,7 +95,6 @@ function Resolve-RoomEncounter {
     $monsterHP = $monster.hp
     $monsterOffBalance = $false
     $heroStarts = $false
-    $heroBonusAttack = $false
     $monsterStarts = $false
 
     Write-SectionTitle -Text "Encounter" -Color "Red"
@@ -107,38 +106,7 @@ function Resolve-RoomEncounter {
         -Hero $Game.Hero `
         -Monster $monster `
         -HeroStarts ([ref]$heroStarts) `
-        -HeroBonusAttack ([ref]$heroBonusAttack) `
         -MonsterStarts ([ref]$monsterStarts)
-
-    $openingResult = Start-OpeningPhase `
-        -Hero $Game.Hero `
-        -Monster $monster `
-        -HeroHP $HeroHP `
-        -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon $HeroDroppedWeapon `
-        -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -HeroStarts $heroStarts `
-        -HeroBonusAttack $heroBonusAttack `
-        -MonsterStarts $monsterStarts
-
-    if (-not $openingResult) {
-        if ($HeroHP.Value -le 0) {
-            return "Defeated"
-        }
-
-        if ($monsterHP -le 0) {
-            Write-Scene "$($monster.definite) collapses to the ground. The path ahead is clear."
-            Grant-HeroXP -Hero $Game.Hero -XP $monster.xp
-            Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP."
-            if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
-                Write-EmphasisLine -Text "$($Game.Hero.Name) feels stronger. A level up awaits after a long rest." -Color "Yellow"
-                Write-ColorLine ""
-            }
-            Resolve-LootDrop -Hero $Game.Hero -Monster $monster -Room $Room
-            $Room.EncounterResolved = $true
-            return "Won"
-        }
-    }
 
     $encounterFled = $false
 
@@ -150,7 +118,7 @@ function Resolve-RoomEncounter {
         -HeroDroppedWeapon $HeroDroppedWeapon `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
         -EncounterFled ([ref]$encounterFled) `
-        -SkipInitialStatus $monsterStarts
+        -HeroStarts $heroStarts
 
     if ($HeroHP.Value -le 0) {
         return "Defeated"

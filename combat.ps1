@@ -255,12 +255,11 @@ function Resolve-HeroBonusAction {
     )
 
     if ($Hero.Class -ne "Bard" -or $MonsterHP.Value -le 0) {
-        return
+        return $false
     }
 
-    Write-ColorLine "Bonus action?" "Cyan"
-    Write-ColorLine "M. Vicious Mockery" "White"
-    Write-ColorLine "N. No bonus action" "DarkGray"
+    Write-ColorLine "Bonus Action" "Cyan"
+    Write-ColorLine "M. Vicious Mockery   N. No bonus action" "White"
     Write-ColorLine ""
 
     while ($true) {
@@ -268,7 +267,7 @@ function Resolve-HeroBonusAction {
 
         if ($choice -eq "N") {
             Write-ColorLine ""
-            return
+            return $false
         }
 
         if ($choice -eq "M") {
@@ -295,7 +294,7 @@ function Resolve-HeroBonusAction {
             }
 
             Write-ColorLine ""
-            return
+            return $true
         }
 
         Write-ColorLine "Choose M or N." "DarkYellow"
@@ -462,9 +461,177 @@ function Show-BardTutorialCombatHint {
         return
     }
 
-    Write-Scene "Prepared bardic inspiration can strengthen Attack, Block, or Focus after you choose the action. Vicious Mockery is your bonus action, and Cutting Words can interrupt a hit as a reaction."
+    Write-Scene "Prepared bardic inspiration can strengthen Attack, Block, or Focus after you choose the action. Each round opens with a combat menu where $($Hero.Name) can choose Action or Bonus Action, and Cutting Words can still interrupt a hit as a reaction."
     Write-ColorLine ""
     $Hero.TutorialCombatHintShown = $true
+}
+
+function Show-CombatTurnMenu {
+    param(
+        $Hero,
+        [bool]$BonusActionSpent = $false
+    )
+
+    $bonusText = "2. Bonus Action"
+
+    if ($BonusActionSpent) {
+        $bonusText = "2. Bonus Action (used)"
+    }
+
+    Write-ColorLine "1. Action   $bonusText   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    Write-ColorLine ""
+}
+
+function Show-CombatChoiceMenu {
+    Write-ColorLine "A. Attack   B. Block   F. Focus" "White"
+    Write-ColorLine "I. Inventory   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    Write-ColorLine ""
+}
+
+function Resolve-MonsterCombatTurn {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$HeroHP,
+        [ref]$MonsterOffBalance,
+        [ref]$HeroBlockArmorBonus
+    )
+
+    if (-not $MonsterOffBalance.Value) {
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value
+        $HeroBlockArmorBonus.Value = 0
+
+        if ($HeroHP.Value -le 0) {
+            Write-Scene "$($Hero.Name) falls in battle..."
+        }
+    }
+    else {
+        Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
+        $MonsterOffBalance.Value = $false
+        Write-ColorLine ""
+    }
+}
+
+function Resolve-HeroCombatTurn {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$HeroHP,
+        [ref]$MonsterHP,
+        [ref]$HeroDroppedWeapon,
+        [ref]$MonsterOffBalance,
+        [ref]$EncounterFled,
+        [ref]$HeroBlockArmorBonus,
+        [ref]$HeroFocusAttackBonus
+    )
+
+    if ($HeroDroppedWeapon.Value) {
+        Resolve-DroppedWeaponTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance
+        return
+    }
+
+    $choice = $null
+    $turnHeroAttackBonus = 0
+    $bonusActionSpent = $false
+
+    while ($null -eq $choice) {
+        Show-CombatTurnMenu -Hero $Hero -BonusActionSpent $bonusActionSpent
+        $turnMenuChoice = (Read-Host "Choose").ToUpper()
+
+        if ($turnMenuChoice -eq "T") {
+            Toggle-TextSpeed | Out-Null
+            continue
+        }
+
+        if ($turnMenuChoice -eq "2") {
+            if ($Hero.Class -ne "Bard") {
+                Write-ColorLine ""
+                Write-ColorLine "No bonus action is available for $($Hero.Name) yet, but this is where abilities like Rage will sit later." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+
+            if ($bonusActionSpent) {
+                Write-ColorLine ""
+                Write-ColorLine "The bonus action is already spent this round." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+
+            $bonusActionSpent = Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
+
+            if ($MonsterHP.Value -le 0) {
+                return
+            }
+
+            continue
+        }
+
+        if ($turnMenuChoice -ne "1") {
+            Write-ColorLine ""
+            Write-ColorLine "Choose 1, 2 or T." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        Show-CombatChoiceMenu
+        $choice = (Read-Host "Choose action").ToUpper()
+
+        if ($choice -eq "T") {
+            Toggle-TextSpeed | Out-Null
+            $choice = $null
+        }
+    }
+
+    if ($choice -eq "I") {
+        Write-ColorLine ""
+        $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP -InCombat
+
+        if (-not $usedItem) {
+            return
+        }
+    }
+    elseif ($choice -eq "R") {
+        Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
+        $EncounterFled.Value = $true
+        return
+    }
+    elseif ($choice -in @("A", "B", "F")) {
+        Resolve-HeroInspirationBoost `
+            -Hero $Hero `
+            -PrimaryAction $choice `
+            -HeroAttackBonus ([ref]$turnHeroAttackBonus) `
+            -HeroBlockArmorBonus $HeroBlockArmorBonus `
+            -HeroFocusAttackBonus $HeroFocusAttackBonus
+    }
+    else {
+        Write-ColorLine ""
+        Write-ColorLine "Type A, B, F, I, R or T." "DarkYellow"
+        Write-ColorLine ""
+        return (Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus $HeroBlockArmorBonus -HeroFocusAttackBonus $HeroFocusAttackBonus)
+    }
+
+    if ($choice -eq "B") {
+        Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
+        $HeroBlockArmorBonus.Value += 2
+        Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
+        Write-ColorLine ""
+        return
+    }
+
+    if ($choice -eq "F") {
+        Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
+        $HeroFocusAttackBonus.Value += 2
+        Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
+        Write-ColorLine ""
+        return
+    }
+
+    if ($choice -eq "A") {
+        Write-ColorLine ""
+        Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus)
+        $HeroFocusAttackBonus.Value = 0
+    }
 }
 
 function Start-CombatLoop {
@@ -476,165 +643,37 @@ function Start-CombatLoop {
         [ref]$HeroDroppedWeapon,
         [ref]$MonsterOffBalance,
         [ref]$EncounterFled,
-        [bool]$SkipInitialStatus = $false
+        [bool]$HeroStarts = $true
     )
 
-    $showStatus = -not $SkipInitialStatus
     $heroBlockArmorBonus = 0
     $heroFocusAttackBonus = 0
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
-        if ($showStatus) {
-            Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
-        }
-
-        $showStatus = $true
+        Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
         Show-BardTutorialCombatHint -Hero $Hero
 
-        if ($HeroDroppedWeapon.Value) {
-            Resolve-DroppedWeaponTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance
+        if ($HeroStarts) {
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
 
-            if ($HeroHP.Value -le 0) {
-                Write-Scene "$($Hero.Name) falls in battle..."
+            if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
                 break
             }
 
-            continue
-        }
-
-        $choice = (Read-Host "What do you want to do? (A/B/F/I/R/T) - Attack, Block, Focus, Inventory, Run or Toggle text speed").ToUpper()
-        $turnHeroAttackBonus = 0
-
-        if ($choice -eq "I") {
-            Write-ColorLine ""
-            $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP -InCombat
-
-            if ($usedItem) {
-                if (-not $MonsterOffBalance.Value) {
-                    Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
-                    $heroBlockArmorBonus = 0
-
-                    if ($HeroHP.Value -le 0) {
-                        Write-Scene "$($Hero.Name) falls in battle..."
-                        break
-                    }
-                }
-                else {
-                    Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
-                    $MonsterOffBalance.Value = $false
-                    Write-ColorLine ""
-                }
-            }
-
-            continue
-        }
-        elseif ($choice -eq "R") {
-            Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
-            $EncounterFled.Value = $true
-            break
-        }
-        elseif ($choice -eq "T") {
-            Toggle-TextSpeed | Out-Null
-            continue
-        }
-
-        if ($choice -in @("A", "B", "F")) {
-            Resolve-HeroInspirationBoost `
-                -Hero $Hero `
-                -PrimaryAction $choice `
-                -HeroAttackBonus ([ref]$turnHeroAttackBonus) `
-                -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) `
-                -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
-        }
-
-        if ($choice -eq "B") {
-            Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
-            $heroBlockArmorBonus += 2
-            Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
-            Write-ColorLine ""
-
-            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
-
-            if ($MonsterHP.Value -le 0) {
-                break
-            }
-
-            if (-not $MonsterOffBalance.Value) {
-                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
-                $heroBlockArmorBonus = 0
-
-                if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) falls in battle..."
-                    break
-                }
-            }
-            else {
-                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
-                $MonsterOffBalance.Value = $false
-                Write-ColorLine ""
-            }
-        }
-        elseif ($choice -eq "F") {
-            Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
-            $heroFocusAttackBonus += 2
-            Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
-            Write-ColorLine ""
-
-            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
-
-            if ($MonsterHP.Value -le 0) {
-                break
-            }
-
-            if (-not $MonsterOffBalance.Value) {
-                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
-                $heroBlockArmorBonus = 0
-
-                if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) falls in battle..."
-                    break
-                }
-            }
-            else {
-                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
-                $MonsterOffBalance.Value = $false
-                Write-ColorLine ""
-            }
-        }
-        elseif ($choice -eq "A") {
-            Write-ColorLine ""
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($heroFocusAttackBonus + $turnHeroAttackBonus)
-            $heroFocusAttackBonus = 0
-
-            if ($MonsterHP.Value -le 0) {
-                break
-            }
-
-            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
-
-            if ($MonsterHP.Value -le 0) {
-                break
-            }
-
-            if (-not $MonsterOffBalance.Value) {
-                Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $heroBlockArmorBonus
-                $heroBlockArmorBonus = 0
-
-                if ($HeroHP.Value -le 0) {
-                    Write-Scene "$($Hero.Name) falls in battle..."
-                    break
-                }
-            }
-            else {
-                Write-Scene "$($Monster.definite) tries to recover its balance and cannot attack this turn."
-                $MonsterOffBalance.Value = $false
-                Write-ColorLine ""
-            }
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
         }
         else {
-            Write-ColorLine ""
-            Write-ColorLine "Type A, B, F, I or R" "DarkYellow"
-            Write-ColorLine ""
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
+
+            if ($HeroHP.Value -le 0) {
+                break
+            }
+
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
+
+            if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
+                break
+            }
         }
     }
 }

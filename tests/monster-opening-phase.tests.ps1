@@ -53,7 +53,7 @@ function Set-TestRollStub {
     $global:RollDiceOverride = $Body
 }
 
-function Test-MonsterOpeningPhaseCriticalHit {
+function Test-MonsterFirstTurnCriticalHit {
     Set-TestOutputStubs
 
     Set-TestRollStub {
@@ -66,26 +66,20 @@ function Test-MonsterOpeningPhaseCriticalHit {
     $hero = New-TestHero
     $monster = New-TestMonster
     $heroHP = $hero.HP
-    $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
     $monsterOffBalance = $false
+    $heroBlockArmorBonus = 0
 
-    $continueCombat = Start-OpeningPhase `
+    Resolve-MonsterCombatTurn `
         -Hero $hero `
         -Monster $monster `
         -HeroHP ([ref]$heroHP) `
-        -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -HeroStarts $false `
-        -HeroBonusAttack $false `
-        -MonsterStarts $true
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
 
-    Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after monster crits without lethal damage."
-    Assert-Equal -Actual $heroHP -Expected 12 -Message "Monster crit in opening phase should deal max die plus a fresh damage roll."
+    Assert-Equal -Actual $heroHP -Expected 12 -Message "Monster crit on a monster-first turn should deal max die plus a fresh damage roll."
 }
 
-function Test-MonsterOpeningPhaseNormalHit {
+function Test-MonsterFirstTurnNormalHit {
     Set-TestOutputStubs
 
     Set-TestRollStub {
@@ -98,27 +92,21 @@ function Test-MonsterOpeningPhaseNormalHit {
     $hero = New-TestHero
     $monster = New-TestMonster
     $heroHP = $hero.HP
-    $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
     $monsterOffBalance = $false
+    $heroBlockArmorBonus = 0
 
-    $continueCombat = Start-OpeningPhase `
+    Resolve-MonsterCombatTurn `
         -Hero $hero `
         -Monster $monster `
         -HeroHP ([ref]$heroHP) `
-        -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -HeroStarts $false `
-        -HeroBonusAttack $false `
-        -MonsterStarts $true
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
 
-    Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after a normal monster hit in opening phase."
-    Assert-Equal -Actual $heroHP -Expected 16 -Message "Monster normal hit in opening phase should reduce hero HP by rolled damage."
+    Assert-Equal -Actual $heroHP -Expected 16 -Message "Monster normal hit on a monster-first turn should reduce hero HP by rolled damage."
 }
 
-Test-MonsterOpeningPhaseCriticalHit
-Test-MonsterOpeningPhaseNormalHit
+Test-MonsterFirstTurnCriticalHit
+Test-MonsterFirstTurnNormalHit
 
-Write-Host "All opening phase monster attack tests passed." -ForegroundColor Green
+Write-Host "All monster-first turn tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

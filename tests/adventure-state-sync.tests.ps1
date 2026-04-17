@@ -47,7 +47,7 @@ function Set-TestOutputStubs {
     function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
 }
 
-function Test-OpeningPhaseStateSync {
+function Test-MonsterFirstTurnStateSync {
     Set-TestOutputStubs
 
     function global:Roll-Dice {
@@ -62,38 +62,28 @@ function Test-OpeningPhaseStateSync {
         Monster = New-TestMonster
         HeroHP = 20
         MonsterHP = 50
-        HeroDroppedWeapon = $false
         MonsterOffBalance = $false
-        HeroStarts = $false
-        HeroBonusAttack = $false
-        MonsterStarts = $true
+        HeroBlockArmorBonus = 0
     }
 
     $heroHP = $game.HeroHP
-    $monsterHP = $game.MonsterHP
-    $heroDroppedWeapon = $game.HeroDroppedWeapon
     $monsterOffBalance = $game.MonsterOffBalance
+    $heroBlockArmorBonus = $game.HeroBlockArmorBonus
 
-    $continueCombat = Start-OpeningPhase `
+    Resolve-MonsterCombatTurn `
         -Hero $game.Hero `
         -Monster $game.Monster `
         -HeroHP ([ref]$heroHP) `
-        -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -HeroStarts $game.HeroStarts `
-        -HeroBonusAttack $game.HeroBonusAttack `
-        -MonsterStarts $game.MonsterStarts
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
 
     $game.HeroHP = $heroHP
-    $game.MonsterHP = $monsterHP
-    $game.HeroDroppedWeapon = $heroDroppedWeapon
     $game.MonsterOffBalance = $monsterOffBalance
+    $game.HeroBlockArmorBonus = $heroBlockArmorBonus
 
-    Assert-Equal -Actual $continueCombat -Expected $true -Message "Combat should continue after the opening monster attack."
-    Assert-Equal -Actual $game.HeroHP -Expected 9 -Message "Adventure state should keep the reduced hero HP after a monster-first opening attack."
+    Assert-Equal -Actual $game.HeroHP -Expected 9 -Message "Adventure state should keep the reduced hero HP after a monster-first turn."
 }
 
-Test-OpeningPhaseStateSync
+Test-MonsterFirstTurnStateSync
 
 Write-Host "Adventure state sync tests passed." -ForegroundColor Green

@@ -40,7 +40,7 @@ function Set-TestRollStub {
     $global:RollDiceOverride = $Body
 }
 
-function Test-NaturalTwentyAlwaysGrantsHeroTwoAttacks {
+function Test-NaturalTwentyAlwaysLetsHeroStart {
     Set-TestOutputStubs
 
     $script:rollIndex = 0
@@ -53,18 +53,15 @@ function Test-NaturalTwentyAlwaysGrantsHeroTwoAttacks {
     }
 
     $heroStarts = $false
-    $heroBonusAttack = $false
     $monsterStarts = $false
 
     Start-DetectionPhase `
         -Hero (New-TestHero) `
         -Monster (New-TestMonster) `
         -HeroStarts ([ref]$heroStarts) `
-        -HeroBonusAttack ([ref]$heroBonusAttack) `
         -MonsterStarts ([ref]$monsterStarts)
 
     Assert-Equal -Actual $heroStarts -Expected $true -Message "A natural 20 should always let the hero start."
-    Assert-Equal -Actual $heroBonusAttack -Expected $true -Message "A natural 20 should grant the hero two opening attacks."
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "A natural 20 should prevent the monster from starting."
 }
 
@@ -81,22 +78,19 @@ function Test-MonsterCanWinOpposedInitiative {
     }
 
     $heroStarts = $false
-    $heroBonusAttack = $false
     $monsterStarts = $false
 
     Start-DetectionPhase `
         -Hero (New-TestHero) `
         -Monster (New-TestMonster) `
         -HeroStarts ([ref]$heroStarts) `
-        -HeroBonusAttack ([ref]$heroBonusAttack) `
         -MonsterStarts ([ref]$monsterStarts)
 
     Assert-Equal -Actual $heroStarts -Expected $false -Message "The hero should not start when the monster wins initiative."
-    Assert-Equal -Actual $heroBonusAttack -Expected $false -Message "The hero should not get a bonus attack without a natural 20."
     Assert-Equal -Actual $monsterStarts -Expected $true -Message "The monster should start when it wins the opposed initiative roll."
 }
 
-Test-NaturalTwentyAlwaysGrantsHeroTwoAttacks
+Test-NaturalTwentyAlwaysLetsHeroStart
 Test-MonsterCanWinOpposedInitiative
 
 Write-Host "Initiative tests passed." -ForegroundColor Green

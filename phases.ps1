@@ -304,7 +304,6 @@ function Start-DetectionPhase {
         $Hero,
         $Monster,
         [ref]$HeroStarts,
-        [ref]$HeroBonusAttack,
         [ref]$MonsterStarts
     )
 
@@ -340,9 +339,7 @@ function Start-DetectionPhase {
 
     if ($heroRoll -eq 20) {
         Write-Scene "$($Hero.Name) seizes the moment with a perfect initiative roll!"
-        Write-Scene "$($Hero.Name) gains two immediate attacks."
         $HeroStarts.Value = $true
-        $HeroBonusAttack.Value = $true
     }
     elseif ($heroTotal -ge $monsterTotal) {
         Write-Scene "$($Hero.Name) moves first and catches $($Monster.definite) off guard."
@@ -352,56 +349,4 @@ function Start-DetectionPhase {
         Write-Scene "$($Monster.definite) is quicker on the draw and strikes first!"
         $MonsterStarts.Value = $true
     }
-}
-
-function Start-OpeningPhase {
-    param(
-        $Hero,
-        $Monster,
-        [ref]$HeroHP,
-        [ref]$MonsterHP,
-        [ref]$HeroDroppedWeapon,
-        [ref]$MonsterOffBalance,
-        [bool]$HeroStarts,
-        [bool]$HeroBonusAttack,
-        [bool]$MonsterStarts
-    )
-
-    if ($HeroStarts) {
-        $attacks = if ($HeroBonusAttack) { 2 } else { 1 }
-
-        for ($i = 1; $i -le $attacks; $i++) {
-            Write-ColorLine ""
-            Write-Action "Opening attack $i of $attacks" "Cyan"
-
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon
-
-            if ($MonsterHP.Value -le 0) {
-                return $false
-            }
-
-            if ($HeroDroppedWeapon.Value) {
-                break
-            }
-        }
-
-        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
-
-        if ($HeroHP.Value -le 0) {
-            Write-Scene "$($Hero.Name) falls in battle..."
-            return $false
-        }
-    }
-    elseif ($MonsterStarts) {
-        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance
-
-        Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
-
-        if ($HeroHP.Value -le 0) {
-            Write-Scene "$($Hero.Name) falls in battle..."
-            return $false
-        }
-    }
-
-    return $true
 }

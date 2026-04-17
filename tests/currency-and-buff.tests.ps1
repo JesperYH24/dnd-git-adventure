@@ -69,18 +69,15 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
     }
 
     $heroStarts = $false
-    $heroBonusAttack = $false
     $monsterStarts = $false
 
     Start-DetectionPhase `
         -Hero $hero `
         -Monster $monster `
         -HeroStarts ([ref]$heroStarts) `
-        -HeroBonusAttack ([ref]$heroBonusAttack) `
         -MonsterStarts ([ref]$monsterStarts)
 
     Assert-Equal -Actual $heroStarts -Expected $true -Message "Haste should let the hero take the better initiative roll."
-    Assert-Equal -Actual $heroBonusAttack -Expected $false -Message "Advantage should not grant the bonus double attack without a natural 20."
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "The monster should not start if haste lets the hero win initiative."
 }
 

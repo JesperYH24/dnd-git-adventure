@@ -334,7 +334,6 @@ function Invoke-StoryCombat {
     $monsterHP = $Monster.hp
     $monsterOffBalance = $false
     $heroStarts = $false
-    $heroBonusAttack = $false
     $monsterStarts = $false
     $encounterFled = $false
 
@@ -347,32 +346,7 @@ function Invoke-StoryCombat {
         -Hero $Game.Hero `
         -Monster $Monster `
         -HeroStarts ([ref]$heroStarts) `
-        -HeroBonusAttack ([ref]$heroBonusAttack) `
         -MonsterStarts ([ref]$monsterStarts)
-
-    $openingResult = Start-OpeningPhase `
-        -Hero $Game.Hero `
-        -Monster $Monster `
-        -HeroHP $HeroHP `
-        -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon ([ref]$Game.HeroDroppedWeapon) `
-        -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -HeroStarts $heroStarts `
-        -HeroBonusAttack $heroBonusAttack `
-        -MonsterStarts $monsterStarts
-
-    if (-not $openingResult) {
-        if ($monsterHP -le 0) {
-            Write-Scene "$($Monster.definite) goes down and does not rise again."
-            Write-ColorLine ""
-        }
-
-        return [PSCustomObject]@{
-            Won = ($monsterHP -le 0)
-            Defeated = ($HeroHP.Value -le 0)
-            Fled = $false
-        }
-    }
 
     Start-CombatLoop `
         -Hero $Game.Hero `
@@ -381,7 +355,8 @@ function Invoke-StoryCombat {
         -MonsterHP ([ref]$monsterHP) `
         -HeroDroppedWeapon ([ref]$Game.HeroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
-        -EncounterFled ([ref]$encounterFled)
+        -EncounterFled ([ref]$encounterFled) `
+        -HeroStarts $heroStarts
 
     if ($monsterHP -le 0) {
         Write-Scene "$($Monster.definite) drops and the fight is finished."

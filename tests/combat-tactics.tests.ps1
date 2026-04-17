@@ -247,6 +247,111 @@ function Test-BardCuttingWordsCanTurnHitIntoMiss {
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Cutting Words should consume one bardic inspiration die."
 }
 
+function Test-BardBonusActionCanResolveBeforeMainAction {
+    Set-TestOutputStubs
+
+    $script:responses = @("2", "M", "1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $monsterHP -Expected 17 -Message "The bard should be able to use Vicious Mockery before taking the main action."
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "The bard should still be able to take a normal action after the bonus action menu."
+}
+
+function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
+    Set-TestOutputStubs
+
+    $script:responses = @("2", "1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "A barbarian should still be able to act normally after checking the future bonus action menu."
+}
+
+function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 15 }
+        return 3
+    }
+
+    $hero = Get-Hero
+    $monster = [PSCustomObject]@{
+        name = "quick striker"
+        definite = "The Quick Striker"
+        hp = 20
+        armorClass = 16
+        attackBonus = 8
+        damageDiceCount = 1
+        damageDiceSides = 4
+        damageBonus = 0
+        isBoss = $false
+    }
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled) -HeroStarts $false
+
+    Assert-True -Condition ($heroHP -lt $hero.HP) -Message "When the monster wins initiative, it should act before the hero can take a turn."
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "The hero should still be able to flee on the following turn."
+}
+
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
 Test-BarbarianCritKillGetsSavageFinisherText
@@ -255,6 +360,9 @@ Test-BardInspirationCanBoostBlock
 Test-BardViciousMockeryBonusActionDealsPsychicDamage
 Test-BardViciousMockeryCanBeSavedAgainst
 Test-BardCuttingWordsCanTurnHitIntoMiss
+Test-BardBonusActionCanResolveBeforeMainAction
+Test-BarbarianCanOpenBonusActionMenuAndStillAct
+Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null
