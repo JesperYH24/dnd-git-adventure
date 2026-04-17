@@ -636,23 +636,50 @@ function Get-HeroWeaponAbility {
     return "STR"
 }
 
+function Get-HeroCheckProficiencies {
+    param($Hero)
+
+    if ($null -ne $Hero.PSObject.Properties["CheckProficiencies"] -and $null -ne $Hero.CheckProficiencies) {
+        return @($Hero.CheckProficiencies)
+    }
+
+    switch ($Hero.Class) {
+        "Barbarian" { return @("STR", "CON") }
+        "Bard" { return @("CHA", "Performance") }
+        default { return @() }
+    }
+}
+
 function Get-HeroAbilityCheckModifier {
     param(
         $Hero,
-        [string]$Ability
+        [string]$Ability,
+        [string]$CheckTag = ""
     )
 
     $modifier = Get-HeroAbilityModifier -Hero $Hero -Ability $Ability
-    $classBonus = 0
+    $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
+    $checkProficiencies = @(Get-HeroCheckProficiencies -Hero $Hero)
+    $normalizedAbility = $Ability.ToUpper()
+    $normalizedTag = if ([string]::IsNullOrWhiteSpace($CheckTag)) { "" } else { $CheckTag.Trim() }
+    $isProficient = $false
 
-    if ($Hero.Class -eq "Bard" -and $Ability -eq "CHA") {
-        $classBonus = 2
+    foreach ($entry in $checkProficiencies) {
+        if ([string]::Equals([string]$entry, $normalizedAbility, [System.StringComparison]::OrdinalIgnoreCase) -or
+            (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase))) {
+            $isProficient = $true
+            break
+        }
     }
+
+    $classBonus = if ($isProficient) { $proficiencyBonus } else { 0 }
 
     return [PSCustomObject]@{
         AbilityModifier = $modifier
         ClassBonus = $classBonus
         TotalModifier = $modifier + $classBonus
+        CheckTag = $normalizedTag
+        IsProficient = $isProficient
     }
 }
 
@@ -1099,6 +1126,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 15
+                CheckProficiencies = @("CHA", "Performance")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4
@@ -1138,6 +1166,7 @@ function Get-Hero {
                 INT                = 8
                 WIS                = 10
                 CHA                = 8
+                CheckProficiencies = @("STR", "CON")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4

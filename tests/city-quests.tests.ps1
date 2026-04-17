@@ -827,6 +827,34 @@ function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
     Assert-True -Condition ($result.Message -like "*Gariand*") -Message "Quest acceptance text should use the current hero's name in the quest log message."
 }
 
+function Test-BarbarianStrengthChecksUseAbilityAndProficiency {
+    $hero = Get-Hero -Class "Barbarian"
+    $profile = Get-HeroAbilityCheckModifier -Hero $hero -Ability "STR"
+
+    Assert-Equal -Actual $profile.AbilityModifier -Expected 2 -Message "A barbarian STR check should use the STR modifier."
+    Assert-Equal -Actual $profile.ClassBonus -Expected 2 -Message "A barbarian STR check should add proficiency."
+    Assert-Equal -Actual $profile.TotalModifier -Expected 4 -Message "A barbarian STR check total should be modifier plus proficiency."
+}
+
+function Test-BardCharismaChecksUseAbilityAndProficiency {
+    $hero = Get-Hero -Class "Bard"
+    $profile = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA"
+
+    Assert-Equal -Actual $profile.AbilityModifier -Expected 2 -Message "A bard CHA check should use the CHA modifier."
+    Assert-Equal -Actual $profile.ClassBonus -Expected 2 -Message "A bard CHA check should add proficiency."
+    Assert-Equal -Actual $profile.TotalModifier -Expected 4 -Message "A bard CHA check total should be modifier plus proficiency."
+}
+
+function Test-BardPerformanceChecksUsePerformanceProficiency {
+    $hero = Get-Hero -Class "Bard"
+    $profile = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA" -CheckTag "Performance"
+    $instrument = Get-HeroInstrument -Hero $hero
+
+    Assert-Equal -Actual $profile.AbilityModifier -Expected 2 -Message "A bard performance check should use the CHA modifier."
+    Assert-Equal -Actual $profile.ClassBonus -Expected 2 -Message "A bard performance check should add performance proficiency."
+    Assert-Equal -Actual $instrument.InspirationBonus -Expected 1 -Message "A bard's starting instrument should still add its own separate performance bonus."
+}
+
 function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
     $game = Initialize-Game
     $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
@@ -892,6 +920,9 @@ Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest
 Test-QuestOutcomeTextStaysBlankForDayJobs
 Test-BardicInspirationCanBoostQuestChecks
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
+Test-BarbarianStrengthChecksUseAbilityAndProficiency
+Test-BardCharismaChecksUseAbilityAndProficiency
+Test-BardPerformanceChecksUsePerformanceProficiency
 
 Write-Host "City quest tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

@@ -471,7 +471,7 @@ function Start-BardPerformanceCheck {
         $CheckDC = [int]$Venue.CheckDC
     }
 
-    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Game.Hero -Ability "CHA"
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Game.Hero -Ability "CHA" -CheckTag "Performance"
     $instrument = Get-HeroInstrument -Hero $Game.Hero
     $instrumentBonus = if ($null -ne $instrument -and $null -ne $instrument.PSObject.Properties["InspirationBonus"]) { [int]$instrument.InspirationBonus } else { 0 }
     $roll = Roll-Dice -Sides 20

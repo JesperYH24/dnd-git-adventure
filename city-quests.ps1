@@ -375,10 +375,11 @@ function Start-NonCombatQuestCheck {
         $Hero,
         [string]$Ability,
         [int]$DC,
-        [string]$ActionText
+        [string]$ActionText,
+        [string]$CheckTag = ""
     )
 
-    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Ability
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Ability -CheckTag $CheckTag
     $roll = Roll-Dice -Sides 20
     $bardicBonus = 0
     $bonusText = ""
@@ -1174,7 +1175,7 @@ function Start-MissingHerbSatchelQuest {
             }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) eases the tension with a low, steady refrain and lets the scavengers talk before fear hardens again."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) eases the tension with a low, steady refrain and lets the scavengers talk before fear hardens again." -CheckTag "Performance"
 
                     if ($success) {
                         Write-Scene "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes."
@@ -1609,7 +1610,7 @@ function Start-NightCourierInterceptQuest {
             }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window." -CheckTag "Performance"
 
                     if ($success) {
                         Write-Scene "The courier misreads the lane, slows for the wrong doorway, and loses both message case and route advantage in one bad step."
@@ -2159,7 +2160,7 @@ function Start-MissingDeliveryDayJob {
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate." -CheckTag "Performance"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) heaves the crate up, takes the whole lane with him, and makes daring him to stop look like a poor plan."
