@@ -729,6 +729,11 @@ function Search-UnderstreetRoom {
     }
     else {
         Write-Scene $Room.SearchFailureText
+
+        if ($Room.Id -eq "whisper_cells" -and -not [string]::IsNullOrWhiteSpace($Room.SearchRewardFlag) -and -not [bool]$Game.Town.StoryFlags[$Room.SearchRewardFlag]) {
+            $Game.Town.StoryFlags[$Room.SearchRewardFlag] = $true
+            Write-EmphasisLine -Text "Even without turning the cells inside out, Borzig still spots the red-wrapped key hidden in the candle niche." -Color "Yellow"
+        }
     }
 
     $Room.HiddenLoot = @()
