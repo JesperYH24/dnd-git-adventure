@@ -4,6 +4,7 @@
 . "$PSScriptRoot\monsters.ps1"
 . "$PSScriptRoot\ui.ps1"
 . "$PSScriptRoot\status.ps1"
+. "$PSScriptRoot\save.ps1"
 . "$PSScriptRoot\inventory.ps1"
 . "$PSScriptRoot\combat.ps1"
 . "$PSScriptRoot\quests.ps1"
@@ -13,6 +14,33 @@
 . "$PSScriptRoot\encounters.ps1"
 . "$PSScriptRoot\phases.ps1"
 . "$PSScriptRoot\exploration.ps1"
+
+function New-DefaultTownState {
+    return @{
+        StreetFlags = @{}
+        Discounts = @{}
+        ChapterOneComplete = $false
+        ChapterTwoComplete = $false
+        ChapterThreeHookSeen = $false
+        ActiveInn = $null
+        MustChooseFirstInn = $false
+        WorkedForRoomToday = $false
+        StoryQuestDoneToday = $false
+        DayJobDoneToday = $false
+        PerformanceCountToday = 0
+        PerformanceCountTotal = 0
+        PerformanceVenuesToday = @{}
+        QuestPayoutBonusCopper = 0
+        Quests = (Initialize-TownQuests)
+        Relationships = @{}
+        InnFlags = @{}
+        StoryFlags = @{}
+        Ring = @{
+            Visits = 0
+            FoughtToday = $false
+        }
+    }
+}
 
 function Initialize-Game {
     param(
@@ -35,30 +63,7 @@ function Initialize-Game {
     $state = @{
         Hero = $hero
         Quest = $quest
-        Town = @{
-            StreetFlags = @{}
-            Discounts = @{}
-            ChapterOneComplete = $false
-            ChapterTwoComplete = $false
-            ChapterThreeHookSeen = $false
-            ActiveInn = $null
-            MustChooseFirstInn = $false
-            WorkedForRoomToday = $false
-            StoryQuestDoneToday = $false
-            DayJobDoneToday = $false
-            PerformanceCountToday = 0
-            PerformanceCountTotal = 0
-            PerformanceVenuesToday = @{}
-            QuestPayoutBonusCopper = 0
-            Quests = (Initialize-TownQuests)
-            Relationships = @{}
-            InnFlags = @{}
-            StoryFlags = @{}
-            Ring = @{
-                Visits = 0
-                FoughtToday = $false
-            }
-        }
+        Town = (New-DefaultTownState)
         Rooms = $rooms
         CurrentRoomId = "entrance"
         LastRoomId = $null

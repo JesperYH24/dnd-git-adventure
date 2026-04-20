@@ -620,6 +620,7 @@ function Start-InnVisitMenu {
         Write-ColorLine "2. Spend time in the common room" "White"
         Write-ColorLine "3. Speak with the innkeeper" "White"
         Write-ColorLine "S. Status" "White"
+        Write-ColorLine "G. Save adventure" "White"
         Write-ColorLine "0. Return to town" "DarkGray"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
@@ -650,6 +651,9 @@ function Start-InnVisitMenu {
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            }
+            "G" {
+                Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
             }
             "0" {
                 return "BackToTown"
@@ -1250,6 +1254,7 @@ function Start-InnMenu {
         Write-ColorLine "4. Manage stored gear" "White"
         Write-ColorLine "5. Status" "White"
         Write-ColorLine "6. Return to inn" "White"
+        Write-ColorLine "G. Save adventure" "White"
         Write-ColorLine "0. End the adventure for now" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
@@ -1279,6 +1284,9 @@ function Start-InnMenu {
             }
             "6" {
                 return "BackToInn"
+            }
+            "G" {
+                Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
             }
             "T" {
                 Toggle-TextSpeed | Out-Null
@@ -1320,10 +1328,16 @@ function Start-InnSelectionMenu {
         }
 
         Write-ColorLine ""
+        Write-ColorLine "G. Save adventure" "White"
         Write-ColorLine "0. Back" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
+
+        if ($choice.ToUpper() -eq "G") {
+            Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
+            continue
+        }
 
         if ($choice -eq "0") {
             return "BackToTown"

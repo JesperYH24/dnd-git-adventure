@@ -11,6 +11,11 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - `Barbarian` as `Borzig`
   - `Bard` as `Gariand`
 - level-up readiness and long-rest leveling from level 1 to level 3
+- local `save/load` support with:
+  - a startup menu for `New adventure` or `Load adventure`
+  - `3` manual save slots
+  - save access from campfire, town, and inn flows
+  - backward-safe save normalization for newer state fields
 - turn-based combat with:
   - initiative rolls
   - true initiative order where the winner actually takes the first turn inside the normal combat loop
@@ -37,6 +42,10 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - `Cutting Words` as a reaction that spends bardic inspiration
   - short-rest recovery of prepared bardic inspiration
 - cave exploration with connected rooms, backtracking, room loot, and encounters
+- defeat handling with:
+  - tutorial defeat resetting the whole tutorial back to the campfire
+  - town quest defeat offering either a same-day `Town Doctor` recovery for coin or a next-day `Inn` recovery through a long rest
+  - ring defeat remaining separate from the heavier city defeat flow
 - tutorial boss warning flow with a Shadow Sanctum reward choice
 - tutorial support for the bard with:
   - class-aware intro and campfire hints
@@ -210,8 +219,11 @@ From there the player can:
 - enter the cave
 - head to town
 - read the quest log
+- save the adventure
 
 The city remains blocked until the tutorial quest is completed.
+
+If the hero is defeated during the tutorial, the cave run resets and the adventure returns to the campfire from a fresh tutorial state.
 
 ### 2. Town
 
@@ -231,6 +243,12 @@ After the warning is delivered, the game opens into a simple town hub where the 
 - keep extra gear in the backpack, then move items onto Borzig's person before combat if they need to be used in battle
 - begin the Chapter Two city story through the first guard quest chain
 - if playing `Bard`, perform for coin and build standing with audiences, patrons, and better venues
+- save the adventure from the main town and inn flows
+
+If the hero is defeated during a city quest, the game no longer assumes a manual reload. Instead, the quest fails and the player chooses between:
+
+- a `Town Doctor` recovery that costs coin and keeps the same day going
+- returning to the booked inn for a full long rest that ends the day and resets daily limits
 
 ### 3. Chapter Two
 
@@ -358,6 +376,8 @@ Useful current suites include:
 powershell -ExecutionPolicy Bypass -File .\tests\city-quests.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\save-load.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\defeat.tests.ps1
 ```
 
 ---
@@ -379,8 +399,6 @@ powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
-- add `save/load` support so longer city and class playthroughs can be resumed cleanly
-- formalize defeat and HP persistence rules so the tutorial can hard-reset at the campfire, the city can keep combat damage between activities, and the fighting ring can stay fully restorative between bouts
 - introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads

@@ -370,6 +370,101 @@ function Invoke-StoryCombat {
     }
 }
 
+function Get-TownDoctorRecoveryCostCopper {
+    return 60
+}
+
+function Resolve-TownQuestDefeatRecovery {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [string]$QuestId
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -ne $quest) {
+        Fail-TownQuest -Game $Game -QuestId $QuestId | Out-Null
+    }
+
+    $doctorCost = Get-TownDoctorRecoveryCostCopper
+    $activeInn = $Game.Town.ActiveInn
+    $canUseInn = $null -ne $activeInn -and [int]$Game.Hero.CurrencyCopper -ge [int]$activeInn.PriceCopper
+
+    Write-SectionTitle -Text "Defeat" -Color "Red"
+    Write-Scene "$($Game.Hero.Name) does not die in the street. Someone drags him out of the wreck of the job before the city can swallow him whole."
+
+    if ($null -ne $quest) {
+        Write-EmphasisLine -Text "$($quest.Name) is marked as failed." -Color "DarkYellow"
+    }
+
+    Write-ColorLine ""
+
+    while ($true) {
+        Write-ColorLine "How should $($Game.Hero.Name) recover?" "Cyan"
+        Write-ColorLine "1. Town doctor - $(Convert-CopperToCurrencyText -Copper $doctorCost) and stay on the same day" "White"
+
+        if ($null -ne $activeInn) {
+            if ($canUseInn) {
+                Write-ColorLine "2. Back to $($activeInn.Name) - pay for the night, take a long rest, and wake on the next day" "White"
+            }
+            else {
+                Write-ColorLine "2. Back to $($activeInn.Name) - not enough coin for another night" "DarkGray"
+            }
+        }
+
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $doctorPayment = Spend-HeroCurrency -Hero $Game.Hero -Copper $doctorCost
+
+                if ($doctorPayment.Success) {
+                    Clear-HeroBuff -Hero $Game.Hero
+                    $HeroHP.Value = $Game.Hero.HP
+                    $Game.HeroDroppedWeapon = $false
+                    Write-Scene "The town doctor takes the coin, resets broken breath and split skin, and has $($Game.Hero.Name) back on his feet before the day is truly lost."
+                    Write-Scene "$($Game.Hero.Name) keeps the same day, but the failed job is gone."
+                    Write-ColorLine ""
+                    return "Doctor"
+                }
+
+                if ($null -eq $activeInn) {
+                    Clear-HeroBuff -Hero $Game.Hero
+                    $HeroHP.Value = 1
+                    $Game.HeroDroppedWeapon = $false
+                    Write-Scene "Without the full fee, the doctor only binds the worst of it and turns $($Game.Hero.Name) back into the city with 1 HP and a warning not to waste a second rescue."
+                    Write-ColorLine ""
+                    return "DoctorStabilized"
+                }
+
+                Write-ColorLine "There is not enough coin left for the doctor." "DarkYellow"
+                Write-ColorLine ""
+            }
+            "2" {
+                if (-not $canUseInn) {
+                    Write-ColorLine "That recovery path is not available right now." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Clear-HeroBuff -Hero $Game.Hero
+                $Game.HeroDroppedWeapon = $false
+                Resolve-BookedInnNightRest -Game $Game -HeroHP $HeroHP | Out-Null
+                Write-Scene "$($Game.Hero.Name) loses the rest of the day, but wakes behind a locked door with the city reset for morning."
+                Write-ColorLine ""
+                return "Inn"
+            }
+            default {
+                Write-ColorLine "Choose one of the listed recovery options." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-NonCombatQuestCheck {
     param(
         $Hero,
@@ -972,6 +1067,7 @@ function Start-NightWatchReliefQuest {
     if ($combatResult.Defeated) {
         Write-Scene "$($Game.Hero.Name) is forced back and the patrol collapses into chaos."
         Write-ColorLine ""
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
         return
     }
 
@@ -1051,6 +1147,7 @@ function Start-StorehouseTroubleQuest {
     if ($combatResult.Defeated) {
         Write-Scene "$($Game.Hero.Name) is driven out of the storehouse before he can secure the evidence."
         Write-ColorLine ""
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
         return
     }
 
@@ -1479,6 +1576,7 @@ function Start-BrokenSealPatrolQuest {
     if ($combatResult.Defeated) {
         Write-Scene "Borzig is forced up and out before the patrol can secure the line."
         Write-ColorLine ""
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
         return
     }
 
@@ -1964,6 +2062,11 @@ function Start-UnderstreetComplexQuest {
     Write-ColorLine ""
 
     $explorationResult = Start-UnderstreetComplexExploration -Game $Game -HeroHP $HeroHP
+
+    if ($explorationResult -eq "Defeated") {
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
+        return
+    }
 
     if ($explorationResult -ne "Victory") {
         return

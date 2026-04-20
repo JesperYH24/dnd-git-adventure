@@ -839,6 +839,7 @@ function Start-TownMenu {
         Write-ColorLine "9. Check inventory" "White"
         Write-ColorLine "10. Check quest log" "White"
         Write-ColorLine "S. Status" "White"
+        Write-ColorLine "G. Save adventure" "White"
         if ($Game.Hero.Class -eq "Bard") {
             Write-ColorLine "P. Find an audience and perform for coin" "White"
         }
@@ -894,6 +895,9 @@ function Start-TownMenu {
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            }
+            "G" {
+                Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
             }
             "P" {
                 if ($Game.Hero.Class -eq "Bard") {

@@ -582,6 +582,7 @@ function Complete-TownQuest {
     }
 
     $quest.Completed = $true
+    $quest.Failed = $false
     $quest.Started = $false
     $quest.AdvanceOutcome = $AdvanceOutcome
 
@@ -622,6 +623,31 @@ function Complete-TownQuest {
         CurrencyResult = $currencyResult
         RewardXP = $rewardXP
         RewardItem = $rewardItem
+    }
+}
+
+function Fail-TownQuest {
+    param(
+        $Game,
+        [string]$QuestId
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -eq $quest) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "That quest could not be marked as failed."
+        }
+    }
+
+    $quest.Failed = $true
+    $quest.Started = $false
+    $quest.Accepted = $false
+
+    return [PSCustomObject]@{
+        Success = $true
+        Quest = $quest
     }
 }
 

@@ -23,6 +23,7 @@ function Start-CaveExploration {
 
         if ($encounterResult -eq "Defeated") {
             Write-Scene "$($Game.Hero.Name) falls in the depths of the cave..."
+            Reset-TutorialAfterDefeat -Game $Game -HeroHP $HeroHP -HeroDroppedWeapon $HeroDroppedWeapon
             return
         }
 

@@ -124,6 +124,33 @@ function Confirm-BardTutorialPreparation {
     }
 }
 
+function Reset-TutorialAfterDefeat {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [ref]$HeroDroppedWeapon
+    )
+
+    $freshGame = Initialize-Game -Class $Game.Hero.Class
+
+    foreach ($key in @($Game.Keys)) {
+        $Game.Remove($key)
+    }
+
+    foreach ($entry in $freshGame.GetEnumerator()) {
+        $Game[$entry.Key] = $entry.Value
+    }
+
+    Set-UiHeroName -Name $Game.Hero.Name
+    $HeroHP.Value = [int]$Game.HeroHP
+    $HeroDroppedWeapon.Value = [bool]$Game.HeroDroppedWeapon
+
+    Write-SectionTitle -Text "Defeat" -Color "Red"
+    Write-Scene "$($Game.Hero.Name) wakes again by the campfire with the whole failed descent still hanging in the nerves like a bad dream."
+    Write-Scene "The cave must be faced again from the beginning."
+    Write-ColorLine ""
+}
+
 function Complete-TutorialAndEnterTown {
     param(
         $Game,
@@ -226,6 +253,7 @@ function Start-CampfireMenu {
             $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
             Write-ColorLine "5. Prepare bardic inspiration with $instrumentName ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) ready)" "White"
         }
+        Write-ColorLine "G. Save adventure" "White"
         Write-TextSpeedOption
         Write-ColorLine ""
 
@@ -282,6 +310,9 @@ function Start-CampfireMenu {
                     Write-ColorLine "Invalid choice. Try again." "Red"
                     Write-ColorLine ""
                 }
+            }
+            "G" {
+                Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
             }
             "T" {
                 Toggle-TextSpeed | Out-Null
