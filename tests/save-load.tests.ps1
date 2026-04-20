@@ -49,6 +49,8 @@ function Test-SaveLoadRoundTripPreservesAdventureState {
         $game.Town.StoryQuestDoneToday = $true
         $game.Town.PerformanceCountToday = 2
         $game.Town.PerformanceCountTotal = 5
+        $game.Town.DayNumber = 4
+        $game.Town.TimeOfDay = "Night"
         $game.Town.StoryFlags["FoundSmugglingLink"] = $true
         $game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
         $game.Town.ActiveInn = [PSCustomObject]@{
@@ -68,6 +70,8 @@ function Test-SaveLoadRoundTripPreservesAdventureState {
         Assert-Equal -Actual $loadedGame.HeroDroppedWeapon -Expected $true -Message "Loading should preserve dropped-weapon state."
         Assert-Equal -Actual $loadedGame.Town.PerformanceCountToday -Expected 2 -Message "Loading should preserve bard performance usage."
         Assert-Equal -Actual $loadedGame.Town.PerformanceCountTotal -Expected 5 -Message "Loading should preserve total bard recognition progress."
+        Assert-Equal -Actual $loadedGame.Town.DayNumber -Expected 4 -Message "Loading should preserve the current town day count."
+        Assert-Equal -Actual $loadedGame.Town.TimeOfDay -Expected "Night" -Message "Loading should preserve the current town time of day."
         Assert-Equal -Actual $loadedGame.Town.StoryQuestDoneToday -Expected $true -Message "Loading should preserve daily story quest usage."
         Assert-Equal -Actual $loadedGame.Town.StoryFlags["FoundSmugglingLink"] -Expected $true -Message "Loading should preserve story flags."
         Assert-Equal -Actual $loadedGame.Town.InnFlags["SilverKettlePrivateInvite"] -Expected $true -Message "Loading should preserve inn flags."
@@ -123,6 +127,8 @@ function Test-OlderSaveDataGetsNewDefaultsOnLoad {
         Assert-Equal -Actual $loadedGame.HeroDroppedWeapon -Expected $false -Message "Older saves should default dropped weapon state to false."
         Assert-True -Condition $loadedGame.Town.ContainsKey("PerformanceVenuesToday") -Message "Older saves should gain new town performance tracking keys."
         Assert-True -Condition $loadedGame.Town.ContainsKey("Ring") -Message "Older saves should gain ring state defaults."
+        Assert-True -Condition $loadedGame.Town.ContainsKey("DayNumber") -Message "Older saves should gain a default town day counter."
+        Assert-True -Condition $loadedGame.Town.ContainsKey("TimeOfDay") -Message "Older saves should gain a default town time-of-day field."
         Assert-True -Condition $loadedGame.Town["Ring"].ContainsKey("FoughtToday") -Message "Older saves should gain nested ring defaults."
     }
     finally {

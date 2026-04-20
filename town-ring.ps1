@@ -1017,9 +1017,17 @@ function Start-BrawlLoop {
 function Start-FightingRing {
     param($Game)
 
+    if ((Get-TownTimeOfDay -Game $Game) -ne "Night") {
+        Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
+        Write-Scene "The pit is still being readied for the night crowd. Canvas, chalk, wagers, and bad decisions all gather properly only after dark."
+        Write-ColorLine ""
+        return
+    }
+
     $entryFee = 100
     $trainingGoal = 10
     Write-SectionTitle -Text "Fighting Ring" -Color "Yellow"
+    Write-TownTimeTracker -Game $Game -Area "Ring"
     Write-Scene "In a sunken pit behind heavy canvas, wagers trade hands faster than greetings and every bruise is worth an opinion."
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
     Write-Scene "Each exchange happens fast: pick a style, commit to it, and see who controls the moment."

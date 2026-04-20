@@ -27,31 +27,64 @@ function Get-ClassAwareTownText {
 function Get-TownShopIntroText {
     param(
         [string]$Shop,
-        $Hero
+        $Hero,
+        $Game = $null
     )
+
+    $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
     switch ($Shop) {
         "Market" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "Most of the market has shuttered for the night. A few stubborn traders still work by lantern light, selling travel gear and necessities to anyone desperate enough to pay after dusk." `
+                    -BardText "Most of the market has gone dark, but a few lantern-lit stalls still linger for late coin, hurried repairs, and performers who know night crowds buy differently than day ones.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." `
                 -BardText "Canvas stalls crowd the square. Traders call Gariand over with travel gear, strings, ribbons, lamp oil, and opportunistic smiles. The market reads him as the sort of traveler who can turn polish and timing into coin if his kit is worthy of the room.")
         }
         "Smithy" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "The forge burns lower at night, but not cold. Steel still glows in the coals while the smith works the kind of late orders that never wait for morning." `
+                    -BardText "The forge runs on lower light now, all banked coals and sharp reflections. Even at night, the smith's eye still goes first to buckles, light armor, and gear that has to survive hard use without looking clumsy.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel. The look he gives Borzig's older weaponry suggests he has already judged it rough, serviceable, and overdue for replacement." `
                 -BardText "Heat and sparks pour from the forge while the smith judges Gariand with a craftsman's patience. Even here the eye goes first to buckles, light armor, and anything that might keep a quick-handed performer alive without ruining his poise.")
         }
         "Apothecary" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "The apothecary keeps a quieter night counter for travelers, watchmen, and anyone trying to look less injured than they are. The room smells stronger of tonic, clove, and clean linen after dark." `
+                    -BardText "The apothecary speaks softer at night, serving bruised guards, late travelers, and performers trying to keep a long evening from showing too clearly on the face.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." `
                 -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice.")
         }
         "Instrument Shop" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "The instrument shop is half-closed for the night, but warm workshop light still spills across polished wood and hanging strings. Someone here clearly trusts evening repairs more than morning promises." `
+                    -BardText "The instrument maker works by lamplight now, listening to wood and strings in the hush after the city's louder rooms have filled. It feels less like a shop and more like a backstage confession.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Borzig gets a wary craftsman's look, the sort usually reserved for men who might carry a lute by the neck instead of the case." `
                 -BardText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Gariand is measured first by ear, then by posture, then by the condition of the instrument already at his side.")
         }
         "Armorer" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "The armorer keeps late hours for people expecting trouble before dawn. Leather, mail, and oiled straps hang heavy in the lamplight, all of it meant for work rather than display." `
+                    -BardText "At night the armorer feels more private, all lamplight on buckles, rivets, and fitted coats. The room has the calm patience of someone who knows last-minute protection sells best after dark.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Leather, chain, buckles, and heavy stitched coats line the armorer's walls. The room smells of oil, wool, and old campaigns, and Borzig is judged like someone who might finally be worth fitting properly." `
                 -BardText "Leather, chain, buckles, and fitted coats line the armorer's walls. Even here the eye goes toward mobility, silhouette, and whether Gariand wants protection that still lets him move like a performer instead of a tower shield.")
@@ -150,20 +183,56 @@ function Get-TownQuestSourceIntroText {
 
     $visitKey = Get-TownSourceVisitKey -Source $Source
     $isRepeatVisit = [bool]$Game.Town.StreetFlags[$visitKey]
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    if ($isNight -and -not $isRepeatVisit) {
+        switch ($Source) {
+            "Quest Board" {
+                $Game.Town.StreetFlags[$visitKey] = $true
+                return "Pinned notices stir in the lantern-draft, half public work and half quiet desperation. By night, even the ordinary jobs look like they might lead somewhere sharper."
+            }
+            "Guard Station" {
+                $Game.Town.StreetFlags[$visitKey] = $true
+                return "Lanterns burn low over the watch desks while runners, tired guards, and half-finished reports keep the hall alive. This is the city's harder face, the one it shows after dark."
+            }
+            "Quest Giver" {
+                $Game.Town.StreetFlags[$visitKey] = $true
+                return "The patron's clerk keeps the ledgers close and his voice lower than usual. Night work in this office feels less like posting jobs and more like choosing who can be trusted with quiet damage."
+            }
+        }
+    }
 
     if ($Game.Town.ChapterTwoComplete) {
         switch ($Source) {
             "Quest Board" {
+                if ($isNight) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "Fresh notices rustle under lantern light now that Borzig's name carries more weight. Night jobs, private coin, and uglier requests seem to surface after dark." `
+                        -BardText "Fresh notices rustle under lantern light now that Gariand's name carries more weight. By night, the board reads less like public work and more like whispered opportunities pinned in plain sight.")
+                }
+
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "Fresh notices have started appearing now that Borzig's name carries more weight. Some want coin-work. Some want the man who broke the understreet to look into worse things." `
                     -BardText "Fresh notices have started appearing now that Gariand's name carries more weight. Some want coin-work. Some want the man who sang his way through closed rooms and walked back out of the understreet to look into worse things.")
             }
             "Guard Station" {
+                if ($isNight) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The watch hall runs sharper at night. Runners come faster, tired guards speak lower, and the jobs left on the table feel closer to real trouble." `
+                        -BardText "The watch hall runs sharper at night. Orders move in clipped voices, lanterns burn low over the desks, and even the guards who distrust polish know Gariand belongs where the city's after-dark truth starts surfacing.")
+                }
+
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The watch hall changes tone when Borzig enters now. Some guards step aside out of respect, and the harder jobs are no longer hidden from him." `
                     -BardText "The watch hall changes tone when Gariand enters now. Some guards still distrust a polished tongue, but none of them mistake him for a lightweight anymore, and the harder jobs are no longer hidden from him.")
             }
             "Quest Giver" {
+                if ($isNight) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The patron's clerk looks more guarded at night, as if every ledger opened after dusk carries extra risk. The work offered now feels quieter, more deliberate, and less deniable." `
+                        -BardText "The patron's clerk looks more guarded at night, counting doors, voices, and witnesses before he says much. The work offered after dusk feels meant for someone who can move carefully between trust and leverage.")
+                }
+
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." `
                     -BardText "The patron's clerk has stopped treating Gariand like charming decoration. Now the work is more careful, more valuable, and offered with the uneasy respect reserved for someone who can move between ledgers, guard posts, and whispered rooms.")
@@ -183,9 +252,27 @@ function Get-TownQuestSourceIntroText {
     }
 
     switch ($Source) {
-        "Quest Board" { return "The board looks thinner now, but there is still work on it for anyone willing to take the coin." }
-        "Guard Station" { return "The watch hall is busier than it looks. Hard jobs are passed quietly from one tired hand to the next." }
+        "Quest Board" {
+            if ($isNight) {
+                return "The board looks different by lantern light. Public notices remain, but the jobs that stand out after dark are the ones ordinary folk do not want overheard."
+            }
+
+            return "The board looks thinner now, but there is still work on it for anyone willing to take the coin."
+        }
+        "Guard Station" {
+            if ($isNight) {
+                return "The watch hall has shifted into its night rhythm. Hard jobs are passed quietly from one tired hand to the next, and nobody wastes words they do not need."
+            }
+
+            return "The watch hall is busier than it looks. Hard jobs are passed quietly from one tired hand to the next."
+        }
         "Quest Giver" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "The patron's clerk recognizes Borzig now and keeps his night work short, private, and expensive." `
+                    -BardText "The patron's clerk recognizes Gariand now and slips into a lower, tighter tone fit for work discussed after dark.")
+            }
+
             return (Get-ClassAwareTownText -Hero $Game.Hero `
                 -BarbarianText "The patron's clerk recognizes Borzig now and reaches for the stack of private work without wasting words." `
                 -BardText "The patron's clerk recognizes Gariand now and reaches for the stack of private work without wasting words. He speaks like a man who has accepted that a polished performer can also be the sharpest knife in the room.")
@@ -206,6 +293,7 @@ function Show-TownQuestSource {
     while ($true) {
         $quests = @(Get-TownQuestList -Game $Game -Source $Source)
         Write-SectionTitle -Text $Title -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area $Title
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
 
@@ -253,7 +341,11 @@ function Show-TownQuestSource {
             $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
             Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
             $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+            $timeText = Get-TownQuestRequiredTimeOfDay -Quest $quest
             Write-ColorLine "   Type: $($quest.QuestType)$tierText" "DarkGray"
+            if (-not [string]::IsNullOrWhiteSpace($timeText)) {
+                Write-ColorLine "   Time: $timeText" "DarkGray"
+            }
             Write-ColorLine "   $($quest.Description)" "DarkGray"
             Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
         }
@@ -324,6 +416,54 @@ function Show-TownQuestSource {
     }
 }
 
+function Wait-For-Nightfall {
+    param($Game)
+
+    if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+        Write-Scene "Night already hangs over the city."
+        Write-ColorLine ""
+        return
+    }
+
+    Set-TownTimeOfDay -Game $Game -TimeOfDay "Night"
+    Write-Scene "Borzig lets the bright edge of the day burn down into lantern light, shuttered stalls, and the slower dangers that only wake after dusk."
+    Write-ColorLine ""
+}
+
+function Test-TownActionAvailableAtCurrentTime {
+    param(
+        $Game,
+        [string]$Action
+    )
+
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    switch ($Action) {
+        "Market" { return -not $isNight }
+        "Smithy" { return -not $isNight }
+        "Armorer" { return -not $isNight }
+        "Ring" { return $isNight }
+        "Performance" { return $isNight }
+        default { return $true }
+    }
+}
+
+function Get-TownActionUnavailableText {
+    param(
+        $Game,
+        [string]$Action
+    )
+
+    switch ($Action) {
+        "Market" { return "Most of the market has shuttered for the night. The real trade there will have to wait for morning." }
+        "Smithy" { return "Rurik's main forge business is done for the night. Serious smithing waits for daylight." }
+        "Armorer" { return "The armorer has closed up for the night, leaving only measured lamplight behind the shutters." }
+        "Ring" { return "The fighting ring does not truly wake until after dark, when the wagers start moving faster than the greetings." }
+        "Performance" { return "$($Game.Hero.Name) can work a room for coin, but this city pays best for performances once the evening crowd has gathered." }
+        default { return "That part of the city is not moving at this hour." }
+    }
+}
+
 function Start-TownQuestPreparationMenu {
     param(
         $Game,
@@ -333,6 +473,7 @@ function Start-TownQuestPreparationMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Prepare for Quest" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Quest Preparation"
         Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
             -BarbarianText "$($Quest.Name) waits when Borzig is ready. He can make final adjustments before stepping out." `
             -BardText "$($Quest.Name) waits when Gariand is ready. He can make final adjustments, steady his nerves, and choose how he wants to carry himself before stepping out.")
@@ -607,6 +748,15 @@ function Resolve-BardPerformance {
         }
     }
 
+    if ((Get-TownTimeOfDay -Game $Game) -ne "Night") {
+        Write-Scene "$($Game.Hero.Name) can earn coin with a room and a song, but the city does not really pay attention until the evening crowd gathers."
+        Write-ColorLine ""
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Performance venue not live yet."
+        }
+    }
+
     if ($Game.Town.PerformanceCountToday -ge 3) {
         Write-Scene "Borzig has already played three paying sets today. His voice, hands, and audience luck will have to wait for tomorrow."
         Write-ColorLine ""
@@ -714,8 +864,15 @@ function Resolve-BardPerformance {
 function Start-BardPerformanceMenu {
     param($Game)
 
+    if ((Get-TownTimeOfDay -Game $Game) -ne "Night") {
+        Write-Scene "$($Game.Hero.Name) can work the city's rooms for coin, but the real audiences do not gather until nightfall."
+        Write-ColorLine ""
+        return
+    }
+
     while ($true) {
         Write-SectionTitle -Text "Find an Audience" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Performance"
         Write-Scene "A bard can make coin in this city without lifting a blade, if the room is right and the performance lands."
         Write-EmphasisLine -Text "Performances today: $($Game.Town.PerformanceCountToday)/3" -Color "Yellow"
         Write-ColorLine "1. Perform in the market square" "White"
@@ -755,6 +912,7 @@ function Start-QuestHubMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Seek Work"
         Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
             -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
             -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act.")
@@ -802,6 +960,7 @@ function Start-TownMenu {
 
     while ($true) {
         Show-PostUnderstreetHook -Game $Game
+        $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
         # The first city night is mandatory so the tutorial always lands on the inn chapter ending.
         if ($Game.Town.MustChooseFirstInn -and -not $Game.Town.ChapterOneComplete) {
@@ -824,6 +983,7 @@ function Start-TownMenu {
 
         Write-ColorLine ""
         Write-ColorLine "===== TOWN =====" "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Town"
 
         if (-not $Game.Town.StreetFlags["TownMenuVisited"]) {
             Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
@@ -833,30 +993,66 @@ function Start-TownMenu {
         elseif ($Game.Town.ChapterTwoComplete) {
             Write-Scene "The city watches Borzig differently now, with more respect and sharper attention."
         }
+        elseif ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+            Write-Scene "Lantern light and late footsteps have taken over the streets. The city is quieter now, but never truly calm."
+        }
         else {
             Write-Scene "The city is awake around Borzig again, full of noise, work, and unfinished business."
         }
         Write-ColorLine ""
-        Write-ColorLine "What do you want to do?" "Cyan"
-        Write-ColorLine "1. Walk the streets" "White"
-        Write-ColorLine "2. Browse the market" "White"
-        Write-ColorLine "3. Visit the smithy" "White"
-        Write-ColorLine "4. Visit the apothecary" "White"
-        Write-ColorLine "5. Visit the instrument shop" "White"
-        Write-ColorLine "6. Visit the armorer" "White"
-        Write-ColorLine "7. Find a buyer" "White"
-        Write-ColorLine "8. Seek work" "White"
-        Write-ColorLine "9. Visit the fighting ring" "White"
-        Write-ColorLine "10. Visit your inn" "White"
+        if ($isNight) {
+            Write-ColorLine "How do you want to spend the night?" "Cyan"
+        }
+        else {
+            Write-ColorLine "What do you want to do?" "Cyan"
+        }
+        Write-ColorLine $(if ($isNight) { "1. Walk the lantern-lit streets" } else { "1. Walk the streets" }) "White"
+        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market") {
+            Write-ColorLine $(if ($isNight) { "2. Browse the last open stalls" } else { "2. Browse the market" }) "White"
+        }
+        else {
+            Write-ColorLine "2. Browse the market (closed for the night)" "DarkGray"
+        }
+        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy") {
+            Write-ColorLine $(if ($isNight) { "3. Visit the forge doors" } else { "3. Visit the smithy" }) "White"
+        }
+        else {
+            Write-ColorLine "3. Visit the smithy (closed for the night)" "DarkGray"
+        }
+        Write-ColorLine $(if ($isNight) { "4. Visit the candlelit apothecary" } else { "4. Visit the apothecary" }) "White"
+        Write-ColorLine $(if ($isNight) { "5. Visit the quiet instrument shop" } else { "5. Visit the instrument shop" }) "White"
+        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer") {
+            Write-ColorLine $(if ($isNight) { "6. Visit the armorer's hall" } else { "6. Visit the armorer" }) "White"
+        }
+        else {
+            Write-ColorLine "6. Visit the armorer (closed for the night)" "DarkGray"
+        }
+        Write-ColorLine $(if ($isNight) { "7. Find a late buyer" } else { "7. Find a buyer" }) "White"
+        Write-ColorLine $(if ($isNight) { "8. Seek late work" } else { "8. Seek work" }) "White"
+        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring") {
+            Write-ColorLine $(if ($isNight) { "9. Head for the fighting ring" } else { "9. Visit the fighting ring" }) "White"
+        }
+        else {
+            Write-ColorLine "9. Visit the fighting ring (opens at night)" "DarkGray"
+        }
+        Write-ColorLine $(if ($isNight) { "10. Return to your inn" } else { "10. Visit your inn" }) "White"
         Write-ColorLine "11. Check inventory" "White"
         Write-ColorLine "12. Check quest log" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
         if ($Game.Hero.Class -eq "Bard") {
-            Write-ColorLine "P. Find an audience and perform for coin" "White"
+            if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") {
+                Write-ColorLine $(if ($isNight) { "P. Find a room and perform for coin" } else { "P. Find an audience and perform for coin" }) "White"
+            }
+            else {
+                Write-ColorLine "P. Find an audience and perform for coin (best after dark)" "DarkGray"
+            }
         }
         if ($null -eq $Game.Town.ActiveInn) {
             Write-ColorLine "L. Find lodging for the night" "White"
+        }
+        if ((Get-TownTimeOfDay -Game $Game) -eq "Day") {
+            Write-ColorLine "W. Wait for nightfall" "White"
         }
         Write-TextSpeedOption
         Write-ColorLine "0. End the adventure for now" "White"
@@ -869,28 +1065,52 @@ function Start-TownMenu {
                 Start-TownStreetScene -Game $Game -ReturnLabel "Return to town"
             }
             "2" {
-                Show-TownShop -Title "Market" -IntroText (Get-TownShopIntroText -Shop "Market" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
+                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market")) {
+                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Market")
+                    Write-ColorLine ""
+                }
+                else {
+                    Show-TownShop -Title "Market" -IntroText (Get-TownShopIntroText -Shop "Market" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
+                }
             }
             "3" {
-                Show-TownShop -Title "Smithy" -IntroText (Get-TownShopIntroText -Shop "Smithy" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
+                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy")) {
+                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Smithy")
+                    Write-ColorLine ""
+                }
+                else {
+                    Show-TownShop -Title "Smithy" -IntroText (Get-TownShopIntroText -Shop "Smithy" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
+                }
             }
             "4" {
-                Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
+                Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
             }
             "5" {
-                Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
+                Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
             }
             "6" {
-                Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
+                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer")) {
+                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Armorer")
+                    Write-ColorLine ""
+                }
+                else {
+                    Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
+                }
             }
             "7" {
-                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
+                Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
             }
             "8" {
                 Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
             }
             "9" {
-                Start-FightingRing -Game $Game
+                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring")) {
+                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Ring")
+                    Write-ColorLine ""
+                }
+                else {
+                    Start-FightingRing -Game $Game
+                }
             }
             "10" {
                 if ($null -ne $Game.Town.ActiveInn) {
@@ -919,7 +1139,13 @@ function Start-TownMenu {
             }
             "P" {
                 if ($Game.Hero.Class -eq "Bard") {
-                    Start-BardPerformanceMenu -Game $Game
+                    if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance")) {
+                        Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Performance")
+                        Write-ColorLine ""
+                    }
+                    else {
+                        Start-BardPerformanceMenu -Game $Game
+                    }
                 }
                 else {
                     Write-ColorLine "Invalid choice. Try again." "Red"
@@ -936,6 +1162,9 @@ function Start-TownMenu {
                         return "EndGame"
                     }
                 }
+            }
+            "W" {
+                Wait-For-Nightfall -Game $Game
             }
             "T" {
                 Toggle-TextSpeed | Out-Null

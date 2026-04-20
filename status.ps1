@@ -85,6 +85,7 @@ function Get-HeroStatusSnapshot {
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
         CurrencyText = $currencyText
+        TimeStatus = if ($null -ne $Game) { Get-TownTimeStatusText -Game $Game } else { "" }
         StoryQuestStatus = $storyQuestStatus
         DayJobStatus = $dayJobStatus
         PerformanceStatus = $performanceStatus
@@ -117,6 +118,9 @@ function Write-HeroStatusDetails {
 
     Write-ColorLine "Level: $($Hero.Level) | AC: $($Snapshot.ArmorClass) | Weapon: $($Snapshot.Weapon.Name) | To Hit: +$($Snapshot.Weapon.TotalAttackBonus) | Damage: $(Get-WeaponDamageRollText -WeaponProfile $Snapshot.Weapon) + $($Snapshot.Weapon.DamageBonus) ($($Snapshot.Weapon.TotalDamageMin)-$($Snapshot.Weapon.TotalDamageMax)) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
     Write-ColorLine "XP: $($Snapshot.DisplayXP)/$($Snapshot.NextLevelXP)" "White"
+    if (-not [string]::IsNullOrWhiteSpace($Snapshot.TimeStatus)) {
+        Write-ColorLine "Time: $($Snapshot.TimeStatus)" "White"
+    }
     Write-ColorLine "Currency: $($Snapshot.CurrencyText) | Story Quest Today: $($Snapshot.StoryQuestStatus) | Day Job Today: $($Snapshot.DayJobStatus)" "White"
     if ($Snapshot.StoryClueCount -gt 0) {
         Write-ColorLine "Story Clues Logged: $($Snapshot.StoryClueCount)" "DarkYellow"

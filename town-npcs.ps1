@@ -116,10 +116,22 @@ function Get-InnKeeperGreeting {
 }
 
 function Get-WidowEliraIntro {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
     $persona = Get-HeroTownPersona -Hero $Hero
     $heroName = Get-HeroTownName -Hero $Hero
+    $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    if ($isNight) {
+        if ($Hero.Level -ge 3) {
+            return "Widow Elira keeps close to the lantern glow and smiles when she sees $heroName. 'Nights used to feel longer here. Folk still listen for bad news after dark, but they do not freeze the way they did before.'"
+        }
+
+        return "Widow Elira stands close to a doorway lamp, shawl tight around her shoulders. 'People still listen harder at night now, hero. Your warning taught the district how quickly dark can carry fear.'"
+    }
 
     if ($Hero.Level -ge 3) {
         return "Widow Elira squeezes $heroName's forearm and smiles with more pride than fear now. 'They say you went under the city and came back with the dark broken behind you. Folk sleep easier for it.'"
@@ -141,10 +153,22 @@ function Get-WidowEliraIntro {
 }
 
 function Get-HadrikIntro {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
     $persona = Get-HeroTownPersona -Hero $Hero
     $heroName = Get-HeroTownName -Hero $Hero
+    $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    if ($isNight) {
+        if ($Hero.Level -ge 3) {
+            return "Hadrik's grin flashes in the forge-light. 'Night shift's the honest one. Day buys polish. Night buys what people are afraid to be without before dawn.'"
+        }
+
+        return "Hadrik works under forge-light and shadow now, soot brighter against his face. 'Anyone shopping for steel at night already expects trouble,' he says, sounding almost pleased by it."
+    }
 
     if ($Hero.Level -ge 3) {
         return "Hadrik's grin comes faster now. 'So it is true. You broke the smugglers' den under the ward. Master's been saying steel feels different in the hands of someone the city finally believes in, especially when he walked in the first time with half-patched kit and cave salvage on his belt.'"
@@ -166,10 +190,22 @@ function Get-HadrikIntro {
 }
 
 function Get-BelorIntro {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
     $persona = Get-HeroTownPersona -Hero $Hero
     $heroName = Get-HeroTownName -Hero $Hero
+    $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    if ($isNight) {
+        if ($Hero.Level -ge 3) {
+            return "Watchman Belor barely looks away from the dark lanes. 'Night's when the city remembers what work like yours is for. Day lets people talk brave. Dark tells us what they actually believe.'"
+        }
+
+        return "Watchman Belor's eyes stay on the darker end of the street. 'Night makes honest guards out of some men and liars out of others. Best time there is to learn which is which.'"
+    }
 
     if ($Hero.Level -ge 3) {
         return "Watchman Belor's nod is small but real. 'The halls under the ward are yours now, as far as the watch is concerned. Means the next work we hand you won't be small.'"
@@ -480,6 +516,34 @@ function Get-BelorDistrictRumorTalk {
     return "Belor exhales through his nose. 'Same rumors, sharper edges. That usually means some of them are true.'"
 }
 
+function Test-TownStreetContactAvailableAtCurrentTime {
+    param(
+        $Game,
+        [string]$ContactId
+    )
+
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    switch ($ContactId) {
+        "WidowElira" { return -not $isNight }
+        "Hadrik" { return -not $isNight }
+        default { return $true }
+    }
+}
+
+function Get-TownStreetContactUnavailableText {
+    param(
+        $Game,
+        [string]$ContactId
+    )
+
+    switch ($ContactId) {
+        "WidowElira" { return "Widow Elira has gone inside for the night. The district keeps its doors shut earlier when darkness starts pressing on the lanes." }
+        "Hadrik" { return "Hadrik has long since withdrawn behind the forge doors, leaving only banked coals and late hammer echoes." }
+        default { return "That contact is not out on the street right now." }
+    }
+}
+
 function Start-WidowEliraConversation {
     param($Game)
 
@@ -487,9 +551,10 @@ function Start-WidowEliraConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero)
+            Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero -Game $Game)
             $showIntro = $false
         }
+        Write-TownTimeTracker -Game $Game -Area "Elira"
         Write-ColorLine "1. Ask after her family" "White"
         Write-ColorLine "2. Ask how the district is holding up" "White"
         Write-ColorLine "3. Tell her no thanks are needed" "White"
@@ -534,9 +599,10 @@ function Start-HadrikConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-HadrikIntro -Hero $Game.Hero)
+            Write-Scene (Get-HadrikIntro -Hero $Game.Hero -Game $Game)
             $showIntro = $false
         }
+        Write-TownTimeTracker -Game $Game -Area "Hadrik"
         Write-ColorLine "1. Ask about the forge and its steel" "White"
         Write-ColorLine "2. Ask how business in the city has changed" "White"
         $workQuestion = if ($Game.Hero.Class -eq "Bard") { "3. Ask if the forge knows anyone outfitting duelists and performers" } else { "3. Ask if the forge has anything worth carrying into the wilds" }
@@ -582,9 +648,10 @@ function Start-BelorConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-BelorIntro -Hero $Game.Hero)
+            Write-Scene (Get-BelorIntro -Hero $Game.Hero -Game $Game)
             $showIntro = $false
         }
+        Write-TownTimeTracker -Game $Game -Area "Belor"
         $workQuestion = if ($Game.Hero.Class -eq "Bard") { "1. Ask where someone with presence can find honest coin" } else { "1. Ask where a capable fighter can find decent work" }
         Write-ColorLine $workQuestion "White"
         Write-ColorLine "2. Ask what has the watch worried" "White"
@@ -633,9 +700,20 @@ function Start-TownStreetScene {
 
     while ($true) {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
+        Write-TownTimeTracker -Game $Game -Area "Streets"
 
         if ($showIntro -and -not $Game.Town.StreetFlags["StreetSceneVisited"]) {
-            if ($Game.Hero.Class -eq "Bard") {
+            if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-Scene "Gariand moves through narrow lanes under lantern glow, where voices drop lower, shutters sit half-closed, and every rumor sounds a little more deliberate."
+                    Write-Scene "Night turns the streets into a different kind of stage. Gratitude, fear, and opportunity all speak softer, but none of them speak less."
+                }
+                else {
+                    Write-Scene "Borzig moves through narrow lanes under lantern glow, where doors are shut, conversations turn quiet, and the city feels alert in a harder way than it does by day."
+                    Write-Scene "Some faces still want to thank him. Others only watch, as if night itself might decide what kind of trouble comes next."
+                }
+            }
+            elseif ($Game.Hero.Class -eq "Bard") {
                 Write-Scene "Gariand moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers and curious tavern retellings."
                 Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble, certain he can talk his way into rooms they cannot reach."
             }
@@ -646,7 +724,15 @@ function Start-TownStreetScene {
             $Game.Town.StreetFlags["StreetSceneVisited"] = $true
         }
         elseif ($showIntro) {
-            if ($Game.Hero.Class -eq "Bard") {
+            if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-Scene "At night the streets read Gariand differently. Familiar faces still recognize him, but now they measure whether he looks like a witness, a rumor-carrier, or the answer to some private problem."
+                }
+                else {
+                    Write-Scene "At night the streets read Borzig differently. The city watches him less like a passerby and more like someone who might actually matter before dawn."
+                }
+            }
+            elseif ($Game.Hero.Class -eq "Bard") {
                 if ([int]$Game.Town.PerformanceCountTotal -ge 6) {
                     Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, and more than one passerby recognizes the city's working performer before the next whisper even starts."
                 }
@@ -662,8 +748,19 @@ function Start-TownStreetScene {
         $showIntro = $false
 
         Write-ColorLine ""
-        Write-ColorLine "1. Speak with Widow Elira" "White"
-        Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
+        Write-ColorLine $(if ((Get-TownTimeOfDay -Game $Game) -eq "Night") { "Who do you seek out under the lamps?" } else { "Who do you want to speak with?" }) "Cyan"
+        if (Test-TownStreetContactAvailableAtCurrentTime -Game $Game -ContactId "WidowElira") {
+            Write-ColorLine "1. Speak with Widow Elira" "White"
+        }
+        else {
+            Write-ColorLine "1. Widow Elira has gone inside for the night" "DarkGray"
+        }
+        if (Test-TownStreetContactAvailableAtCurrentTime -Game $Game -ContactId "Hadrik") {
+            Write-ColorLine "2. Speak with Hadrik the smith's apprentice" "White"
+        }
+        else {
+            Write-ColorLine "2. Hadrik has gone back to the forge" "DarkGray"
+        }
         Write-ColorLine "3. Speak with Watchman Belor" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. $ReturnLabel" "DarkGray"
@@ -673,10 +770,22 @@ function Start-TownStreetScene {
 
         switch ($choice) {
             "1" {
-                Start-WidowEliraConversation -Game $Game
+                if (-not (Test-TownStreetContactAvailableAtCurrentTime -Game $Game -ContactId "WidowElira")) {
+                    Write-Scene (Get-TownStreetContactUnavailableText -Game $Game -ContactId "WidowElira")
+                    Write-ColorLine ""
+                }
+                else {
+                    Start-WidowEliraConversation -Game $Game
+                }
             }
             "2" {
-                Start-HadrikConversation -Game $Game
+                if (-not (Test-TownStreetContactAvailableAtCurrentTime -Game $Game -ContactId "Hadrik")) {
+                    Write-Scene (Get-TownStreetContactUnavailableText -Game $Game -ContactId "Hadrik")
+                    Write-ColorLine ""
+                }
+                else {
+                    Start-HadrikConversation -Game $Game
+                }
             }
             "3" {
                 Start-BelorConversation -Game $Game

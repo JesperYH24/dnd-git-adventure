@@ -282,6 +282,7 @@ function Test-OffBalanceFallsBackToSimpleActions {
 
 function Test-FightingRingOptionOneStartsTournament {
     $game = Initialize-Game
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $game.Hero.CurrencyCopper = 200
     $script:BrawlStarted = $false
 

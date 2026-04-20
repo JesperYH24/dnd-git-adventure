@@ -234,15 +234,38 @@ function Get-TownBuyerLabel {
 }
 
 function Get-TownBuyerIntroText {
-    param([string]$BuyerType)
+    param(
+        [string]$BuyerType,
+        $Game = $null
+    )
+
+    $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
     switch ($BuyerType) {
-        "GeneralBuyer" { return "A calm-eyed quartermaster weighs every piece Borzig lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin." }
-        "Market" { return "The market trader turns goods over quickly, happy with tonics and travel-ready stock but much less impressed by heavy battlefield gear. Rusted cave salvage gets a skeptical sniff before the price comes out." }
-        "InstrumentShop" { return "The instrument maker checks wood, strings, balance, and finish with the severity of someone who thinks bad care is a moral failure. Fine instruments and performer gear get the best attention here." }
-        "Smithy" { return "The smith checks balance, grip, and metal first. Weapons and armor interest the forge. Potions do not. Anything dragged out of the tutorial cave gets judged hard for chips, rust, and poor temper." }
-        "Armorer" { return "The armorer runs a hard eye over straps, stitching, dented plates, and any sign that the city has been trusting bad leather too long. Armor, field gear, and sturdy coats are worth real coin here." }
-        "Apothecary" { return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite." }
+        "GeneralBuyer" {
+            if ($isNight) { return "The quartermaster works more quietly at night, weighing gear by lamplight and quoting prices with the tired efficiency reserved for late business and people who need coin before dawn." }
+            return "A calm-eyed quartermaster weighs every piece Borzig lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin."
+        }
+        "Market" {
+            if ($isNight) { return "The market trader keeps one late table open for night business, moving goods fast and paying less for anything too bulky, too bloody, or too difficult to explain after dark." }
+            return "The market trader turns goods over quickly, happy with tonics and travel-ready stock but much less impressed by heavy battlefield gear. Rusted cave salvage gets a skeptical sniff before the price comes out."
+        }
+        "InstrumentShop" {
+            if ($isNight) { return "The instrument maker judges trade-ins by lamplight, listening for hidden cracks and bad repairs in the hush after the city's louder rooms have filled." }
+            return "The instrument maker checks wood, strings, balance, and finish with the severity of someone who thinks bad care is a moral failure. Fine instruments and performer gear get the best attention here."
+        }
+        "Smithy" {
+            if ($isNight) { return "At night the smith checks balance, grip, and metal with fewer words and less patience. Late steel trade usually means somebody expects to need the coin or the gear fast." }
+            return "The smith checks balance, grip, and metal first. Weapons and armor interest the forge. Potions do not. Anything dragged out of the tutorial cave gets judged hard for chips, rust, and poor temper."
+        }
+        "Armorer" {
+            if ($isNight) { return "The armorer inspects straps, stitching, and battered plates under close lamp-light, the way only people used to emergency repairs after dusk ever learn to do." }
+            return "The armorer runs a hard eye over straps, stitching, dented plates, and any sign that the city has been trusting bad leather too long. Armor, field gear, and sturdy coats are worth real coin here."
+        }
+        "Apothecary" {
+            if ($isNight) { return "The apothecary handles late trade like triage, studying bottles and sealed mixtures with tired care while clearly wishing fewer customers needed remedies after dark." }
+            return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite."
+        }
         default { return "A trader looks over Borzig's gear and starts naming coin." }
     }
 }
@@ -431,6 +454,7 @@ function Show-TownShop {
 
     while ($true) {
         Write-SectionTitle -Text $Title -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area $Title
         if ($showIntro) {
             Write-Scene $IntroText
             $showIntro = $false
@@ -454,7 +478,7 @@ function Show-TownShop {
         $choice = (Read-Host "Choose").ToUpper()
 
         if ($choice -eq "S") {
-            Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType
+            Open-TownSellMenu -Game $Game -Hero $Hero -BuyerType $BuyerType
             continue
         }
 
@@ -484,7 +508,7 @@ function Show-TownShop {
             $sellChoice = (Read-Host "Sell gear to the $buyerLabel to make room? (Y/N)").ToUpper()
 
             if ($sellChoice -eq "Y") {
-                Open-TownSellMenu -Hero $Hero -BuyerType $BuyerType -ExitLabel "Return to shop"
+                Open-TownSellMenu -Game $Game -Hero $Hero -BuyerType $BuyerType -ExitLabel "Return to shop"
             }
         }
 
@@ -494,6 +518,7 @@ function Show-TownShop {
 
 function Open-TownSellMenu {
     param(
+        $Game,
         $Hero,
         [string]$BuyerType = "GeneralBuyer",
         [string]$ExitLabel = "Return to town"
@@ -504,8 +529,9 @@ function Open-TownSellMenu {
     while ($true) {
         $buyerLabel = Get-TownBuyerLabel -BuyerType $BuyerType
         Write-SectionTitle -Text "Sell to $buyerLabel" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Sell Gear"
         if ($showIntro) {
-            Write-Scene (Get-TownBuyerIntroText -BuyerType $BuyerType)
+            Write-Scene (Get-TownBuyerIntroText -BuyerType $BuyerType -Game $Game)
             Write-ColorLine ""
             $showIntro = $false
         }
@@ -628,10 +654,14 @@ function Retrieve-StashedItem {
 }
 
 function Start-InnStorageMenu {
-    param($Hero)
+    param(
+        $Game,
+        $Hero
+    )
 
     while ($true) {
         Write-SectionTitle -Text "Manage Storage" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Storage"
         Write-Scene "A lockbox and a travel chest sit under the bed, ready to hold whatever Borzig does not want to carry through the city."
         Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "DarkCyan"
         Write-ColorLine ""

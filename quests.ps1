@@ -182,6 +182,46 @@ function Get-TownQuestDailyLockText {
     return "$heroName has already spent today's real story effort. Another story quest will have to wait until after a night's rest."
 }
 
+function Get-TownQuestRequiredTimeOfDay {
+    param($Quest)
+
+    if ($null -eq $Quest) {
+        return ""
+    }
+
+    if ($Quest.QuestType -eq "DayJob") {
+        return "Day"
+    }
+
+    switch ($Quest.Id) {
+        "guard_night_watch" { return "Night" }
+        "guard_night_courier" { return "Night" }
+        "bent_nail_whispers" { return "Night" }
+        default { return "" }
+    }
+}
+
+function Get-TownQuestTimeLockText {
+    param(
+        $Quest,
+        $Game = $null
+    )
+
+    $requiredTime = Get-TownQuestRequiredTimeOfDay -Quest $Quest
+
+    if ([string]::IsNullOrWhiteSpace($requiredTime)) {
+        return ""
+    }
+
+    $heroName = Get-QuestHeroName -Game $Game
+
+    if ($requiredTime -eq "Night") {
+        return "$heroName needs to wait until nightfall before starting $($Quest.Name)."
+    }
+
+    return "$($Quest.Name) is day work. $heroName will need to come back in the morning."
+}
+
 function Get-CurrentStoryQuestTier {
     param($Game)
 
@@ -539,6 +579,20 @@ function Start-TownQuestAttempt {
         }
     }
 
+    $requiredTime = Get-TownQuestRequiredTimeOfDay -Quest $quest
+
+    if ($requiredTime -eq "Night" -and (Get-TownTimeOfDay -Game $Game) -ne "Night") {
+        Write-Scene "$($Game.Hero.Name) lets the city turn over until nightfall before stepping into $($quest.Name)."
+        Write-ColorLine ""
+        Set-TownTimeOfDay -Game $Game -TimeOfDay "Night"
+    }
+    elseif ($requiredTime -eq "Day" -and (Get-TownTimeOfDay -Game $Game) -ne "Day") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = (Get-TownQuestTimeLockText -Quest $quest -Game $Game)
+        }
+    }
+
     if ($quest.QuestType -eq "DayJob") {
         $Game.Town.DayJobDoneToday = $true
     }
@@ -855,6 +909,7 @@ function Start-TownQuestLogMenu {
     while ($true) {
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
         Show-QuestLogSummary -Game $Game -Hero $Game.Hero
+        Write-TownTimeTracker -Game $Game -Area "Quest Log"
 
         Write-ColorLine "1. Accepted quests" "White"
         Write-ColorLine "2. Story clues" "White"
@@ -886,6 +941,7 @@ function Start-TownQuestLogMenu {
                 while ($true) {
                     Write-ColorLine ""
                     Write-ColorLine "===== ACCEPTED QUESTS =====" "Yellow"
+                    Write-TownTimeTracker -Game $Game -Area "Quest Log"
 
                     for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
                         $quest = $acceptedQuests[$i]

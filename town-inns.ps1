@@ -406,60 +406,100 @@ function Start-InnEveningMenu {
 
     $inn = $Game.Town.ActiveInn
     $showIntro = $true
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
     while ($true) {
-        Write-SectionTitle -Text "Common Room" -Color "Yellow"
+        $roomTitle = if ($isNight) { "Common Room" } else { "Dining Room" }
+        Write-SectionTitle -Text $roomTitle -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Common Room"
 
         switch ($inn.Id) {
             "bent_nail" {
                 if ($showIntro) {
-                    Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                    if ($isNight) {
+                        Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                    }
+                    else {
+                        Write-Scene "By day the Bent Nail runs on thick stew, coarse bread, and the sort of tired dockside silence that only slowly turns back into rumor."
+                    }
 
-                    if ((Get-CurrentStoryQuestTier -Game $Game) -lt 2) {
+                    if ($isNight -and (Get-CurrentStoryQuestTier -Game $Game) -lt 2) {
                         Write-EmphasisLine -Text "The back tables are watching Borzig, but the real Bent Nail whispers will likely open up once Tier 2 city work is unlocked." -Color "Yellow"
                     }
                 }
-                Write-ColorLine "1. Listen to the smugglers and dockside fixers" "White"
-                Write-ColorLine "2. Join a loud dice table" "White"
-                if ($Game.Hero.Class -eq "Bard") {
+                if ($isNight) {
+                    Write-ColorLine "1. Listen to the smugglers and dockside fixers over dark ale" "White"
+                    Write-ColorLine "2. Join a loud dice table" "White"
+                }
+                else {
+                    Write-ColorLine "1. Share rough stew with the dockers and fixers" "White"
+                    Write-ColorLine "2. Sit with the room and nurse a bitter midday drink" "White"
+                }
+                if ($isNight -and $Game.Hero.Class -eq "Bard") {
                     Write-ColorLine "4. Play a rough set for the room" "White"
                 }
                 $bentNailQuest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
 
-                if ($null -ne $bentNailQuest -and (Is-TownQuestUnlocked -Game $Game -Quest $bentNailQuest) -and -not $bentNailQuest.Completed) {
+                if ($isNight -and $null -ne $bentNailQuest -and (Is-TownQuestUnlocked -Game $Game -Quest $bentNailQuest) -and -not $bentNailQuest.Completed) {
                     $questStatus = if ($bentNailQuest.Accepted) { "Accepted" } else { "Available" }
                     Write-ColorLine "3. Follow up the Bent Nail whispers [$questStatus]" "White"
                 }
             }
             "lantern_rest" {
                 if ($showIntro) {
-                    if ($Game.Hero.Class -eq "Bard") {
+                    if (-not $isNight -and $Game.Hero.Class -eq "Bard") {
+                        Write-Scene "The Lantern Rest opens into a bright, orderly dining room where hot breakfast and midday meals give merchants a reason to linger and listen."
+                    }
+                    elseif (-not $isNight) {
+                        Write-Scene "The Lantern Rest feels steady by day: hot plates, clean tables, and practical people taking real meals before the next road or ledger starts making demands again."
+                    }
+                    elseif ($Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Lantern Rest feels built for a working bard: warm light, decent listeners, and enough merchants under one roof to turn a good evening into tomorrow's invitation."
                     }
                     else {
                         Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
                     }
                 }
-                Write-ColorLine "1. Share supper with the merchants" "White"
-                Write-ColorLine "2. Sit with the guards and caravan hands" "White"
-                Write-ColorLine "3. Join the room's drinking song" "White"
-                if ($Game.Hero.Class -eq "Bard") {
+                if ($isNight) {
+                    Write-ColorLine "1. Share supper with the merchants" "White"
+                    Write-ColorLine "2. Sit with the guards and caravan hands over dinner and drink" "White"
+                    Write-ColorLine "3. Join the room's drinking song" "White"
+                }
+                else {
+                    Write-ColorLine "1. Sit down to breakfast with the merchants" "White"
+                    Write-ColorLine "2. Take a meal with the guards and caravan hands" "White"
+                    Write-ColorLine "3. Linger over coffee, broth, and road gossip" "White"
+                }
+                if ($isNight -and $Game.Hero.Class -eq "Bard") {
                     Write-ColorLine "4. Take over the room with a traveler's set" "White"
                 }
             }
             "silver_kettle" {
                 if ($showIntro) {
-                    if ($Game.Hero.Class -eq "Bard") {
+                    if (-not $isNight -and $Game.Hero.Class -eq "Bard") {
+                        Write-Scene "The Silver Kettle by day is all fine service and quiet luncheon talk, where contracts, taste, and opportunity are plated as carefully as the food."
+                    }
+                    elseif (-not $isNight) {
+                        Write-Scene "The Silver Kettle by day hums with polished luncheon conversation, careful silverware, and the sort of expensive calm that expects to be obeyed."
+                    }
+                    elseif ($Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Silver Kettle hums with polished manners, private money, and the dangerous possibility that the right performance could lift $($Game.Hero.Name) into rooms the rest of the city only serves."
                     }
                     else {
                         Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."
                     }
                 }
-                Write-ColorLine "1. Listen to the contract talk over wine" "White"
-                Write-ColorLine "2. Make a polished introduction to the upper tables" "White"
-                Write-ColorLine "3. Stay visible and see who takes offense" "White"
-                if ($Game.Hero.Class -eq "Bard") {
+                if ($isNight) {
+                    Write-ColorLine "1. Listen to the contract talk over wine and a fine dinner" "White"
+                    Write-ColorLine "2. Make a polished introduction to the upper tables" "White"
+                    Write-ColorLine "3. Stay visible and see who takes offense" "White"
+                }
+                else {
+                    Write-ColorLine "1. Listen to the contract talk over luncheon" "White"
+                    Write-ColorLine "2. Accept a polite seat at the upper tables" "White"
+                    Write-ColorLine "3. Stay visible through the meal service and watch the room" "White"
+                }
+                if ($isNight -and $Game.Hero.Class -eq "Bard") {
                     Write-ColorLine "4. Offer a polished evening performance" "White"
                 }
             }
@@ -485,13 +525,13 @@ function Start-InnEveningMenu {
 
         switch ($inn.Id) {
             "bent_nail" {
-                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                if ($choice -eq "4" -and $isNight -and $Game.Hero.Class -eq "Bard") {
                     Resolve-BardPerformance -Game $Game -VenueId "bent_nail_stage" | Out-Null
                     Write-ColorLine ""
                     continue
                 }
 
-                if ($choice -eq "3") {
+                if ($choice -eq "3" -and $isNight) {
                     $quest = Find-TownQuest -Game $Game -QuestId "bent_nail_whispers"
 
                     if ($null -eq $quest -or -not (Is-TownQuestUnlocked -Game $Game -Quest $quest) -or $quest.Completed) {
@@ -520,7 +560,7 @@ function Start-InnEveningMenu {
                 Resolve-BentNailEveningChoice -Game $Game -Choice $choice
             }
             "lantern_rest" {
-                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                if ($choice -eq "4" -and $isNight -and $Game.Hero.Class -eq "Bard") {
                     Resolve-BardPerformance -Game $Game -VenueId "lantern_rest_stage" | Out-Null
                     Write-ColorLine ""
                     continue
@@ -529,7 +569,7 @@ function Start-InnEveningMenu {
                 Resolve-LanternRestEveningChoice -Game $Game -Choice $choice
             }
             "silver_kettle" {
-                if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
+                if ($choice -eq "4" -and $isNight -and $Game.Hero.Class -eq "Bard") {
                     Resolve-BardPerformance -Game $Game -VenueId "silver_kettle_stage" | Out-Null
                     Write-ColorLine ""
                     continue
@@ -552,31 +592,64 @@ function Get-InnAmbientVisitText {
     $flagKey = "InnAmbientIndex_$($Inn.Id)"
     $currentIndex = if ($null -ne $Game.Town.InnFlags[$flagKey]) { [int]$Game.Town.InnFlags[$flagKey] } else { 0 }
     $isBard = $Game.Hero.Class -eq "Bard"
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
     $lines = switch ($Inn.Id) {
         "bent_nail" {
-            @(
-                "The Bent Nail leans into the hour with rough laughter, chipped mugs, and the feeling that half the room has heard something useful and plans to sell it badly.",
-                "Tonight the Bent Nail sounds like dice, boots, and low arguments that never quite become fights.",
-                $(if ($isBard) { "A few eyes follow $($Game.Hero.Name) with the half-grin reserved for someone this room already considers worth hearing." } else { "A few hard cases glance Borzig's way and then think better of turning curiosity into a challenge." })
-            )
+            if ($isNight) {
+                @(
+                    "The Bent Nail leans into the hour with rough laughter, chipped mugs, and the feeling that half the room has heard something useful and plans to sell it badly.",
+                    "Tonight the Bent Nail sounds like dice, boots, and low arguments that never quite become fights.",
+                    $(if ($isBard) { "A few eyes follow $($Game.Hero.Name) with the half-grin reserved for someone this room already considers worth hearing." } else { "A few hard cases glance Borzig's way and then think better of turning curiosity into a challenge." })
+                )
+            }
+            else {
+                @(
+                    "By daylight the Bent Nail is more stew kettle than brawl pit, full of dockworkers chewing through thick bread and bad tempers slowly.",
+                    "The room smells of boiled onions, stale ale, and a floor that survived last night well enough to host today's meal service.",
+                    $(if ($isBard) { "A few regulars watch $($Game.Hero.Name) over chipped bowls like they are deciding whether a performer belongs in a room this blunt before sundown." } else { "A few hard-used laborers give Borzig the short nod reserved for someone who looks like he eats without complaint and leaves without fuss." })
+                )
+            }
         }
         "lantern_rest" {
-            @(
-                "The Lantern Rest feels bright in a practical way: warm plates, steady voices, and travelers trying to believe tomorrow's road will be kinder than the last one.",
-                "Caravan talk and merchant gossip weave through the Lantern Rest tonight, easy enough to listen to without ever fully trusting.",
-                $(if ($isBard) { "At the Lantern Rest, the room seems glad to have $($Game.Hero.Name) under the same roof again, as if good company might yet turn into a good evening." } else { "At the Lantern Rest, the room gives Borzig the respectful space reserved for someone who looks capable of finishing bad business without making more of it." })
-            )
+            if ($isNight) {
+                @(
+                    "The Lantern Rest feels bright in a practical way: warm plates, steady voices, and travelers trying to believe tomorrow's road will be kinder than the last one.",
+                    "Caravan talk and merchant gossip weave through the Lantern Rest tonight, easy enough to listen to without ever fully trusting.",
+                    $(if ($isBard) { "At the Lantern Rest, the room seems glad to have $($Game.Hero.Name) under the same roof again, as if good company might yet turn into a good evening." } else { "At the Lantern Rest, the room gives Borzig the respectful space reserved for someone who looks capable of finishing bad business without making more of it." })
+                )
+            }
+            else {
+                @(
+                    "The Lantern Rest carries the comfort of a proper meal service by day: hot bread, decent stew, and ledgers being discussed over plates instead of cups.",
+                    "Merchants and caravan hands eat like people planning routes, repairs, and tomorrow's departures one mouthful at a time.",
+                    $(if ($isBard) { "At the Lantern Rest by day, $($Game.Hero.Name) looks less like entertainment and more like the sort of guest worth inviting to the better table before the coffee cools." } else { "At the Lantern Rest by day, the room gives Borzig the practical courtesy reserved for someone who might travel out on the same dangerous roads." })
+                )
+            }
         }
         "silver_kettle" {
-            @(
-                "The Silver Kettle carries itself with polished calm, all measured voices and the soft certainty that somebody important is always one table away from overhearing everything.",
-                "Soft glass, lower laughter, and carefully aimed conversation make the Silver Kettle feel expensive long before the bill arrives.",
-                $(if ($isBard) { "More than one table at the Silver Kettle seems to notice $($Game.Hero.Name) on arrival and quietly adjust the room around that fact." } else { "The Silver Kettle still studies Borzig like an unusual guest, but by now even its finer tables do so with more curiosity than doubt." })
-            )
+            if ($isNight) {
+                @(
+                    "The Silver Kettle carries itself with polished calm, all measured voices and the soft certainty that somebody important is always one table away from overhearing everything.",
+                    "Soft glass, lower laughter, and carefully aimed conversation make the Silver Kettle feel expensive long before the bill arrives.",
+                    $(if ($isBard) { "More than one table at the Silver Kettle seems to notice $($Game.Hero.Name) on arrival and quietly adjust the room around that fact." } else { "The Silver Kettle still studies Borzig like an unusual guest, but by now even its finer tables do so with more curiosity than doubt." })
+                )
+            }
+            else {
+                @(
+                    "By day the Silver Kettle serves its elegance on plates as much as in manners, with polished cutlery, quiet luncheon talk, and servants who move like part of the decor.",
+                    "The room sounds softer in daylight: fine dishes, measured voices, and people discussing contracts as if appetite and ambition were the same course.",
+                    $(if ($isBard) { "At the Silver Kettle by day, more than one table seems to recognize that $($Game.Hero.Name) might be worth hearing later, even while the room is still pretending lunch is only lunch." } else { "The Silver Kettle studies Borzig over white linen and bright silver, as if deciding whether he is a curiosity, a contract, or both." })
+                )
+            }
         }
         default {
-            @("The inn settles around the night in its own rhythm, offering shelter, noise, and the promise of a door that closes behind it all.")
+            if ($isNight) {
+                @("The inn settles around the night in its own rhythm, offering shelter, noise, and the promise of a door that closes behind it all.")
+            }
+            else {
+                @("The inn moves through the day on food, voices, and the steady comfort of a room built to hold travelers between roads.")
+            }
         }
     }
 
@@ -606,6 +679,8 @@ function Start-InnVisitMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== $($inn.Name.ToUpper()) =====" "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Inn Visit"
+        $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
         if (-not [bool]$Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"]) {
             Write-Scene "$($inn.Name) wraps around Borzig like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
             $Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"] = $true
@@ -615,9 +690,14 @@ function Start-InnVisitMenu {
         }
         Write-ColorLine "Keeper: $($inn.Keeper) | Standard: $($inn.Quality)" "DarkYellow"
         Write-ColorLine ""
-        Write-ColorLine "What do you want to do?" "Cyan"
+        Write-ColorLine $(if ($isNight) { "How do you want to spend the evening here?" } else { "What do you want to do?" }) "Cyan"
         Write-ColorLine "1. Go to your room" "White"
-        Write-ColorLine "2. Spend time in the common room" "White"
+        if ($isNight) {
+            Write-ColorLine "2. Spend time in the common room" "White"
+        }
+        else {
+            Write-ColorLine "2. Sit down in the dining room" "White"
+        }
         Write-ColorLine "3. Speak with the innkeeper" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
@@ -678,6 +758,7 @@ function Resolve-InnWorkOffRoom {
 
     while ($true) {
         Write-SectionTitle -Text "Work Off the Room" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Inn Visit"
         Write-Scene "$($Inn.Keeper) looks Borzig over, then points toward the sort of work that keeps an inn alive after dark."
         Write-Scene "If he cannot pay in coin tonight, he can pay in sweat."
         Write-ColorLine ""
@@ -748,12 +829,7 @@ function Resolve-InnWorkOffRoom {
 
         $Game.Town.ActiveInn = $Inn
         $Game.Town.MustChooseFirstInn = $false
-        $Game.Town.WorkedForRoomToday = $true
-        $Game.Town.Ring.FoughtToday = $true
-        $Game.Town.StoryQuestDoneToday = $false
-        $Game.Town.DayJobDoneToday = $false
-        $Game.Town.PerformanceCountToday = 0
-        $Game.Town.PerformanceVenuesToday = @{}
+        Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day" -WorkedForRoomToday $true -RingFoughtToday $true
         Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
@@ -849,7 +925,6 @@ function Resolve-InnStay {
 
     $Game.Town.ActiveInn = $Inn
     $Game.Town.MustChooseFirstInn = $false
-    $Game.Town.WorkedForRoomToday = $false
 
     Write-SectionTitle -Text $Inn.Name -Color "Yellow"
     Write-Scene (Get-InnKeeperGreeting -Inn $Inn -Hero $Game.Hero -RepeatVisit $false)
@@ -857,11 +932,7 @@ function Resolve-InnStay {
     Resolve-InnEvent -Game $Game -HeroHP $HeroHP -Inn $Inn -EventRoll $EventRoll
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
-    $Game.Town.Ring.FoughtToday = $false
-    $Game.Town.StoryQuestDoneToday = $false
-    $Game.Town.DayJobDoneToday = $false
-    $Game.Town.PerformanceCountToday = 0
-    $Game.Town.PerformanceVenuesToday = @{}
+    Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
@@ -926,12 +997,7 @@ function Resolve-BookedInnNightRest {
     Write-Scene (Get-InnRepeatRestText -Inn $inn -Hero $Game.Hero)
     Clear-HeroBuff -Hero $Game.Hero
     $HeroHP.Value = $Game.Hero.HP
-    $Game.Town.WorkedForRoomToday = $false
-    $Game.Town.Ring.FoughtToday = $false
-    $Game.Town.StoryQuestDoneToday = $false
-    $Game.Town.DayJobDoneToday = $false
-    $Game.Town.PerformanceCountToday = 0
-    $Game.Town.PerformanceVenuesToday = @{}
+    Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, clears the day from his head, and resets the city for morning."
@@ -1027,6 +1093,68 @@ function Get-InnkeeperHouseTalk {
             return "$($inn.Keeper) shrugs. 'A roof, a ledger, and enough patience to outlast the city. That's innkeeping.'"
         }
     }
+}
+
+function Get-InnConversationServiceText {
+    param(
+        $Game,
+        [string]$Topic = ""
+    )
+
+    $inn = $Game.Town.ActiveInn
+
+    if ($null -eq $inn) {
+        return ""
+    }
+
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    switch ($inn.Id) {
+        "bent_nail" {
+            if ($isNight) {
+                return "A chipped mug and whatever cheap bottle survived the first rush land on the table while the room keeps one ear on dice, boots, and brewing trouble."
+            }
+
+            return "A rough bowl of stew, heel of bread, and watered beer arrive with the kind of efficiency that assumes anyone sitting down at midday means to eat first and talk second."
+        }
+        "lantern_rest" {
+            if ($isNight) {
+                return "A proper supper plate and an honest pour of ale arrive first, the kind of service that invites a guest to settle in before the talk gets useful."
+            }
+
+            return "Oren's people set down hot breakfast, fresh bread, and a decent pot to drink from, as if good conversation deserves to start with a real meal."
+        }
+        "silver_kettle" {
+            if ($isNight) {
+                return "Wine, fine dinner, and polished silver appear in careful order before the real conversation is allowed to begin."
+            }
+
+            return "Luncheon is laid out with quiet precision: a light course, bright tea, and the sort of table service that makes even gossip feel expensive."
+        }
+        default {
+            if ($isNight) {
+                return "A drink is set down before the talk begins."
+            }
+
+            return "A simple meal is set down before the talk begins."
+        }
+    }
+}
+
+function Format-InnConversationText {
+    param(
+        $Game,
+        [string]$Line,
+        [string]$Topic = ""
+    )
+
+    $serviceText = Get-InnConversationServiceText -Game $Game -Topic $Topic
+
+    if ([string]::IsNullOrWhiteSpace($serviceText)) {
+        return $Line
+    }
+
+    return "$serviceText $Line"
 }
 
 function Get-InnkeeperClienteleTalk {
@@ -1174,8 +1302,14 @@ function Start-InnkeeperMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Innkeeper"
         if ($showIntro) {
-            Write-Scene "$($inn.Keeper) stands behind the bar, keeping one eye on the room and the other on Borzig."
+            if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+                Write-Scene "$($inn.Keeper) keeps one eye on the room, the other on Borzig, and the rest of their attention on the sort of evening service that can turn rowdy or profitable without warning."
+            }
+            else {
+                Write-Scene "$($inn.Keeper) moves through the day's service with practiced calm, pausing long enough to give Borzig the attention due a paying guest."
+            }
             $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
             $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
             Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
@@ -1194,15 +1328,15 @@ function Start-InnkeeperMenu {
 
         switch ($choice) {
             "1" {
-                Write-Scene (Get-InnkeeperHouseTalk -Game $Game)
+                Write-Scene (Format-InnConversationText -Game $Game -Topic "House" -Line (Get-InnkeeperHouseTalk -Game $Game))
                 Write-ColorLine ""
             }
             "2" {
-                Write-Scene (Get-InnkeeperClienteleTalk -Game $Game)
+                Write-Scene (Format-InnConversationText -Game $Game -Topic "Clientele" -Line (Get-InnkeeperClienteleTalk -Game $Game))
                 Write-ColorLine ""
             }
             "3" {
-                Write-Scene (Get-InnkeeperLocalRumorTalk -Game $Game)
+                Write-Scene (Format-InnConversationText -Game $Game -Topic "Rumor" -Line (Get-InnkeeperLocalRumorTalk -Game $Game))
                 Write-ColorLine ""
             }
             "4" {
@@ -1234,6 +1368,7 @@ function Start-InnMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== INN ROOM =====" "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Inn Room"
         $roomVisitKey = "InnRoomVisited_$($inn.Id)"
 
         if (-not $Game.Town.InnFlags[$roomVisitKey]) {
@@ -1277,7 +1412,7 @@ function Start-InnMenu {
                 Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "4" {
-                Start-InnStorageMenu -Hero $Game.Hero
+                Start-InnStorageMenu -Game $Game -Hero $Game.Hero
             }
             "5" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
@@ -1316,6 +1451,7 @@ function Start-InnSelectionMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Find Lodging" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Lodging"
         Write-Scene "Night settles over the city, and Borzig must choose what kind of roof he wants over his head."
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
         Write-ColorLine ""

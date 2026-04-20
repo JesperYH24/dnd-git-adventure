@@ -239,9 +239,11 @@ function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {
     $global:RollDiceOverride = { param([int]$Sides) return 4 }
 
     $withoutPermit = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $withoutPermit -TimeOfDay "Night"
     $beforePermit = Resolve-BardPerformance -Game $withoutPermit -VenueId "market_square"
 
     $withPermit = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $withPermit -TimeOfDay "Night"
     Resolve-BelorChoice -Game $withPermit -Choice "1" | Out-Null
     $afterPermit = Resolve-BardPerformance -Game $withPermit -VenueId "market_square"
 
@@ -295,6 +297,7 @@ function Test-BardCanEarnCoinByPerformingInMarketSquare {
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $beforeXP = $game.Hero.XP
 
     $result = Resolve-BardPerformance -Game $game -VenueId "market_square"
@@ -314,6 +317,7 @@ function Test-BardCannotPerformTwiceAtSameVenueInOneDay {
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
 
     Resolve-BardPerformance -Game $game -VenueId "market_square" | Out-Null
     $beforeCopper = $game.Hero.CurrencyCopper
@@ -332,6 +336,7 @@ function Test-BardCanPerformAtDifferentVenuesOnSameDay {
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
 
     $first = Resolve-BardPerformance -Game $game -VenueId "market_square"
     $second = Resolve-BardPerformance -Game $game -VenueId "lantern_rest_stage"
@@ -350,6 +355,7 @@ function Test-BardHasThreePerformanceSlotsPerDay {
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
 
     Resolve-BardPerformance -Game $game -VenueId "market_square" | Out-Null
     Resolve-BardPerformance -Game $game -VenueId "lantern_rest_stage" | Out-Null
@@ -371,6 +377,7 @@ function Test-SilverKettlePerformanceCanEarnPatronFavor {
     $global:RollDiceOverride = { param([int]$Sides) return 18 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
 
     $result = Resolve-BardPerformance -Game $game -VenueId "silver_kettle_stage"
 
@@ -389,6 +396,7 @@ function Test-PrivateSalonPerformanceRequiresInvite {
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $beforeCopper = $game.Hero.CurrencyCopper
 
     $result = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"
@@ -406,6 +414,7 @@ function Test-PrivateSalonPerformancePaysAfterInvite {
     $global:RollDiceOverride = { param([int]$Sides) return 18 }
 
     $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
 
     $result = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"

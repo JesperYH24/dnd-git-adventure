@@ -24,8 +24,10 @@ function Set-TestReadHostSequence {
 function Test-InnStayChargesGoldAndHealsHero {
     $game = Initialize-Game
     $heroHP = 3
+    $startingDay = $game.Town.DayNumber
     $game.Hero.CurrencyCopper = 500
     $game.Town.MustChooseFirstInn = $true
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
 
     $result = Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99
@@ -35,6 +37,8 @@ function Test-InnStayChargesGoldAndHealsHero {
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Inn stay should restore the hero to full HP."
     Assert-Equal -Actual $game.Town.ChapterOneComplete -Expected $true -Message "The first successful inn stay should complete chapter one."
     Assert-Equal -Actual $game.Town.MustChooseFirstInn -Expected $false -Message "The first inn stay should clear the forced-lodging flag."
+    Assert-Equal -Actual $game.Town.DayNumber -Expected ($startingDay + 1) -Message "A full inn stay should advance the town to the next day."
+    Assert-Equal -Actual $game.Town.TimeOfDay -Expected "Day" -Message "A full inn stay should return the city to daytime."
 }
 
 function Test-TutorialArrivalStarterFundsCoverCheapestInn {
@@ -62,6 +66,7 @@ function Test-InnStayResetsDailyRingLockout {
 function Test-BookedInnNightRestResetsDailySystems {
     $game = Initialize-Game
     $heroHP = 5
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $game.Hero.CurrencyCopper = 500
     $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
 
@@ -174,6 +179,7 @@ function Test-WorkOffRoomCoversNightAndBlocksRing {
     $game = Initialize-Game
     $heroHP = 2
     $game.Town.MustChooseFirstInn = $true
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
     $game.Hero.CurrencyCopper = 0
     Set-TestReadHostSequence -Values @("1", "1")
@@ -186,6 +192,7 @@ function Test-WorkOffRoomCoversNightAndBlocksRing {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 0 -Message "A simple worked-off room should not require coin."
     Assert-Equal -Actual $game.Town.WorkedForRoomToday -Expected $true -Message "Working off the room should mark the hero as fatigued for the next day."
     Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $true -Message "Working off the room should block the ring for the next day."
+    Assert-Equal -Actual $game.Town.TimeOfDay -Expected "Day" -Message "Working off the room should still advance the city into the next morning."
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "Working off the room should still end with a full night's rest."
 }
 
