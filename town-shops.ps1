@@ -128,6 +128,21 @@ function Get-MarketOffers {
     return $offers
 }
 
+function Get-InstrumentShopOffers {
+    param($Game = $null)
+
+    $offers = @(
+        (New-TownOffer -Id "instrument_shop_stage_lute" -Name "Stage Lute" -Category "Utility" -Description "A polished stage instrument with cleaner tuning and enough presence to carry a room. Adds +2 inspiration." -PriceCopper 220)
+        (New-TownOffer -Id "instrument_shop_salon_lute" -Name "Salon Lute" -Category "Utility" -Description "A richer-bodied instrument made for refined rooms, private sets, and a bard who expects to be heard. Adds +3 inspiration." -PriceCopper 340)
+    )
+
+    if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $offers += (New-TownOffer -Id "instrument_shop_court_lute" -Name "Court Lute" -Category "Utility" -Description "A fine-crafted instrument balanced for long play, upper rooms, and a performer with real city standing. Adds +4 inspiration." -PriceCopper 520)
+    }
+
+    return $offers
+}
+
 function Get-SmithyOffers {
     param($Game = $null)
 
@@ -140,6 +155,21 @@ function Get-SmithyOffers {
 
     if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
         $offers += (New-TownOffer -Id "smithy_executioner_axe" -Name "Executioner Axe" -Category "Weapon" -Description "A broad-bladed two-handed axe forged for fighters with the strength to end a battle in one committed swing. Requires STR 16." -PriceCopper 420)
+    }
+
+    return $offers
+}
+
+function Get-ArmorerOffers {
+    param($Game = $null)
+
+    $offers = @(
+        (New-TownOffer -Id "armorer_studded_leather" -Name "Studded Leather Coat" -Category "Armor" -Description "A reinforced leather coat that still lets quick fighters and performers move cleanly. AC +2 and adds DEX." -PriceCopper 260)
+        (New-TownOffer -Id "armorer_chain_shirt" -Name "Chain Shirt" -Category "Armor" -Description "A practical shirt of linked steel for adventurers who want more protection without turning into a wall. AC +3 and adds DEX up to +2." -PriceCopper 380)
+    )
+
+    if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
+        $offers += (New-TownOffer -Id "armorer_brigandine" -Name "Brigandine Coat" -Category "Armor" -Description "Layered plates stitched into a hardened coat for veterans who expect ugly work. AC +4 and adds DEX up to +1." -PriceCopper 560)
     }
 
     return $offers
@@ -170,11 +200,17 @@ function New-TownItemFromOfferId {
         "market_handaxe" { return (New-WeaponItem -Name "Hand Axe" -Value 140 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 11 -SlotCost 1) }
         "market_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
         "market_throwing_axe" { return (New-WeaponItem -Name "Balanced Throwing Axe" -Value 190 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 12 -SlotCost 1) }
+        "instrument_shop_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
+        "instrument_shop_salon_lute" { return (New-UtilityItem -Name "Salon Lute" -Value 340 -InspirationBonus 3 -SlotCost 1) }
+        "instrument_shop_court_lute" { return (New-UtilityItem -Name "Court Lute" -Value 520 -InspirationBonus 4 -SlotCost 1) }
         "smithy_longsword" { return (New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2) }
         "smithy_rapier" { return (New-WeaponItem -Name "Rapier" -Value 200 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredDEX 12 -SlotCost 1) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_greataxe" { return (New-WeaponItem -Name "Steel Great Axe" -Value 260 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 15 -SlotCost 2) }
         "smithy_executioner_axe" { return (New-WeaponItem -Name "Executioner Axe" -Value 420 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 16 -SlotCost 2) }
+        "armorer_studded_leather" { return (New-ArmorItem -Name "Studded Leather Coat" -Value 260 -ArmorBonus 2 -AddsDexModifier $true -SlotCost 2) }
+        "armorer_chain_shirt" { return (New-ArmorItem -Name "Chain Shirt" -Value 380 -ArmorBonus 3 -AddsDexModifier $true -DexBonusCap 2 -SlotCost 3) }
+        "armorer_brigandine" { return (New-ArmorItem -Name "Brigandine Coat" -Value 560 -ArmorBonus 4 -AddsDexModifier $true -DexBonusCap 1 -SlotCost 3) }
         "apothecary_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
         "apothecary_greater_healing_potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }
         "apothecary_haste_potion" { return (New-ConsumableItem -Name "Potion of Haste" -Value 300 -HealAmount 0 -BuffType "Haste" -BuffName "Potion of Haste" -InitiativeAdvantage $true -SlotCost 1) }
@@ -189,7 +225,9 @@ function Get-TownBuyerLabel {
     switch ($BuyerType) {
         "GeneralBuyer" { return "Town Buyer" }
         "Market" { return "Market Trader" }
+        "InstrumentShop" { return "Instrument Maker" }
         "Smithy" { return "Smith" }
+        "Armorer" { return "Armorer" }
         "Apothecary" { return "Apothecary" }
         default { return "Trader" }
     }
@@ -201,7 +239,9 @@ function Get-TownBuyerIntroText {
     switch ($BuyerType) {
         "GeneralBuyer" { return "A calm-eyed quartermaster weighs every piece Borzig lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin." }
         "Market" { return "The market trader turns goods over quickly, happy with tonics and travel-ready stock but much less impressed by heavy battlefield gear. Rusted cave salvage gets a skeptical sniff before the price comes out." }
+        "InstrumentShop" { return "The instrument maker checks wood, strings, balance, and finish with the severity of someone who thinks bad care is a moral failure. Fine instruments and performer gear get the best attention here." }
         "Smithy" { return "The smith checks balance, grip, and metal first. Weapons and armor interest the forge. Potions do not. Anything dragged out of the tutorial cave gets judged hard for chips, rust, and poor temper." }
+        "Armorer" { return "The armorer runs a hard eye over straps, stitching, dented plates, and any sign that the city has been trusting bad leather too long. Armor, field gear, and sturdy coats are worth real coin here." }
         "Apothecary" { return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite." }
         default { return "A trader looks over Borzig's gear and starts naming coin." }
     }
@@ -220,8 +260,18 @@ function Get-SaleAffinityMultiplier {
             if ($Item.Type -eq "Utility" -or $Item.Type -eq "Junk") { return 0.45 }
             return 0.35
         }
+        "InstrumentShop" {
+            if ($Item.Type -eq "Utility") { return 0.5 }
+            if ($Item.Type -eq "Armor") { return 0.35 }
+            return 0.25
+        }
         "Smithy" {
             if ($Item.Type -in @("Weapon", "Armor")) { return 0.5 }
+            return 0.3
+        }
+        "Armorer" {
+            if ($Item.Type -eq "Armor") { return 0.5 }
+            if ($Item.Type -eq "Utility") { return 0.4 }
             return 0.3
         }
         "Apothecary" {

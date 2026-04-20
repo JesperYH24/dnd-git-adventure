@@ -8,11 +8,15 @@ function Test-LevelThreeShopsUnlockBetterOffers {
     $game.Hero.LevelCap = 3
 
     $market = @(Get-MarketOffers -Game $game)
+    $instrumentShop = @(Get-InstrumentShopOffers -Game $game)
     $smithy = @(Get-SmithyOffers -Game $game)
+    $armorer = @(Get-ArmorerOffers -Game $game)
     $apothecary = @(Get-ApothecaryOffers -Game $game)
 
     Assert-True -Condition ($market.Id -contains "market_throwing_axe") -Message "Level 3 Borzig should see an upgraded market weapon offer."
+    Assert-True -Condition ($instrumentShop.Id -contains "instrument_shop_court_lute") -Message "Level 3 bards should unlock a finer instrument tier in the instrument shop."
     Assert-True -Condition ($smithy.Id -contains "smithy_executioner_axe") -Message "Level 3 Borzig should unlock a heavier smithy weapon offer."
+    Assert-True -Condition ($armorer.Id -contains "armorer_brigandine") -Message "Level 3 heroes should unlock the heavier armorer coat."
     Assert-True -Condition ($apothecary.Id -contains "apothecary_battle_tonic") -Message "Level 3 Borzig should unlock a stronger apothecary tonic."
 }
 
@@ -32,17 +36,44 @@ function Test-MarketStocksAnInstrumentUpgradeForBards {
 function Test-DedicatedBuyerMatchesSpecialistForOwnGoods {
     $potion = New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1
     $weapon = New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2
+    $instrument = New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1
+    $armor = New-ArmorItem -Name "Studded Leather Coat" -Value 260 -ArmorBonus 2 -AddsDexModifier $true -SlotCost 2
 
     Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $potion) -Expected (Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $potion) -Message "The apothecary should match the dedicated buyer for potions."
     Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $weapon) -Expected (Get-SaleValueForBuyer -BuyerType "Smithy" -Item $weapon) -Message "The smith should match the dedicated buyer for weapons."
+    Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $instrument) -Expected (Get-SaleValueForBuyer -BuyerType "InstrumentShop" -Item $instrument) -Message "The instrument maker should match the dedicated buyer for bard gear."
+    Assert-Equal -Actual (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $armor) -Expected (Get-SaleValueForBuyer -BuyerType "Armorer" -Item $armor) -Message "The armorer should match the dedicated buyer for armor."
 }
 
 function Test-OffSpecialtyBuyersPayLess {
     $potion = New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1
     $weapon = New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2
+    $instrument = New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1
+    $armor = New-ArmorItem -Name "Studded Leather Coat" -Value 260 -ArmorBonus 2 -AddsDexModifier $true -SlotCost 2
 
     Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Smithy" -Item $potion) -lt (Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $potion)) -Message "The smith should pay less for potions than the apothecary."
     Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $weapon) -lt (Get-SaleValueForBuyer -BuyerType "Smithy" -Item $weapon)) -Message "The apothecary should pay less for weapons than the smith."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Market" -Item $instrument) -lt (Get-SaleValueForBuyer -BuyerType "InstrumentShop" -Item $instrument)) -Message "The market should pay less for instruments than the instrument maker."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $armor) -gt (Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $armor)) -Message "The apothecary should pay less for armor than a normal town buyer."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "Apothecary" -Item $armor) -lt (Get-SaleValueForBuyer -BuyerType "Armorer" -Item $armor)) -Message "The armorer should pay better for armor than a clearly wrong buyer."
+}
+
+function Test-NewSpecialtyShopsStockRealClassGear {
+    $bardGame = Initialize-Game -Class "Bard"
+    $fighterGame = Initialize-Game -Class "Barbarian"
+
+    $instrumentOffers = @(Get-InstrumentShopOffers -Game $bardGame)
+    $armorerOffers = @(Get-ArmorerOffers -Game $fighterGame)
+    $salonLute = New-TownItemFromOfferId -OfferId "instrument_shop_salon_lute"
+    $chainShirt = New-TownItemFromOfferId -OfferId "armorer_chain_shirt"
+
+    Assert-True -Condition ($instrumentOffers.Id -contains "instrument_shop_stage_lute") -Message "The instrument shop should stock the bard's first proper upgrade."
+    Assert-True -Condition ($instrumentOffers.Id -contains "instrument_shop_salon_lute") -Message "The instrument shop should carry a stronger salon-grade lute."
+    Assert-True -Condition ($armorerOffers.Id -contains "armorer_studded_leather") -Message "The armorer should stock mobile leather protection."
+    Assert-True -Condition ($armorerOffers.Id -contains "armorer_chain_shirt") -Message "The armorer should stock a mid-tier chain option."
+    Assert-Equal -Actual $salonLute.InspirationBonus -Expected 3 -Message "The salon lute should grant a larger inspiration bonus than the stage lute."
+    Assert-Equal -Actual $chainShirt.ArmorBonus -Expected 3 -Message "The chain shirt should provide its advertised armor bonus."
+    Assert-Equal -Actual $chainShirt.DexBonusCap -Expected 2 -Message "The chain shirt should cap added dexterity as intended."
 }
 
 function Test-TutorialLootHasUsefulButModestSaleValue {
@@ -130,6 +161,7 @@ Test-LevelThreeShopsUnlockBetterOffers
 Test-MarketStocksAnInstrumentUpgradeForBards
 Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
+Test-NewSpecialtyShopsStockRealClassGear
 Test-TutorialLootHasUsefulButModestSaleValue
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

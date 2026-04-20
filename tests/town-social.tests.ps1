@@ -50,9 +50,9 @@ function Test-LanternRestMerchantsFavorBardToolsForBards {
     $game = Initialize-Game -Class "Bard"
 
     Resolve-LanternRestEveningChoice -Game $game -Choice "1"
-    $stageLuteOffer = (Get-MarketOffers -Game $game) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+    $stageLuteOffer = (Get-InstrumentShopOffers -Game $game) | Where-Object { $_.Id -eq "instrument_shop_stage_lute" } | Select-Object -First 1
 
-    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "Lantern Rest merchants should steer a bard toward better instruments instead of an axe discount."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "Lantern Rest merchants should steer a bard toward the dedicated instrument shop instead of an axe discount."
     Assert-Equal -Actual $game.Town.Relationships["LanternAudience"] -Expected "Warm" -Message "Lantern Rest should recognize the bard as a good fit for the room."
 }
 
@@ -87,10 +87,24 @@ function Test-BardTownShopsUseDifferentIntroTone {
     $marketText = Get-TownShopIntroText -Shop "Market" -Hero $game.Hero
     $smithyText = Get-TownShopIntroText -Shop "Smithy" -Hero $game.Hero
     $apothecaryText = Get-TownShopIntroText -Shop "Apothecary" -Hero $game.Hero
+    $instrumentText = Get-TownShopIntroText -Shop "Instrument Shop" -Hero $game.Hero
+    $armorerText = Get-TownShopIntroText -Shop "Armorer" -Hero $game.Hero
 
     Assert-True -Condition ($marketText -like "*Gariand*" -or $marketText -like "*strings*") -Message "Market intro should speak to the bard as more than a weapon buyer."
     Assert-True -Condition ($smithyText -like "*light armor*" -or $smithyText -like "*quick-handed performer*") -Message "Smithy intro should recognize the bard's lighter kit needs."
     Assert-True -Condition ($apothecaryText -like "*performer*" -or $apothecaryText -like "*steady nerves*") -Message "Apothecary intro should feel more bard-aware than simple battle-tonic flavor."
+    Assert-True -Condition ($instrumentText -like "*Gariand*" -or $instrumentText -like "*measured first by ear*") -Message "Instrument shop intro should treat the bard like a real performer walking into a specialist's room."
+    Assert-True -Condition ($armorerText -like "*performer*" -or $armorerText -like "*mobility*") -Message "Armorer intro should still frame armor through the bard's movement and presentation."
+}
+
+function Test-BarbarianSpecialtyShopToneFitsBorzig {
+    $game = Initialize-Game -Class "Barbarian"
+
+    $instrumentText = Get-TownShopIntroText -Shop "Instrument Shop" -Hero $game.Hero
+    $armorerText = Get-TownShopIntroText -Shop "Armorer" -Hero $game.Hero
+
+    Assert-True -Condition ($instrumentText -like "*Borzig*" -or $instrumentText -like "*carry a lute by the neck*") -Message "Instrument shop intro should treat Borzig like an outsider in a room built for performers."
+    Assert-True -Condition ($armorerText -like "*Borzig*" -or $armorerText -like "*worth fitting properly*") -Message "Armorer intro should read Borzig as a serious customer for heavier field gear."
 }
 
 function Test-InnkeeperGreetingChangesWithHeroStyle {
@@ -203,7 +217,7 @@ function Test-HadrikRewardsDifferentClassesDifferently {
 
     $greataxeOffer = (Get-SmithyOffers -Game $barbarianGame) | Where-Object { $_.Id -eq "smithy_greataxe" } | Select-Object -First 1
     $rapierOffer = (Get-SmithyOffers -Game $bardGame) | Where-Object { $_.Id -eq "smithy_rapier" } | Select-Object -First 1
-    $stageLuteOffer = (Get-MarketOffers -Game $bardGame) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+    $stageLuteOffer = (Get-InstrumentShopOffers -Game $bardGame) | Where-Object { $_.Id -eq "instrument_shop_stage_lute" } | Select-Object -First 1
 
     Assert-True -Condition ([bool]$barbarianGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Barbarians should still get Hadrik's smithy weapon discount."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $barbarianGame -Offer $greataxeOffer) -Expected 200 -Message "Hadrik's barbarian discount should lower the Steel Great Axe price."
@@ -211,7 +225,7 @@ function Test-HadrikRewardsDifferentClassesDifferently {
 
     Assert-True -Condition ([bool]$bardGame.Town.StreetFlags["HadrikRapierDiscountUnlocked"]) -Message "Bards should get Hadrik's rapier recommendation instead of a heavy axe pitch."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $rapierOffer) -Expected 140 -Message "Hadrik's bard recommendation should lower the Rapier price."
-    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 220 -Message "Hadrik should no longer duplicate the Stage Lute discount from the streets."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 220 -Message "Hadrik should not interfere with the Lantern Rest instrument-shop discount path."
     Assert-True -Condition (-not [bool]$bardGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Bards should not spend their one-time Hadrik reward on an axe discount they are unlikely to use."
     Assert-True -Condition ($bardResult -like "*Rapier*") -Message "Hadrik should name the rapier lead clearly for a bard."
 }
@@ -408,6 +422,7 @@ Test-LanternRestMerchantsFavorBardToolsForBards
 Test-SilverKettleUpperTablesAdvanceBardSocialStanding
 Test-BardQuestSourceTextReflectsSocialAllianceRole
 Test-BardTownShopsUseDifferentIntroTone
+Test-BarbarianSpecialtyShopToneFitsBorzig
 Test-InnkeeperGreetingChangesWithHeroStyle
 Test-StreetNpcIntrosRecognizeBardAsGariand
 Test-InnkeeperSmallTalkChangesAfterFirstAsk

@@ -79,8 +79,8 @@ function Resolve-InnEvent {
                     $Game.Town.InnFlags["LanternMerchantDiscount"] = $true
                     if ($Game.Hero.Class -eq "Bard") {
                         $Game.Town.Relationships["LanternAudience"] = "Warm"
-                        Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
-                        Write-Scene "A caravan factor shares road gossip over supper, then decides Gariand belongs in better company than the back corner. By dessert, the market stringwright has been told to shave the price on a Stage Lute."
+                        Set-TownOfferDiscount -Game $Game -OfferId "instrument_shop_stage_lute" -DiscountCopper 20
+                        Write-Scene "A caravan factor shares road gossip over supper, then decides Gariand belongs in better company than the back corner. By dessert, the instrument maker near the square has been told to shave the price on a Stage Lute."
                     }
                     else {
                         Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
@@ -223,10 +223,10 @@ function Resolve-LanternRestEveningChoice {
             if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
                 $Game.Town.InnFlags["LanternTradeAdvice"] = $true
                 if ($Game.Hero.Class -eq "Bard") {
-                    Set-TownOfferDiscount -Game $Game -OfferId "market_stage_lute" -DiscountCopper 20
+                    Set-TownOfferDiscount -Game $Game -OfferId "instrument_shop_stage_lute" -DiscountCopper 20
                     $Game.Town.Relationships["LanternAudience"] = "Warm"
-                    Write-Scene "Merchants and factors wave $($Game.Hero.Name) into the better half of the room, compare supper-room tastes, and quietly point him toward the market stringwright who outfits performers that travelers actually remember."
-                    Write-EmphasisLine -Text "$($Game.Hero.Name) earns warm standing at the Lantern Rest. The Stage Lute is now cheaper at the market." -Color "Yellow"
+                    Write-Scene "Merchants and factors wave $($Game.Hero.Name) into the better half of the room, compare supper-room tastes, and quietly point him toward the instrument maker who outfits performers that travelers actually remember."
+                    Write-EmphasisLine -Text "$($Game.Hero.Name) earns warm standing at the Lantern Rest. The Stage Lute is now cheaper at the instrument shop." -Color "Yellow"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $Game.Town.Relationships["LanternMercenaries"] = "Warm"

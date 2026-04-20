@@ -212,10 +212,10 @@ function Test-LanternRestFirstNightSupportsBardAudienceLoop {
     $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
 
     Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 40 | Out-Null
-    $stageLuteOffer = (Get-MarketOffers -Game $game) | Where-Object { $_.Id -eq "market_stage_lute" } | Select-Object -First 1
+    $stageLuteOffer = (Get-InstrumentShopOffers -Game $game) | Where-Object { $_.Id -eq "instrument_shop_stage_lute" } | Select-Object -First 1
 
     Assert-Equal -Actual $game.Town.Relationships["LanternAudience"] -Expected "Warm" -Message "A bard's first Lantern Rest event should warm the room to him."
-    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "A bard's first Lantern Rest event should support the Stage Lute path instead of old potion discounts."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "A bard's first Lantern Rest event should support the Stage Lute path at the instrument shop instead of old potion discounts."
 }
 
 function Test-SilverKettleFirstNightCanOpenPrivateBardVenue {

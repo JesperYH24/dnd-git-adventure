@@ -46,6 +46,16 @@ function Get-TownShopIntroText {
                 -BarbarianText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." `
                 -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice.")
         }
+        "Instrument Shop" {
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Borzig gets a wary craftsman's look, the sort usually reserved for men who might carry a lute by the neck instead of the case." `
+                -BardText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Gariand is measured first by ear, then by posture, then by the condition of the instrument already at his side.")
+        }
+        "Armorer" {
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "Leather, chain, buckles, and heavy stitched coats line the armorer's walls. The room smells of oil, wool, and old campaigns, and Borzig is judged like someone who might finally be worth fitting properly." `
+                -BardText "Leather, chain, buckles, and fitted coats line the armorer's walls. Even here the eye goes toward mobility, silhouette, and whether Gariand wants protection that still lets him move like a performer instead of a tower shield.")
+        }
     }
 
     return ""
@@ -832,12 +842,14 @@ function Start-TownMenu {
         Write-ColorLine "2. Browse the market" "White"
         Write-ColorLine "3. Visit the smithy" "White"
         Write-ColorLine "4. Visit the apothecary" "White"
-        Write-ColorLine "5. Find a buyer" "White"
-        Write-ColorLine "6. Seek work" "White"
-        Write-ColorLine "7. Visit the fighting ring" "White"
-        Write-ColorLine "8. Visit your inn" "White"
-        Write-ColorLine "9. Check inventory" "White"
-        Write-ColorLine "10. Check quest log" "White"
+        Write-ColorLine "5. Visit the instrument shop" "White"
+        Write-ColorLine "6. Visit the armorer" "White"
+        Write-ColorLine "7. Find a buyer" "White"
+        Write-ColorLine "8. Seek work" "White"
+        Write-ColorLine "9. Visit the fighting ring" "White"
+        Write-ColorLine "10. Visit your inn" "White"
+        Write-ColorLine "11. Check inventory" "White"
+        Write-ColorLine "12. Check quest log" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
         if ($Game.Hero.Class -eq "Bard") {
@@ -866,15 +878,21 @@ function Start-TownMenu {
                 Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
             }
             "5" {
-                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
+                Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
             }
             "6" {
-                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
+                Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
             }
             "7" {
-                Start-FightingRing -Game $Game
+                Open-TownSellMenu -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
             }
             "8" {
+                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
+            }
+            "9" {
+                Start-FightingRing -Game $Game
+            }
+            "10" {
                 if ($null -ne $Game.Town.ActiveInn) {
                     $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
 
@@ -887,10 +905,10 @@ function Start-TownMenu {
                     Write-ColorLine ""
                 }
             }
-            "9" {
+            "11" {
                 Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
             }
-            "10" {
+            "12" {
                 Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
             }
             "S" {
