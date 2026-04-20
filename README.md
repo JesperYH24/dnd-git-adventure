@@ -43,6 +43,11 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - bardic inspiration preparation before the first dungeon
   - smoother tutorial combat onboarding for bard actions
 - quest log with XP tracking plus separate views for accepted quests, completed quests, failed quests, and Chapter Two story clues
+- player-facing status views across combat, town, inn, streets, quest sources, and bard performance menus
+- class-aware check proficiency groundwork with:
+  - `Barbarian` proficiency on `STR` and `CON` checks
+  - `Bard` proficiency on `CHA` and `Performance` checks
+  - a lighter bridge toward future skill tags beyond raw stats
 - inventory with:
   - `8` ready-use personal slots
   - a separate backpack storage layer
@@ -75,6 +80,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - different greetings, rewards, and utility hooks for barbarian and bard
   - bard-aware intros in quest sources, shops, streets, inns, and quest log text
   - cleaner use of `Gariand` / current hero name across tutorial, town, inn, and performance text
+  - stronger barbarian-specific city rewards, quest routes, and trust hooks so Borzig feels more intentional outside the ring too
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
   - more narrative round-to-round ring text with lighter rules-facing combat chatter
@@ -130,6 +136,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
     - `Private Patron Salon`
   - performance rewards that do not consume the normal day-job slot
   - first-night inn events and social standing that can support the bard's audience/invitation loop
+  - growing public recognition when the bard performs often in town and in inns
   - better fit with `Lantern Rest` and `Silver Kettle` as the bard's natural city homes
 
 ---
@@ -258,6 +265,8 @@ The bard is now a real alternate playthrough rather than just a combat variant.
 - a separate money loop through performances
 - early city quest alternatives
 - class-aware inn, NPC, shop, and quest-source reactions
+- growing recognition through repeated performances and venue progression
+- status, quest, and town flows that now read more cleanly as a bard playthrough
 
 The remaining bard work is mostly polish and breadth rather than missing foundations:
 
@@ -268,27 +277,27 @@ The remaining bard work is mostly polish and breadth rather than missing foundat
 
 ### 5. Class parity snapshot
 
-The current build now supports both `Barbarian` and `Bard` as real starting classes, but they are not yet equally deep in every part of the game.
+The current build now supports both `Barbarian` and `Bard` as real starting classes, and the gap between them is much smaller than it was before.
 
 Right now the class split looks roughly like this:
 
 - `Barbarian` feels strongest in raw combat, ring identity, physical intimidation, and the blunt-force version of the adventure
 - `Bard` feels strongest in town reactivity, social problem-solving, performance economy, and class-aware city flavor
 
-That means both classes are playable and distinct, but they are not yet equally authored across every pillar of the game. The bard currently has more bespoke city-content, while the barbarian still has the clearer combat-first fantasy.
+That means both classes are playable and distinct, but they still express that identity through different pillars. The bard still has the cleaner social/economy fantasy, while the barbarian still has the clearer combat-first fantasy.
 
-The current parity goal for the next barbarian pass is:
+The recent class-balance work already added:
 
-- give `Barbarian` more city-specific advantages that are not just the default route
-- add more barbarian-specific quest outcomes where force, threat, toughness, or reputation solve problems in their own way
-- give more NPCs class-specific rewards or trust hooks for `Barbarian`, the way several now do for `Bard`
-- make sure the barbarian has a stronger non-ring city identity, so `Bard` is not the only class with a clearly special loop in town
+- more barbarian-specific quest outcomes where force, threat, toughness, or reputation solve problems in their own way
+- more barbarian-specific city rewards, trust hooks, and inn/NPC utility
+- clearer class-aware reactions for both `Borzig` and `Gariand`
+- a shared check-proficiency foundation that makes future skill work easier to layer in cleanly
 
 In short:
 
-- `Bard v1` is now close to feature-complete for this milestone
-- `Barbarian` is still fully playable and coherent
-- the next class-balance polish should focus more on `Barbarian parity` than on adding brand-new bard systems
+- `Bard v1` is close to feature-complete for this milestone
+- `Barbarian` now feels much more deliberate in the city than it did before
+- the next major priorities should move away from class parity and toward `save/load` plus clear defeat/persistence rules
 
 ---
 
@@ -370,6 +379,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
+- add `save/load` support so longer city and class playthroughs can be resumed cleanly
 - formalize defeat and HP persistence rules so the tutorial can hard-reset at the campfire, the city can keep combat damage between activities, and the fighting ring can stay fully restorative between bouts
 - introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
@@ -392,7 +402,6 @@ powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
 - more classes and class-specific dialogue, gear use, and social reactions
 - class features beyond level 3
 - resistances, elemental effects, and broader enemy mechanics
-- save/load support
 
 ### Optional presentation and polish
 
