@@ -342,12 +342,20 @@ In short:
 - `encounters.ps1`
 - `city-quests.ps1`
 - `town.ps1`
+- `town-inns.ps1`
+- `town-shops.ps1`
+- `town-ring.ps1`
+- `town-npcs.ps1`
 - `quests.ps1`
 
 ### Items and inventory
 
 - `items.ps1`
 - `inventory.ps1`
+
+### Persistence
+
+- `save.ps1`
 
 ### Presentation
 
@@ -374,10 +382,13 @@ Useful current suites include:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tests\city-quests.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\initiative.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\ring.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\save-load.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\defeat.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\tutorial-skip.tests.ps1
 ```
 
 ---
