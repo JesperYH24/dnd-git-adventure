@@ -352,7 +352,7 @@ function Show-TownQuestSource {
         }
 
         Write-ColorLine ""
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to seek work" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -485,7 +485,7 @@ function Start-TownQuestPreparationMenu {
         Write-ColorLine "1. Start the quest now" "White"
         Write-ColorLine "2. Check inventory and gear" "White"
         Write-ColorLine "3. Check quest log" "White"
-        Write-ColorLine "4. Return to town without starting" "White"
+        Write-ColorLine "4. Back to town without starting" "White"
         if ($Game.Hero.Class -eq "Bard") {
             $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
             $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
@@ -879,7 +879,7 @@ function Start-BardPerformanceMenu {
         Write-ColorLine "1. Perform in the market square" "White"
         Write-ColorLine "2. Book a private patron salon" "White"
         Write-ColorLine "S. Status" "White"
-        Write-ColorLine "0. Return to town" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -924,7 +924,7 @@ function Start-QuestHubMenu {
         Write-ColorLine "2. Visit the guard station" "White"
         Write-ColorLine "3. Speak with the quest giver's clerk" "White"
         Write-ColorLine "S. Status" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1036,7 +1036,7 @@ function Start-TownMenu {
         else {
             Write-ColorLine "9. Visit the fighting ring (opens at night)" "DarkGray"
         }
-        Write-ColorLine $(if ($isNight) { "10. Return to your inn" } else { "10. Visit your inn" }) "White"
+        Write-ColorLine $(if ($isNight) { "10. Go to your inn" } else { "10. Visit your inn" }) "White"
         Write-ColorLine "11. Check inventory" "White"
         Write-ColorLine "12. Check quest log" "White"
         Write-ColorLine "S. Status" "White"
@@ -1056,14 +1056,14 @@ function Start-TownMenu {
             Write-ColorLine "W. Wait for nightfall" "White"
         }
         Write-TextSpeedOption
-        Write-ColorLine "0. End the adventure for now" "White"
+        Write-ColorLine "0. End adventure for now" "White"
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose").ToUpper()
 
         switch ($choice) {
             "1" {
-                Start-TownStreetScene -Game $Game -ReturnLabel "Return to town"
+                Start-TownStreetScene -Game $Game -ReturnLabel "Back to town"
             }
             "2" {
                 if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market")) {
@@ -1099,7 +1099,7 @@ function Start-TownMenu {
                 }
             }
             "7" {
-                Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Return to town"
+                Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Back to town"
             }
             "8" {
                 Start-QuestHubMenu -Game $Game -HeroHP $HeroHP

@@ -253,6 +253,23 @@ function Test-InnRoomReturnsToInnWithoutJumpingToTown {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "Returning from the room should happen in one quick step."
 }
 
+function Test-BardCanPrepareInspirationInInnRoom {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 99 | Out-Null
+    $game.Hero.CurrentBardicInspirationDice = 0
+    Set-TestReadHostSequence -Values @("7", "6")
+
+    $result = Start-InnMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected (Get-HeroBardicInspirationMaxDice -Hero $game.Hero) -Message "A bard should be able to prepare inspiration privately in an inn room."
+    Assert-Equal -Actual $result -Expected "BackToInn" -Message "Preparing in the room should keep the player in the inn-room loop until they leave."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The inn room should accept prepare then return choices."
+}
+
 Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
@@ -268,6 +285,7 @@ Test-CommonRoomStaysOpenUntilBackedOut
 Test-LanternRestFirstNightSupportsBardAudienceLoop
 Test-SilverKettleFirstNightCanOpenPrivateBardVenue
 Test-InnRoomReturnsToInnWithoutJumpingToTown
+Test-BardCanPrepareInspirationInInnRoom
 
 $global:RollDiceOverride = $null
 

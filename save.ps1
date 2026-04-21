@@ -308,7 +308,7 @@ function Show-AdventureSaveSlots {
     }
 
     Write-ColorLine ""
-    Write-ColorLine "0. Back" "DarkGray"
+    Write-ColorLine "0. Back to previous menu" "DarkGray"
     Write-ColorLine ""
 }
 

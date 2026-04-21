@@ -1054,7 +1054,7 @@ function Start-FightingRing {
     Write-ColorLine "1. Enter the ring" "White"
     Write-ColorLine "2. Ask Dorr about the pit" "White"
     Write-ColorLine "3. Ask Dorr what sort of challengers are waiting" "White"
-    Write-ColorLine "0. Back" "DarkGray"
+    Write-ColorLine "0. Back to town" "DarkGray"
     Write-ColorLine ""
 
     if ($Game.Town.WorkedForRoomToday) {

@@ -1007,7 +1007,7 @@ function Start-TownQuestLogMenu {
         Write-ColorLine "3. Completed quests" "White"
         Write-ColorLine "4. Failed quests" "White"
         Write-ColorLine "S. Status" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose").ToUpper()
@@ -1043,7 +1043,7 @@ function Start-TownQuestLogMenu {
                     }
 
                     Write-ColorLine ""
-                    Write-ColorLine "0. Return to quest log" "DarkGray"
+                    Write-ColorLine "0. Back to quest log" "DarkGray"
                     Write-ColorLine ""
 
                     $acceptedChoice = Read-Host "Choose a quest to prepare or start"

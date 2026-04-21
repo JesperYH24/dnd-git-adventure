@@ -472,7 +472,7 @@ function Show-TownShop {
 
         Write-ColorLine ""
         Write-ColorLine "S. Sell gear" "White"
-        Write-ColorLine "0. Return to town" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose").ToUpper()
@@ -508,7 +508,7 @@ function Show-TownShop {
             $sellChoice = (Read-Host "Sell gear to the $buyerLabel to make room? (Y/N)").ToUpper()
 
             if ($sellChoice -eq "Y") {
-                Open-TownSellMenu -Game $Game -Hero $Hero -BuyerType $BuyerType -ExitLabel "Return to shop"
+                Open-TownSellMenu -Game $Game -Hero $Hero -BuyerType $BuyerType -ExitLabel "Back to shop"
             }
         }
 
@@ -521,7 +521,7 @@ function Open-TownSellMenu {
         $Game,
         $Hero,
         [string]$BuyerType = "GeneralBuyer",
-        [string]$ExitLabel = "Return to town"
+        [string]$ExitLabel = "Back to town"
     )
 
     $showIntro = $true
@@ -668,7 +668,7 @@ function Start-InnStorageMenu {
         Write-ColorLine "1. Store gear from inventory" "White"
         Write-ColorLine "2. Retrieve stored gear" "White"
         Write-ColorLine "3. View stored gear" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to inn room" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"

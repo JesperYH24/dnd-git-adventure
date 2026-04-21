@@ -858,7 +858,7 @@ function Resolve-UnderstreetLockedCache {
             Write-ColorLine "3. Use the recovered key" "White"
         }
 
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to the room" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"

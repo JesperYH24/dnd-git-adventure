@@ -508,7 +508,7 @@ function Start-InnEveningMenu {
         $showIntro = $false
 
         Write-ColorLine "S. Status" "White"
-        Write-ColorLine "0. Return to the inn" "DarkGray"
+        Write-ColorLine "0. Back to inn" "DarkGray"
         Write-ColorLine ""
 
         $choice = (Read-Host "Choose").ToUpper()
@@ -701,7 +701,7 @@ function Start-InnVisitMenu {
         Write-ColorLine "3. Speak with the innkeeper" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
-        Write-ColorLine "0. Return to town" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
@@ -765,7 +765,7 @@ function Resolve-InnWorkOffRoom {
         Write-ColorLine "1. Haul kegs and split firewood (STR)" "White"
         Write-ColorLine "2. Scrub tables and reset the room (CON)" "White"
         Write-ColorLine "3. Hold the late door and break up trouble (STR)" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to inn selection" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -905,7 +905,7 @@ function Resolve-InnStay {
         Write-Scene "$($Game.Hero.Name) cannot afford a room at $($Inn.Name)."
         Write-ColorLine "1. Work off the room tonight" "White"
         Write-ColorLine "2. Choose another inn" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to inn selection" "DarkGray"
         Write-ColorLine ""
 
         while ($true) {
@@ -975,7 +975,7 @@ function Resolve-BookedInnNightRest {
         Write-Scene "$($Game.Hero.Name) does not have enough coin to cover another night at $($inn.Name)."
         Write-ColorLine "1. Work off the room tonight" "White"
         Write-ColorLine "2. Keep walking the city instead" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         while ($true) {
@@ -1267,7 +1267,7 @@ function Start-InnBookingConversation {
         Write-ColorLine ""
         Write-ColorLine "1. Keep the room" "White"
         Write-ColorLine "2. Cancel the booking" "White"
-        Write-ColorLine "0. Return to the innkeeper" "DarkGray"
+        Write-ColorLine "0. Back to innkeeper" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1321,7 +1321,7 @@ function Start-InnkeeperMenu {
         Write-ColorLine "2. Ask what sort of people stay here" "White"
         Write-ColorLine "3. Ask what people have been saying lately" "White"
         Write-ColorLine "4. Discuss your room booking" "White"
-        Write-ColorLine "0. Return to the inn" "DarkGray"
+        Write-ColorLine "0. Back to inn" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -1388,9 +1388,15 @@ function Start-InnMenu {
         Write-ColorLine "3. Check quest log" "White"
         Write-ColorLine "4. Manage stored gear" "White"
         Write-ColorLine "5. Status" "White"
-        Write-ColorLine "6. Return to inn" "White"
+        Write-ColorLine "6. Back to inn" "White"
+        if ($Game.Hero.Class -eq "Bard") {
+            $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
+            $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
+            Write-ColorLine "7. Prepare bardic inspiration with $instrumentName" "White"
+            Write-ColorLine "   Current: $($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides)" "DarkGray"
+        }
         Write-ColorLine "G. Save adventure" "White"
-        Write-ColorLine "0. End the adventure for now" "White"
+        Write-ColorLine "0. End adventure for now" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine ""
 
@@ -1419,6 +1425,17 @@ function Start-InnMenu {
             }
             "6" {
                 return "BackToInn"
+            }
+            "7" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $preparation = Prepare-HeroBardicInspiration -Hero $Game.Hero
+                    Write-Scene $preparation.Message
+                    Write-ColorLine ""
+                }
+                else {
+                    Write-ColorLine "Invalid choice. Try again." "Red"
+                    Write-ColorLine ""
+                }
             }
             "G" {
                 Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
@@ -1465,7 +1482,7 @@ function Start-InnSelectionMenu {
 
         Write-ColorLine ""
         Write-ColorLine "G. Save adventure" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"

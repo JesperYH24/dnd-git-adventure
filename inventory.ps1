@@ -271,7 +271,7 @@ function Open-BackpackMenu {
 
         Write-ColorLine "" 
         Write-ColorLine "M. Move gear from personal inventory into backpack" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to inventory" "DarkGray"
         Write-TextSpeedOption
         Write-ColorLine ""
 
@@ -311,7 +311,7 @@ function Open-BackpackMenu {
                 Write-ColorLine "$($i + 1). $(Format-InventoryItemLine -Item $movableItems[$i].Item)" "White"
             }
 
-            Write-ColorLine "0. Back" "DarkGray"
+            Write-ColorLine "0. Back to backpack" "DarkGray"
             $moveChoice = Read-Host "Move which item"
 
             if ($moveChoice -eq "0") {
@@ -364,7 +364,7 @@ function Open-BackpackMenu {
         Write-ColorLine "Selected: $(Format-InventoryItemLine -Item $selectedItem)" "Cyan"
         Write-ColorLine "R. Move to personal inventory" "White"
         Write-ColorLine "D. Drop from backpack" "White"
-        Write-ColorLine "B. Back" "DarkGray"
+        Write-ColorLine "B. Back to backpack" "DarkGray"
         Write-TextSpeedOption
         Write-ColorLine ""
 
@@ -409,11 +409,11 @@ function Open-InventoryMenu {
         Show-Inventory -Hero $Hero
 
         if (-not $Hero.Inventory -or $Hero.Inventory.Count -eq 0) {
-            Read-Host "Press Enter to go back"
+            Read-Host "Press Enter to return to the previous menu"
             return $false
         }
 
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to previous menu" "DarkGray"
         if ($null -ne (Get-HeroBackpackItem -Hero $Hero)) {
             if ($InCombat) {
                 Write-ColorLine "P. Backpack (unavailable in combat)" "DarkGray"
@@ -467,7 +467,7 @@ function Open-InventoryMenu {
         }
 
         Write-ColorLine "D. Drop" "White"
-        Write-ColorLine "B. Back" "DarkGray"
+        Write-ColorLine "B. Back to inventory" "DarkGray"
         Write-TextSpeedOption
         Write-ColorLine ""
 

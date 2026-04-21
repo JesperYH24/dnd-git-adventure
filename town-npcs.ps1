@@ -559,7 +559,7 @@ function Start-WidowEliraConversation {
         Write-ColorLine "2. Ask how the district is holding up" "White"
         Write-ColorLine "3. Tell her no thanks are needed" "White"
         Write-ColorLine "4. Accept her gratitude with respect" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to streets" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -608,7 +608,7 @@ function Start-HadrikConversation {
         $workQuestion = if ($Game.Hero.Class -eq "Bard") { "3. Ask if the forge knows anyone outfitting duelists and performers" } else { "3. Ask if the forge has anything worth carrying into the wilds" }
         Write-ColorLine $workQuestion "White"
         Write-ColorLine "4. Shrug him off and keep walking" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to streets" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -657,7 +657,7 @@ function Start-BelorConversation {
         Write-ColorLine "2. Ask what has the watch worried" "White"
         Write-ColorLine "3. Ask which part of the city feels wrong" "White"
         Write-ColorLine "4. Thank him and move on" "White"
-        Write-ColorLine "0. Back" "DarkGray"
+        Write-ColorLine "0. Back to streets" "DarkGray"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -693,7 +693,7 @@ function Start-BelorConversation {
 function Start-TownStreetScene {
     param(
         $Game,
-        [string]$ReturnLabel = "Return to town"
+        [string]$ReturnLabel = "Back to town"
     )
 
     $showIntro = $true
