@@ -53,6 +53,7 @@ function Get-HeroStatusSnapshot {
     }
 
     $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+    $barbarianStatus = Get-HeroBarbarianResourceStatus -Hero $Hero
     $currencyText = Get-HeroCurrencyText -Hero $Hero
     $storyQuestStatus = "Unknown"
     $dayJobStatus = "Unknown"
@@ -84,6 +85,7 @@ function Get-HeroStatusSnapshot {
         UnarmedTrainingLevel = $unarmedTrainingLevel
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
+        BarbarianResources = $barbarianStatus
         CurrencyText = $currencyText
         TimeStatus = if ($null -ne $Game) { Get-TownTimeStatusText -Game $Game } else { "" }
         StoryQuestStatus = $storyQuestStatus
@@ -136,6 +138,12 @@ function Write-HeroStatusDetails {
         if (-not [string]::IsNullOrWhiteSpace($Snapshot.PerformanceStatus)) {
             Write-ColorLine "Performances: $($Snapshot.PerformanceStatus)" "DarkYellow"
         }
+    }
+
+    if ($null -ne $Snapshot.BarbarianResources) {
+        $rageText = if ($Snapshot.BarbarianResources.RageActive) { "Active" } else { "Ready" }
+        $recklessText = if ($Snapshot.BarbarianResources.RecklessAttackExposed) { "Exposed" } else { "Guarded" }
+        Write-ColorLine "Rage: $($Snapshot.BarbarianResources.CurrentRages)/$($Snapshot.BarbarianResources.MaxRages) | State: $rageText | Reckless: $recklessText" "DarkYellow"
     }
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {

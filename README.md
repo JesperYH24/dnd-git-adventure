@@ -25,14 +25,20 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - armor class
   - `Block` and `Focus`
   - dropped-weapon recovery for the barbarian
+  - barbarian `Rage` and `Reckless Attack`
   - bard spell/save support with a visible `Spell Save DC`
   - bard reactions and bonus offense through:
     - `Bardic Inspiration`
     - `Cutting Words`
     - `Vicious Mockery`
   - a cleaner battle-status layout with clearer separation between Borzig and the enemy
-  - a class-ready turn menu with separate `Action` and `Bonus Action` entry points for future expansion
+  - a class-ready turn menu with separate `Action` and `Bonus Action` entry points
   - brutal barbarian crit-finish text on lethal takedowns
+- class-specific combat identity for the barbarian:
+  - `Rage` as a bonus action with limited uses per long rest
+  - rage adding weapon damage while reducing incoming weapon damage during the fight
+  - `Reckless Attack` as a higher-risk attack style that gives Borzig advantage now and gives the next enemy attack against him advantage too
+  - combat status showing rage uses, active rage state, and reckless exposure
 - class-specific combat identity for the bard:
   - `Bardic Inspiration` prepared before danger with an instrument
   - inspiration dice equal to `1 + CHA modifier`
@@ -328,14 +334,15 @@ The recent class-balance work already added:
 
 - more barbarian-specific quest outcomes where force, threat, toughness, or reputation solve problems in their own way
 - more barbarian-specific city rewards, trust hooks, and inn/NPC utility
+- barbarian combat resources through `Rage` and `Reckless Attack`
 - clearer class-aware reactions for both `Borzig` and `Gariand`
 - a shared check-proficiency foundation that makes future skill work easier to layer in cleanly
 
 In short:
 
 - `Bard v1` is close to feature-complete for this milestone
-- `Barbarian` now feels much more deliberate in the city than it did before
-- the next major priorities should move away from class parity and toward `save/load` plus clear defeat/persistence rules
+- `Barbarian` now feels much more deliberate in both city play and moment-to-moment combat
+- the next major priorities should move toward clearer day-job presentation, broader quest polish, and later class depth beyond the current level range
 
 ---
 

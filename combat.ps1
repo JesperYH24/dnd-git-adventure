@@ -17,6 +17,68 @@ function Get-BarbarianCriticalKillText {
     return "$($Hero.Name) tears through $($Monster.definite) in a savage finishing blow, driving the $weaponName clean through the kill!"
 }
 
+function Get-HeroRageDamageBonus {
+    param(
+        $Hero,
+        $Weapon
+    )
+
+    if (-not (Test-HeroRageActive -Hero $Hero)) {
+        return 0
+    }
+
+    return 2
+}
+
+function Get-HeroRageReducedDamage {
+    param(
+        $Hero,
+        [int]$Damage
+    )
+
+    if (-not (Test-HeroRageActive -Hero $Hero)) {
+        return $Damage
+    }
+
+    return [Math]::Max(1, [Math]::Ceiling($Damage / 2))
+}
+
+function Roll-D20Attack {
+    param(
+        [bool]$Advantage = $false
+    )
+
+    $firstRoll = Roll-Dice -Sides 20
+
+    if (-not $Advantage) {
+        return [PSCustomObject]@{
+            Roll = $firstRoll
+            FirstRoll = $firstRoll
+            SecondRoll = $null
+            Advantage = $false
+        }
+    }
+
+    $secondRoll = Roll-Dice -Sides 20
+
+    return [PSCustomObject]@{
+        Roll = [Math]::Max($firstRoll, $secondRoll)
+        FirstRoll = $firstRoll
+        SecondRoll = $secondRoll
+        Advantage = $true
+    }
+}
+
+function Format-D20AttackRollText {
+    param($RollResult)
+
+    if ($null -ne $RollResult -and $RollResult.Advantage) {
+        return "d20 advantage rolls $($RollResult.FirstRoll)/$($RollResult.SecondRoll), using $($RollResult.Roll)"
+    }
+
+    return "d20 roll $($RollResult.Roll)"
+}
+
 function Get-MonsterCriticalDamage {
     param($Monster)
 
@@ -36,35 +98,43 @@ function Invoke-HeroAttack {
         $Monster,
         [ref]$MonsterHP,
         [ref]$HeroDroppedWeapon,
-        [int]$AttackBonusModifier = 0
+        [int]$AttackBonusModifier = 0,
+        [bool]$Advantage = $false
     )
 
     $weapon = Get-HeroWeaponProfile -Hero $Hero
     $targetArmorClass = [int]$Monster.armorClass
-    $heroRoll = Roll-Dice -Sides 20
+    $rollResult = Roll-D20Attack -Advantage $Advantage
+    $heroRoll = $rollResult.Roll
     $attackTotal = $heroRoll + $weapon.TotalAttackBonus + $AttackBonusModifier
+    $rollText = Format-D20AttackRollText -RollResult $rollResult
 
     $bonusText = ""
 
     if ($AttackBonusModifier -gt 0) {
-        $bonusText = " (+$AttackBonusModifier focus)"
+        $bonusText = " (+$AttackBonusModifier attack bonus)"
     }
 
-    Write-Action "$($Hero.Name) attacks with $($weapon.Name): d20 roll $heroRoll, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
+    Write-Action "$($Hero.Name) attacks with $($weapon.Name): $rollText, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
 
     if ($heroRoll -eq 20) {
         $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
         $bonusDamageRoll = Roll-WeaponBonusDamage -WeaponProfile $weapon
-        $heroDamage = [Math]::Max(1, $weapon.DamageMax + $extraDamageRoll + $weapon.DamageBonus + $bonusDamageRoll)
+        $rageDamageBonus = Get-HeroRageDamageBonus -Hero $Hero -Weapon $weapon
+        $heroDamage = [Math]::Max(1, $weapon.DamageMax + $extraDamageRoll + $weapon.DamageBonus + $bonusDamageRoll + $rageDamageBonus)
         $MonsterHP.Value -= $heroDamage
+        $damageText = "$($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus)"
+
+        if ($bonusDamageRoll -gt 0 -and -not [string]::IsNullOrWhiteSpace($weapon.BonusDamageType)) {
+            $damageText = "$damageText + $bonusDamageRoll $($weapon.BonusDamageType.ToLower())"
+        }
+
+        if ($rageDamageBonus -gt 0) {
+            $damageText = "$damageText + $rageDamageBonus rage"
+        }
 
         Write-Action "CRITICAL HIT!" "Red"
-        if ($bonusDamageRoll -gt 0 -and -not [string]::IsNullOrWhiteSpace($weapon.BonusDamageType)) {
-            Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus) + $bonusDamageRoll $($weapon.BonusDamageType.ToLower()))" "Yellow"
-        }
-        else {
-            Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($($weapon.DamageMax) + $extraDamageRoll + $($weapon.DamageBonus))" "Yellow"
-        }
+        Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($damageText)" "Yellow"
 
         if ($MonsterHP.Value -le 0 -and $Hero.Class -eq "Barbarian") {
             Write-Scene (Get-BarbarianCriticalKillText -Hero $Hero -Monster $Monster -Weapon $weapon)
@@ -78,15 +148,20 @@ function Invoke-HeroAttack {
     elseif ($attackTotal -ge $targetArmorClass) {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $weapon
         $bonusDamageRoll = Roll-WeaponBonusDamage -WeaponProfile $weapon
-        $heroDamage = [Math]::Max(1, $damageRoll + $weapon.DamageBonus + $bonusDamageRoll)
+        $rageDamageBonus = Get-HeroRageDamageBonus -Hero $Hero -Weapon $weapon
+        $heroDamage = [Math]::Max(1, $damageRoll + $weapon.DamageBonus + $bonusDamageRoll + $rageDamageBonus)
         $MonsterHP.Value -= $heroDamage
+        $damageText = "$damageRoll + $($weapon.DamageBonus)"
 
         if ($bonusDamageRoll -gt 0 -and -not [string]::IsNullOrWhiteSpace($weapon.BonusDamageType)) {
-            Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus) + $bonusDamageRoll $($weapon.BonusDamageType.ToLower()))" "Yellow"
+            $damageText = "$damageText + $bonusDamageRoll $($weapon.BonusDamageType.ToLower())"
         }
-        else {
-            Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageRoll + $($weapon.DamageBonus))" "Yellow"
+
+        if ($rageDamageBonus -gt 0) {
+            $damageText = "$damageText + $rageDamageBonus rage"
         }
+
+        Write-Action "$($Hero.Name) hits $($Monster.definite) for $heroDamage damage! ($damageText)" "Yellow"
     }
     else {
         Write-Action "$($Hero.Name) misses the attack!" "DarkGray"
@@ -106,14 +181,19 @@ function Invoke-MonsterAttack {
         [ref]$HeroHP,
         [ref]$MonsterOffBalance,
         [int]$BlockArmorBonus = 0,
-        [int]$AttackPenaltyModifier = 0
+        [int]$AttackPenaltyModifier = 0,
+        [int]$AttackBonusModifier = 0,
+        [bool]$Advantage = $false
     )
 
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
-    $attackRoll = Roll-Dice -Sides 20
-    $attackTotal = $attackRoll + [int]$Monster.attackBonus - $AttackPenaltyModifier
+    $rollResult = Roll-D20Attack -Advantage $Advantage
+    $attackRoll = $rollResult.Roll
+    $attackTotal = $attackRoll + [int]$Monster.attackBonus - $AttackPenaltyModifier + $AttackBonusModifier
+    $rollText = Format-D20AttackRollText -RollResult $rollResult
     $blockText = ""
     $penaltyText = ""
+    $bonusText = ""
 
     if ($BlockArmorBonus -gt 0) {
         $blockText = " (including +$BlockArmorBonus block)"
@@ -123,16 +203,26 @@ function Invoke-MonsterAttack {
         $penaltyText = " (-$AttackPenaltyModifier distract)"
     }
 
-    Write-Action "$($Monster.definite) attacks: d20 roll $attackRoll, total $attackTotal$penaltyText vs AC $heroArmorClass$blockText" "DarkCyan"
+    if ($AttackBonusModifier -gt 0) {
+        $bonusText = " (+$AttackBonusModifier attack bonus)"
+    }
+
+    Write-Action "$($Monster.definite) attacks: $rollText, total $attackTotal$penaltyText$bonusText vs AC $heroArmorClass$blockText" "DarkCyan"
 
     if ($attackRoll -eq 20) {
         Write-Action "CRITICAL HIT!" "Red"
         $criticalDamage = Get-MonsterCriticalDamage -Monster $Monster
-        $monsterDamage = $criticalDamage.Damage
+        $rawDamage = $criticalDamage.Damage
+        $monsterDamage = Get-HeroRageReducedDamage -Hero $Hero -Damage $rawDamage
 
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($($criticalDamage.DamageMax) + $($criticalDamage.ExtraDamageRoll))" "Yellow"
+        if ($monsterDamage -lt $rawDamage) {
+            Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage after rage resistance! ($($criticalDamage.DamageMax) + $($criticalDamage.ExtraDamageRoll), reduced from $rawDamage)" "Yellow"
+        }
+        else {
+            Write-Action "$($Monster.definite) lands a crushing blow for $monsterDamage damage! ($($criticalDamage.DamageMax) + $($criticalDamage.ExtraDamageRoll))" "Yellow"
+        }
     }
     elseif ($attackRoll -eq 1) {
         Write-Action "CRITICAL FAIL!" "Magenta"
@@ -152,10 +242,16 @@ function Invoke-MonsterAttack {
             return
         }
 
-        $monsterDamage = Roll-MonsterDamage -Monster $Monster
+        $rawDamage = Roll-MonsterDamage -Monster $Monster
+        $monsterDamage = Get-HeroRageReducedDamage -Hero $Hero -Damage $rawDamage
         $HeroHP.Value -= $monsterDamage
 
-        Write-Action "$($Monster.definite) hits for $monsterDamage damage!" "Yellow"
+        if ($monsterDamage -lt $rawDamage) {
+            Write-Action "$($Monster.definite) hits for $monsterDamage damage after rage resistance! (reduced from $rawDamage)" "Yellow"
+        }
+        else {
+            Write-Action "$($Monster.definite) hits for $monsterDamage damage!" "Yellow"
+        }
     }
     else {
         Write-Action "$($Monster.definite) misses!" "DarkGray"
@@ -247,6 +343,46 @@ function Resolve-HeroInspirationBoost {
     }
 }
 
+function Resolve-HeroRecklessAttackChoice {
+    param(
+        $Hero,
+        [ref]$HeroAttackAdvantage,
+        [ref]$HeroRecklessExposure
+    )
+
+    if ($Hero.Class -ne "Barbarian") {
+        return
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    Write-ColorLine "Attack Style" "Cyan"
+    Write-ColorLine "1. Normal attack" "White"
+    Write-ColorLine "2. Reckless Attack (advantage now, enemy advantage next)" "White"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "1") {
+            Write-ColorLine ""
+            return
+        }
+
+        if ($choice -eq "2") {
+            $HeroAttackAdvantage.Value = $true
+            $HeroRecklessExposure.Value = $true
+            $Hero.RecklessAttackExposed = $true
+            Write-Scene "$($Hero.Name) throws caution aside and commits everything to the swing."
+            Write-Action "Reckless Attack: Borzig attacks with advantage now, but the next enemy attack against him also has advantage." "Yellow"
+            Write-ColorLine ""
+            return
+        }
+
+        Write-ColorLine "Choose 1 or 2." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
 function Resolve-HeroBonusAction {
     param(
         $Hero,
@@ -254,7 +390,42 @@ function Resolve-HeroBonusAction {
         [ref]$MonsterHP
     )
 
-    if ($Hero.Class -ne "Bard" -or $MonsterHP.Value -le 0) {
+    if ($MonsterHP.Value -le 0) {
+        return $false
+    }
+
+    if ($Hero.Class -eq "Barbarian") {
+        Initialize-HeroBarbarianResources -Hero $Hero
+        Write-ColorLine "Bonus Action" "Cyan"
+        Write-ColorLine "R. Rage ($($Hero.CurrentRages)/$($Hero.MaxRages) left)   N. No bonus action" "White"
+        Write-ColorLine ""
+
+        while ($true) {
+            $choice = (Read-Host "Choose bonus action").ToUpper()
+
+            if ($choice -eq "N") {
+                Write-ColorLine ""
+                return $false
+            }
+
+            if ($choice -eq "R") {
+                $rage = Start-HeroRage -Hero $Hero
+                Write-Scene $rage.Message
+
+                if ($rage.Success) {
+                    Write-Action "Rage: +2 weapon damage and incoming weapon damage is halved until the fight ends." "Yellow"
+                }
+
+                Write-ColorLine ""
+                return $rage.Success
+            }
+
+            Write-ColorLine "Choose R or N." "DarkYellow"
+            Write-ColorLine ""
+        }
+    }
+
+    if ($Hero.Class -ne "Bard") {
         return $false
     }
 
@@ -466,6 +637,27 @@ function Show-BardTutorialCombatHint {
     $Hero.TutorialCombatHintShown = $true
 }
 
+function Show-BarbarianTutorialCombatHint {
+    param($Hero)
+
+    if ($Hero.Class -ne "Barbarian" -or [int]$Hero.Level -ne 1) {
+        return
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["TutorialCombatHintShown"]) {
+        $Hero | Add-Member -NotePropertyName TutorialCombatHintShown -NotePropertyValue $false
+    }
+
+    if ($Hero.TutorialCombatHintShown) {
+        return
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    Write-Scene "Barbarian combat now has two hard choices: Rage uses the Bonus Action menu for more damage and resistance, while Reckless Attack gives Borzig advantage on his attack but gives the next enemy attack against him advantage too."
+    Write-ColorLine ""
+    $Hero.TutorialCombatHintShown = $true
+}
+
 function Show-CombatTurnMenu {
     param(
         $Hero,
@@ -494,12 +686,23 @@ function Resolve-MonsterCombatTurn {
         $Monster,
         [ref]$HeroHP,
         [ref]$MonsterOffBalance,
-        [ref]$HeroBlockArmorBonus
+        [ref]$HeroBlockArmorBonus,
+        [ref]$HeroRecklessExposure
     )
 
     if (-not $MonsterOffBalance.Value) {
-        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value
+        $recklessAdvantage = ($null -ne $HeroRecklessExposure -and $HeroRecklessExposure.Value)
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value -Advantage $recklessAdvantage
         $HeroBlockArmorBonus.Value = 0
+
+        if ($null -ne $HeroRecklessExposure) {
+            $HeroRecklessExposure.Value = $false
+        }
+
+        if ($Hero.Class -eq "Barbarian") {
+            Initialize-HeroBarbarianResources -Hero $Hero
+            $Hero.RecklessAttackExposed = $false
+        }
 
         if ($HeroHP.Value -le 0) {
             Write-Scene "$($Hero.Name) falls in battle..."
@@ -522,7 +725,8 @@ function Resolve-HeroCombatTurn {
         [ref]$MonsterOffBalance,
         [ref]$EncounterFled,
         [ref]$HeroBlockArmorBonus,
-        [ref]$HeroFocusAttackBonus
+        [ref]$HeroFocusAttackBonus,
+        [ref]$HeroRecklessExposure
     )
 
     if ($HeroDroppedWeapon.Value) {
@@ -532,6 +736,7 @@ function Resolve-HeroCombatTurn {
 
     $choice = $null
     $turnHeroAttackBonus = 0
+    $turnHeroAttackAdvantage = $false
     $bonusActionSpent = $false
 
     while ($null -eq $choice) {
@@ -544,9 +749,9 @@ function Resolve-HeroCombatTurn {
         }
 
         if ($turnMenuChoice -eq "2") {
-            if ($Hero.Class -ne "Bard") {
+            if ($Hero.Class -notin @("Bard", "Barbarian")) {
                 Write-ColorLine ""
-                Write-ColorLine "No bonus action is available for $($Hero.Name) yet, but this is where abilities like Rage will sit later." "DarkYellow"
+                Write-ColorLine "No bonus action is available for $($Hero.Name) yet." "DarkYellow"
                 Write-ColorLine ""
                 continue
             }
@@ -608,7 +813,7 @@ function Resolve-HeroCombatTurn {
         Write-ColorLine ""
         Write-ColorLine "Type A, B, F, I, R or T." "DarkYellow"
         Write-ColorLine ""
-        return (Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus $HeroBlockArmorBonus -HeroFocusAttackBonus $HeroFocusAttackBonus)
+        return (Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus $HeroBlockArmorBonus -HeroFocusAttackBonus $HeroFocusAttackBonus -HeroRecklessExposure $HeroRecklessExposure)
     }
 
     if ($choice -eq "B") {
@@ -628,8 +833,9 @@ function Resolve-HeroCombatTurn {
     }
 
     if ($choice -eq "A") {
+        Resolve-HeroRecklessAttackChoice -Hero $Hero -HeroAttackAdvantage ([ref]$turnHeroAttackAdvantage) -HeroRecklessExposure $HeroRecklessExposure
         Write-ColorLine ""
-        Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus)
+        Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage
         $HeroFocusAttackBonus.Value = 0
     }
 }
@@ -648,32 +854,36 @@ function Start-CombatLoop {
 
     $heroBlockArmorBonus = 0
     $heroFocusAttackBonus = 0
+    $heroRecklessExposure = $false
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
         Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
         Show-BardTutorialCombatHint -Hero $Hero
+        Show-BarbarianTutorialCombatHint -Hero $Hero
 
         if ($HeroStarts) {
-            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
 
             if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
                 break
             }
 
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
         }
         else {
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
 
             if ($HeroHP.Value -le 0) {
                 break
             }
 
-            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus)
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
 
             if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
                 break
             }
         }
     }
+
+    Stop-HeroRage -Hero $Hero
 }

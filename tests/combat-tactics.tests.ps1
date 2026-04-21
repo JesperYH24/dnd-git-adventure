@@ -285,7 +285,7 @@ function Test-BardBonusActionCanResolveBeforeMainAction {
 function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
     Set-TestOutputStubs
 
-    $script:responses = @("2", "1", "R")
+    $script:responses = @("2", "N", "1", "R")
     $script:index = 0
     function global:Read-Host {
         param([string]$Prompt)
@@ -306,6 +306,134 @@ function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
     Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
 
     Assert-Equal -Actual $encounterFled -Expected $true -Message "A barbarian should still be able to act normally after checking the future bonus action menu."
+}
+
+function Test-BarbarianRageBonusActionAddsDamage {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "R"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 12 }
+        return 6
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+
+    $usedBonusAction = Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+
+    Assert-Equal -Actual $usedBonusAction -Expected $true -Message "Rage should spend the barbarian's bonus action."
+    Assert-Equal -Actual $hero.CurrentRages -Expected 1 -Message "Starting rage should spend one rage use."
+    Assert-Equal -Actual $monsterHP -Expected 10 -Message "Rage should add +2 weapon damage to the barbarian's hit."
+}
+
+function Test-BarbarianRageReducesIncomingDamage {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 18 }
+        return 5
+    }
+
+    $hero = Get-Hero
+    Start-HeroRage -Hero $hero | Out-Null
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 3) -Message "Rage should halve incoming weapon damage, rounded up."
+}
+
+function Test-BarbarianRecklessAttackGrantsAdvantageForExposure {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $hero = Get-Hero
+    $attackAdvantage = $false
+    $recklessExposure = $false
+
+    Resolve-HeroRecklessAttackChoice -Hero $hero -HeroAttackAdvantage ([ref]$attackAdvantage) -HeroRecklessExposure ([ref]$recklessExposure)
+
+    Assert-Equal -Actual $attackAdvantage -Expected $true -Message "Reckless Attack should give advantage on the current attack roll."
+    Assert-Equal -Actual $recklessExposure -Expected $true -Message "Reckless Attack should expose the barbarian to the next enemy attack."
+    Assert-Equal -Actual $hero.RecklessAttackExposed -Expected $true -Message "The hero status should reflect reckless exposure."
+}
+
+function Test-BarbarianRecklessAdvantageCanTurnMissIntoHit {
+    Set-TestOutputStubs
+
+    $script:rolls = @(5, 12, 6)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -Advantage $true
+
+    Assert-Equal -Actual $monsterHP -Expected 12 -Message "Reckless advantage should use the higher d20 roll and hit when the lower roll would miss."
+}
+
+function Test-RecklessExposureGivesMonsterAdvantage {
+    Set-TestOutputStubs
+
+    $script:rolls = @(5, 18, 4)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+    $blockBonus = 0
+    $recklessExposure = $true
+
+    Resolve-MonsterCombatTurn -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance) -HeroBlockArmorBonus ([ref]$blockBonus) -HeroRecklessExposure ([ref]$recklessExposure)
+
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 4) -Message "Enemy advantage from Reckless Attack should use the higher d20 roll and land the hit."
+    Assert-Equal -Actual $recklessExposure -Expected $false -Message "Reckless exposure should clear after the enemy attack resolves."
+}
+
+function Test-BarbarianLongRestRestoresRages {
+    $hero = Get-Hero
+    Start-HeroRage -Hero $hero | Out-Null
+    Stop-HeroRage -Hero $hero
+
+    Restore-HeroRages -Hero $hero
+
+    Assert-Equal -Actual $hero.CurrentRages -Expected $hero.MaxRages -Message "A long rest should restore barbarian rage uses."
+    Assert-Equal -Actual $hero.RageActive -Expected $false -Message "Rage should not remain active after rest."
 }
 
 function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
@@ -362,6 +490,12 @@ Test-BardViciousMockeryCanBeSavedAgainst
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
 Test-BarbarianCanOpenBonusActionMenuAndStillAct
+Test-BarbarianRageBonusActionAddsDamage
+Test-BarbarianRageReducesIncomingDamage
+Test-BarbarianRecklessAttackGrantsAdvantageForExposure
+Test-BarbarianRecklessAdvantageCanTurnMissIntoHit
+Test-RecklessExposureGivesMonsterAdvantage
+Test-BarbarianLongRestRestoresRages
 Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green

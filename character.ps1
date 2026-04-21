@@ -796,6 +796,118 @@ function Restore-HeroBardicInspiration {
     return (Prepare-HeroBardicInspiration -Hero $Hero)
 }
 
+function Initialize-HeroBarbarianResources {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["MaxRages"]) {
+        $Hero | Add-Member -NotePropertyName MaxRages -NotePropertyValue 2
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["CurrentRages"]) {
+        $Hero | Add-Member -NotePropertyName CurrentRages -NotePropertyValue ([int]$Hero.MaxRages)
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RageActive"]) {
+        $Hero | Add-Member -NotePropertyName RageActive -NotePropertyValue $false
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RecklessAttackExposed"]) {
+        $Hero | Add-Member -NotePropertyName RecklessAttackExposed -NotePropertyValue $false
+    }
+}
+
+function Get-HeroBarbarianResourceStatus {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return $null
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+
+    return [PSCustomObject]@{
+        CurrentRages = [int]$Hero.CurrentRages
+        MaxRages = [int]$Hero.MaxRages
+        RageActive = [bool]$Hero.RageActive
+        RecklessAttackExposed = [bool]$Hero.RecklessAttackExposed
+    }
+}
+
+function Start-HeroRage {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Only a barbarian can rage."
+        }
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+
+    if ([bool]$Hero.RageActive) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) is already raging."
+        }
+    }
+
+    if ([int]$Hero.CurrentRages -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) has no rage left before a long rest."
+        }
+    }
+
+    $Hero.CurrentRages = [Math]::Max(0, [int]$Hero.CurrentRages - 1)
+    $Hero.RageActive = $true
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) lets the red heat in, turning pain into momentum."
+    }
+}
+
+function Stop-HeroRage {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    $Hero.RageActive = $false
+    $Hero.RecklessAttackExposed = $false
+}
+
+function Restore-HeroRages {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    $Hero.CurrentRages = [int]$Hero.MaxRages
+    $Hero.RageActive = $false
+    $Hero.RecklessAttackExposed = $false
+}
+
+function Test-HeroRageActive {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return $false
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    return [bool]$Hero.RageActive
+}
+
 function Use-HeroBardicInspirationDie {
     param(
         $Hero,
@@ -1113,6 +1225,10 @@ function Get-Hero {
                 ActiveBuff         = $null
                 CurrentBardicInspirationDice = 0
                 BardicInspirationDieSides = 6
+                MaxRages           = 0
+                CurrentRages       = 0
+                RageActive         = $false
+                RecklessAttackExposed = $false
                 TutorialCampfireHintShown = $false
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0
@@ -1153,6 +1269,10 @@ function Get-Hero {
                 ActiveBuff         = $null
                 CurrentBardicInspirationDice = 0
                 BardicInspirationDieSides = 6
+                MaxRages           = 2
+                CurrentRages       = 2
+                RageActive         = $false
+                RecklessAttackExposed = $false
                 TutorialCampfireHintShown = $false
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0
