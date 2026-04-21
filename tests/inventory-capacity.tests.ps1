@@ -28,7 +28,7 @@ function Test-PersonalInventoryAndBackpackAreSeparate {
 
     Assert-Equal -Actual (Get-InventoryCapacity -Hero $hero) -Expected 8 -Message "Borzig should have eight ready inventory slots on hand."
     Assert-Equal -Actual (Get-BackpackCapacity -Hero $hero) -Expected 4 -Message "The backpack should provide its own separate storage."
-    Assert-Equal -Actual (Get-InventoryUsedSlots -Hero $hero) -Expected 4 -Message "Starting on-hand gear should use only its own ready slots."
+    Assert-Equal -Actual (Get-InventoryUsedSlots -Hero $hero) -Expected 3 -Message "Starting on-hand gear should use only its own ready slots."
     Assert-Equal -Actual (Get-BackpackUsedSlots -Hero $hero) -Expected 0 -Message "The backpack should start empty."
 }
 
@@ -36,7 +36,7 @@ function Test-ItemsCanOverflowIntoBackpack {
     $hero = Get-Hero
 
     $hero.Inventory += (New-WeaponItem -Name "Spare Pike" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "Two-Handed" -RequiredSTR 11 -SlotCost 3)
-    $hero.Inventory += (New-ArmorItem -Name "Traveler Plates" -Value 0 -ArmorBonus 1 -SlotCost 1)
+    $hero.Inventory += (New-ArmorItem -Name "Traveler Plates" -Value 0 -ArmorBonus 1 -SlotCost 2)
 
     $item = New-ConsumableItem -Name "Greater Healing Potion" -Value 25 -HealAmount 12 -SlotCost 1
     $storeResult = Add-ItemToHeroStorage -Hero $hero -Item $item

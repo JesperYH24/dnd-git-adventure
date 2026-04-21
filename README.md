@@ -35,6 +35,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - a class-ready turn menu with separate `Action` and `Bonus Action` entry points
   - brutal barbarian crit-finish text on lethal takedowns
 - class-specific combat identity for the barbarian:
+  - `Unarmored Defense` using `10 + DEX modifier + CON modifier` when no armor is equipped
   - `Rage` as a bonus action with limited uses per long rest
   - rage adding weapon damage while reducing incoming weapon damage during the fight
   - `Reckless Attack` as a higher-risk attack style that gives Borzig advantage now and gives the next enemy attack against him advantage too

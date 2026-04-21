@@ -578,9 +578,11 @@ function Get-HeroArmorClass {
 
     $armorBonus = 0
     $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+    $hasEquippedArmor = $false
 
     foreach ($item in $Hero.Inventory) {
         if ($item.Type -eq "Armor" -and $item.Equipped -and $null -ne $item.ArmorBonus) {
+            $hasEquippedArmor = $true
             $armorBonus += [int]$item.ArmorBonus
 
             if ($null -ne $item.PSObject.Properties["AddsDexModifier"] -and $item.AddsDexModifier) {
@@ -595,7 +597,32 @@ function Get-HeroArmorClass {
         }
     }
 
+    if ($Hero.Class -eq "Barbarian" -and -not $hasEquippedArmor) {
+        $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+        return $Hero.BaseArmorClass + [Math]::Max(0, $dexterityModifier) + [Math]::Max(0, $constitutionModifier)
+    }
+
     return $Hero.BaseArmorClass + $armorBonus
+}
+
+function Get-HeroUnarmoredDefenseStatus {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return $null
+    }
+
+    $hasEquippedArmor = [bool]($Hero.Inventory | Where-Object { $_.Type -eq "Armor" -and $_.Equipped } | Select-Object -First 1)
+    $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    $armorClass = $Hero.BaseArmorClass + [Math]::Max(0, $dexterityModifier) + [Math]::Max(0, $constitutionModifier)
+
+    return [PSCustomObject]@{
+        Active = (-not $hasEquippedArmor)
+        ArmorClass = $armorClass
+        DexterityModifier = $dexterityModifier
+        ConstitutionModifier = $constitutionModifier
+    }
 }
 
 function Get-HeroBrawlAbility {
@@ -1156,6 +1183,12 @@ function Set-EquippedItem {
     }
 
     if ($Item.Type -eq "Armor") {
+        foreach ($inventoryItem in $Hero.Inventory) {
+            if ($inventoryItem.Type -eq "Armor") {
+                $inventoryItem.Equipped = $false
+            }
+        }
+
         $Item.Equipped = $true
         return [PSCustomObject]@{
             Success = $true
@@ -1294,7 +1327,6 @@ function Get-Hero {
                 StashedInventory   = @()
                 Inventory          = @(
                     (New-WeaponItem -Name "Great Axe" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 13 -SlotCost 2 -Equipped $true)
-                    (New-ArmorItem -Name "Helmet" -Value 0 -ArmorBonus 1 -SlotCost 1 -Equipped $true)
                     (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
                     (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
                 )

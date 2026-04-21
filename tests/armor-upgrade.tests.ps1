@@ -27,13 +27,50 @@ function Test-BetterArmorRaisesArmorClass {
     $hero = Get-Hero
     $startingArmorClass = Get-HeroArmorClass -Hero $hero
 
-    $newArmor = New-ArmorItem -Name "Rotten Armor Scraps" -Value 3 -ArmorBonus 1 -SlotCost 2
+    $newArmor = New-ArmorItem -Name "Chain Shirt" -Value 380 -ArmorBonus 3 -AddsDexModifier $true -DexBonusCap 2 -SlotCost 3
     $hero.Inventory += $newArmor
 
-    Set-EquippedItem -Hero $hero -Item $newArmor
+    Set-EquippedItem -Hero $hero -Item $newArmor | Out-Null
 
-    Assert-Equal -Actual $startingArmorClass -Expected 11 -Message "The hero should start with AC 11 from the helmet."
-    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 12 -Message "Equipping better armor should raise armor class."
+    Assert-Equal -Actual $startingArmorClass -Expected 14 -Message "The barbarian should start with AC 14 from Unarmored Defense."
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 15 -Message "Equipping good armor should replace Unarmored Defense and raise armor class."
+}
+
+function Test-BarbarianStartsWithoutHelmet {
+    $hero = Get-Hero
+
+    Assert-Equal -Actual @($hero.Inventory | Where-Object { $_.Name -eq "Helmet" }).Count -Expected 0 -Message "The barbarian should no longer start with a helmet."
+}
+
+function Test-BarbarianUnarmoredDefenseDoesNotStackWithArmor {
+    $hero = Get-Hero
+    $weakArmor = New-ArmorItem -Name "Rotten Armor Scraps" -Value 3 -ArmorBonus 1 -SlotCost 2
+    $hero.Inventory += $weakArmor
+
+    Set-EquippedItem -Hero $hero -Item $weakArmor | Out-Null
+
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 11 -Message "Unarmored Defense should not stack while actual armor is equipped."
+}
+
+function Test-BarbarianUnarmoredDefenseStatusExplainsArmorClass {
+    $hero = Get-Hero
+    $status = Get-HeroStatusSnapshot -Hero $hero -HeroHP $hero.HP
+
+    Assert-Equal -Actual $status.UnarmoredDefense.Active -Expected $true -Message "Status should show Unarmored Defense as active when no armor is equipped."
+    Assert-Equal -Actual $status.UnarmoredDefense.ArmorClass -Expected 14 -Message "Status should explain the barbarian's unarmored AC."
+    Assert-Equal -Actual $status.UnarmoredDefense.DexterityModifier -Expected 2 -Message "Status should include the DEX modifier used by Unarmored Defense."
+    Assert-Equal -Actual $status.UnarmoredDefense.ConstitutionModifier -Expected 2 -Message "Status should include the CON modifier used by Unarmored Defense."
+}
+
+function Test-BarbarianUnarmoredDefenseStatusTurnsOffWithArmor {
+    $hero = Get-Hero
+    $weakArmor = New-ArmorItem -Name "Rotten Armor Scraps" -Value 3 -ArmorBonus 1 -SlotCost 2
+    $hero.Inventory += $weakArmor
+    Set-EquippedItem -Hero $hero -Item $weakArmor | Out-Null
+
+    $status = Get-HeroStatusSnapshot -Hero $hero -HeroHP $hero.HP
+
+    Assert-Equal -Actual $status.UnarmoredDefense.Active -Expected $false -Message "Status should show Unarmored Defense as inactive when armor is equipped."
 }
 
 function Test-GreatAxeDamageProfile {
@@ -217,6 +254,10 @@ function Test-LevelUpCanUseRolledHPGain {
 }
 
 Test-BetterArmorRaisesArmorClass
+Test-BarbarianStartsWithoutHelmet
+Test-BarbarianUnarmoredDefenseDoesNotStackWithArmor
+Test-BarbarianUnarmoredDefenseStatusExplainsArmorClass
+Test-BarbarianUnarmoredDefenseStatusTurnsOffWithArmor
 Test-GreatAxeDamageProfile
 Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
 Test-BardStartsWithLightCombatProfileAndCharismaEdge

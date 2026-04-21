@@ -54,6 +54,7 @@ function Get-HeroStatusSnapshot {
 
     $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
     $barbarianStatus = Get-HeroBarbarianResourceStatus -Hero $Hero
+    $unarmoredDefenseStatus = Get-HeroUnarmoredDefenseStatus -Hero $Hero
     $currencyText = Get-HeroCurrencyText -Hero $Hero
     $storyQuestStatus = "Unknown"
     $dayJobStatus = "Unknown"
@@ -86,6 +87,7 @@ function Get-HeroStatusSnapshot {
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
         BarbarianResources = $barbarianStatus
+        UnarmoredDefense = $unarmoredDefenseStatus
         CurrencyText = $currencyText
         TimeStatus = if ($null -ne $Game) { Get-TownTimeStatusText -Game $Game } else { "" }
         StoryQuestStatus = $storyQuestStatus
@@ -144,6 +146,15 @@ function Write-HeroStatusDetails {
         $rageText = if ($Snapshot.BarbarianResources.RageActive) { "Active" } else { "Ready" }
         $recklessText = if ($Snapshot.BarbarianResources.RecklessAttackExposed) { "Exposed" } else { "Guarded" }
         Write-ColorLine "Rage: $($Snapshot.BarbarianResources.CurrentRages)/$($Snapshot.BarbarianResources.MaxRages) | State: $rageText | Reckless: $recklessText" "DarkYellow"
+
+        if ($null -ne $Snapshot.UnarmoredDefense) {
+            if ($Snapshot.UnarmoredDefense.Active) {
+                Write-ColorLine "Unarmored Defense: Active (AC $($Snapshot.UnarmoredDefense.ArmorClass) = 10 + DEX $($Snapshot.UnarmoredDefense.DexterityModifier) + CON $($Snapshot.UnarmoredDefense.ConstitutionModifier))" "DarkYellow"
+            }
+            else {
+                Write-ColorLine "Unarmored Defense: Inactive (armor equipped)" "DarkGray"
+            }
+        }
     }
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {

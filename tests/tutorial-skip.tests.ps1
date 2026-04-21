@@ -49,7 +49,7 @@ function Test-TutorialSkipCompletesTutorialState {
     Assert-True -Condition ($null -eq $game.Hero.ActiveBuff) -Message "Tutorial skip should not grant the haste reward."
     Assert-Equal -Actual $game.Hero.Level -Expected 2 -Message "Tutorial skip should apply the tutorial level up."
     Assert-True -Condition ($heroHP -eq $game.Hero.HP) -Message "Tutorial skip should leave the hero fully rested."
-    Assert-Equal -Actual (Get-HeroArmorClass -Hero $game.Hero) -Expected 11 -Message "Tutorial skip should not change Borzig's armor class."
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $game.Hero) -Expected 14 -Message "Tutorial skip should preserve Borzig's Unarmored Defense armor class."
 }
 
 Test-TutorialSkipCompletesTutorialState
