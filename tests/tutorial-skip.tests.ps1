@@ -35,6 +35,12 @@ function Set-TestOutputStubs {
 
 function Test-TutorialSkipCompletesTutorialState {
     Set-TestOutputStubs
+    $global:RollDiceOverride = {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 15 }
+        return 1
+    }
 
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -45,11 +51,12 @@ function Test-TutorialSkipCompletesTutorialState {
     Assert-Equal -Actual $game.Quest.SeenDragon -Expected $true -Message "Tutorial skip should mark the dragon warning as seen."
     Assert-Equal -Actual $game.Quest.Completed -Expected $true -Message "Tutorial skip should complete the tutorial quest."
     Assert-Equal -Actual $game.ShadowSanctumRewardTaken -Expected $true -Message "Tutorial skip should lock in the sanctum reward."
-    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 200 -Message "Tutorial skip should always grant the reduced sanctum gold reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 400 -Message "Tutorial skip should use the same rolled sanctum gold reward table."
     Assert-True -Condition ($null -eq $game.Hero.ActiveBuff) -Message "Tutorial skip should not grant the haste reward."
     Assert-Equal -Actual $game.Hero.Level -Expected 2 -Message "Tutorial skip should apply the tutorial level up."
     Assert-True -Condition ($heroHP -eq $game.Hero.HP) -Message "Tutorial skip should leave the hero fully rested."
     Assert-Equal -Actual (Get-HeroArmorClass -Hero $game.Hero) -Expected 14 -Message "Tutorial skip should preserve Borzig's Unarmored Defense armor class."
+    $global:RollDiceOverride = $null
 }
 
 Test-TutorialSkipCompletesTutorialState

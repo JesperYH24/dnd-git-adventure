@@ -166,7 +166,8 @@ function Complete-TutorialAndEnterTown {
         $Game.Quest.SeenDragon = $true
 
         if (-not $Game.ShadowSanctumRewardTaken) {
-            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount (Get-ShadowSanctumGoldRewardGP)
+            $goldRoll = Roll-Dice -Sides 20
+            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount (Get-ShadowSanctumGoldRewardGP -Roll $goldRoll)
 
             if ($currencyResult.LeftoverCopper -gt 0 -and $null -ne $currencyResult.LeftoverItem) {
                 $ashenThreshold = $Game.Rooms["ashen_threshold"]

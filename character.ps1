@@ -77,7 +77,27 @@ function Get-HeroNextLevelXPThreshold {
 }
 
 function Get-ShadowSanctumGoldRewardGP {
-    return 2
+    param(
+        [int]$Roll
+    )
+
+    if ($Roll -le 4) {
+        return 1
+    }
+    elseif ($Roll -le 9) {
+        return 2
+    }
+    elseif ($Roll -le 14) {
+        return 3
+    }
+    elseif ($Roll -le 18) {
+        return 4
+    }
+    elseif ($Roll -eq 19) {
+        return 5
+    }
+
+    return 6
 }
 
 function Convert-CurrencyToCopper {

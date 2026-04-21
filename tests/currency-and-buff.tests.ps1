@@ -81,21 +81,20 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "The monster should not start if haste lets the hero win initiative."
 }
 
-function Test-ShadowSanctumGoldOverflowStaysInRoom {
+function Test-ShadowSanctumGoldRollOverflowStaysInRoom {
     Set-TestOutputStubs
 
-    $script:readHostResponses = @("1")
-    $script:readHostIndex = 0
     function global:Read-Host {
         param([string]$Prompt)
 
-        if ($script:readHostIndex -lt $script:readHostResponses.Count) {
-            $response = $script:readHostResponses[$script:readHostIndex]
-            $script:readHostIndex += 1
-            return $response
-        }
+        return ""
+    }
 
-        return "1"
+    function global:Roll-Dice {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 20 }
+        return 1
     }
 
     $game = Initialize-Game
@@ -107,11 +106,18 @@ function Test-ShadowSanctumGoldOverflowStaysInRoom {
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot.Count -Expected 1 -Message "Overflowing sanctum gold should remain in the cave as loot."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Type -Expected "Currency" -Message "The leftover sanctum reward should still be currency."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Denomination -Expected "GP" -Message "The leftover sanctum reward should keep its gold denomination."
-    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 1 -Message "Overflowing sanctum gold should leave the correct amount behind."
+    Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 5 -Message "A natural 20 should be capped at a non-breaking 6 GP reward."
+}
+
+function Test-ShadowSanctumGoldRewardTableCapsNaturalTwenty {
+    Assert-Equal -Actual (Get-ShadowSanctumGoldRewardGP -Roll 1) -Expected 1 -Message "A low sanctum gold roll should still grant a small reward."
+    Assert-Equal -Actual (Get-ShadowSanctumGoldRewardGP -Roll 10) -Expected 3 -Message "A middling sanctum gold roll should grant a modest reward."
+    Assert-Equal -Actual (Get-ShadowSanctumGoldRewardGP -Roll 20) -Expected 6 -Message "A natural 20 should feel good without breaking the early economy."
 }
 
 Test-GoldPouchCapsAtOneHundredFiftyGP
 Test-HasteBuffGrantsInitiativeAdvantage
-Test-ShadowSanctumGoldOverflowStaysInRoom
+Test-ShadowSanctumGoldRollOverflowStaysInRoom
+Test-ShadowSanctumGoldRewardTableCapsNaturalTwenty
 
 Write-Host "Currency and buff tests passed." -ForegroundColor Green

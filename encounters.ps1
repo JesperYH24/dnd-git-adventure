@@ -6,40 +6,27 @@ function Resolve-ShadowSanctumReward {
     }
 
     Write-SectionTitle -Text "Ancient Temptation" -Color "Yellow"
-    Write-Scene "Near the edge of the hoard, two prizes catch $($Game.Hero.Name)'s eye before the true horror fully stirs."
-    $goldRewardGP = Get-ShadowSanctumGoldRewardGP
-    Write-ColorLine "1. Take $goldRewardGP GP" "White"
-    Write-ColorLine "2. Drink a Potion of Haste" "White"
+    Write-Scene "Gold glints near the edge of the hoard, but the true horror is already beginning to stir."
+    Write-Scene "$($Game.Hero.Name) has only seconds to grab what can be reached before the shadow wakes."
+    Write-ColorLine "Roll a d20 to see how much gold $($Game.Hero.Name) can snatch." "White"
     Write-ColorLine ""
+    Read-Host "Press Enter to roll" | Out-Null
 
-    while ($true) {
-        $choice = Read-Host "Choose your prize"
+    $goldRoll = Roll-Dice -Sides 20
+    $goldRewardGP = Get-ShadowSanctumGoldRewardGP -Roll $goldRoll
+    Write-Action "Sanctum gold roll: d20 roll $goldRoll = $goldRewardGP GP." "Cyan"
 
-        if ($choice -eq "1") {
-            $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount $goldRewardGP
+    $currencyResult = Add-HeroCurrency -Hero $Game.Hero -Denomination "GP" -Amount $goldRewardGP
 
-            if ($currencyResult.StoredCopper -gt 0) {
-                Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs as much of the $goldRewardGP GP as possible into the gold pouch." -Color "Yellow"
-            }
+    if ($currencyResult.StoredCopper -gt 0) {
+        Write-EmphasisLine -Text "$($Game.Hero.Name) stuffs as much of the $goldRewardGP GP as possible into the gold pouch." -Color "Yellow"
+    }
 
-            if ($currencyResult.LeftoverCopper -gt 0) {
-                $leftoverItem = $currencyResult.LeftoverItem
-                $ashenThreshold = $Game.Rooms["ashen_threshold"]
-                $ashenThreshold.Loot += $leftoverItem
-                Write-Scene "The gold pouch cannot hold the full reward, so the remaining coins are left behind near the sanctum approach."
-            }
-
-            break
-        }
-
-        if ($choice -eq "2") {
-            Apply-HeroBuff -Hero $Game.Hero -BuffType "Haste" -BuffName "Potion of Haste"
-            Write-EmphasisLine -Text "$($Game.Hero.Name) downs the Potion of Haste and feels the world sharpen around him." -Color "Yellow"
-            break
-        }
-
-        Write-ColorLine "Choose 1 or 2." "DarkYellow"
-        Write-ColorLine ""
+    if ($currencyResult.LeftoverCopper -gt 0) {
+        $leftoverItem = $currencyResult.LeftoverItem
+        $ashenThreshold = $Game.Rooms["ashen_threshold"]
+        $ashenThreshold.Loot += $leftoverItem
+        Write-Scene "The gold pouch cannot hold the full reward, so the remaining coins are left behind near the sanctum approach."
     }
 
     $Game.ShadowSanctumRewardTaken = $true

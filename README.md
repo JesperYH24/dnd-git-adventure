@@ -53,7 +53,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - tutorial defeat resetting the whole tutorial back to the campfire
   - town quest defeat offering either a same-day `Town Doctor` recovery for coin or a next-day `Inn` recovery through a long rest
   - ring defeat remaining separate from the heavier city defeat flow
-- tutorial boss warning flow with a Shadow Sanctum reward choice
+- tutorial boss warning flow with a Shadow Sanctum d20 gold grab
 - tutorial support for the bard with:
   - class-aware intro and campfire hints
   - bardic inspiration preparation before the first dungeon
@@ -212,8 +212,8 @@ This hidden shortcut:
 - delivers the current hero to the city
 - applies the level 2 long-rest level up with fixed HP gain
 - restores him to full HP
-- always takes the reduced Shadow Sanctum gold reward path of `2 GP`
-- never grants the haste reward
+- uses the same capped Shadow Sanctum d20 gold table as the normal tutorial flow
+- never grants the old haste reward
 
 ---
 
