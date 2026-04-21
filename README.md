@@ -66,13 +66,15 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
 - town hub with:
+  - explicit day/night state shown in town choice menus
+  - day/night-aware activity access, NPC availability, inn flavor, and quest timing
   - first-night inn choice after the tutorial
   - guaranteed coin for the cheapest first-night room if the hero reaches town broke
   - `work off the room` fallback when money runs short
   - locked inn booking until the player cancels it with the innkeeper
   - inn-first navigation where the player enters the inn before choosing room or common-room activities
   - inn storage
-  - inn-specific evening activities based on quality and clientele
+  - inn-specific dining-room and common-room activities based on time of day, quality, and clientele
   - street interactions
   - quest board
   - guard station
@@ -80,7 +82,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - smithy
   - apothecary
   - a dedicated town buyer
-  - fighting ring
+  - fighting ring that opens at night
   - small NPC rewards, information hooks, and discounts
   - deeper innkeeper and street-NPC conversations with repeat-aware dialogue
   - specialist selling prices depending on who Borzig sells to
@@ -113,9 +115,11 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
     - `Warehouse Ledger Recovery`
   - final story quest:
     - `The Understreet Complex`
-  - day jobs:
-    - `Missing Delivery`
-    - `Gate Duty Overflow`
+  - repeatable day-job tracks with level-based continuations:
+    - `Market Runner`
+    - `Gate Duty`
+    - `Dock Work`
+    - `Scribe Work`
   - separate daily limits for:
     - `1 story quest per day`
     - `1 day job per day`
@@ -135,8 +139,8 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - tougher fighting ring progression after champion status
   - better-paying day jobs for a proven veteran without granting XP
 - bard city identity with:
-  - `Find an audience and perform for coin`
-  - up to `3` performances per day at different venues
+  - nighttime `Find an audience and perform for coin`
+  - up to `3` performances per day at different evening venues
   - venue progression through:
     - `Market Square`
     - `Bent Nail`
@@ -144,6 +148,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
     - `Silver Kettle`
     - `Private Patron Salon`
   - performance rewards that do not consume the normal day-job slot
+  - a Belor market performance permit that improves market-square performances
   - first-night inn events and social standing that can support the bard's audience/invitation loop
   - growing public recognition when the bard performs often in town and in inns
   - better fit with `Lantern Rest` and `Silver Kettle` as the bard's natural city homes
@@ -245,6 +250,14 @@ After the warning is delivered, the game opens into a simple town hub where the 
 - if playing `Bard`, perform for coin and build standing with audiences, patrons, and better venues
 - save the adventure from the main town and inn flows
 
+The town now uses an explicit day/night rhythm:
+
+- daytime supports shopping, street conversations, day jobs, preparation, dining-room inn flavor, and the manual `Wait for nightfall` transition
+- nighttime opens the fighting ring, bard performance venues, inn common-room activity, and night-oriented story quests
+- market, smithy, and armorer close at night, while the apothecary, instrument shop, inn, streets, quest log, and buyer flow remain available
+- paid bard performances are night-only, but bard-flavored `Performance` checks can still appear inside day jobs or quests
+- long rests at an inn advance to the next day and reset daily limits
+
 If the hero is defeated during a city quest, the game no longer assumes a manual reload. Instead, the quest fails and the player chooses between:
 
 - a `Town Doctor` recovery that costs coin and keeps the same day going
@@ -267,6 +280,13 @@ Borzig effectively becomes the bridge between those three angles, carrying hard 
 When playing as `Bard`, several early city quests now support a different feel from the barbarian route. The bard can lean harder on `CHA`, crowd control, staged performances, merchant ego, and polished lies in places where Borzig would more often force, pressure, or outlast the same obstacle.
 
 The final quest now plays as a more involved mini-dungeon with branching rooms, dead ends, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
+
+Day jobs now work as level-based job tracks instead of one-off filler. Each track keeps its own order of assignments, unlocks new continuations at later levels, and lets a higher-level hero catch up on missed earlier steps one day at a time. Current day-job tracks are:
+
+- `Market Runner`: `Missing Delivery`, `Wrong Ledger`, `High-Value Hand-Off`
+- `Gate Duty`: `Gate Duty Overflow`, `Toll Dispute`, `Noble Convoy`
+- `Dock Work`: `Morning Load`, `Split Cargo`, `Heavy Tide`
+- `Scribe Work`: `Clean Copies`, `Margin Errors`, `Sealed Abstract`
 
 Searching rooms in the Understreet now uses `INT`, and several chambers deliberately hint when something feels hidden, recently disturbed, or worth forcing open. That gives the finale more of a real dungeon rhythm where observation, route choice, loot pressure, and resource management matter alongside combat.
 
@@ -382,7 +402,12 @@ Useful current suites include:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tests\city-quests.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\day-job-progression.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\day-night.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\day-night-mechanics.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\day-night-text.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\initiative.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\inn-day-night-text.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\ring.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1
@@ -396,7 +421,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\tutorial-skip.tests.ps1
 ## Notes
 
 - the game is currently built around a tutorial arc, a full city hub, and a first complete Chapter Two story chain
-- Chapter Two is now playable from its opening story layer through its finale, with multiple replay-friendly clue paths and first day jobs implemented
+- Chapter Two is now playable from its opening story layer through its finale, with multiple replay-friendly clue paths and level-based day-job tracks implemented
 - the current Chapter Two writing treats the watch, merchant-clerk, and Bent Nail leads as a loose shared investigation rather than disconnected quest boards
 - some systems are intentionally lightweight for now so they can be expanded later
 - several town information hooks are already in place as setup for later quest branches, payout modifiers, and post-Understreet story paths
@@ -410,14 +435,14 @@ powershell -ExecutionPolicy Bypass -File .\tests\tutorial-skip.tests.ps1
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
-- introduce a stronger day/night rhythm so inns, daily limits, ring access, and city activities feel tied to time passing
+- deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
 
 ### Medium-term world and progression work
 
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
-- add more day jobs that reinforce economy and city life without granting XP
+- add more day-job tracks that reinforce economy and city life without granting XP
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
