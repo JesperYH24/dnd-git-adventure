@@ -29,9 +29,9 @@ function Test-QuestSourcesListOpeningQuestsAndDayJobs {
     $guard = @(Get-TownQuestList -Game $game -Source "Guard Station")
     $patron = @(Get-TownQuestList -Game $game -Source "Quest Giver")
 
-    Assert-Equal -Actual $questBoard.Count -Expected 2 -Message "The quest board should list one opening story quest and one day job."
+    Assert-Equal -Actual $questBoard.Count -Expected 3 -Message "The quest board should list one opening story quest and two day jobs."
     Assert-Equal -Actual $guard.Count -Expected 2 -Message "The guard station should list one opening story quest and one day job before deeper clues are found."
-    Assert-Equal -Actual $patron.Count -Expected 1 -Message "The quest giver should list one opening tier-1 story quest before deeper tiers open."
+    Assert-Equal -Actual $patron.Count -Expected 2 -Message "The quest giver should list one opening tier-1 story quest and one scribe day job before deeper tiers open."
 }
 
 function Use-StoryCombatWinStub {

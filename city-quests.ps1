@@ -2402,6 +2402,200 @@ function Start-GateDutyOverflowDayJob {
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
 }
 
+function Start-DockWorkDayJob {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [string]$QuestId = "dayjob_dock_loading"
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "That dock job is not available right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text $quest.Name -Color "Yellow"
+    switch ($QuestId) {
+        "dayjob_dock_loading_2" {
+            Write-Scene "The dock boss spots Borzig before the shouting crews do. Two cargo marks point to the same stack, and neither side wants to admit the ledger may be wrong."
+            Write-Scene "The pay is better because the job now needs a cool head as much as a strong back."
+        }
+        "dayjob_dock_loading_3" {
+            Write-Scene "Heavy tide lifts the barge against the pilings while expensive cargo waits under tarps. The dock boss has stopped asking for volunteers and started naming people he trusts."
+            Write-Scene "This shift pays well because one bad hour can cost the river crews more than a week's wages."
+        }
+        default {
+            Write-Scene "The morning dock is all rope, wet planks, shouting crewmen, and freight that needs to move before the tide turns inconvenient."
+            Write-Scene "The work is honest, heavy, and paid in cash at the end of the shift."
+        }
+    }
+
+    Write-ColorLine "1. Haul the heaviest cargo yourself (STR)" "White"
+    Write-ColorLine "2. Work the full shift without slowing (CON)" "White"
+    Write-ColorLine "3. Organize the crews before they waste the tide (CHA)" "White"
+    if ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Make the whole dock move at your pace (STR)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Turn the work rhythm into a call-and-response chant (Performance)" "White"
+    }
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) gets under the worst of the load and makes the crew believe it can move." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) keeps working after the easy breath is gone, one crate and one soaked plank at a time." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) cuts through the shouting and gets the crews pulling in the same order." }
+            "4" {
+                if ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) takes the front line, sets the pace, and dares the dock to fall behind."
+                }
+                elseif ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the crew's rhythm into a chant that keeps hands moving and tempers low." -CheckTag "Performance"
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument."
+        }
+        else {
+            Write-Scene "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage."
+        }
+
+        break
+    }
+
+    $completionText = switch ($QuestId) {
+        "dayjob_dock_loading_2" { "The cargo dispute settles before fists come out. The dock boss pays Borzig and marks him down as someone worth calling when freight turns political." }
+        "dayjob_dock_loading_3" { "The heavy-tide job clears just before the river makes it impossible. The dock boss pays the higher rate without pretending it was easy." }
+        default { "The dock boss counts out Borzig's pay with wet fingers and points him toward the city before the next crew tries to hire him again." }
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
+}
+
+function Start-ScribeWorkDayJob {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [string]$QuestId = "dayjob_scribe_copy"
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "That scribe job is not available right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text $quest.Name -Color "Yellow"
+    switch ($QuestId) {
+        "dayjob_scribe_copy_2" {
+            Write-Scene "The clerk remembers Borzig and slides over a stack of drafts with ink still drying. The sums do not quite match, and someone important wants the clean version fast."
+            Write-Scene "This is better-paid work because a copied error can become a public embarrassment."
+        }
+        "dayjob_scribe_copy_3" {
+            Write-Scene "The office lowers its voice for this one. A sealed abstract needs preparing, and the patron wants accuracy, discretion, and no curious questions."
+            Write-Scene "The pay is high for desk work because quiet mistakes at this level become expensive."
+        }
+        default {
+            Write-Scene "The clerk's office smells of ink, dust, and hot wax. A stack of contracts waits beside a clean copybook."
+            Write-Scene "It is not glorious work, but the coin is honest and the chair is better than a wet dock plank."
+        }
+    }
+
+    Write-ColorLine "1. Copy the documents with careful focus (INT)" "White"
+    Write-ColorLine "2. Spot the practical mistake before it leaves the desk (WIS)" "White"
+    Write-ColorLine "3. Keep the clerk calm and the work moving (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Make the language cleaner without changing the meaning (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Catch the suspicious clause by treating it like a trap (WIS)" "White"
+    }
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 10 -ActionText "$($Game.Hero.Name) slows down, matches each line, and refuses to let the ink hurry him into mistakes." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "$($Game.Hero.Name) reads the work like a problem waiting to reveal itself." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) steadies the clerk, smooths the pressure, and keeps the desk from turning frantic." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) shapes the wording until the contract sounds cleaner, sharper, and no less binding." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon."
+        }
+        else {
+            Write-Scene "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage."
+        }
+
+        break
+    }
+
+    $completionText = switch ($QuestId) {
+        "dayjob_scribe_copy_2" { "The corrected drafts leave the office under fresh sand and a grateful seal. The clerk pays Borzig with the air of someone who will remember reliable help." }
+        "dayjob_scribe_copy_3" { "The sealed abstract is finished cleanly and tucked away before the wrong ears can notice. The clerk pays the higher rate in quiet coin." }
+        default { "The clerk counts out Borzig's copy wage and slides the finished contracts into the outgoing stack." }
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
+}
+
 function Start-TownQuest {
     param(
         $Game,
@@ -2425,6 +2619,12 @@ function Start-TownQuest {
         "dayjob_gate_labor" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_gate_labor_2" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_gate_labor_3" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading_2" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading_3" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy_2" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy_3" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         default {
             Write-Scene "That quest is not playable yet."
             Write-ColorLine ""
