@@ -2215,13 +2215,14 @@ function Start-WhispersBeneathBentNailQuest {
 function Start-MissingDeliveryDayJob {
     param(
         $Game,
-        [ref]$HeroHP
+        [ref]$HeroHP,
+        [string]$QuestId = "dayjob_market_delivery"
     )
 
-    $quest = Find-TownQuest -Game $Game -QuestId "dayjob_market_delivery"
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
 
     if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
-        Write-Scene "That delivery problem is not available right now."
+        Write-Scene "That market runner job is not available right now."
         Write-ColorLine ""
         return
     }
@@ -2234,14 +2235,26 @@ function Start-MissingDeliveryDayJob {
         return
     }
 
-    Write-SectionTitle -Text "Missing Delivery" -Color "Yellow"
-    if ($Game.Hero.Level -ge 3) {
-        Write-Scene "A market runner needs one missing crate found before dawn. With Borzig taking the job, the man sounds more hopeful than frightened."
+    Write-SectionTitle -Text $quest.Name -Color "Yellow"
+    switch ($QuestId) {
+        "dayjob_market_delivery_2" {
+            Write-Scene "The same runner waves Borzig over with a ledger tucked under one arm. A crate was delivered, paid for, and signed under the wrong stall, which means three merchants are now angry and one is lying."
+            Write-Scene "This is still day work, but it pays better because the runner now trusts Borzig with a problem that can cost reputation as well as coin."
+        }
+        "dayjob_market_delivery_3" {
+            Write-Scene "By now the market runners know Borzig's face. This time the package is sealed, valuable, and expected across the square before a rival buyer realizes it moved."
+            Write-Scene "The work is still honest enough, but the coin is better because everyone involved knows a known hand is worth paying for."
+        }
+        default {
+            if ($Game.Hero.Level -ge 3) {
+                Write-Scene "A market runner needs one missing crate found before the market eats the loss. With Borzig taking the job, the man sounds more hopeful than frightened."
+            }
+            else {
+                Write-Scene "A market runner explains the problem quickly: one crate of lamp oil and cloth never reached its stall, and if it stays missing too long he eats the loss."
+            }
+        }
     }
-    else {
-        Write-Scene "A market runner explains the problem quickly: one crate of lamp oil and cloth never reached its stall, and if it stays missing by dawn he eats the loss."
-    }
-    Write-Scene "Borzig only needs to get the crate moving again and avoid turning a late delivery into a street fight."
+    Write-Scene "Borzig only needs to get the goods moving again and avoid turning day work into a street fight."
     Write-ColorLine "1. Clear the alley by force (STR)" "White"
     Write-ColorLine "2. Haul the crate back yourself (STR)" "White"
     Write-ColorLine "3. Talk the locals into helping (CHA)" "White"
@@ -2299,16 +2312,23 @@ function Start-MissingDeliveryDayJob {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "dayjob_market_delivery" -CompletionText "The runner presses the agreed coin into Borzig's hand and hurries back to the market before dawn." 
+    $completionText = switch ($QuestId) {
+        "dayjob_market_delivery_2" { "The runner checks the corrected ledger twice, pays Borzig, and looks relieved that the market will be arguing about prices instead of blame by sunset." }
+        "dayjob_market_delivery_3" { "The sealed package reaches the right hands. The runner pays without haggling this time, which says more than thanks would." }
+        default { "The runner presses the agreed coin into Borzig's hand and hurries back to the market before the loss becomes permanent." }
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
 }
 
 function Start-GateDutyOverflowDayJob {
     param(
         $Game,
-        [ref]$HeroHP
+        [ref]$HeroHP,
+        [string]$QuestId = "dayjob_gate_labor"
     )
 
-    $quest = Find-TownQuest -Game $Game -QuestId "dayjob_gate_labor"
+    $quest = Find-TownQuest -Game $Game -QuestId $QuestId
 
     if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
         Write-Scene "That gate detail is not available right now."
@@ -2324,12 +2344,24 @@ function Start-GateDutyOverflowDayJob {
         return
     }
 
-    Write-SectionTitle -Text "Gate Duty Overflow" -Color "Yellow"
-    if ($Game.Hero.Level -ge 3) {
-        Write-Scene "At the east gate, even the loudest drivers quiet a little when they realize the fighter who broke the understreet has been sent to straighten out the line."
-    }
-    else {
-        Write-Scene "At the east gate, freight has jammed the archway and three drivers are one insult away from a riot."
+    Write-SectionTitle -Text $quest.Name -Color "Yellow"
+    switch ($QuestId) {
+        "dayjob_gate_labor_2" {
+            Write-Scene "At the east gate, the problem is paper instead of freight: two merchants both claim the toll was already paid, and the line is turning ugly while clerks compare marks."
+            Write-Scene "The sergeant wants Borzig to settle it cleanly before daylight traffic turns one dispute into ten."
+        }
+        "dayjob_gate_labor_3" {
+            Write-Scene "A noble convoy has locked the gate with polished guards, proud horses, and the kind of impatience that makes ordinary drivers furious."
+            Write-Scene "The sergeant offers better coin because this is less about muscle now and more about keeping status, traffic, and temper from colliding."
+        }
+        default {
+            if ($Game.Hero.Level -ge 3) {
+                Write-Scene "At the east gate, even the loudest drivers quiet a little when they realize the fighter who broke the understreet has been sent to straighten out the line."
+            }
+            else {
+                Write-Scene "At the east gate, freight has jammed the archway and three drivers are one insult away from a riot."
+            }
+        }
     }
     Write-ColorLine "1. Bark the line straight with sheer force of presence (STR)" "White"
     Write-ColorLine "2. Shoulder the worst wagon clear yourself (CON)" "White"
@@ -2361,7 +2393,13 @@ function Start-GateDutyOverflowDayJob {
         break
     }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "dayjob_gate_labor" -CompletionText "The gate sergeant counts out Borzig's pay and tells him to come back if he wants honest work again."
+    $completionText = switch ($QuestId) {
+        "dayjob_gate_labor_2" { "The toll dispute ends with the line moving and the sergeant's paperwork still clean. He pays Borzig like a man who hates needing help but respects useful results." }
+        "dayjob_gate_labor_3" { "The noble convoy finally clears the gate without a street brawl. The sergeant counts out better coin and admits, very grudgingly, that Borzig saved the watch a long afternoon." }
+        default { "The gate sergeant counts out Borzig's pay and tells him to come back if he wants honest work again." }
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
 }
 
 function Start-TownQuest {
@@ -2381,8 +2419,12 @@ function Start-TownQuest {
         "patron_warehouse_ledger" { Start-WarehouseLedgerRecoveryQuest -Game $Game -HeroHP $HeroHP }
         "guard_broken_seal" { Start-BrokenSealPatrolQuest -Game $Game -HeroHP $HeroHP }
         "bent_nail_whispers" { Start-WhispersBeneathBentNailQuest -Game $Game -HeroHP $HeroHP }
-        "dayjob_market_delivery" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP }
-        "dayjob_gate_labor" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP }
+        "dayjob_market_delivery" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_market_delivery_2" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_market_delivery_3" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor_2" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor_3" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         default {
             Write-Scene "That quest is not playable yet."
             Write-ColorLine ""

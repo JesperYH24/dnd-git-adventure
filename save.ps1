@@ -210,6 +210,24 @@ function Ensure-LoadedAdventureShape {
     if ($null -eq $Game.Town["Quests"]) {
         $Game.Town["Quests"] = Initialize-TownQuests
     }
+    else {
+        $defaultQuests = @(Initialize-TownQuests)
+
+        foreach ($defaultQuest in $defaultQuests) {
+            $existingQuest = $Game.Town["Quests"] | Where-Object { $_.Id -eq $defaultQuest.Id } | Select-Object -First 1
+
+            if ($null -eq $existingQuest) {
+                $Game.Town["Quests"] += $defaultQuest
+                continue
+            }
+
+            foreach ($property in @("DayJobTrackId", "DayJobStep", "RequiredHeroLevel")) {
+                if ($null -eq $existingQuest.PSObject.Properties[$property]) {
+                    $existingQuest | Add-Member -NotePropertyName $property -NotePropertyValue $defaultQuest.$property
+                }
+            }
+        }
+    }
 
     return $Game
 }

@@ -10,7 +10,10 @@ function New-TownQuest {
         [int]$RewardCopper = 0,
         [int]$RewardXP = 0,
         [string]$RewardItemName = "",
-        [int]$RequiredStoryClues = 0
+        [int]$RequiredStoryClues = 0,
+        [string]$DayJobTrackId = "",
+        [int]$DayJobStep = 0,
+        [int]$RequiredHeroLevel = 1
     )
 
     return [PSCustomObject]@{
@@ -25,6 +28,9 @@ function New-TownQuest {
         RewardXP = $RewardXP
         RewardItemName = $RewardItemName
         RequiredStoryClues = $RequiredStoryClues
+        DayJobTrackId = $DayJobTrackId
+        DayJobStep = $DayJobStep
+        RequiredHeroLevel = $RequiredHeroLevel
         Accepted = $false
         Started = $false
         Completed = $false
@@ -54,8 +60,12 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -Tier 3 -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 170)
         (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
-        (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before dawn." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90)
-        (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100)
+        (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before the market eats the loss." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90 -DayJobTrackId "market_runner" -DayJobStep 1 -RequiredHeroLevel 1)
+        (New-TownQuest -Id "dayjob_market_delivery_2" -Name "Market Runner: Wrong Ledger" -Source "Quest Board" -Description "The market runners trust Borzig with a touchier problem: a paid delivery logged under the wrong stall." -Objective "Sort out the bad ledger mark and get the right goods to the right hands." -QuestType "DayJob" -RewardCopper 115 -DayJobTrackId "market_runner" -DayJobStep 2 -RequiredHeroLevel 2)
+        (New-TownQuest -Id "dayjob_market_delivery_3" -Name "Market Runner: High-Value Hand-Off" -Source "Quest Board" -Description "A better-paying runner job needs a known face to move sealed goods through crowded daylight." -Objective "Carry the sealed goods across the market without losing the package or the crowd." -QuestType "DayJob" -RewardCopper 140 -DayJobTrackId "market_runner" -DayJobStep 3 -RequiredHeroLevel 3)
+        (New-TownQuest -Id "dayjob_gate_labor" -Name "Gate Duty Overflow" -Source "Guard Station" -Description "The gate sergeant needs a strong back and a hard stare to keep freight moving without panic." -Objective "Help the gate detail clear a jam and keep tempers under control." -QuestType "DayJob" -RewardCopper 100 -DayJobTrackId "gate_labor" -DayJobStep 1 -RequiredHeroLevel 1)
+        (New-TownQuest -Id "dayjob_gate_labor_2" -Name "Gate Duty: Toll Dispute" -Source "Guard Station" -Description "A toll argument is slowing the morning gate, and the watch wants it solved without drawing steel." -Objective "Break the dispute, keep the wagons moving, and leave the sergeant with clean paperwork." -QuestType "DayJob" -RewardCopper 125 -DayJobTrackId "gate_labor" -DayJobStep 2 -RequiredHeroLevel 2)
+        (New-TownQuest -Id "dayjob_gate_labor_3" -Name "Gate Duty: Noble Convoy" -Source "Guard Station" -Description "A noble convoy has snarled the gate with pride, guards, and expensive impatience." -Objective "Clear the convoy jam before the gate detail loses control of the street." -QuestType "DayJob" -RewardCopper 150 -DayJobTrackId "gate_labor" -DayJobStep 3 -RequiredHeroLevel 3)
     )
 }
 
@@ -401,6 +411,10 @@ function Is-TownQuestUnlocked {
         return $false
     }
 
+    if ($Quest.QuestType -eq "DayJob") {
+        return Test-DayJobStepAvailable -Game $Game -Quest $Quest
+    }
+
     if ($Quest.QuestType -ne "Story") {
         return $true
     }
@@ -411,6 +425,77 @@ function Is-TownQuestUnlocked {
 
     $currentTier = Get-CurrentStoryQuestTier -Game $Game
     return [int]$Quest.Tier -eq $currentTier
+}
+
+function Get-DayJobTrackId {
+    param($Quest)
+
+    if ($null -eq $Quest) {
+        return ""
+    }
+
+    if ($null -ne $Quest.PSObject.Properties["DayJobTrackId"] -and -not [string]::IsNullOrWhiteSpace([string]$Quest.DayJobTrackId)) {
+        return [string]$Quest.DayJobTrackId
+    }
+
+    return [string]$Quest.Id
+}
+
+function Get-DayJobStep {
+    param($Quest)
+
+    if ($null -ne $Quest -and $null -ne $Quest.PSObject.Properties["DayJobStep"] -and [int]$Quest.DayJobStep -gt 0) {
+        return [int]$Quest.DayJobStep
+    }
+
+    return 1
+}
+
+function Get-DayJobRequiredHeroLevel {
+    param($Quest)
+
+    if ($null -ne $Quest -and $null -ne $Quest.PSObject.Properties["RequiredHeroLevel"] -and [int]$Quest.RequiredHeroLevel -gt 0) {
+        return [int]$Quest.RequiredHeroLevel
+    }
+
+    return 1
+}
+
+function Test-DayJobStepAvailable {
+    param(
+        $Game,
+        $Quest
+    )
+
+    if ($null -eq $Game -or $null -eq $Quest -or $Quest.QuestType -ne "DayJob") {
+        return $false
+    }
+
+    if ($Quest.Accepted -and -not $Quest.Completed) {
+        return $true
+    }
+
+    if ($Quest.Completed) {
+        return $false
+    }
+
+    if ([int]$Game.Hero.Level -lt (Get-DayJobRequiredHeroLevel -Quest $Quest)) {
+        return $false
+    }
+
+    $trackId = Get-DayJobTrackId -Quest $Quest
+    $availableSteps = @($Game.Town.Quests | Where-Object {
+        $_.QuestType -eq "DayJob" -and
+        (Get-DayJobTrackId -Quest $_) -eq $trackId -and
+        -not $_.Completed -and
+        [int]$Game.Hero.Level -ge (Get-DayJobRequiredHeroLevel -Quest $_)
+    } | Sort-Object @{ Expression = { Get-DayJobStep -Quest $_ }; Ascending = $true })
+
+    if ($availableSteps.Count -eq 0) {
+        return $false
+    }
+
+    return [string]$availableSteps[0].Id -eq [string]$Quest.Id
 }
 
 function Get-UnderstreetFinalEntryMessage {

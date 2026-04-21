@@ -341,8 +341,9 @@ function Show-TownQuestSource {
             $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
             Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
             $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+            $dayJobText = if ($quest.QuestType -eq "DayJob") { " | Step $(Get-DayJobStep -Quest $quest) | Level $(Get-DayJobRequiredHeroLevel -Quest $quest)+" } else { "" }
             $timeText = Get-TownQuestRequiredTimeOfDay -Quest $quest
-            Write-ColorLine "   Type: $($quest.QuestType)$tierText" "DarkGray"
+            Write-ColorLine "   Type: $($quest.QuestType)$tierText$dayJobText" "DarkGray"
             if (-not [string]::IsNullOrWhiteSpace($timeText)) {
                 Write-ColorLine "   Time: $timeText" "DarkGray"
             }
