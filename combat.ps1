@@ -17,6 +17,162 @@ function Get-BarbarianCriticalKillText {
     return "$($Hero.Name) tears through $($Monster.definite) in a savage finishing blow, driving the $weaponName clean through the kill!"
 }
 
+function Get-RandomCombatFlavorText {
+    param([string[]]$Options)
+
+    if ($null -eq $Options -or $Options.Count -eq 0) {
+        return ""
+    }
+
+    return $Options[(Get-Random -Minimum 0 -Maximum $Options.Count)]
+}
+
+function Resolve-CombatFlavorText {
+    param(
+        [string]$Text,
+        $Hero,
+        $Monster = $null
+    )
+
+    $resolved = Resolve-HeroNarrativeText -Text $Text -Hero $Hero
+
+    if ($null -ne $Monster) {
+        $targetName = if (-not [string]::IsNullOrWhiteSpace([string]$Monster.definite)) { [string]$Monster.definite } else { "the enemy" }
+        $resolved = $resolved.Replace("{target}", $targetName)
+    }
+
+    return $resolved
+}
+
+function Get-BarbarianRageFlavorText {
+    param($Hero)
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero}'s breathing turns heavy and wrong, like a forge being fed too much air.",
+        "Something old and red wakes behind {hero}'s eyes, and pain starts looking like a useful language.",
+        "{Hero} rolls {his} shoulders once, and the room suddenly remembers what fear is for.",
+        "A low growl climbs out of {hero}'s chest, too controlled to be panic and too ugly to be mercy.",
+        "{Hero} lets the anger in cleanly, like opening a door that should have stayed barred."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero)
+}
+
+function Get-BarbarianRecklessCommitFlavorText {
+    param($Hero)
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} stops defending and starts arriving.",
+        "{Hero} grins like the wound is already worth it and throws {himself} into the opening.",
+        "Caution dies first. {Hero} follows it in with both hands on the weapon.",
+        "{Hero} leans past safety and turns the next heartbeat into a challenge.",
+        "The smart move leaves. {Hero} stays."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero)
+}
+
+function Get-BarbarianRecklessSwingFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero}'s reckless swing comes in wide, fast, and mean enough to make {target} answer it or break.",
+        "{Hero} attacks like getting hit back is someone else's problem until it happens.",
+        "{Hero} sells the guard for momentum, driving the weapon at {target} with ugly confidence.",
+        "{Hero} gives {target} a clean opening and makes the price of taking it look painful.",
+        "No shield, no second thought: {hero} turns the attack into a dare."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardViciousMockeryFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} looks {target} up and down. 'I've heard doors threaten better than you, and at least doors know when to close.'",
+        "{Hero} gives {target} a pitying smile. 'That stance is brave. Not useful, but very brave.'",
+        "{Hero} clicks {his} tongue. 'If confidence were armor, you'd still need a helmet.'",
+        "{Hero} points at {target}'s weapon. 'Careful with that. It looks like the clever one between you.'",
+        "{Hero} sighs. 'Somewhere, a village idiot is fighting unarmed because you stole the family talent.'",
+        "{Hero} bows slightly. 'I would insult your technique, but I try not to punch downward twice in one sentence.'"
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardViciousMockeryHitFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "The words land under {target}'s skin and twist.",
+        "{target} flinches like the insult found a bruise no blade could reach.",
+        "The joke gets a laugh from exactly no one, which somehow makes it hurt worse.",
+        "{target}'s focus cracks, and {hero}'s smile says the line did its work."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardViciousMockerySaveFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target} snarls through the insult before it can fully bite.",
+        "For once, {target} has just enough dignity left to survive the joke.",
+        "{target} shakes the words off, though the silence afterward is not flattering.",
+        "The mockery glances off. {Hero} looks personally offended by the waste of good material."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardCuttingWordsFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} cuts across {target}'s swing with a smile sharp enough to leave a mark. 'Careful. You almost looked trained.'",
+        "{Hero} flicks a glance at {target}. 'That was the attack? I thought you were still looking for one.'",
+        "{Hero} leans into the opening. 'Bold choice, letting your weapon embarrass you first.'",
+        "{Hero} snaps, 'Less battle cry, more apology,' and the timing of {target}'s strike buckles.",
+        "{Hero} laughs once, perfectly timed and absolutely cruel, right as {target} commits to the blow.",
+        "{Hero} says, 'I've seen tavern doors hit with more intent,' and somehow the words get in the way."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardCuttingWordsPreventedHitFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target}'s attack falls apart mid-motion, murdered by timing and bad self-esteem.",
+        "The blow loses its line, and {hero}'s grin makes it very clear that was the point.",
+        "{target} overcorrects, hesitates, and suddenly the hit is gone.",
+        "The insult lands first. The weapon arrives late, weak, and useless."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
 function Get-HeroRageDamageBonus {
     param(
         $Hero,
@@ -113,6 +269,10 @@ function Invoke-HeroAttack {
 
     if ($AttackBonusModifier -gt 0) {
         $bonusText = " (+$AttackBonusModifier attack bonus)"
+    }
+
+    if ($Advantage -and $Hero.Class -eq "Barbarian") {
+        Write-Scene (Get-BarbarianRecklessSwingFlavorText -Hero $Hero -Monster $Monster)
     }
 
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): $rollText, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
@@ -237,6 +397,7 @@ function Invoke-MonsterAttack {
             -TargetArmorClass $heroArmorClass
 
         if ($cuttingWordsResult.PreventedHit) {
+            Write-Scene (Get-BardCuttingWordsPreventedHitFlavorText -Hero $Hero -Monster $Monster)
             Write-Action "$($Monster.definite) misses after the bard's cutting words throw off the strike!" "DarkGray"
             Write-ColorLine ""
             return
@@ -372,8 +533,8 @@ function Resolve-HeroRecklessAttackChoice {
             $HeroAttackAdvantage.Value = $true
             $HeroRecklessExposure.Value = $true
             $Hero.RecklessAttackExposed = $true
-            Write-Scene "$($Hero.Name) throws caution aside and commits everything to the swing."
-            Write-Action "Reckless Attack: Borzig attacks with advantage now, but the next enemy attack against him also has advantage." "Yellow"
+            Write-Scene (Get-BarbarianRecklessCommitFlavorText -Hero $Hero)
+            Write-Action "Reckless Attack: $($Hero.Name) attacks with advantage now, but the next enemy attack against him also has advantage." "Yellow"
             Write-ColorLine ""
             return
         }
@@ -413,6 +574,7 @@ function Resolve-HeroBonusAction {
                 Write-Scene $rage.Message
 
                 if ($rage.Success) {
+                    Write-Scene (Get-BarbarianRageFlavorText -Hero $Hero)
                     Write-Action "Rage: +2 weapon damage and incoming weapon damage is halved until the fight ends." "Yellow"
                 }
 
@@ -452,15 +614,17 @@ function Resolve-HeroBonusAction {
             $saveRoll = Roll-Dice -Sides 20
             $saveTotal = $saveRoll + $wisdomSaveBonus
 
-            Write-Scene "$($Hero.Name) spits a vicious line that lands like a blade between the ribs of the mind."
+            Write-Scene (Get-BardViciousMockeryFlavorText -Hero $Hero -Monster $Monster)
             Write-Action "$($Monster.definite) makes a Wisdom save: d20 roll $saveRoll $(Format-AbilityModifier -Modifier $wisdomSaveBonus) = $saveTotal vs DC $spellSaveDC." "DarkCyan"
 
             if ($saveTotal -lt $spellSaveDC) {
                 $damage = Roll-Dice -Sides 4
                 $MonsterHP.Value = [Math]::Max(0, $MonsterHP.Value - $damage)
+                Write-Scene (Get-BardViciousMockeryHitFlavorText -Hero $Hero -Monster $Monster)
                 Write-Action "Vicious Mockery deals $damage psychic damage." "Yellow"
             }
             else {
+                Write-Scene (Get-BardViciousMockerySaveFlavorText -Hero $Hero -Monster $Monster)
                 Write-Action "$($Monster.definite) shakes off the mockery and takes no damage." "DarkGray"
             }
 
@@ -520,7 +684,7 @@ function Try-Resolve-BardCuttingWords {
 
             $AttackTotal.Value -= $inspiration.TotalBonus
             $result.Used = $true
-            Write-Scene "$($Hero.Name) lashes out with cutting words, breaking the enemy's rhythm mid-swing."
+            Write-Scene (Get-BardCuttingWordsFlavorText -Hero $Hero -Monster $Monster)
             Write-Action "Cutting Words: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = -$($inspiration.TotalBonus) to hit." "Yellow"
 
             if ($AttackTotal.Value -lt $TargetArmorClass) {

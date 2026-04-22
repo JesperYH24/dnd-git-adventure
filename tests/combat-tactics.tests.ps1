@@ -103,6 +103,31 @@ function Test-BarbarianCritKillGetsSavageFinisherText {
     }
 }
 
+function Test-ClassActionFlavorTextResolvesCombatTokens {
+    $bard = Get-Hero -Class "Bard"
+    $barbarian = Get-Hero -Class "Barbarian"
+    $monster = New-TestMonster
+
+    $mockery = Get-BardViciousMockeryFlavorText -Hero $bard -Monster $monster
+    $cuttingWords = Get-BardCuttingWordsFlavorText -Hero $bard -Monster $monster
+    $cuttingWordsPreventedHit = Get-BardCuttingWordsPreventedHitFlavorText -Hero $bard -Monster $monster
+    $rage = Get-BarbarianRageFlavorText -Hero $barbarian
+    $reckless = Get-BarbarianRecklessSwingFlavorText -Hero $barbarian -Monster $monster
+    $explicitTargetLine = Resolve-CombatFlavorText -Text "{Hero} heckles {target}." -Hero $bard -Monster $monster
+
+    Assert-True -Condition ($mockery -like "*$($bard.Name)*") -Message "Vicious Mockery flavor should include the bard's name."
+    Assert-True -Condition ($cuttingWords -like "*$($bard.Name)*") -Message "Cutting Words flavor should include the bard's name."
+    Assert-True -Condition ($explicitTargetLine -like "*$($bard.Name)*" -and $explicitTargetLine -like "*$($monster.definite)*") -Message "Combat flavor resolver should include hero and target names."
+    Assert-True -Condition ($rage -like "*$($barbarian.Name)*" -or $rage -like "*$($barbarian.GenderPronouns.Possessive)*") -Message "Rage flavor should resolve barbarian hero tokens."
+    Assert-True -Condition ($reckless -like "*$($barbarian.Name)*" -or $reckless -like "*$($barbarian.GenderPronouns.Subjective)*") -Message "Reckless flavor should resolve barbarian hero tokens."
+    Assert-True -Condition ($reckless -like "*$($monster.definite)*" -or $reckless -notlike "*{target}*") -Message "Reckless flavor should resolve target tokens."
+    Assert-True -Condition ($mockery -notlike "*{hero}*" -and $mockery -notlike "*{Hero}*" -and $mockery -notlike "*{target}*") -Message "Bard flavor should not leak raw combat tokens."
+    Assert-True -Condition ($cuttingWords -notlike "*{hero}*" -and $cuttingWords -notlike "*{Hero}*" -and $cuttingWords -notlike "*{target}*") -Message "Cutting Words flavor should not leak raw combat tokens."
+    Assert-True -Condition ($cuttingWordsPreventedHit -notlike "*{hero}*" -and $cuttingWordsPreventedHit -notlike "*{Hero}*" -and $cuttingWordsPreventedHit -notlike "*{target}*") -Message "Cutting Words payoff flavor should not leak raw combat tokens."
+    Assert-True -Condition ($rage -notlike "*{hero}*" -and $rage -notlike "*{Hero}*") -Message "Rage flavor should not leak raw hero tokens."
+    Assert-True -Condition ($reckless -notlike "*{hero}*" -and $reckless -notlike "*{Hero}*" -and $reckless -notlike "*{target}*") -Message "Reckless flavor should not leak raw combat tokens."
+}
+
 function Test-BardInspirationBoostsCurrentAttack {
     Set-TestOutputStubs
 
@@ -483,6 +508,7 @@ function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
 Test-BarbarianCritKillGetsSavageFinisherText
+Test-ClassActionFlavorTextResolvesCombatTokens
 Test-BardInspirationBoostsCurrentAttack
 Test-BardInspirationCanBoostBlock
 Test-BardViciousMockeryBonusActionDealsPsychicDamage
