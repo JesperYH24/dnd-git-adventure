@@ -59,7 +59,7 @@ function Get-RingOpponentPool {
             GrappleChance = 10
             FocusChance = 20
             BlockChance = 15
-            Intro = "Sella circles lightly on her feet, measuring Borzig with the patience of someone used to tiring out bigger foes."
+            Intro = "Sella circles lightly on her feet, measuring {hero} with the patience of someone used to tiring out bigger foes."
         }
         [PSCustomObject]@{
             Name = "Gravel-Tooth Harven"
@@ -74,7 +74,7 @@ function Get-RingOpponentPool {
             GrappleChance = 10
             FocusChance = 0
             BlockChance = 0
-            Intro = "Harven spits blood into the sand and beckons Borzig closer with a broken grin. He is slower than most, but every clean hit lands heavy."
+            Intro = "Harven spits blood into the sand and beckons {hero} closer with a broken grin. He is slower than most, but every clean hit lands heavy."
         }
         [PSCustomObject]@{
             Name = "Latchhook Vessa"
@@ -340,7 +340,7 @@ function Get-RingOpponentIntro {
         $Opponent
     )
 
-    $intro = $Opponent.Intro
+    $intro = Resolve-HeroNarrativeText -Text $Opponent.Intro -Hero $Hero
     $record = Get-HeroRingRivalryRecord -Hero $Hero -OpponentName $Opponent.Name
 
     if ($record.HeroWins -eq 0 -and $record.OpponentWins -eq 0) {
@@ -348,11 +348,11 @@ function Get-RingOpponentIntro {
     }
 
     if ($record.HeroWins -gt 0 -and $record.OpponentWins -eq 0) {
-        return "$intro `n$($Opponent.Name) does not hide the fact that Borzig has already beaten $([int]$record.HeroWins) time(s), and the crowd can feel the grudge."
+        return "$intro `n$($Opponent.Name) does not hide the fact that $($Hero.Name) has already beaten $([int]$record.HeroWins) time(s), and the crowd can feel the grudge."
     }
 
     if ($record.OpponentWins -gt 0 -and $record.HeroWins -eq 0) {
-        return "$intro `n$($Opponent.Name) carries the easy confidence of someone who has already put Borzig on the canvas $([int]$record.OpponentWins) time(s)."
+        return "$intro `n$($Opponent.Name) carries the easy confidence of someone who has already put $($Hero.Name) on the canvas $([int]$record.OpponentWins) time(s)."
     }
 
     if ($record.HeroWins -eq $record.OpponentWins) {
@@ -360,7 +360,7 @@ function Get-RingOpponentIntro {
     }
 
     if ($record.HeroWins -gt $record.OpponentWins) {
-        return "$intro `nBorzig leads their rivalry $($record.HeroWins)-$($record.OpponentWins), which leaves $($Opponent.Name) tense, proud, and eager to change that."
+        return "$intro `n$($Hero.Name) leads their rivalry $($record.HeroWins)-$($record.OpponentWins), which leaves $($Opponent.Name) tense, proud, and eager to change that."
     }
 
     return "$intro `n$($Opponent.Name) leads their rivalry $($record.OpponentWins)-$($record.HeroWins), and steps in like someone expecting history to repeat."
@@ -455,7 +455,7 @@ function Invoke-OpponentBrawlAttack {
         [string]$TargetAction = "Punch"
     )
 
-    # Ring bouts use Borzig's current defensive gear baseline, with Block temporarily raising it.
+    # Ring bouts use the hero's current defensive gear baseline, with Block temporarily raising it.
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $roll = Roll-Dice -Sides 20
     $total = $roll + $Opponent.AttackBonus + $AttackBonusModifier
@@ -476,7 +476,7 @@ function Invoke-OpponentBrawlAttack {
         $damage = $Opponent.DamageDiceSides + $secondDamage + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
-        Write-Action "$($Opponent.Definite) crashes through Borzig's guard with a huge hit." "Yellow"
+        Write-Action "$($Opponent.Definite) crashes through $($Hero.Name)'s guard with a huge hit." "Yellow"
     }
     elseif ($roll -eq 1) {
         Write-Action "$($Opponent.Definite) slips and loses the angle." "DarkGray"
@@ -485,7 +485,7 @@ function Invoke-OpponentBrawlAttack {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
         $damage = $damageRoll + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
-        Write-Action "$($Opponent.Definite) clips Borzig with a solid shot." "Yellow"
+        Write-Action "$($Opponent.Definite) clips $($Hero.Name) with a solid shot." "Yellow"
     }
     else {
         Write-Action "$($Hero.Name) slips clear." "DarkGray"
@@ -520,14 +520,14 @@ function Resolve-OpponentBrawlGrapple {
     $heroTotal = $heroRoll + $heroModifier + $trainingBonus
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
-    Write-Action "$($Opponent.Definite) dives in for a takedown and Borzig braces hard against it." "DarkCyan"
+    Write-Action "$($Opponent.Definite) dives in for a takedown and $($Hero.Name) braces hard against it." "DarkCyan"
 
     if ($opponentRoll -eq 20 -or ($heroRoll -ne 20 -and $opponentTotal -ge $heroTotal)) {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
         $controlDamage = [Math]::Max(1, $damageRoll + $Opponent.DamageBonus)
         $HeroHP.Value -= $controlDamage
         $HeroOffBalance.Value = $true
-        Write-Action "$($Opponent.Definite) drags Borzig down into the sand and leaves him scrambling up." "Yellow"
+        Write-Action "$($Opponent.Definite) drags $($Hero.Name) down into the sand and leaves $($Hero.GenderPronouns.Objective) scrambling up." "Yellow"
 
         if ($HeroHP.Value -lt 0) {
             $HeroHP.Value = 0
@@ -537,7 +537,7 @@ function Resolve-OpponentBrawlGrapple {
         return $true
     }
 
-    Write-Action "Borzig fights free before the hold can settle." "DarkGray"
+    Write-Action "$($Hero.Name) fights free before the hold can settle." "DarkGray"
     Write-ColorLine ""
     return $false
 }
@@ -757,7 +757,7 @@ function Resolve-BrawlGrappleAttempt {
             }
 
             $HeroOffBalance.Value = $true
-            Write-Action "$($Opponent.Definite) forces the clinch through and leaves Borzig off balance for the next exchange." "Yellow"
+            Write-Action "$($Opponent.Definite) forces the clinch through and leaves $($Hero.Name) off balance for the next exchange." "Yellow"
         }
 
         Write-ColorLine ""
@@ -822,7 +822,7 @@ function Start-BrawlLoop {
     Write-ColorLine ""
 
     while ($heroBrawlHP -gt 0 -and $opponentHP -gt 0) {
-        Write-ColorLine "Borzig: $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
+        Write-ColorLine "$($Hero.Name): $heroBrawlHP HP | $($Opponent.Name): $opponentHP HP" "Green"
         Write-ColorLine "P. Throw hands" "White"
         Write-ColorLine "G. Go for a takedown" "White"
         Write-ColorLine "B. Cover up" "White"
@@ -895,7 +895,7 @@ function Start-BrawlLoop {
                 }
                 "P/F" {
                     $heroTurnEnded = $false
-                    Write-Scene "$($Opponent.Definite) hesitates for a read and gives Borzig the cleaner opening."
+                    Write-Scene "$($Opponent.Definite) hesitates for a read and gives $($Hero.Name) the cleaner opening."
                     Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Focus" -HeroHP ([ref]$heroBrawlHP) -HeroTurnEnded ([ref]$heroTurnEnded)
                     $heroFocusAttackBonus = 0
 
@@ -1029,7 +1029,7 @@ function Start-FightingRing {
     Write-ColorLine ""
 
     if ($Game.Town.WorkedForRoomToday) {
-        Write-Scene "Ringmaster Dorr snorts when Borzig approaches. 'You smell like inn-work and sleep loss. Come back after a real night off.'"
+        Write-Scene "Ringmaster Dorr snorts when $($Game.Hero.Name) approaches. 'You smell like inn-work and sleep loss. Come back after a real night off.'"
         Write-ColorLine ""
         return
     }
@@ -1094,7 +1094,7 @@ function Start-FightingRing {
         }
 
         $wins += 1
-        Write-Scene "The crowd roars as Borzig survives another round."
+        Write-Scene "The crowd roars as $($Game.Hero.Name) survives another round."
         Write-ColorLine ""
     }
 
@@ -1102,10 +1102,10 @@ function Start-FightingRing {
 
     if ($rewardCopper -gt 0) {
         Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null
-        Write-EmphasisLine -Text "Borzig leaves the pit with $(Convert-CopperToCurrencyText -Copper $rewardCopper) in prize money." -Color "Yellow"
+        Write-EmphasisLine -Text "$($Game.Hero.Name) leaves the pit with $(Convert-CopperToCurrencyText -Copper $rewardCopper) in prize money." -Color "Yellow"
     }
     else {
-        Write-Scene "Borzig leaves the ring with bruises, noise in his ears, and no prize money."
+        Write-Scene "$($Game.Hero.Name) leaves the ring with bruises, noise in $($Game.Hero.GenderPronouns.Possessive) ears, and no prize money."
     }
 
     if ($wins -gt 0) {
@@ -1114,10 +1114,10 @@ function Start-FightingRing {
         if ($trainingResult.Unlocked) {
             Write-SectionTitle -Text "Skill Gained" -Color "Green"
             if ($Game.Hero.UnarmedTrainingLevel -eq 1) {
-                Write-EmphasisLine -Text "Pit-Fighter Basics unlocked: Borzig gains +1 to hit and +1 damage with bare hands." -Color "Green"
+                Write-EmphasisLine -Text "Pit-Fighter Basics unlocked: $($Game.Hero.Name) gains +1 to hit and +1 damage with bare hands." -Color "Green"
             }
             else {
-                Write-EmphasisLine -Text "Pit-Fighter Basics deepens: Borzig now gains +2 to hit and +2 damage with bare hands." -Color "Green"
+                Write-EmphasisLine -Text "Pit-Fighter Basics deepens: $($Game.Hero.Name) now gains +2 to hit and +2 damage with bare hands." -Color "Green"
             }
         }
     }

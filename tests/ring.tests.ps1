@@ -227,6 +227,19 @@ function Test-RingOpponentIntroReflectsRivalryRecord {
     Assert-True -Condition ($thirdIntro -like "*unfinished business*") -Message "An even rivalry should change the intro tone."
 }
 
+function Test-RingOpponentIntroResolvesActiveHero {
+    $hero = Get-Hero -Class "Bard"
+    $opponent = [PSCustomObject]@{
+        Name = "Sella Quickstep"
+        Intro = "Sella measures Borzig before the first step."
+    }
+
+    $intro = Get-RingOpponentIntro -Hero $hero -Opponent $opponent
+
+    Assert-True -Condition ($intro -like "*Gariand*") -Message "Ring opponent intros should resolve legacy hero text to the active hero."
+    Assert-True -Condition ($intro -notlike "*Borzig*") -Message "Ring opponent intros should not leak Borzig when another hero is active."
+}
+
 function Test-PunchVsGrappleUsesPunchBonus {
     Set-TestOutputStubs
 
@@ -387,6 +400,7 @@ Test-HeroRingPunchCriticalFailDealsMishapDamage
 Test-HeroRingGrappleCriticalFailDealsMishapDamage
 Test-GrappleHeavyOpponentCanChooseGrapple
 Test-RingOpponentIntroReflectsRivalryRecord
+Test-RingOpponentIntroResolvesActiveHero
 Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage

@@ -20,25 +20,24 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - initiative rolls
   - true initiative order where the winner actually takes the first turn inside the normal combat loop
   - no scripted free opening attack before the combat menu begins
-  - critical hits and critical fails
+  - critical hits and critical fails, with hero Nat 1s causing mishap damage and ending the current hero turn
   - weapon damage dice
   - armor class
   - `Block` and `Focus`
-  - dropped-weapon recovery for the barbarian
   - barbarian `Rage` and `Reckless Attack`
   - bard spell/save support with a visible `Spell Save DC`
   - bard reactions and bonus offense through:
     - `Bardic Inspiration`
     - `Cutting Words`
     - `Vicious Mockery`
-  - a cleaner battle-status layout with clearer separation between Borzig and the enemy
-  - a class-ready turn menu with separate `Action` and `Bonus Action` entry points
+  - a cleaner battle-status layout with clearer separation between the hero and the enemy
+  - a class-ready turn menu where `Action` and `Bonus Action` can be used in either order or passed
   - brutal barbarian crit-finish text on lethal takedowns
 - class-specific combat identity for the barbarian:
   - `Unarmored Defense` using `10 + DEX modifier + CON modifier` when no armor is equipped
   - `Rage` as a bonus action with limited uses per long rest
   - rage adding weapon damage while reducing incoming weapon damage during the fight
-  - `Reckless Attack` as a higher-risk attack style that gives Borzig advantage now and gives the next enemy attack against him advantage too
+  - `Reckless Attack` as a higher-risk attack style that gives the barbarian advantage now and gives the next enemy attack against him advantage too
   - combat status showing rage uses, active rage state, and reckless exposure
 - class-specific combat identity for the bard:
   - `Bardic Inspiration` prepared before danger with an instrument
@@ -68,7 +67,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - `8` ready-use personal slots
   - a separate backpack storage layer
   - out-of-combat transfer between backpack and ready gear
-  - combat-only access to what Borzig is carrying on his person
+  - combat-only access to what the hero is carrying on his person
   - equipping, consumables, and dropped loot persistence
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - weapon requirements with stat and handling restrictions such as `STR`, `DEX`, `One-Handed`, and `Two-Handed`
@@ -93,7 +92,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - fighting ring that opens at night
   - small NPC rewards, information hooks, and discounts
   - deeper innkeeper and street-NPC conversations with repeat-aware dialogue
-  - specialist selling prices depending on who Borzig sells to
+  - specialist selling prices depending on who the hero sells to
   - comments and flavor around worn starting gear and rough cave salvage
 - class-aware town and NPC reactions with:
   - different greetings, rewards, and utility hooks for barbarian and bard
@@ -104,10 +103,11 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - stronger barbarian-specific city rewards, quest routes, and trust hooks so Borzig feels more intentional outside the ring too
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
+  - hero Nat 1s in ring punches and grapples causing mishap damage instead of empty misses
   - more narrative round-to-round ring text with lighter rules-facing combat chatter
   - matchup-style ring rounds where both fighters commit before the exchange is resolved
   - distinct opponents with different styles such as pressure fighters, clinch hunters, defensive readers, and heavy hitters
-  - opponent rivalries that remember Borzig's record against specific fighters
+  - opponent rivalries that remember the hero's record against specific fighters
   - rebalanced grapple pressure so takedowns disrupt the next exchange without deleting a full round
   - once-per-day tournament access
   - champion-tier and veteran-tier opponent pools
