@@ -135,7 +135,7 @@ function Initialize-Game {
     )
 
     $hero = Get-Hero -Class $Class
-    Set-UiHeroName -Name $hero.Name
+    Set-UiHeroContext -Hero $hero
     $heroHP = $hero.HP
 
     $rooms = Get-CaveRooms

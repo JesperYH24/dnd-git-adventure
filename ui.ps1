@@ -29,6 +29,42 @@ function Set-UiHeroName {
     $global:UiHeroName = $Name
 }
 
+function Set-UiHeroContext {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        Set-UiHeroName -Name "Borzig"
+        $global:UiHeroClass = "Barbarian"
+        $global:UiHeroPronouns = @{
+            Subject = "he"
+            Object = "him"
+            Possessive = "his"
+            Reflexive = "himself"
+        }
+        return
+    }
+
+    Set-UiHeroName -Name $Hero.Name
+    $global:UiHeroClass = if ([string]::IsNullOrWhiteSpace([string]$Hero.Class)) { "Hero" } else { [string]$Hero.Class }
+
+    $pronouns = @{
+        Subject = "he"
+        Object = "him"
+        Possessive = "his"
+        Reflexive = "himself"
+    }
+
+    if ($null -ne $Hero.PSObject.Properties["Pronouns"] -and $null -ne $Hero.Pronouns) {
+        foreach ($key in @("Subject", "Object", "Possessive", "Reflexive")) {
+            if ($null -ne $Hero.Pronouns[$key] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Pronouns[$key])) {
+                $pronouns[$key] = [string]$Hero.Pronouns[$key]
+            }
+        }
+    }
+
+    $global:UiHeroPronouns = $pronouns
+}
+
 function Get-UiHeroName {
     if ([string]::IsNullOrWhiteSpace($global:UiHeroName)) {
         return "Borzig"
@@ -37,20 +73,125 @@ function Get-UiHeroName {
     return [string]$global:UiHeroName
 }
 
-function Resolve-UiHeroText {
-    param([string]$Text)
+function Get-UiHeroClass {
+    if ([string]::IsNullOrWhiteSpace($global:UiHeroClass)) {
+        return "Barbarian"
+    }
+
+    return [string]$global:UiHeroClass
+}
+
+function Get-UiHeroPronouns {
+    if ($null -eq $global:UiHeroPronouns) {
+        $global:UiHeroPronouns = @{
+            Subject = "he"
+            Object = "him"
+            Possessive = "his"
+            Reflexive = "himself"
+        }
+    }
+
+    return $global:UiHeroPronouns
+}
+
+function Get-UiHeroNarrativeContext {
+    return [PSCustomObject]@{
+        Name = Get-UiHeroName
+        Class = Get-UiHeroClass
+        Pronouns = Get-UiHeroPronouns
+    }
+}
+
+function ConvertTo-TitleCaseToken {
+    param([string]$Value)
+
+    if ([string]::IsNullOrWhiteSpace($Value)) {
+        return $Value
+    }
+
+    if ($Value.Length -eq 1) {
+        return $Value.ToUpper()
+    }
+
+    return ($Value.Substring(0, 1).ToUpper() + $Value.Substring(1))
+}
+
+function Resolve-HeroNarrativeText {
+    param(
+        [string]$Text,
+        $Hero = $null
+    )
 
     if ([string]::IsNullOrEmpty($Text)) {
         return $Text
     }
 
-    $heroName = Get-UiHeroName
+    $context = if ($null -ne $Hero) {
+        $heroPronouns = @{
+            Subject = "he"
+            Object = "him"
+            Possessive = "his"
+            Reflexive = "himself"
+        }
 
-    if ($heroName -eq "Borzig") {
-        return $Text
+        if ($null -ne $Hero.PSObject.Properties["Pronouns"] -and $null -ne $Hero.Pronouns) {
+            foreach ($key in @("Subject", "Object", "Possessive", "Reflexive")) {
+                if ($null -ne $Hero.Pronouns[$key] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Pronouns[$key])) {
+                    $heroPronouns[$key] = [string]$Hero.Pronouns[$key]
+                }
+            }
+        }
+
+        [PSCustomObject]@{
+            Name = if ([string]::IsNullOrWhiteSpace([string]$Hero.Name)) { "the hero" } else { [string]$Hero.Name }
+            Class = if ([string]::IsNullOrWhiteSpace([string]$Hero.Class)) { "Hero" } else { [string]$Hero.Class }
+            Pronouns = $heroPronouns
+        }
+    }
+    else {
+        Get-UiHeroNarrativeContext
     }
 
-    return $Text.Replace("Borzig", $heroName)
+    $heroName = [string]$context.Name
+    $heroClass = [string]$context.Class
+    $pronouns = $context.Pronouns
+
+    $resolved = $Text
+    $resolved = $resolved.Replace("{hero}", $heroName).Replace("{Hero}", $heroName)
+    $resolved = $resolved.Replace("{class}", $heroClass.ToLower()).Replace("{Class}", $heroClass)
+    $resolved = $resolved.Replace("{he}", [string]$pronouns.Subject).Replace("{He}", (ConvertTo-TitleCaseToken -Value ([string]$pronouns.Subject)))
+    $resolved = $resolved.Replace("{him}", [string]$pronouns.Object).Replace("{Him}", (ConvertTo-TitleCaseToken -Value ([string]$pronouns.Object)))
+    $resolved = $resolved.Replace("{his}", [string]$pronouns.Possessive).Replace("{His}", (ConvertTo-TitleCaseToken -Value ([string]$pronouns.Possessive)))
+    $resolved = $resolved.Replace("{himself}", [string]$pronouns.Reflexive).Replace("{Himself}", (ConvertTo-TitleCaseToken -Value ([string]$pronouns.Reflexive)))
+
+    if ($heroName -eq "Borzig") {
+        return $resolved
+    }
+
+    return $resolved.Replace("Borzig", $heroName)
+}
+
+function Resolve-UiHeroText {
+    param([string]$Text)
+
+    return (Resolve-HeroNarrativeText -Text $Text)
+}
+
+function Get-ClassNarrativeText {
+    param(
+        $Hero,
+        [string]$DefaultText,
+        [hashtable]$ClassText = @{}
+    )
+
+    $className = if ($null -ne $Hero -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Class)) { [string]$Hero.Class } else { "" }
+    $selectedText = $DefaultText
+
+    if (-not [string]::IsNullOrWhiteSpace($className) -and $null -ne $ClassText -and $ClassText.ContainsKey($className) -and -not [string]::IsNullOrWhiteSpace([string]$ClassText[$className])) {
+        $selectedText = [string]$ClassText[$className]
+    }
+
+    return (Resolve-HeroNarrativeText -Text $selectedText -Hero $Hero)
 }
 
 function Get-FastTextEnabled {

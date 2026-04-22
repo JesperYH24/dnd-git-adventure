@@ -99,6 +99,8 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - different greetings, rewards, and utility hooks for barbarian and bard
   - bard-aware intros in quest sources, shops, streets, inns, and quest log text
   - improved use of `Gariand` / current hero name across tutorial, town, inn, and performance text
+  - shared narrative text tokens such as `{hero}`, `{he}`, `{him}`, `{his}`, `{himself}`, and `{class}` so future classes do not inherit hardcoded barbarian/bard wording by accident
+  - reusable class-branch text selection with a neutral fallback for future classes
   - stronger barbarian-specific city rewards, quest routes, and trust hooks so Borzig feels more intentional outside the ring too
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
@@ -419,6 +421,7 @@ powershell -ExecutionPolicy Bypass -File .\tests\day-night-mechanics.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\day-night-text.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\initiative.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\inn-day-night-text.tests.ps1
+powershell -ExecutionPolicy Bypass -File .\tests\narrative-text.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\ring.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-social.tests.ps1

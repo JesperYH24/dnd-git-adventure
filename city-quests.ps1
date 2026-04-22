@@ -110,12 +110,7 @@ function Format-UnderstreetHeroText {
         $Hero
     )
 
-    if ([string]::IsNullOrWhiteSpace($Text)) {
-        return $Text
-    }
-
-    $heroName = if ($null -ne $Hero -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) { [string]$Hero.Name } else { "the hero" }
-    return ($Text -replace "\bBorzig\b", $heroName)
+    return (Resolve-HeroNarrativeText -Text $Text -Hero $Hero)
 }
 
 function Get-UnderstreetFinalClassText {

@@ -274,7 +274,7 @@ function Load-AdventureGame {
     }
 
     $game = Ensure-LoadedAdventureShape -Game $saveData.Game
-    Set-UiHeroName -Name $game.Hero.Name
+    Set-UiHeroContext -Hero $game.Hero
     return $game
 }
 

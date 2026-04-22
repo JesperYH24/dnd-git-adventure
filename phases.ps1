@@ -141,7 +141,7 @@ function Reset-TutorialAfterDefeat {
         $Game[$entry.Key] = $entry.Value
     }
 
-    Set-UiHeroName -Name $Game.Hero.Name
+    Set-UiHeroContext -Hero $Game.Hero
     $HeroHP.Value = [int]$Game.HeroHP
     $HeroDroppedWeapon.Value = [bool]$Game.HeroDroppedWeapon
 
