@@ -1106,6 +1106,9 @@ function Resolve-HeroCombatTurn {
             }
         }
     }
+
+    Write-Scene "$($Hero.Name) has spent both action slots. The enemy gets the next opening."
+    Write-ColorLine ""
 }
 
 function Start-CombatLoop {

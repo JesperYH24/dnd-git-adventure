@@ -410,6 +410,7 @@ function Test-HeroCanPassActionAndBonusAction {
     Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Passing action and bonus action should not damage the hero."
     Assert-Equal -Actual $monsterHP -Expected $monster.hp -Message "Passing action and bonus action should not damage the monster."
     Assert-Equal -Actual $encounterFled -Expected $false -Message "Passing both slots should end the turn without fleeing."
+    Assert-True -Condition ($global:CapturedScenes -contains "$($hero.Name) has spent both action slots. The enemy gets the next opening.") -Message "Spending or passing both slots should clearly hand the turn to the enemy."
 }
 
 function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
