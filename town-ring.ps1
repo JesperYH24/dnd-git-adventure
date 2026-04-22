@@ -802,65 +802,6 @@ function Resolve-BrawlGrappleAttempt {
     return "Defender"
 }
 
-function Resolve-HeroBrawlGrapple {
-    param(
-        $Hero,
-        $Opponent,
-        [ref]$OpponentHP,
-        [ref]$OpponentOffBalance,
-        $HeroHP = $null
-    )
-
-    $heroAbility = Get-HeroBrawlAbility -Hero $Hero
-    $heroModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $heroAbility
-    $trainingBonus = 0
-
-    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
-        $trainingBonus = [int]$Hero.UnarmedTrainingLevel
-    }
-
-    $opponentGrappleBonus = 0
-
-    if ($null -ne $Opponent.PSObject.Properties["GrappleBonus"]) {
-        $opponentGrappleBonus = [int]$Opponent.GrappleBonus
-    }
-    else {
-        $opponentGrappleBonus = [int]$Opponent.AttackBonus
-    }
-
-    $heroRoll = Roll-Dice -Sides 20
-    $opponentRoll = Roll-Dice -Sides 20
-    $heroTotal = $heroRoll + $heroModifier + $trainingBonus
-    $opponentTotal = $opponentRoll + $opponentGrappleBonus
-
-    Write-Action "$($Hero.Name) dives for a takedown while $($Opponent.Definite) braces hard against it." "Cyan"
-
-    if ($heroRoll -eq 1) {
-        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP
-        Write-ColorLine ""
-        return $false
-    }
-
-    if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
-        $damageRoll = Roll-Dice -Sides 4
-        $controlDamage = [Math]::Max(1, $damageRoll + $heroModifier + $trainingBonus)
-        $OpponentHP.Value -= $controlDamage
-        $OpponentOffBalance.Value = $true
-        Write-Action "$($Hero.Name) drags $($Opponent.Definite) down and comes up in control." "Yellow"
-
-        if ($OpponentHP.Value -lt 0) {
-            $OpponentHP.Value = 0
-        }
-
-        Write-ColorLine ""
-        return $true
-    }
-
-    Write-Action "$($Opponent.Definite) slips away before Borzig can settle the hold." "DarkGray"
-    Write-ColorLine ""
-    return $false
-}
-
 function Start-BrawlLoop {
     param(
         $Hero,

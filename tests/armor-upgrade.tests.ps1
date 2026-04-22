@@ -198,12 +198,10 @@ function Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength {
         isBoss = $false
     }
     $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
 
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
     Assert-Equal -Actual $monsterHP -Expected 9 -Message "Hero crit should deal max weapon die plus a new die roll plus Strength modifier."
-    Assert-True -Condition (-not $heroDroppedWeapon) -Message "A critical hit should not drop the hero's weapon."
 }
 
 function Test-TutorialXPLevelsHeroToTwo {

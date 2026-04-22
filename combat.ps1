@@ -315,7 +315,6 @@ function Invoke-HeroAttack {
         $Hero,
         $Monster,
         [ref]$MonsterHP,
-        [ref]$HeroDroppedWeapon,
         [int]$AttackBonusModifier = 0,
         [bool]$Advantage = $false,
         $HeroHP = $null,
@@ -881,7 +880,7 @@ function Show-BarbarianTutorialCombatHint {
     }
 
     Initialize-HeroBarbarianResources -Hero $Hero
-    Write-Scene "Barbarian combat now has two hard choices: Rage uses the Bonus Action menu for more damage and resistance, while Reckless Attack gives Borzig advantage on his attack but gives the next enemy attack against him advantage too."
+    Write-Scene "Barbarian combat now has two hard choices: Rage uses the Bonus Action menu for more damage and resistance, while Reckless Attack gives $($Hero.Name) advantage on the attack but gives the next enemy attack against $($Hero.GenderPronouns.Objective) advantage too."
     Write-ColorLine ""
     $Hero.TutorialCombatHintShown = $true
 }
@@ -1098,7 +1097,7 @@ function Resolve-HeroCombatTurn {
         if ($choice -eq "A") {
             Resolve-HeroRecklessAttackChoice -Hero $Hero -HeroAttackAdvantage ([ref]$turnHeroAttackAdvantage) -HeroRecklessExposure $HeroRecklessExposure
             Write-ColorLine ""
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded)
+            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded)
             $HeroFocusAttackBonus.Value = 0
             $actionSpent = $true
 

@@ -65,9 +65,8 @@ function Test-FocusBonusImprovesHeroAttack {
     $hero = Get-Hero
     $monster = New-TestMonster
     $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
 
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -AttackBonusModifier 2
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -AttackBonusModifier 2
 
     Assert-Equal -Actual $monsterHP -Expected 12 -Message "Focus should let Borzig land a hit that would otherwise miss."
 }
@@ -107,19 +106,16 @@ function Test-HeroCriticalFailDealsMishapDamageAndEndsTurn {
     $monster = New-TestMonster
     $monsterHP = $monster.hp
     $heroHP = $hero.HP
-    $heroDroppedWeapon = $false
     $heroTurnEnded = $false
 
     Invoke-HeroAttack `
         -Hero $hero `
         -Monster $monster `
         -MonsterHP ([ref]$monsterHP) `
-        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -HeroHP ([ref]$heroHP) `
         -HeroTurnEnded ([ref]$heroTurnEnded)
 
     Assert-Equal -Actual $heroHP -Expected ($hero.HP - 3) -Message "A hero critical fail should deal mishap damage."
-    Assert-Equal -Actual $heroDroppedWeapon -Expected $false -Message "A hero critical fail should no longer force dropped-weapon recovery."
     Assert-Equal -Actual $heroTurnEnded -Expected $true -Message "A hero critical fail should end the rest of the hero's current turn."
 }
 
@@ -460,10 +456,9 @@ function Test-BarbarianRageBonusActionAddsDamage {
     $hero = Get-Hero
     $monster = New-TestMonster
     $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
 
     $usedBonusAction = Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
     Assert-Equal -Actual $usedBonusAction -Expected $true -Message "Rage should spend the barbarian's bonus action."
     Assert-Equal -Actual $hero.CurrentRages -Expected 1 -Message "Starting rage should spend one rage use."
@@ -526,9 +521,8 @@ function Test-BarbarianRecklessAdvantageCanTurnMissIntoHit {
     $hero = Get-Hero
     $monster = New-TestMonster
     $monsterHP = $monster.hp
-    $heroDroppedWeapon = $false
 
-    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -Advantage $true
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -Advantage $true
 
     Assert-Equal -Actual $monsterHP -Expected 12 -Message "Reckless advantage should use the higher d20 roll and hit when the lower roll would miss."
 }
