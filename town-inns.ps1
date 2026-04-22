@@ -671,7 +671,7 @@ function Start-InnVisitMenu {
     $inn = $Game.Town.ActiveInn
 
     if ($null -eq $inn) {
-        Write-Scene "Borzig has not taken a room yet."
+        Write-Scene "$($Game.Hero.Name) has not taken a room yet."
         Write-ColorLine ""
         return "NoInn"
     }
@@ -682,7 +682,7 @@ function Start-InnVisitMenu {
         Write-TownTimeTracker -Game $Game -Area "Inn Visit"
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
         if (-not [bool]$Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"]) {
-            Write-Scene "$($inn.Name) wraps around Borzig like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
+            Write-Scene "$($inn.Name) wraps around $($Game.Hero.Name) like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
             $Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"] = $true
         }
         else {

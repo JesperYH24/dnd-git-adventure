@@ -88,6 +88,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
   - market
   - smithy
   - apothecary
+  - armorer
   - a dedicated town buyer
   - fighting ring that opens at night
   - small NPC rewards, information hooks, and discounts
@@ -97,7 +98,7 @@ A text-based fantasy adventure in PowerShell where you choose a class, survive a
 - class-aware town and NPC reactions with:
   - different greetings, rewards, and utility hooks for barbarian and bard
   - bard-aware intros in quest sources, shops, streets, inns, and quest log text
-  - cleaner use of `Gariand` / current hero name across tutorial, town, inn, and performance text
+  - improved use of `Gariand` / current hero name across tutorial, town, inn, and performance text
   - stronger barbarian-specific city rewards, quest routes, and trust hooks so Borzig feels more intentional outside the ring too
 - fighting ring progression with:
   - unarmed combat with simultaneous round choices
@@ -317,6 +318,7 @@ The remaining bard work is mostly polish and breadth rather than missing foundat
 
 - more full-playthrough testing from tutorial through Tier 2 city quests
 - more scattered bard-specific dialogue and quest variants
+- replacing remaining Borzig-first city text where shared systems should use the current hero
 - future gear/shop expansion for instruments and lighter armor
 - later spell and class-depth work beyond the current `v1`
 

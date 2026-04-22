@@ -302,11 +302,11 @@ function Show-TownQuestSource {
         Write-ColorLine ""
 
         if ($Game.Town.StoryQuestDoneToday) {
-            Write-EmphasisLine -Text "Borzig has already pushed the main story forward today. Another story quest must wait until tomorrow." -Color "DarkYellow"
+            Write-EmphasisLine -Text "$($Game.Hero.Name) has already pushed the main story forward today. Another story quest must wait until tomorrow." -Color "DarkYellow"
         }
 
         if ($Game.Town.DayJobDoneToday) {
-            Write-EmphasisLine -Text "Borzig has already taken one paid side job today." -Color "DarkYellow"
+            Write-EmphasisLine -Text "$($Game.Hero.Name) has already taken one paid side job today." -Color "DarkYellow"
         }
 
         if ($Game.Town.StoryQuestDoneToday -or $Game.Town.DayJobDoneToday) {
@@ -759,7 +759,7 @@ function Resolve-BardPerformance {
     }
 
     if ($Game.Town.PerformanceCountToday -ge 3) {
-        Write-Scene "Borzig has already played three paying sets today. His voice, hands, and audience luck will have to wait for tomorrow."
+        Write-Scene "$($Game.Hero.Name) has already played three paying sets today. His voice, hands, and audience luck will have to wait for tomorrow."
         Write-ColorLine ""
         return [PSCustomObject]@{
             Success = $false
@@ -777,7 +777,7 @@ function Resolve-BardPerformance {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($VenueId) -and [bool]$Game.Town.PerformanceVenuesToday[$VenueId]) {
-        Write-Scene "$($venue.Name) has already had Borzig's set today. If he wants more coin before nightfall, he needs a different room."
+        Write-Scene "$($venue.Name) has already had $($Game.Hero.Name)'s set today. If he wants more coin before nightfall, he needs a different room."
         Write-ColorLine ""
         return [PSCustomObject]@{
             Success = $false
@@ -1122,7 +1122,7 @@ function Start-TownMenu {
                     }
                 }
                 else {
-                    Write-Scene "Borzig has not taken a room yet."
+                    Write-Scene "$($Game.Hero.Name) has not taken a room yet."
                     Write-ColorLine ""
                 }
             }
