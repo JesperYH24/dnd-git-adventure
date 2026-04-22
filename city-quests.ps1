@@ -177,50 +177,50 @@ function Get-UnderstreetComplexRooms {
     $rooms = @{
         sealed_descent = (New-UnderstreetQuestRoom -Id "sealed_descent" -Name "Sealed Descent" -Description "Broken stone stairs fall away beneath the ward. Damp mortar and old guard sigils mark the last point where the city still pretended these routes were closed. Fresh scrape marks suggest heavy crates were dragged east in a hurry." -Exits @{ east = "contraband_hall" })
         contraband_hall = (New-UnderstreetQuestRoom -Id "contraband_hall" -Name "Contraband Hall" -Description "False crates line the passage in crooked ranks. Cheap lamp oil, stamped cloth, and sealed packets have all been staged here for quick movement above. One stack leans at an angle that looks too deliberate to be accidental." -Exits @{ west = "sealed_descent"; south = "cistern_refuge"; east = "tally_crossing"; north = "sentry_turn" } -EncounterFactory "Get-UnderstreetLookoutEnemy" -EncounterTitle "Contraband Hall" -EncounterIntro "A hard-eyed lookout lunges out from behind a wall of false cargo, trying to buy the complex enough time to bury its evidence.")
-        cistern_refuge = (New-UnderstreetQuestRoom -Id "cistern_refuge" -Name "Cistern Refuge" -Description "An old maintenance alcove opens beside a stagnant cistern. The space is cramped, but the stone lip and rusted grating make it defensible if Borzig takes the time to secure it. Someone once hid here long enough to scratch warning marks into the lime." -Exits @{ north = "contraband_hall" } -CanShortRest $true)
-        sentry_turn = (New-UnderstreetQuestRoom -Id "sentry_turn" -Name "Sentry Turn" -Description "A bent corner widens just enough for a sentry post. A stool, a lantern hook, and a strip of chalked wall codes tell Borzig this turn was meant to watch three approaches at once." -Exits @{ south = "contraband_hall"; east = "flooded_switchback"; north = "collapsed_barracks" } -EncounterFactory "Get-UnderstreetSentryEnemy" -EncounterTitle "Sentry Turn" -EncounterIntro "A sentry with a hooked knife kicks the stool aside and comes at Borzig before he can read the wall codes.")
+        cistern_refuge = (New-UnderstreetQuestRoom -Id "cistern_refuge" -Name "Cistern Refuge" -Description "An old maintenance alcove opens beside a stagnant cistern. The space is cramped, but the stone lip and rusted grating make it defensible if {hero} takes the time to secure it. Someone once hid here long enough to scratch warning marks into the lime." -Exits @{ north = "contraband_hall" } -CanShortRest $true)
+        sentry_turn = (New-UnderstreetQuestRoom -Id "sentry_turn" -Name "Sentry Turn" -Description "A bent corner widens just enough for a sentry post. A stool, a lantern hook, and a strip of chalked wall codes tell {hero} this turn was meant to watch three approaches at once." -Exits @{ south = "contraband_hall"; east = "flooded_switchback"; north = "collapsed_barracks" } -EncounterFactory "Get-UnderstreetSentryEnemy" -EncounterTitle "Sentry Turn" -EncounterIntro "A sentry with a hooked knife kicks the stool aside and comes at {hero} before he can read the wall codes.")
         collapsed_barracks = (New-UnderstreetQuestRoom -Id "collapsed_barracks" -Name "Collapsed Barracks" -Description "Half the ceiling has given up here, crushing rotten bunks and leaving a crescent of dry ground near the back wall. A faded gambling rhyme and a cracked footlocker make the dead-end feel less abandoned than it should." -Exits @{ south = "sentry_turn" } -CanShortRest $true)
         tally_crossing = (New-UnderstreetQuestRoom -Id "tally_crossing" -Name "Tally Crossing" -Description "Three passages knot together around a waist-high counting table scarred by blades and ink. Every path looks used, but not equally often. The south passage smells of sump water while the east smells of lampblack and old paper." -Exits @{ west = "contraband_hall"; north = "flooded_switchback"; east = "record_chamber"; south = "sump_gallery" })
-        flooded_switchback = (New-UnderstreetQuestRoom -Id "flooded_switchback" -Name "Flooded Switchback" -Description "The tunnel kinks twice around a flooded trench where dark water moves just fast enough to hide its depth. Bootprints crowd one ledge, and claw-marks score the stone near the bend." -Exits @{ west = "sentry_turn"; south = "tally_crossing"; east = "old_armory" } -EncounterFactory "Get-UnderstreetHoundEnemy" -EncounterTitle "Flooded Switchback" -EncounterIntro "A chain-scarred tunnel hound splashes up from the trench edge while its handler drives it toward Borzig with a curse.")
+        flooded_switchback = (New-UnderstreetQuestRoom -Id "flooded_switchback" -Name "Flooded Switchback" -Description "The tunnel kinks twice around a flooded trench where dark water moves just fast enough to hide its depth. Bootprints crowd one ledge, and claw-marks score the stone near the bend." -Exits @{ west = "sentry_turn"; south = "tally_crossing"; east = "old_armory" } -EncounterFactory "Get-UnderstreetHoundEnemy" -EncounterTitle "Flooded Switchback" -EncounterIntro "A chain-scarred tunnel hound splashes up from the trench edge while its handler drives it toward {hero} with a curse.")
         sump_gallery = (New-UnderstreetQuestRoom -Id "sump_gallery" -Name "Sump Gallery" -Description "The floor dips into a long wet gallery lined with runoff channels and rusted hooks. Someone has been using the dripping noise to hide whispered conversations. One section of wall bears a cleaner rectangle where something once hung." -Exits @{ north = "tally_crossing"; east = "whisper_cells" })
         whisper_cells = (New-UnderstreetQuestRoom -Id "whisper_cells" -Name "Whisper Cells" -Description "A row of cramped holding cells sits behind warped bars. Most doors hang open, but one remains shut beside a niche where candles were burned down to wax claws. The place feels important in the way forgotten cruelty always does." -Exits @{ west = "sump_gallery" })
-        old_armory = (New-UnderstreetQuestRoom -Id "old_armory" -Name "Old Armory" -Description "Weapon racks stand stripped or bent, but a reinforced locker still clings to the wall under a rusted watch crest. The floor shows recent traffic. If the smugglers kept anything worth saving, it may be in here." -Exits @{ west = "flooded_switchback"; south = "record_chamber"; north = "smugglers_lockup" } -EncounterFactory "Get-UnderstreetArmoryWardenEnemy" -EncounterTitle "Old Armory" -EncounterIntro "An armored warden tears a pry-bar off the wall and charges before Borzig can test the locker.")
+        old_armory = (New-UnderstreetQuestRoom -Id "old_armory" -Name "Old Armory" -Description "Weapon racks stand stripped or bent, but a reinforced locker still clings to the wall under a rusted watch crest. The floor shows recent traffic. If the smugglers kept anything worth saving, it may be in here." -Exits @{ west = "flooded_switchback"; south = "record_chamber"; north = "smugglers_lockup" } -EncounterFactory "Get-UnderstreetArmoryWardenEnemy" -EncounterTitle "Old Armory" -EncounterIntro "An armored warden tears a pry-bar off the wall and charges before {hero} can test the locker.")
         smugglers_lockup = (New-UnderstreetQuestRoom -Id "smugglers_lockup" -Name "Smugglers' Lockup" -Description "The lockup is a dead-end cage of chain, old manacles, and confiscated satchels. A key ring is missing from the board, but a single hook still bears fresh scratches and a scrap of red cloth." -Exits @{ south = "old_armory" } -EncounterFactory "Get-UnderstreetGaolerEnemy" -EncounterTitle "Smugglers' Lockup" -EncounterIntro "The lockup's gaoler steps out from the shadows with chain wrapped around one forearm and a cudgel in the other hand.")
-        record_chamber = (New-UnderstreetQuestRoom -Id "record_chamber" -Name "Record Chamber" -Description "Shelves of coded tallies and damp ledgers fill a long narrow room. The understreet network kept its memory here, hidden in dust and oilskin. Some shelves stand too far from the wall, as if the room was searched in a panic." -Exits @{ west = "tally_crossing"; north = "old_armory"; east = "command_vault" } -EncounterFactory "Get-UnderstreetRecordKeeperEnemy" -EncounterTitle "Record Chamber" -EncounterIntro "A ledger-keeper slams shut a hidden folio, grabs a hooked blade, and throws himself between Borzig and the chamber's evidence.")
+        record_chamber = (New-UnderstreetQuestRoom -Id "record_chamber" -Name "Record Chamber" -Description "Shelves of coded tallies and damp ledgers fill a long narrow room. The understreet network kept its memory here, hidden in dust and oilskin. Some shelves stand too far from the wall, as if the room was searched in a panic." -Exits @{ west = "tally_crossing"; north = "old_armory"; east = "command_vault" } -EncounterFactory "Get-UnderstreetRecordKeeperEnemy" -EncounterTitle "Record Chamber" -EncounterIntro "A ledger-keeper slams shut a hidden folio, grabs a hooked blade, and throws himself between {hero} and the chamber's evidence.")
         command_vault = (New-UnderstreetQuestRoom -Id "command_vault" -Name "Command Vault" -Description "The deepest chamber is half office, half bunker. Route maps, coin ledgers, and sealed orders cover a heavy table beneath a pair of guttering lanterns. A locked war chest sits open just enough to prove Serik was ready to run." -Exits @{ west = "record_chamber" } -EncounterFactory "Get-UnderstreetCaptainEnemy" -EncounterTitle "Command Vault" -EncounterIntro "Captain Serik steps into the lantern glow with a heavy blade, a command ledger under one arm, and the cold expression of a man who thought the city would never reach him down here." -BossRoom $true)
     }
 
-    $rooms["contraband_hall"].SearchHintText = "The slanted cargo stack looks wrong. There may be something worth searching if Borzig slows down."
+    $rooms["contraband_hall"].SearchHintText = "The slanted cargo stack looks wrong. There may be something worth searching if {hero} slows down."
     $rooms["contraband_hall"].SearchPromptText = "Search the false cargo stacks for hidden spoils or route notes."
-    $rooms["contraband_hall"].SearchSuccessText = "Borzig shifts the false crates and finds a smuggler's drop pocket: a healing draught, loose coin, and a chalk map marking the hall as a transfer point."
-    $rooms["contraband_hall"].SearchFailureText = "Borzig checks the stacks, but the best hiding place was already skimmed clean before he spots it."
+    $rooms["contraband_hall"].SearchSuccessText = "{hero} shifts the false crates and finds a smuggler's drop pocket: a healing draught, loose coin, and a chalk map marking the hall as a transfer point."
+    $rooms["contraband_hall"].SearchFailureText = "{hero} checks the stacks, but the best hiding place was already skimmed clean before he spots it."
     $rooms["contraband_hall"].SearchDC = 11
     $rooms["contraband_hall"].HiddenLoot += (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1)
     $rooms["contraband_hall"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 8)
 
     $rooms["collapsed_barracks"].SearchHintText = "The cracked footlocker and gambling rhyme make this dead-end feel like it still holds a private stash."
     $rooms["collapsed_barracks"].SearchPromptText = "Search the collapsed bunks and broken footlocker for anything the sentries hid here."
-    $rooms["collapsed_barracks"].SearchSuccessText = "Borzig pries open the crushed locker and finds a field note, a tucked-away potion, and a line about 'the red rag on the lockup board'."
-    $rooms["collapsed_barracks"].SearchFailureText = "Borzig turns the dead-end over, but the best hiding place stays buried under splintered bunks and stone."
+    $rooms["collapsed_barracks"].SearchSuccessText = "{hero} pries open the crushed locker and finds a field note, a tucked-away potion, and a line about 'the red rag on the lockup board'."
+    $rooms["collapsed_barracks"].SearchFailureText = "{hero} turns the dead-end over, but the best hiding place stays buried under splintered bunks and stone."
     $rooms["collapsed_barracks"].SearchDC = 12
     $rooms["collapsed_barracks"].HiddenLoot += (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1)
     $rooms["collapsed_barracks"].SearchRewardText = "Lore: the barracks note suggests the missing armory key was hung near the lockup under a strip of red cloth."
 
     $rooms["sump_gallery"].SearchHintText = "The clean patch on the wall and the sound-cover of the runoff both suggest someone hid things here."
     $rooms["sump_gallery"].SearchPromptText = "Search the runoff hooks and wall seams for anything hidden behind the noise."
-    $rooms["sump_gallery"].SearchSuccessText = "Borzig finds a wax-wrapped packet tucked into the wall seam: route ciphers, a little coin, and another hint that Serik kept backup exits ready."
-    $rooms["sump_gallery"].SearchFailureText = "Borzig checks the dripping wall, but the hiding place stays just out of reach."
+    $rooms["sump_gallery"].SearchSuccessText = "{hero} finds a wax-wrapped packet tucked into the wall seam: route ciphers, a little coin, and another hint that Serik kept backup exits ready."
+    $rooms["sump_gallery"].SearchFailureText = "{hero} checks the dripping wall, but the hiding place stays just out of reach."
     $rooms["sump_gallery"].SearchDC = 12
     $rooms["sump_gallery"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 12)
     $rooms["sump_gallery"].SearchRewardText = "Lore: the ciphers describe fallback routes and emergency fires meant to erase the record chamber in minutes."
 
     $rooms["whisper_cells"].SearchHintText = "The burned candle niche and the shut cell door make this dead-end feel like it was used for more than storage."
     $rooms["whisper_cells"].SearchPromptText = "Search the cells and candle niche for overlooked evidence or hidden belongings."
-    $rooms["whisper_cells"].SearchSuccessText = "Under a loose stone in the candle niche, Borzig finds a narrow iron key wrapped in red cloth and a note recording prisoner names that never reached the watch."
-    $rooms["whisper_cells"].SearchFailureText = "Borzig searches the cells, but the walls keep their best secret."
+    $rooms["whisper_cells"].SearchSuccessText = "Under a loose stone in the candle niche, {hero} finds a narrow iron key wrapped in red cloth and a note recording prisoner names that never reached the watch."
+    $rooms["whisper_cells"].SearchFailureText = "{hero} searches the cells, but the walls keep their best secret."
     $rooms["whisper_cells"].SearchDC = 12
     $rooms["whisper_cells"].SearchRewardFlag = "UnderstreetArmoryKey"
-    $rooms["whisper_cells"].SearchRewardText = "Borzig recovers a red-wrapped key that should fit the old armory locker."
+    $rooms["whisper_cells"].SearchRewardText = "{hero} recovers a red-wrapped key that should fit the old armory locker."
 
     $rooms["old_armory"].LockedCacheName = "reinforced armory locker"
     $rooms["old_armory"].LockedCacheHintText = "The reinforced locker is still intact. It could be forced with brute strength, picked carefully, or opened cleanly with the right key."
@@ -228,7 +228,7 @@ function Get-UnderstreetComplexRooms {
     $rooms["old_armory"].LockedCachePickDC = 13
     $rooms["old_armory"].LockedCacheKeyFlag = "UnderstreetArmoryKey"
     $rooms["old_armory"].LockedCacheOpenText = "The locker finally gives way with a metal crack. Inside are preserved supplies and one piece of gear the smugglers clearly kept for themselves."
-    $rooms["old_armory"].LockedCacheFailText = "The locker holds. Borzig will need a better touch, more force, or the proper key."
+    $rooms["old_armory"].LockedCacheFailText = "The locker holds. {hero} will need a better touch, more force, or the proper key."
     $rooms["old_armory"].LockedCacheLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
     $rooms["old_armory"].LockedCacheLoot += (New-ArmorItem -Name "Braced Leather Vest" -Value 220 -ArmorBonus 1 -SlotCost 2)
 
@@ -237,8 +237,8 @@ function Get-UnderstreetComplexRooms {
 
     $rooms["record_chamber"].SearchHintText = "The shelves that stand away from the wall look recently disturbed. If anything else was hidden here, it may still be nearby."
     $rooms["record_chamber"].SearchPromptText = "Search the displaced shelves and hidden folios for overlooked evidence."
-    $rooms["record_chamber"].SearchSuccessText = "Borzig finds a reserve folio behind the shifted shelf along with a sealed tonic and one more ledger ribbon tying Serik's orders to the city above."
-    $rooms["record_chamber"].SearchFailureText = "Borzig checks the shelves, but the best-hidden folio stays buried in dust and panic."
+    $rooms["record_chamber"].SearchSuccessText = "{hero} finds a reserve folio behind the shifted shelf along with a sealed tonic and one more ledger ribbon tying Serik's orders to the city above."
+    $rooms["record_chamber"].SearchFailureText = "{hero} checks the shelves, but the best-hidden folio stays buried in dust and panic."
     $rooms["record_chamber"].SearchDC = 13
     $rooms["record_chamber"].HiddenLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
     $rooms["record_chamber"].SearchRewardText = "Lore: the reserve folio confirms the understreet was only one branch of a larger smuggling network."
@@ -1107,7 +1107,7 @@ function Start-NightWatchReliefQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the assignment before the watch will brief him."
+        Write-Scene "{hero} needs to accept the assignment before the watch will brief him."
         Write-ColorLine ""
         return
     }
@@ -1129,9 +1129,9 @@ function Start-NightWatchReliefQuest {
         Write-Scene "Gariand joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
     }
     else {
-        Write-Scene "Captain Halden meets Borzig under a guttering lantern and speaks without wasting a word."
+        Write-Scene "Captain Halden meets {hero} under a guttering lantern and speaks without wasting a word."
         Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'And now merchants are whispering about missing stock on top of it. Walk the line, see what scared my people, and come back with something better than rumors.'"
-        Write-Scene "Borzig joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
+        Write-Scene "{hero} joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
     }
     Write-ColorLine ""
     Write-Scene "At the edge of the district they find a smashed city seal, muddy footprints, and drag marks leading to a storm grate half-pried from the street."
@@ -1153,14 +1153,14 @@ function Start-NightWatchReliefQuest {
     }
 
     if ($combatResult.Fled) {
-        Write-Scene "The runner disappears into the drainage dark before Borzig can finish the chase."
+        Write-Scene "The runner disappears into the drainage dark before {hero} can finish the chase."
         Write-Scene "Lysa spits into the gutter. 'We still know more than we did, but the captain won't call this settled yet.'"
         Write-ColorLine ""
         return
     }
 
-    Write-Scene "The runner goes down hard. On the body Borzig finds a marked token, a scrap of delivery code, and a key stamped with an undercity sigil."
-    Write-Scene "Lysa stares at the broken grate, then at the token in Borzig's hand. 'That is not random theft. That's an operation.'"
+    Write-Scene "The runner goes down hard. On the body {hero} finds a marked token, a scrap of delivery code, and a key stamped with an undercity sigil."
+    Write-Scene "Lysa stares at the broken grate, then at the token in {hero}'s hand. 'That is not random theft. That's an operation.'"
     Write-ColorLine ""
 
     $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
@@ -1183,7 +1183,7 @@ function Start-StorehouseTroubleQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the storehouse job before the clerk hands over the key."
+        Write-Scene "{hero} needs to accept the storehouse job before the clerk hands over the key."
         Write-ColorLine ""
         return
     }
@@ -1211,9 +1211,9 @@ function Start-StorehouseTroubleQuest {
         Write-Scene "Inside the locked storehouse Gariand finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
     }
     else {
-        Write-Scene "The patron's clerk presses a cold iron key into Borzig's hand and points him toward the river quarter."
+        Write-Scene "The patron's clerk presses a cold iron key into {hero}'s hand and points him toward the river quarter."
         Write-Scene "'The watch keeps asking about tunnels and night movement,' the clerk mutters. 'I want to know where the goods are going.'"
-        Write-Scene "Inside the locked storehouse Borzig finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
+        Write-Scene "Inside the locked storehouse {hero} finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
     }
     Write-Scene "Someone has been using the place as a transfer point, not just a hiding place."
     Write-ColorLine ""
@@ -1233,12 +1233,12 @@ function Start-StorehouseTroubleQuest {
     }
 
     if ($combatResult.Fled) {
-        Write-Scene "The thief escapes through a side hatch, leaving Borzig with a disturbed storehouse and half a clue."
+        Write-Scene "The thief escapes through a side hatch, leaving {hero} with a disturbed storehouse and half a clue."
         Write-ColorLine ""
         return
     }
 
-    Write-Scene "Among the broken crates Borzig finds false seals, rerouting marks, and a list of goods that never should have left the lawful inventory."
+    Write-Scene "Among the broken crates {hero} finds false seals, rerouting marks, and a list of goods that never should have left the lawful inventory."
     Write-Scene "This is not petty theft. It is organized smuggling with handlers on both sides of the lock."
     Write-ColorLine ""
 
@@ -1262,7 +1262,7 @@ function Start-MissingHerbSatchelQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the satchel job before setting out."
+        Write-Scene "{hero} needs to accept the satchel job before setting out."
         Write-ColorLine ""
         return
     }
@@ -1307,7 +1307,7 @@ function Start-MissingHerbSatchelQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig steps in close and lets brute presence do the talking."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps in close and lets brute presence do the talking."
 
                 if ($success) {
                     Write-Scene "The scavengers surrender the satchel and blurt out that marked runners have been using the old road at night."
@@ -1315,14 +1315,14 @@ function Start-MissingHerbSatchelQuest {
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The scavengers bolt, leaving Borzig with the satchel but only half-heard panic about the road. He learns less than he wanted."
+                    Write-Scene "The scavengers bolt, leaving {hero} with the satchel but only half-heard panic about the road. He learns less than he wanted."
                     $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                 }
 
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "Borzig forces himself to lower his voice and listen before the moment goes bad."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} forces himself to lower his voice and listen before the moment goes bad."
 
                 if ($success) {
                     Write-Scene "The scavengers explain they found the satchel after a courier dropped it while fleeing someone from the city."
@@ -1330,14 +1330,14 @@ function Start-MissingHerbSatchelQuest {
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "Borzig gets the satchel back, but the scavengers never settle enough to say who they feared."
+                    Write-Scene "{hero} gets the satchel back, but the scavengers never settle enough to say who they feared."
                     $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                 }
 
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "Borzig crouches by the broken road and follows the little signs most people walk past."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} crouches by the broken road and follows the little signs most people walk past."
 
                 if ($success) {
                     Write-Scene "He spots the courier mark, the satchel, and a fresh heelprint pointing back toward the city."
@@ -1345,7 +1345,7 @@ function Start-MissingHerbSatchelQuest {
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The search is clumsy, but Borzig still recovers the satchel after turning half the roadside ditch upside down."
+                    Write-Scene "The search is clumsy, but {hero} still recovers the satchel after turning half the roadside ditch upside down."
                     $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                 }
 
@@ -1411,10 +1411,10 @@ function Start-MissingHerbSatchelQuest {
     }
 
     $completionText = if ($strongOutcome) {
-        "The herbalist clutches the satchel to her chest and thanks Borzig more than once before the relief settles in."
+        "The herbalist clutches the satchel to her chest and thanks {hero} more than once before the relief settles in."
     }
     else {
-        "The herbalist gets her satchel back, but Borzig returns with more sympathy than certainty about who dropped it there."
+        "The herbalist gets her satchel back, but {hero} returns with more sympathy than certainty about who dropped it there."
     }
 
     $rewardXP = if ($strongOutcome) { $null } else { 80 }
@@ -1439,7 +1439,7 @@ function Start-LedgerOfAshQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the ledger job before the clerk will risk explaining it."
+        Write-Scene "{hero} needs to accept the ledger job before the clerk will risk explaining it."
         Write-ColorLine ""
         return
     }
@@ -1467,7 +1467,7 @@ function Start-LedgerOfAshQuest {
         Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful. You hear how men talk when they think wit is the same thing as safety. Use that.'"
     }
     else {
-        Write-Scene "The patron's clerk spreads a smoke-smudged ledger across a narrow desk and shows Borzig which entries do not add up."
+        Write-Scene "The patron's clerk spreads a smoke-smudged ledger across a narrow desk and shows {hero} which entries do not add up."
         Write-Scene "Some payments are too clean. Some names repeat in different hands. Someone is paying to move goods without asking what they are."
         Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful.'"
     }
@@ -1490,42 +1490,42 @@ function Start-LedgerOfAshQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig corners the named clerk in a back office and lets silence do most of the work."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} corners the named clerk in a back office and lets silence do most of the work."
                 if ($success) {
                     Write-Scene "The clerk folds quickly and gives up a chain of payments tied to an under-street handler called Serik."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The clerk lies badly, but Borzig still gets enough names to prove the books were cooked."
+                    Write-Scene "The clerk lies badly, but {hero} still gets enough names to prove the books were cooked."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "Borzig grinds through the numbers until the lies in the ink start to stand out."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} grinds through the numbers until the lies in the ink start to stand out."
                 if ($success) {
                     Write-Scene "Three fake freight lines all point back to the same middleman. The name Serik surfaces again and again."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The ledger is a mess, but Borzig still proves the irregular payments are real."
+                    Write-Scene "The ledger is a mess, but {hero} still proves the irregular payments are real."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig leans on the best merchant contacts he has and trades plain truth for useful insight."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} leans on the best merchant contacts he has and trades plain truth for useful insight."
                 if ($success) {
-                    Write-Scene "A contact quietly points Borzig to the same under-street name hidden behind the payments: Serik."
+                    Write-Scene "A contact quietly points {hero} to the same under-street name hidden behind the payments: Serik."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "Even without a clean name, Borzig confirms the payments were not normal trade."
+                    Write-Scene "Even without a clean name, {hero} confirms the payments were not normal trade."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
@@ -1612,7 +1612,7 @@ function Start-BrokenSealPatrolQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the broken seal patrol before the watch will move."
+        Write-Scene "{hero} needs to accept the broken seal patrol before the watch will move."
         Write-ColorLine ""
         return
     }
@@ -1641,7 +1641,7 @@ function Start-BrokenSealPatrolQuest {
         Write-Scene "The other guard eyes Gariand sidelong. 'You were right too. Same names in the nice rooms and the ugly ones. Means this rot has roots.'"
     }
     else {
-        Write-Scene "Captain Halden sends Borzig with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
+        Write-Scene "Captain Halden sends {hero} with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
         Write-Scene "The lock is split, the stones are marked, and the air from below smells like wet mortar and torch smoke."
         Write-Scene "'Your merchant clerk was right about organized movement,' one watchman mutters. 'No one protects a dead tunnel like this unless coin is riding through it.'"
     }
@@ -1655,7 +1655,7 @@ function Start-BrokenSealPatrolQuest {
         -IntroText "A broad-shouldered enforcer rises from the tunnel dark and tries to drive the patrol back before they see how far the route goes."
 
     if ($combatResult.Defeated) {
-        Write-Scene "Borzig is forced up and out before the patrol can secure the line."
+        Write-Scene "{hero} is forced up and out before the patrol can secure the line."
         Write-ColorLine ""
         Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
         return
@@ -1691,7 +1691,7 @@ function Start-NightCourierInterceptQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the courier assignment before the watch shares the route."
+        Write-Scene "{hero} needs to accept the courier assignment before the watch shares the route."
         Write-ColorLine ""
         return
     }
@@ -1740,48 +1740,48 @@ function Start-NightCourierInterceptQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig plants himself in the narrowest part of the lane and turns surprise into a wall of muscle."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} plants himself in the narrowest part of the lane and turns surprise into a wall of muscle."
 
                 if ($success) {
-                    Write-Scene "The courier freezes for half a heartbeat too long. Borzig gets a hand on him, tears the satchel free, and sends him running empty into the dark."
+                    Write-Scene "The courier freezes for half a heartbeat too long. {hero} gets a hand on him, tears the satchel free, and sends him running empty into the dark."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.Relationships["Belor"] = "Trusting"
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier slips away clean. Borzig keeps only a wax strip and a guessed lane pattern, enough to prove there is a courier game but not enough to own the route."
+                    Write-Scene "The courier slips away clean. {hero} keeps only a wax strip and a guessed lane pattern, enough to prove there is a courier game but not enough to own the route."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "Borzig hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible."
 
                 if ($success) {
-                    Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. Borzig does not get the man, but he gets the route and the signal mark."
+                    Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. {hero} does not get the man, but he gets the route and the signal mark."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier senses something and breaks early. Borzig learns which mark to watch for, but not the full route."
+                    Write-Scene "The courier senses something and breaks early. {hero} learns which mark to watch for, but not the full route."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "Borzig steps out under the lantern light and barks a challenge sharp enough to turn speed into panic."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} steps out under the lantern light and barks a challenge sharp enough to turn speed into panic."
 
                 if ($success) {
-                    Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in Borzig's hands."
+                    Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in {hero}'s hands."
                     $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The courier still escapes, and Borzig gets only a signal token and another glimpse of the same marked network."
+                    Write-Scene "The courier still escapes, and {hero} gets only a signal token and another glimpse of the same marked network."
                     $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                 }
 
@@ -1846,7 +1846,7 @@ function Start-NightCourierInterceptQuest {
     }
 
     $completionText = if ($strongOutcome) {
-        "Belor studies the recovered markings in silence, then gives Borzig a curt nod. 'Good. Now we've got their streets as well as their tunnels.'"
+        "Belor studies the recovered markings in silence, then gives {hero} a curt nod. 'Good. Now we've got their streets as well as their tunnels.'"
     }
     else {
         "Belor studies the partial signs and exhales through his nose. 'Not clean enough yet,' he says, 'but it's still more than we had.'"
@@ -1868,13 +1868,13 @@ function Start-WarehouseLedgerRecoveryQuest {
     $quest = Find-TownQuest -Game $Game -QuestId "patron_warehouse_ledger"
 
     if ($null -eq $quest) {
-        Write-Scene "The warehouse-ledger job has vanished before Borzig could get his hands on it."
+        Write-Scene "The warehouse-ledger job has vanished before {hero} could get his hands on it."
         Write-ColorLine ""
         return
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to accept the warehouse-ledger job before the clerk risks the details."
+        Write-Scene "{hero} needs to accept the warehouse-ledger job before the clerk risks the details."
         Write-ColorLine ""
         return
     }
@@ -1901,7 +1901,7 @@ function Start-WarehouseLedgerRecoveryQuest {
         Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter. And if the watch is about to move underground, I want them moving with proof in hand. You can get men talking long past the point they mean to. I need that tonight.'"
     }
     else {
-        Write-Scene "The patron's clerk meets Borzig in a side passage and keeps his voice low."
+        Write-Scene "The patron's clerk meets {hero} in a side passage and keeps his voice low."
         Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter. And if the watch is about to move underground, I want them moving with proof in hand.'"
     }
     Write-Scene "The warehouse office is dark, shuttered, and recently searched. Someone knew the papers were worth hiding."
@@ -1924,48 +1924,48 @@ function Start-WarehouseLedgerRecoveryQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig forces the office before anyone can come back for the papers."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} forces the office before anyone can come back for the papers."
 
                 if ($success) {
-                    Write-Scene "Behind a false shelf panel Borzig finds the true warehouse ledger, complete with hidden marks and payout names."
+                    Write-Scene "Behind a false shelf panel {hero} finds the true warehouse ledger, complete with hidden marks and payout names."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The search turns rough. Borzig saves fragments and margin codes, but not the clean ledger itself."
+                    Write-Scene "The search turns rough. {hero} saves fragments and margin codes, but not the clean ledger itself."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "Borzig slows down and reads the office by what has been moved, scrubbed, or disturbed too recently."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} slows down and reads the office by what has been moved, scrubbed, or disturbed too recently."
 
                 if ($success) {
-                    Write-Scene "A dragged stool and fresh dust line lead Borzig straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
+                    Write-Scene "A dragged stool and fresh dust line lead {hero} straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The room gives up only fragments. Borzig preserves enough to keep the suspicion alive, but not enough to own the case."
+                    Write-Scene "The room gives up only fragments. {hero} preserves enough to keep the suspicion alive, but not enough to own the case."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig corners the night clerk with the kind of flat certainty that makes lies feel expensive."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} corners the night clerk with the kind of flat certainty that makes lies feel expensive."
 
                 if ($success) {
-                    Write-Scene "The clerk breaks and points Borzig to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
+                    Write-Scene "The clerk breaks and points {hero} to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
                     $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The clerk lies first and folds late. Borzig comes away with scraps and irregular entries, not the clean ledger he wanted."
+                    Write-Scene "The clerk lies first and folds late. {hero} comes away with scraps and irregular entries, not the clean ledger he wanted."
                     $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                 }
 
@@ -1982,7 +1982,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                         $strongOutcome = $true
                     }
                     else {
-                        Write-Scene "The clerk holds longer than expected. Borzig still comes away with scraps and accounting tells, but not the whole book."
+                        Write-Scene "The clerk holds longer than expected. {hero} still comes away with scraps and accounting tells, but not the whole book."
                         $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                     }
 
@@ -1998,7 +1998,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                         $strongOutcome = $true
                     }
                     else {
-                        Write-Scene "The office comes apart noisily, and Borzig saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
+                        Write-Scene "The office comes apart noisily, and {hero} saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
                         $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                     }
 
@@ -2177,13 +2177,13 @@ function Start-WhispersBeneathBentNailQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to take the broker's lead seriously before the back room opens up."
+        Write-Scene "{hero} needs to take the broker's lead seriously before the back room opens up."
         Write-ColorLine ""
         return
     }
 
     if ($quest.Completed) {
-        Write-Scene "Borzig has already squeezed what truth he can from the Bent Nail's under-table whispers."
+        Write-Scene "{hero} has already squeezed what truth he can from the Bent Nail's under-table whispers."
         Write-ColorLine ""
         return
     }
@@ -2199,7 +2199,7 @@ function Start-WhispersBeneathBentNailQuest {
     $quest.Objective = "Lean on the Bent Nail's broker network and learn where the city's quiet cargo routes are feeding into the understreets."
 
     Write-SectionTitle -Text "Whispers Beneath the Bent Nail" -Color "Yellow"
-    Write-Scene "Past the loud tables and dice cups, a scarred broker finally admits Borzig into the Bent Nail's back booths."
+    Write-Scene "Past the loud tables and dice cups, a scarred broker finally admits {hero} into the Bent Nail's back booths."
     Write-Scene "The man calls himself Brin and talks like every sentence costs him something. 'You didn't hear this from me,' he mutters. 'But plenty of folk are moving cargo that never sees a legal ledger.'"
     Write-Scene "'Funny thing,' Brin adds. 'The watch asks about tunnels, the merchants ask about missing goods, and they're both really asking about the same people.'"
     Write-ColorLine ""
@@ -2213,7 +2213,7 @@ function Start-WhispersBeneathBentNailQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig leans over the table and makes it clear this is the last soft chance Brin gets."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} leans over the table and makes it clear this is the last soft chance Brin gets."
 
                 if ($success) {
                     Write-Scene "Brin folds fast and names a smugglers' route running beneath the river stairs, along with the warning that the work is organized."
@@ -2223,14 +2223,14 @@ function Start-WhispersBeneathBentNailQuest {
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "Brin gives up less than Borzig wants. Borzig leaves knowing the Bent Nail matters, but without the clean confirmation needed to lock the broker into the case."
+                    Write-Scene "Brin gives up less than {hero} wants. {hero} leaves knowing the Bent Nail matters, but without the clean confirmation needed to lock the broker into the case."
                     $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "Borzig pays for the next round, lowers his tone, and lets the broker believe the conversation is still his idea."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} pays for the next round, lowers his tone, and lets the broker believe the conversation is still his idea."
 
                 if ($success) {
                     Write-Scene "Brin loosens up enough to name the handlers moving cargo off-book and to admit the Bent Nail has been hearing their footsteps for weeks."
@@ -2240,23 +2240,23 @@ function Start-WhispersBeneathBentNailQuest {
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The coin buys patience more than honesty. Borzig gets a smell of the route, but not the broker's clean confession."
+                    Write-Scene "The coin buys patience more than honesty. {hero} gets a smell of the route, but not the broker's clean confession."
                     $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "Borzig slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over."
 
                 if ($success) {
-                    Write-Scene "Borzig shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
+                    Write-Scene "{hero} shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
                     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
                     $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
                     $strongOutcome = $true
                 }
                 else {
-                    Write-Scene "The tail is clumsy. Borzig confirms the room is nervous for a reason, but he loses the handoff before it becomes proof."
+                    Write-Scene "The tail is clumsy. {hero} confirms the room is nervous for a reason, but he loses the handoff before it becomes proof."
                     $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
                 }
 
@@ -2280,10 +2280,10 @@ function Start-WhispersBeneathBentNailQuest {
     }
 
     $completionText = if ($strongOutcome) {
-        "Brin vanishes back into the Bent Nail's smoke before Borzig is even done thinking through the lead."
+        "Brin vanishes back into the Bent Nail's smoke before {hero} is even done thinking through the lead."
     }
     else {
-        "Brin disappears back into the smoke with most of his certainty intact, leaving Borzig with a rumor worth respecting but not yet proving."
+        "Brin disappears back into the smoke with most of his certainty intact, leaving {hero} with a rumor worth respecting but not yet proving."
     }
 
     $rewardXP = if ($strongOutcome) { $null } else { 100 }
@@ -2319,23 +2319,23 @@ function Start-MissingDeliveryDayJob {
     Write-SectionTitle -Text $quest.Name -Color "Yellow"
     switch ($QuestId) {
         "dayjob_market_delivery_2" {
-            Write-Scene "The same runner waves Borzig over with a ledger tucked under one arm. A crate was delivered, paid for, and signed under the wrong stall, which means three merchants are now angry and one is lying."
-            Write-Scene "This is still day work, but it pays better because the runner now trusts Borzig with a problem that can cost reputation as well as coin."
+            Write-Scene "The same runner waves {hero} over with a ledger tucked under one arm. A crate was delivered, paid for, and signed under the wrong stall, which means three merchants are now angry and one is lying."
+            Write-Scene "This is still day work, but it pays better because the runner now trusts {hero} with a problem that can cost reputation as well as coin."
         }
         "dayjob_market_delivery_3" {
-            Write-Scene "By now the market runners know Borzig's face. This time the package is sealed, valuable, and expected across the square before a rival buyer realizes it moved."
+            Write-Scene "By now the market runners know {hero}'s face. This time the package is sealed, valuable, and expected across the square before a rival buyer realizes it moved."
             Write-Scene "The work is still honest enough, but the coin is better because everyone involved knows a known hand is worth paying for."
         }
         default {
             if ($Game.Hero.Level -ge 3) {
-                Write-Scene "A market runner needs one missing crate found before the market eats the loss. With Borzig taking the job, the man sounds more hopeful than frightened."
+                Write-Scene "A market runner needs one missing crate found before the market eats the loss. With {hero} taking the job, the man sounds more hopeful than frightened."
             }
             else {
                 Write-Scene "A market runner explains the problem quickly: one crate of lamp oil and cloth never reached its stall, and if it stays missing too long he eats the loss."
             }
         }
     }
-    Write-Scene "Borzig only needs to get the goods moving again and avoid turning day work into a street fight."
+    Write-Scene "{hero} only needs to get the goods moving again and avoid turning day work into a street fight."
     Write-ColorLine "1. Clear the alley by force (STR)" "White"
     Write-ColorLine "2. Haul the crate back yourself (STR)" "White"
     Write-ColorLine "3. Talk the locals into helping (CHA)" "White"
@@ -2352,9 +2352,9 @@ function Start-MissingDeliveryDayJob {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig steps into the alley and makes it clear the crate is moving now." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "Borzig gets both hands under the crate and muscles the job back on schedule." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "Borzig slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps into the alley and makes it clear the crate is moving now." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} gets both hands under the crate and muscles the job back on schedule." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate." -CheckTag "Performance"
@@ -2394,9 +2394,9 @@ function Start-MissingDeliveryDayJob {
     }
 
     $completionText = switch ($QuestId) {
-        "dayjob_market_delivery_2" { "The runner checks the corrected ledger twice, pays Borzig, and looks relieved that the market will be arguing about prices instead of blame by sunset." }
+        "dayjob_market_delivery_2" { "The runner checks the corrected ledger twice, pays {hero}, and looks relieved that the market will be arguing about prices instead of blame by sunset." }
         "dayjob_market_delivery_3" { "The sealed package reaches the right hands. The runner pays without haggling this time, which says more than thanks would." }
-        default { "The runner presses the agreed coin into Borzig's hand and hurries back to the market before the loss becomes permanent." }
+        default { "The runner presses the agreed coin into {hero}'s hand and hurries back to the market before the loss becomes permanent." }
     }
 
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
@@ -2429,7 +2429,7 @@ function Start-GateDutyOverflowDayJob {
     switch ($QuestId) {
         "dayjob_gate_labor_2" {
             Write-Scene "At the east gate, the problem is paper instead of freight: two merchants both claim the toll was already paid, and the line is turning ugly while clerks compare marks."
-            Write-Scene "The sergeant wants Borzig to settle it cleanly before daylight traffic turns one dispute into ten."
+            Write-Scene "The sergeant wants {hero} to settle it cleanly before daylight traffic turns one dispute into ten."
         }
         "dayjob_gate_labor_3" {
             Write-Scene "A noble convoy has locked the gate with polished guards, proud horses, and the kind of impatience that makes ordinary drivers furious."
@@ -2454,9 +2454,9 @@ function Start-GateDutyOverflowDayJob {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "Borzig steps into the middle of the jam and makes his presence the new center of the argument." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "Borzig leans in against wood and iron until the worst wagon finally shudders free." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "Borzig tries the harder route and talks the hottest temper back down before the guards have to draw batons." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "{hero} leans in against wood and iron until the worst wagon finally shudders free." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} tries the harder route and talks the hottest temper back down before the guards have to draw batons." }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
                 Write-ColorLine ""
@@ -2475,9 +2475,9 @@ function Start-GateDutyOverflowDayJob {
     }
 
     $completionText = switch ($QuestId) {
-        "dayjob_gate_labor_2" { "The toll dispute ends with the line moving and the sergeant's paperwork still clean. He pays Borzig like a man who hates needing help but respects useful results." }
-        "dayjob_gate_labor_3" { "The noble convoy finally clears the gate without a street brawl. The sergeant counts out better coin and admits, very grudgingly, that Borzig saved the watch a long afternoon." }
-        default { "The gate sergeant counts out Borzig's pay and tells him to come back if he wants honest work again." }
+        "dayjob_gate_labor_2" { "The toll dispute ends with the line moving and the sergeant's paperwork still clean. He pays {hero} like a man who hates needing help but respects useful results." }
+        "dayjob_gate_labor_3" { "The noble convoy finally clears the gate without a street brawl. The sergeant counts out better coin and admits, very grudgingly, that {hero} saved the watch a long afternoon." }
+        default { "The gate sergeant counts out {hero}'s pay and tells him to come back if he wants honest work again." }
     }
 
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
@@ -2509,7 +2509,7 @@ function Start-DockWorkDayJob {
     Write-SectionTitle -Text $quest.Name -Color "Yellow"
     switch ($QuestId) {
         "dayjob_dock_loading_2" {
-            Write-Scene "The dock boss spots Borzig before the shouting crews do. Two cargo marks point to the same stack, and neither side wants to admit the ledger may be wrong."
+            Write-Scene "The dock boss spots {hero} before the shouting crews do. Two cargo marks point to the same stack, and neither side wants to admit the ledger may be wrong."
             Write-Scene "The pay is better because the job now needs a cool head as much as a strong back."
         }
         "dayjob_dock_loading_3" {
@@ -2572,9 +2572,9 @@ function Start-DockWorkDayJob {
     }
 
     $completionText = switch ($QuestId) {
-        "dayjob_dock_loading_2" { "The cargo dispute settles before fists come out. The dock boss pays Borzig and marks him down as someone worth calling when freight turns political." }
+        "dayjob_dock_loading_2" { "The cargo dispute settles before fists come out. The dock boss pays {hero} and marks him down as someone worth calling when freight turns political." }
         "dayjob_dock_loading_3" { "The heavy-tide job clears just before the river makes it impossible. The dock boss pays the higher rate without pretending it was easy." }
-        default { "The dock boss counts out Borzig's pay with wet fingers and points him toward the city before the next crew tries to hire him again." }
+        default { "The dock boss counts out {hero}'s pay with wet fingers and points him toward the city before the next crew tries to hire him again." }
     }
 
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
@@ -2606,7 +2606,7 @@ function Start-ScribeWorkDayJob {
     Write-SectionTitle -Text $quest.Name -Color "Yellow"
     switch ($QuestId) {
         "dayjob_scribe_copy_2" {
-            Write-Scene "The clerk remembers Borzig and slides over a stack of drafts with ink still drying. The sums do not quite match, and someone important wants the clean version fast."
+            Write-Scene "The clerk remembers {hero} and slides over a stack of drafts with ink still drying. The sums do not quite match, and someone important wants the clean version fast."
             Write-Scene "This is better-paid work because a copied error can become a public embarrassment."
         }
         "dayjob_scribe_copy_3" {
@@ -2669,9 +2669,9 @@ function Start-ScribeWorkDayJob {
     }
 
     $completionText = switch ($QuestId) {
-        "dayjob_scribe_copy_2" { "The corrected drafts leave the office under fresh sand and a grateful seal. The clerk pays Borzig with the air of someone who will remember reliable help." }
+        "dayjob_scribe_copy_2" { "The corrected drafts leave the office under fresh sand and a grateful seal. The clerk pays {hero} with the air of someone who will remember reliable help." }
         "dayjob_scribe_copy_3" { "The sealed abstract is finished cleanly and tucked away before the wrong ears can notice. The clerk pays the higher rate in quiet coin." }
-        default { "The clerk counts out Borzig's copy wage and slides the finished contracts into the outgoing stack." }
+        default { "The clerk counts out {hero}'s copy wage and slides the finished contracts into the outgoing stack." }
     }
 
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText

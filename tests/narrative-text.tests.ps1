@@ -39,8 +39,18 @@ function Test-ClassNarrativeTextFallsBackForFutureClass {
     Assert-Equal -Actual $text -Expected "Nyra trusts her read of the room and keeps herself ready." -Message "Unknown future classes should use tokenized default text instead of a hardcoded existing class branch."
 }
 
+function Test-QuestNarrativeDoesNotReintroduceBorzigLocks {
+    $cityQuestText = Get-Content -Raw -Path (Join-Path $PSScriptRoot "..\city-quests.ps1")
+    $questText = Get-Content -Raw -Path (Join-Path $PSScriptRoot "..\quests.ps1")
+    $questBorzigMatches = [regex]::Matches($questText, "\bBorzig\b")
+
+    Assert-Equal -Actual ([regex]::Matches($cityQuestText, "\bBorzig\b").Count) -Expected 0 -Message "City quest narrative should use {hero} or class branches instead of hardcoded Borzig."
+    Assert-Equal -Actual $questBorzigMatches.Count -Expected 1 -Message "Quest definitions should only keep Borzig as the fallback hero name."
+}
+
 Test-HeroNarrativeTokensUseCurrentUiHero
 Test-ClassNarrativeTextChoosesClassBranch
 Test-ClassNarrativeTextFallsBackForFutureClass
+Test-QuestNarrativeDoesNotReintroduceBorzigLocks
 
 Write-Host "Narrative text tests passed." -ForegroundColor Green
