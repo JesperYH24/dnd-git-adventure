@@ -92,6 +92,37 @@ function Test-BlockRaisesArmorClassAgainstNextAttack {
     Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Block should cause the next monster attack to miss if the bonus pushes AC high enough."
 }
 
+function Test-HeroCriticalFailDealsMishapDamageAndEndsTurn {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 1 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $heroHP = $hero.HP
+    $heroDroppedWeapon = $false
+    $heroTurnEnded = $false
+
+    Invoke-HeroAttack `
+        -Hero $hero `
+        -Monster $monster `
+        -MonsterHP ([ref]$monsterHP) `
+        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+        -HeroHP ([ref]$heroHP) `
+        -HeroTurnEnded ([ref]$heroTurnEnded)
+
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 3) -Message "A hero critical fail should deal mishap damage."
+    Assert-Equal -Actual $heroDroppedWeapon -Expected $false -Message "A hero critical fail should no longer force dropped-weapon recovery."
+    Assert-Equal -Actual $heroTurnEnded -Expected $true -Message "A hero critical fail should end the rest of the hero's current turn."
+}
+
 function Test-BarbarianCritKillGetsSavageFinisherText {
     $hero = Get-Hero
     $monster = New-TestMonster
@@ -307,6 +338,84 @@ function Test-BardBonusActionCanResolveBeforeMainAction {
     Assert-Equal -Actual $encounterFled -Expected $true -Message "The bard should still be able to take a normal action after the bonus action menu."
 }
 
+function Test-BardBonusActionCanResolveAfterMainAction {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "A", "2", "M")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    $script:rolls = @(2, 5, 3)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monster.hp = 3
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $monsterHP -Expected 0 -Message "The bard should be able to take a bonus action after using the main action."
+}
+
+function Test-HeroCanPassActionAndBonusAction {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "P", "2", "N")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+    $heroBlockArmorBonus = 0
+    $heroFocusAttackBonus = 0
+    $heroRecklessExposure = $false
+
+    Resolve-HeroCombatTurn `
+        -Hero $hero `
+        -Monster $monster `
+        -HeroHP ([ref]$heroHP) `
+        -MonsterHP ([ref]$monsterHP) `
+        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+        -MonsterOffBalance ([ref]$monsterOffBalance) `
+        -EncounterFled ([ref]$encounterFled) `
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) `
+        -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) `
+        -HeroRecklessExposure ([ref]$heroRecklessExposure)
+
+    Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Passing action and bonus action should not damage the hero."
+    Assert-Equal -Actual $monsterHP -Expected $monster.hp -Message "Passing action and bonus action should not damage the monster."
+    Assert-Equal -Actual $encounterFled -Expected $false -Message "Passing both slots should end the turn without fleeing."
+}
+
 function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
     Set-TestOutputStubs
 
@@ -507,6 +616,7 @@ function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
 
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
+Test-HeroCriticalFailDealsMishapDamageAndEndsTurn
 Test-BarbarianCritKillGetsSavageFinisherText
 Test-ClassActionFlavorTextResolvesCombatTokens
 Test-BardInspirationBoostsCurrentAttack
@@ -515,6 +625,8 @@ Test-BardViciousMockeryBonusActionDealsPsychicDamage
 Test-BardViciousMockeryCanBeSavedAgainst
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
+Test-BardBonusActionCanResolveAfterMainAction
+Test-HeroCanPassActionAndBonusAction
 Test-BarbarianCanOpenBonusActionMenuAndStillAct
 Test-BarbarianRageBonusActionAddsDamage
 Test-BarbarianRageReducesIncomingDamage

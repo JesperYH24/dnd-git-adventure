@@ -173,6 +173,68 @@ function Get-BardCuttingWordsPreventedHitFlavorText {
     return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
 }
 
+function Get-HeroCriticalFailFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    if ($Hero.Class -eq "Barbarian") {
+        $line = Get-RandomCombatFlavorText -Options @(
+            "{Hero} overcommits hard enough to turn rage into a bad landing.",
+            "{Hero}'s swing bites empty air, and the momentum comes back mean.",
+            "{Hero} drives in too deep, catches a brutal angle, and pays for it in blood.",
+            "The attack goes wide. {Hero} keeps hold of the weapon, but not the clean footing."
+        )
+
+        return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+    }
+
+    if ($Hero.Class -eq "Bard") {
+        $line = Get-RandomCombatFlavorText -Options @(
+            "{Hero}'s flourish turns one beat too clever, and the mistake bites back.",
+            "{Hero} commits to the bit, loses the rhythm, and catches pain instead of applause.",
+            "{Hero}'s attack slips off tempo, leaving no graceful way out of the recoil.",
+            "The move needed confidence. {Hero} supplied too much and pays for the extra."
+        )
+
+        return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+    }
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero}'s attack goes wrong, turning momentum into a painful stumble.",
+        "{Hero} misses badly and catches the ugly cost of the opening."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Resolve-HeroCriticalFail {
+    param(
+        $Hero,
+        $Monster,
+        $HeroHP = $null,
+        $HeroTurnEnded = $null
+    )
+
+    $damage = Roll-Dice -Sides 4
+
+    Write-Action "CRITICAL FAIL!" "Magenta"
+    Write-Scene (Get-HeroCriticalFailFlavorText -Hero $Hero -Monster $Monster)
+
+    if ($null -ne $HeroHP) {
+        $HeroHP.Value = [Math]::Max(0, $HeroHP.Value - $damage)
+        Write-Action "$($Hero.Name) takes $damage mishap damage and loses the rest of this turn." "Red"
+    }
+    else {
+        Write-Action "$($Hero.Name) loses the rest of this turn." "Red"
+    }
+
+    if ($null -ne $HeroTurnEnded) {
+        $HeroTurnEnded.Value = $true
+    }
+}
+
 function Get-HeroRageDamageBonus {
     param(
         $Hero,
@@ -255,7 +317,9 @@ function Invoke-HeroAttack {
         [ref]$MonsterHP,
         [ref]$HeroDroppedWeapon,
         [int]$AttackBonusModifier = 0,
-        [bool]$Advantage = $false
+        [bool]$Advantage = $false,
+        $HeroHP = $null,
+        $HeroTurnEnded = $null
     )
 
     $weapon = Get-HeroWeaponProfile -Hero $Hero
@@ -301,9 +365,7 @@ function Invoke-HeroAttack {
         }
     }
     elseif ($heroRoll -eq 1) {
-        $HeroDroppedWeapon.Value = $true
-        Write-Action "CRITICAL FAIL!" "Magenta"
-        Write-Scene "$($Hero.Name) fumbles, drops the weapon, and must pick it up next turn!"
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Monster -HeroHP $HeroHP -HeroTurnEnded $HeroTurnEnded
     }
     elseif ($attackTotal -ge $targetArmorClass) {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $weapon
@@ -548,7 +610,9 @@ function Resolve-HeroBonusAction {
     param(
         $Hero,
         $Monster,
-        [ref]$MonsterHP
+        [ref]$MonsterHP,
+        $HeroHP = $null,
+        $HeroTurnEnded = $null
     )
 
     if ($MonsterHP.Value -le 0) {
@@ -825,22 +889,28 @@ function Show-BarbarianTutorialCombatHint {
 function Show-CombatTurnMenu {
     param(
         $Hero,
+        [bool]$ActionSpent = $false,
         [bool]$BonusActionSpent = $false
     )
 
+    $actionText = "1. Action"
     $bonusText = "2. Bonus Action"
+
+    if ($ActionSpent) {
+        $actionText = "1. Action (used)"
+    }
 
     if ($BonusActionSpent) {
         $bonusText = "2. Bonus Action (used)"
     }
 
-    Write-ColorLine "1. Action   $bonusText   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    Write-ColorLine "$actionText   $bonusText   3. End Turn   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
 
 function Show-CombatChoiceMenu {
     Write-ColorLine "A. Attack   B. Block   F. Focus" "White"
-    Write-ColorLine "I. Inventory   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    Write-ColorLine "I. Inventory   P. Pass Action   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
 
@@ -901,10 +971,12 @@ function Resolve-HeroCombatTurn {
     $choice = $null
     $turnHeroAttackBonus = 0
     $turnHeroAttackAdvantage = $false
+    $turnHeroEnded = $false
+    $actionSpent = $false
     $bonusActionSpent = $false
 
-    while ($null -eq $choice) {
-        Show-CombatTurnMenu -Hero $Hero -BonusActionSpent $bonusActionSpent
+    while (-not $actionSpent -or -not $bonusActionSpent) {
+        Show-CombatTurnMenu -Hero $Hero -ActionSpent $actionSpent -BonusActionSpent $bonusActionSpent
         $turnMenuChoice = (Read-Host "Choose").ToUpper()
 
         if ($turnMenuChoice -eq "T") {
@@ -912,14 +984,13 @@ function Resolve-HeroCombatTurn {
             continue
         }
 
-        if ($turnMenuChoice -eq "2") {
-            if ($Hero.Class -notin @("Bard", "Barbarian")) {
-                Write-ColorLine ""
-                Write-ColorLine "No bonus action is available for $($Hero.Name) yet." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
+        if ($turnMenuChoice -eq "3") {
+            Write-Scene "$($Hero.Name) lets the moment pass and ends the turn."
+            Write-ColorLine ""
+            return
+        }
 
+        if ($turnMenuChoice -eq "2") {
             if ($bonusActionSpent) {
                 Write-ColorLine ""
                 Write-ColorLine "The bonus action is already spent this round." "DarkYellow"
@@ -927,9 +998,18 @@ function Resolve-HeroCombatTurn {
                 continue
             }
 
-            $bonusActionSpent = Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP
+            if ($Hero.Class -notin @("Bard", "Barbarian")) {
+                Write-ColorLine ""
+                Write-ColorLine "$($Hero.Name) passes the bonus action." "DarkGray"
+                Write-ColorLine ""
+                $bonusActionSpent = $true
+                continue
+            }
 
-            if ($MonsterHP.Value -le 0) {
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) | Out-Null
+            $bonusActionSpent = $true
+
+            if ($MonsterHP.Value -le 0 -or $HeroHP.Value -le 0 -or $turnHeroEnded) {
                 return
             }
 
@@ -938,7 +1018,14 @@ function Resolve-HeroCombatTurn {
 
         if ($turnMenuChoice -ne "1") {
             Write-ColorLine ""
-            Write-ColorLine "Choose 1, 2 or T." "DarkYellow"
+            Write-ColorLine "Choose 1, 2, 3 or T." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        if ($actionSpent) {
+            Write-ColorLine ""
+            Write-ColorLine "The action is already spent this round." "DarkYellow"
             Write-ColorLine ""
             continue
         }
@@ -949,58 +1036,76 @@ function Resolve-HeroCombatTurn {
         if ($choice -eq "T") {
             Toggle-TextSpeed | Out-Null
             $choice = $null
+            continue
         }
-    }
 
-    if ($choice -eq "I") {
-        Write-ColorLine ""
-        $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP -InCombat
+        if ($choice -eq "P") {
+            Write-Scene "$($Hero.Name) passes the action and keeps the guard up."
+            Write-ColorLine ""
+            $actionSpent = $true
+            continue
+        }
 
-        if (-not $usedItem) {
+        if ($choice -eq "I") {
+            Write-ColorLine ""
+            $usedItem = Open-InventoryMenu -Hero $Hero -HeroHP $HeroHP -InCombat
+
+            if ($usedItem) {
+                $actionSpent = $true
+            }
+
+            continue
+        }
+        elseif ($choice -eq "R") {
+            Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
+            $EncounterFled.Value = $true
             return
         }
-    }
-    elseif ($choice -eq "R") {
-        Write-Scene "$($Hero.Name) flees from $($Monster.definite)!"
-        $EncounterFled.Value = $true
-        return
-    }
-    elseif ($choice -in @("A", "B", "F")) {
+
+        if ($choice -notin @("A", "B", "F")) {
+            Write-ColorLine ""
+            Write-ColorLine "Type A, B, F, I, P, R or T." "DarkYellow"
+            Write-ColorLine ""
+            $choice = $null
+            continue
+        }
+
         Resolve-HeroInspirationBoost `
             -Hero $Hero `
             -PrimaryAction $choice `
             -HeroAttackBonus ([ref]$turnHeroAttackBonus) `
             -HeroBlockArmorBonus $HeroBlockArmorBonus `
             -HeroFocusAttackBonus $HeroFocusAttackBonus
-    }
-    else {
-        Write-ColorLine ""
-        Write-ColorLine "Type A, B, F, I, R or T." "DarkYellow"
-        Write-ColorLine ""
-        return (Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus $HeroBlockArmorBonus -HeroFocusAttackBonus $HeroFocusAttackBonus -HeroRecklessExposure $HeroRecklessExposure)
-    }
 
-    if ($choice -eq "B") {
-        Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
-        $HeroBlockArmorBonus.Value += 2
-        Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
-        Write-ColorLine ""
-        return
-    }
+        if ($choice -eq "B") {
+            Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
+            $HeroBlockArmorBonus.Value += 2
+            Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
+            Write-ColorLine ""
+            $actionSpent = $true
+            continue
+        }
 
-    if ($choice -eq "F") {
-        Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
-        $HeroFocusAttackBonus.Value += 2
-        Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
-        Write-ColorLine ""
-        return
-    }
+        if ($choice -eq "F") {
+            Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
+            $HeroFocusAttackBonus.Value += 2
+            Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
+            Write-ColorLine ""
+            $actionSpent = $true
+            continue
+        }
 
-    if ($choice -eq "A") {
-        Resolve-HeroRecklessAttackChoice -Hero $Hero -HeroAttackAdvantage ([ref]$turnHeroAttackAdvantage) -HeroRecklessExposure $HeroRecklessExposure
-        Write-ColorLine ""
-        Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage
-        $HeroFocusAttackBonus.Value = 0
+        if ($choice -eq "A") {
+            Resolve-HeroRecklessAttackChoice -Hero $Hero -HeroAttackAdvantage ([ref]$turnHeroAttackAdvantage) -HeroRecklessExposure $HeroRecklessExposure
+            Write-ColorLine ""
+            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded)
+            $HeroFocusAttackBonus.Value = 0
+            $actionSpent = $true
+
+            if ($MonsterHP.Value -le 0 -or $HeroHP.Value -le 0 -or $turnHeroEnded) {
+                return
+            }
+        }
     }
 }
 

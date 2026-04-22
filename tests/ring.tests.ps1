@@ -119,6 +119,79 @@ function Test-OpponentCritUsesMaxDiePlusRolledDie {
     Assert-Equal -Actual $heroHP -Expected 12 -Message "Opponent crits should deal max die + rolled die + modifier."
 }
 
+function Test-HeroRingPunchCriticalFailDealsMishapDamage {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+    $opponentHP = 10
+    $heroTurnEnded = $false
+    $opponent = [PSCustomObject]@{
+        Name = "Test Bruiser"
+        Definite = "Test Bruiser"
+        ArmorClass = 12
+        HP = 10
+        AttackBonus = 2
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 2
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(1)
+    $script:rollQueue.Enqueue(3)
+
+    Set-TestRollStub {
+        param([int]$Sides)
+        return $script:rollQueue.Dequeue()
+    }
+
+    Invoke-HeroBrawlAttack -Hero $hero -Opponent $opponent -OpponentHP ([ref]$opponentHP) -HeroHP ([ref]$heroHP) -HeroTurnEnded ([ref]$heroTurnEnded)
+
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 3) -Message "A ring punch critical fail should deal mishap damage to the hero."
+    Assert-Equal -Actual $opponentHP -Expected 10 -Message "A ring punch critical fail should not damage the opponent."
+    Assert-Equal -Actual $heroTurnEnded -Expected $true -Message "A ring punch critical fail should end the hero's exchange attempt."
+}
+
+function Test-HeroRingGrappleCriticalFailDealsMishapDamage {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $heroHP = $hero.HP
+    $opponentHP = 10
+    $heroOffBalance = $false
+    $opponentOffBalance = $false
+    $heroFocusAttackBonus = 0
+    $opponentFocusAttackBonus = 0
+    $opponent = [PSCustomObject]@{
+        Name = "Test Grappler"
+        Definite = "Test Grappler"
+        ArmorClass = 11
+        HP = 10
+        AttackBonus = 1
+        DamageDiceSides = 4
+        DamageBonus = 1
+        GrappleBonus = 4
+    }
+
+    $script:rollQueue = [System.Collections.Generic.Queue[int]]::new()
+    $script:rollQueue.Enqueue(1)
+    $script:rollQueue.Enqueue(12)
+    $script:rollQueue.Enqueue(2)
+
+    Set-TestRollStub {
+        param([int]$Sides)
+        return $script:rollQueue.Dequeue()
+    }
+
+    $result = Resolve-BrawlGrappleAttempt -Hero $hero -Opponent $opponent -HeroHP ([ref]$heroHP) -OpponentHP ([ref]$opponentHP) -HeroOffBalance ([ref]$heroOffBalance) -OpponentOffBalance ([ref]$opponentOffBalance) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -OpponentFocusAttackBonus ([ref]$opponentFocusAttackBonus) -HeroInitiates $true -DefenderAction "Block"
+
+    Assert-Equal -Actual $result -Expected "HeroCriticalFail" -Message "A ring grapple critical fail should end the hero's grapple attempt."
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 2) -Message "A ring grapple critical fail should deal mishap damage to the hero."
+    Assert-Equal -Actual $opponentHP -Expected 10 -Message "A ring grapple critical fail should not damage the opponent."
+    Assert-Equal -Actual $opponentOffBalance -Expected $false -Message "A failed critical grapple should not off-balance the opponent."
+}
+
 function Test-GrappleHeavyOpponentCanChooseGrapple {
     $opponent = [PSCustomObject]@{
         GrappleChance = 45
@@ -310,6 +383,8 @@ Test-RingVeteranCircuitUnlocksAfterFifteenWins
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie
+Test-HeroRingPunchCriticalFailDealsMishapDamage
+Test-HeroRingGrappleCriticalFailDealsMishapDamage
 Test-GrappleHeavyOpponentCanChooseGrapple
 Test-RingOpponentIntroReflectsRivalryRecord
 Test-PunchVsGrappleUsesPunchBonus

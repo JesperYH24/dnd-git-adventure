@@ -397,7 +397,9 @@ function Invoke-HeroBrawlAttack {
         [ref]$OpponentHP,
         [int]$AttackBonusModifier = 0,
         [int]$TargetArmorBonus = 0,
-        [string]$TargetAction = "Punch"
+        [string]$TargetAction = "Punch",
+        $HeroHP = $null,
+        $HeroTurnEnded = $null
     )
 
     $profile = Get-HeroUnarmedProfile -Hero $Hero
@@ -424,7 +426,7 @@ function Invoke-HeroBrawlAttack {
         Write-Action "$($Hero.Name) lands a brutal hook that rocks $($Opponent.Definite)." "Yellow"
     }
     elseif ($roll -eq 1) {
-        Write-Action "$($Hero.Name) overcommits and stumbles wide." "DarkGray"
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP -HeroTurnEnded $HeroTurnEnded
     }
     elseif ($total -ge $targetArmorClass) {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $profile
@@ -632,6 +634,12 @@ function Resolve-BrawlGrappleContest {
     Write-Action "$($Hero.Name) commits to ${HeroActionLabel}: d20 roll $heroRoll, total $heroTotal$heroBonusText" "Cyan"
     Write-Action "$($Opponent.Definite) answers with ${OpponentActionLabel}: d20 roll $opponentRoll, total $opponentTotal$opponentBonusText" "DarkCyan"
 
+    if ($heroRoll -eq 1) {
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP
+        Write-ColorLine ""
+        return "HeroCriticalFail"
+    }
+
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -gt $opponentTotal)) {
         $damageRoll = Roll-Dice -Sides 4
         $controlDamage = [Math]::Max(1, $damageRoll + [Math]::Max(0, $heroModifier) + $trainingBonus + $HeroDamageBonus)
@@ -714,6 +722,18 @@ function Resolve-BrawlGrappleAttempt {
 
     Write-Action "$initiatorName shoots in for a clinch while $defenderName answers on instinct." "Cyan"
 
+    if ($HeroInitiates -and $initiatorRoll -eq 1) {
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP
+        Write-ColorLine ""
+        return "HeroCriticalFail"
+    }
+
+    if (-not $HeroInitiates -and $defenderRoll -eq 1) {
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP
+        Write-ColorLine ""
+        return "HeroCriticalFail"
+    }
+
     if ($initiatorRoll -eq 20 -or ($defenderRoll -ne 20 -and $initiatorTotal -gt $defenderTotal)) {
         if ($HeroInitiates) {
             $damageRoll = Roll-Dice -Sides 4
@@ -753,7 +773,7 @@ function Resolve-BrawlGrappleAttempt {
                 $OpponentFocusAttackBonus.Value = 0
             }
             else {
-                Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP $OpponentHP -AttackBonusModifier $HeroFocusAttackBonus.Value -TargetAction "Grapple"
+                Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP $OpponentHP -AttackBonusModifier $HeroFocusAttackBonus.Value -TargetAction "Grapple" -HeroHP $HeroHP
                 $HeroFocusAttackBonus.Value = 0
             }
         }
@@ -787,7 +807,8 @@ function Resolve-HeroBrawlGrapple {
         $Hero,
         $Opponent,
         [ref]$OpponentHP,
-        [ref]$OpponentOffBalance
+        [ref]$OpponentOffBalance,
+        $HeroHP = $null
     )
 
     $heroAbility = Get-HeroBrawlAbility -Hero $Hero
@@ -813,6 +834,12 @@ function Resolve-HeroBrawlGrapple {
     $opponentTotal = $opponentRoll + $opponentGrappleBonus
 
     Write-Action "$($Hero.Name) dives for a takedown while $($Opponent.Definite) braces hard against it." "Cyan"
+
+    if ($heroRoll -eq 1) {
+        Resolve-HeroCriticalFail -Hero $Hero -Monster $Opponent -HeroHP $HeroHP
+        Write-ColorLine ""
+        return $false
+    }
 
     if ($heroRoll -eq 20 -or ($opponentRoll -ne 20 -and $heroTotal -ge $opponentTotal)) {
         $damageRoll = Roll-Dice -Sides 4
@@ -905,17 +932,19 @@ function Start-BrawlLoop {
 
         switch ("$heroChoice/$opponentDisplayChoice") {
                 "P/P" {
-                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Punch"
+                    $heroTurnEnded = $false
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Punch" -HeroHP ([ref]$heroBrawlHP) -HeroTurnEnded ([ref]$heroTurnEnded)
                     $heroFocusAttackBonus = 0
 
-                    if ($opponentHP -gt 0) {
+                    if ($opponentHP -gt 0 -and -not $heroTurnEnded) {
                         Invoke-OpponentBrawlAttack -Hero $Hero -Opponent $Opponent -HeroHP ([ref]$heroBrawlHP) -AttackBonusModifier $opponentFocusAttackBonus -TargetAction "Punch"
                         $opponentFocusAttackBonus = 0
                     }
                 }
                 "P/B" {
+                    $heroTurnEnded = $false
                     Write-Scene "$($Opponent.Definite) reads the swing and shells up in time."
-                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus 2 -TargetAction "Block"
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetArmorBonus 2 -TargetAction "Block" -HeroHP ([ref]$heroBrawlHP) -HeroTurnEnded ([ref]$heroTurnEnded)
                     $heroFocusAttackBonus = 0
                 }
                 "B/P" {
@@ -924,11 +953,12 @@ function Start-BrawlLoop {
                     $opponentFocusAttackBonus = 0
                 }
                 "P/F" {
+                    $heroTurnEnded = $false
                     Write-Scene "$($Opponent.Definite) hesitates for a read and gives Borzig the cleaner opening."
-                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Focus"
+                    Invoke-HeroBrawlAttack -Hero $Hero -Opponent $Opponent -OpponentHP ([ref]$opponentHP) -AttackBonusModifier $heroFocusAttackBonus -TargetAction "Focus" -HeroHP ([ref]$heroBrawlHP) -HeroTurnEnded ([ref]$heroTurnEnded)
                     $heroFocusAttackBonus = 0
 
-                    if ($opponentHP -gt 0) {
+                    if ($opponentHP -gt 0 -and -not $heroTurnEnded) {
                         $opponentFocusAttackBonus = 2
                         Write-Action "$($Opponent.Definite) still comes away with a sharper read for the next exchange." "Yellow"
                         Write-ColorLine ""
