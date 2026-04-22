@@ -310,6 +310,7 @@ The bard is now a real alternate playthrough rather than just a combat variant.
 - distinct combat tools and resource management
 - a separate money loop through performances
 - early city quest alternatives
+- Bard-aware Understreet finale briefing, approach text, room text, and short-rest/search narration
 - class-aware inn, NPC, shop, and quest-source reactions
 - growing recognition through repeated performances and venue progression
 - status, quest, and town flows that now read more cleanly as a bard playthrough
@@ -318,7 +319,7 @@ The remaining bard work is mostly polish and breadth rather than missing foundat
 
 - more full-playthrough testing from tutorial through Tier 2 city quests
 - more scattered bard-specific dialogue and quest variants
-- replacing remaining Borzig-first city text where shared systems should use the current hero
+- replacing remaining Borzig-first city text in older shared quests and day-job scenes
 - future gear/shop expansion for instruments and lighter armor
 - later spell and class-depth work beyond the current `v1`
 

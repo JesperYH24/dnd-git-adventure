@@ -104,6 +104,80 @@ function New-UnderstreetQuestRoom {
     return $room
 }
 
+function Format-UnderstreetHeroText {
+    param(
+        [string]$Text,
+        $Hero
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $Text
+    }
+
+    $heroName = if ($null -ne $Hero -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) { [string]$Hero.Name } else { "the hero" }
+    return ($Text -replace "\bBorzig\b", $heroName)
+}
+
+function Get-UnderstreetFinalClassText {
+    param(
+        $Hero,
+        [string]$Key
+    )
+
+    $isBard = $null -ne $Hero -and $Hero.Class -eq "Bard"
+    $name = if ($null -ne $Hero -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) { [string]$Hero.Name } else { "the hero" }
+
+    switch ($Key) {
+        "NeedAccepted" {
+            if ($isBard) { return "$name needs to take the final understreet assignment before the watch will trust his read on the room, the route, and the lies holding both together." }
+            return "$name needs to take the final understreet assignment before the watch will commit men and steel."
+        }
+        "NeedEvidence" {
+            if ($isBard) { return "$name still lacks enough hard evidence to turn rumor, ledgers, and whispers into a watch-sanctioned strike beneath the city." }
+            return "$name still lacks enough hard evidence to force the watch into the understreet complex."
+        }
+        "BriefingClues" {
+            if ($isBard) { return "Captain Halden spreads $name's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, broker whispers, and the careful social pressure that made the city's hidden pattern sing in tune." }
+            return "Captain Halden spreads $name's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, and broker whispers that all point below the same streets."
+        }
+        "BriefingPrep" {
+            if ($isBard) { return "The watch begins its quiet preparations while $name studies tunnel sketches like a hostile score: sealed descent, contraband hall, record chamber, and command vault, each one waiting for the wrong note." }
+            return "The watch begins its quiet preparations while $name looks over tunnel sketches showing a sealed descent, a contraband hall, and the command vault at the heart of the route."
+        }
+        "ApproachWatch" {
+            if ($isBard) { return "$name descends beside two watch veterans, reading their silences as carefully as the tunnel turns while black runoff splashes underfoot." }
+            return "$name descends beside two watch veterans, boots splashing into black runoff beneath the district."
+        }
+        "ApproachBroker" {
+            if ($isBard) { return "$name takes the broker's lower route, carrying a half-truth, a quiet smile, and enough confidence to enter before the smugglers know which story they are trapped inside." }
+            return "$name takes the broker's route instead, entering through a mean little cut beneath old river stairs before the smugglers can shift their guard."
+        }
+        "ApproachStudyAction" {
+            if ($isBard) { return "$name studies the sketched route and gathered clues like competing verses, looking for the refrain that reveals where Serik's command vault must be." }
+            return "$name studies the sketched route and the gathered clues one last time before committing to the descent."
+        }
+        "ApproachStudySuccess" {
+            if ($isBard) { return "The pattern resolves in $name's head: route, motive, witness, and hiding place all falling into one clean progression. He leads the descent like he already knows where the silence will break." }
+            return "The route finally clicks into place in $name's head. He leads the descent like he has already walked it once in the dark."
+        }
+        "ApproachStudyFail" {
+            if ($isBard) { return "$name catches enough of the pattern to move. It is not a perfect read, but it is enough to step into the dark without letting the room set the tempo." }
+            return "$name gets enough from the map to move. It is not elegant, but it is enough to start the descent with purpose."
+        }
+        "MoveRoomByRoom" {
+            if ($isBard) { return "$name will have to move room by room, reading threats, records, and frightened men before the whole hidden arrangement can collapse cleanly." }
+            return "$name will have to move room by room if he wants to break it cleanly."
+        }
+        "Victory" {
+            if ($isBard) { return "Whatever comes next for the city will grow out of this ruin, because $name has turned whispers, ledgers, and the final blade in the dark into proof no one can sing away." }
+            return "Whatever comes next for the city will grow out of this ruin, because $name has broken the hidden structure that held the whole scheme together."
+        }
+        default {
+            return ""
+        }
+    }
+}
+
 function Get-UnderstreetComplexRooms {
     $rooms = @{
         sealed_descent = (New-UnderstreetQuestRoom -Id "sealed_descent" -Name "Sealed Descent" -Description "Broken stone stairs fall away beneath the ward. Damp mortar and old guard sigils mark the last point where the city still pretended these routes were closed. Fresh scrape marks suggest heavy crates were dragged east in a hurry." -Exits @{ east = "contraband_hall" })
@@ -338,8 +412,8 @@ function Invoke-StoryCombat {
     $encounterFled = $false
 
     Write-SectionTitle -Text $Title -Color "Red"
-    Write-Scene $IntroText
-    Write-Scene "$($Monster.article) $($Monster.name) steps out to stop Borzig."
+    Write-Scene (Format-UnderstreetHeroText -Text $IntroText -Hero $Game.Hero)
+    Write-Scene "$($Monster.article) $($Monster.name) steps out to stop $($Game.Hero.Name)."
     Write-ColorLine ""
 
     Start-DetectionPhase `
@@ -698,21 +772,24 @@ function Show-UnderstreetRoomActions {
 }
 
 function Show-UnderstreetRoom {
-    param($Room)
+    param(
+        $Room,
+        $Hero = $null
+    )
 
     Write-SectionTitle -Text $Room.Name -Color "Cyan"
-    Write-Scene $Room.Description
+    Write-Scene (Format-UnderstreetHeroText -Text $Room.Description -Hero $Hero)
 
     if ($Room.Loot.Count -gt 0) {
         Write-Scene "You spot useful gear or hidden spoils left in the chamber."
     }
 
     if (-not [string]::IsNullOrWhiteSpace($Room.SearchHintText) -and -not $Room.SearchResolved) {
-        Write-EmphasisLine -Text $Room.SearchHintText -Color "DarkYellow"
+        Write-EmphasisLine -Text (Format-UnderstreetHeroText -Text $Room.SearchHintText -Hero $Hero) -Color "DarkYellow"
     }
 
     if (-not [string]::IsNullOrWhiteSpace($Room.LockedCacheHintText) -and -not $Room.LockedCacheOpened) {
-        Write-EmphasisLine -Text $Room.LockedCacheHintText -Color "DarkYellow"
+        Write-EmphasisLine -Text (Format-UnderstreetHeroText -Text $Room.LockedCacheHintText -Hero $Hero) -Color "DarkYellow"
     }
 
     if (-not $Room.Visited) {
@@ -720,10 +797,10 @@ function Show-UnderstreetRoom {
     }
 
     if ($Room.Secured) {
-        Write-Scene "Borzig has already secured this space well enough to catch his breath here."
+        Write-Scene "$($Hero.Name) has already secured this space well enough to catch his breath here."
     }
 
-    $restHint = Get-UnderstreetRoomRestHintText -Room $Room
+    $restHint = Get-UnderstreetRoomRestHintText -Room $Room -Hero $Hero
 
     if (-not [string]::IsNullOrWhiteSpace($restHint)) {
         Write-EmphasisLine -Text $restHint -Color "Yellow"
@@ -734,7 +811,10 @@ function Show-UnderstreetRoom {
 }
 
 function Get-UnderstreetRoomRestHintText {
-    param($Room)
+    param(
+        $Room,
+        $Hero = $null
+    )
 
     $canSecureForRest = $Room.CanShortRest -and `
         -not $Room.BossRoom -and `
@@ -749,7 +829,8 @@ function Get-UnderstreetRoomRestHintText {
         return ""
     }
 
-    return "This chamber looks defensible. Borzig can secure it and use R to take a short rest before pushing deeper."
+    $heroName = if ($null -ne $Hero -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) { [string]$Hero.Name } else { "the hero" }
+    return "This chamber looks defensible. $heroName can secure it and use R to take a short rest before pushing deeper."
 }
 
 function Secure-UnderstreetRoomAndRest {
@@ -764,13 +845,18 @@ function Secure-UnderstreetRoomAndRest {
     }
 
     if (-not ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory))) {
-        Write-Scene "Borzig cannot secure the room while it is still contested."
+        Write-Scene "$($Game.Hero.Name) cannot secure the room while it is still contested."
         Write-ColorLine ""
         return
     }
 
     $Room.Secured = $true
-    Write-Scene "Borzig drags debris into place, checks the angles, and turns $($Room.Name) into a temporary strongpoint."
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-Scene "$($Game.Hero.Name) marks the noisy stones, dead angles, and echoing approaches, then turns $($Room.Name) into a temporary refuge that can warn him before it betrays him."
+    }
+    else {
+        Write-Scene "$($Game.Hero.Name) drags debris into place, checks the angles, and turns $($Room.Name) into a temporary strongpoint."
+    }
     $restResult = Resolve-HeroShortRest -Hero $Game.Hero -HeroHP $HeroHP
     $Room.ShortRestTaken = $true
 
@@ -800,16 +886,16 @@ function Search-UnderstreetRoom {
     )
 
     if ($Room.SearchResolved -or $Room.SearchDC -le 0) {
-        Write-Scene "There is nothing else here that Borzig can meaningfully search for."
+        Write-Scene "There is nothing else here that $($Game.Hero.Name) can meaningfully search for."
         Write-ColorLine ""
         return
     }
 
-    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC $Room.SearchDC -ActionText $Room.SearchPromptText
+    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC $Room.SearchDC -ActionText (Format-UnderstreetHeroText -Text $Room.SearchPromptText -Hero $Game.Hero)
     $Room.SearchResolved = $true
 
     if ($success) {
-        Write-Scene $Room.SearchSuccessText
+        Write-Scene (Format-UnderstreetHeroText -Text $Room.SearchSuccessText -Hero $Game.Hero)
 
         foreach ($item in $Room.HiddenLoot) {
             $Room.Loot += $item
@@ -820,15 +906,15 @@ function Search-UnderstreetRoom {
         }
 
         if (-not [string]::IsNullOrWhiteSpace($Room.SearchRewardText)) {
-            Write-EmphasisLine -Text $Room.SearchRewardText -Color "Yellow"
+            Write-EmphasisLine -Text (Format-UnderstreetHeroText -Text $Room.SearchRewardText -Hero $Game.Hero) -Color "Yellow"
         }
     }
     else {
-        Write-Scene $Room.SearchFailureText
+        Write-Scene (Format-UnderstreetHeroText -Text $Room.SearchFailureText -Hero $Game.Hero)
 
         if ($Room.Id -eq "whisper_cells" -and -not [string]::IsNullOrWhiteSpace($Room.SearchRewardFlag) -and -not [bool]$Game.Town.StoryFlags[$Room.SearchRewardFlag]) {
             $Game.Town.StoryFlags[$Room.SearchRewardFlag] = $true
-            Write-EmphasisLine -Text "Even without turning the cells inside out, Borzig still spots the red-wrapped key hidden in the candle niche." -Color "Yellow"
+            Write-EmphasisLine -Text "Even without turning the cells inside out, $($Game.Hero.Name) still spots the red-wrapped key hidden in the candle niche." -Color "Yellow"
         }
     }
 
@@ -871,10 +957,10 @@ function Resolve-UnderstreetLockedCache {
 
         switch ($choice) {
             "1" {
-                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC $Room.LockedCacheForceDC -ActionText "Borzig plants his feet and tries to wrench the lock apart by force."
+                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC $Room.LockedCacheForceDC -ActionText "$($Game.Hero.Name) plants his feet and tries to wrench the lock apart by force."
             }
             "2" {
-                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "DEX" -DC $Room.LockedCachePickDC -ActionText "Borzig works the old mechanism by feel, trying to tease the lock open without the proper tools."
+                $opened = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "DEX" -DC $Room.LockedCachePickDC -ActionText "$($Game.Hero.Name) works the old mechanism by feel, trying to tease the lock open without the proper tools."
             }
             "3" {
                 if (-not [string]::IsNullOrWhiteSpace($Room.LockedCacheKeyFlag) -and [bool]$Game.Town.StoryFlags[$Room.LockedCacheKeyFlag]) {
@@ -883,7 +969,7 @@ function Resolve-UnderstreetLockedCache {
                     $opened = $true
                 }
                 else {
-                    Write-ColorLine "Borzig does not have the right key." "DarkYellow"
+                    Write-ColorLine "$($Game.Hero.Name) does not have the right key." "DarkYellow"
                     Write-ColorLine ""
                     continue
                 }
@@ -897,7 +983,7 @@ function Resolve-UnderstreetLockedCache {
 
         if ($opened) {
             $Room.LockedCacheOpened = $true
-            Write-Scene $Room.LockedCacheOpenText
+            Write-Scene (Format-UnderstreetHeroText -Text $Room.LockedCacheOpenText -Hero $Game.Hero)
 
             foreach ($item in $Room.LockedCacheLoot) {
                 $Room.Loot += $item
@@ -908,7 +994,7 @@ function Resolve-UnderstreetLockedCache {
             return
         }
 
-        Write-Scene $Room.LockedCacheFailText
+        Write-Scene (Format-UnderstreetHeroText -Text $Room.LockedCacheFailText -Hero $Game.Hero)
         Write-ColorLine ""
         return
     }
@@ -926,7 +1012,7 @@ function Start-UnderstreetComplexExploration {
 
     while ($HeroHP.Value -gt 0) {
         $room = $rooms[$currentRoomId]
-        Show-UnderstreetRoom -Room $room
+        Show-UnderstreetRoom -Room $room -Hero $Game.Hero
 
         $encounterResult = Resolve-UnderstreetRoomEncounter `
             -Game $Game `
@@ -1975,7 +2061,7 @@ function Start-UnderstreetComplexQuest {
     }
 
     if (-not $quest.Accepted) {
-        Write-Scene "Borzig needs to take the final understreet assignment before the watch will commit men and steel."
+        Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "NeedAccepted")
         Write-ColorLine ""
         return
     }
@@ -1987,7 +2073,7 @@ function Start-UnderstreetComplexQuest {
     }
 
     if (-not (Is-TownQuestUnlocked -Game $Game -Quest $quest)) {
-        Write-Scene "Borzig still lacks enough hard evidence to force the watch into the understreet complex."
+        Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "NeedEvidence")
         Write-ColorLine ""
         return
     }
@@ -2009,9 +2095,9 @@ function Start-UnderstreetComplexQuest {
     $quest.Objective = "Descend into the understreet complex, break the command vault, and bring the hidden network crashing down."
 
     Write-SectionTitle -Text "The Understreet Complex" -Color "Yellow"
-    Write-Scene "Captain Halden spreads Borzig's gathered clues across a scarred planning table: broken seals, courier marks, ledger scraps, and broker whispers that all point below the same streets."
+    Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "BriefingClues")
     Write-Scene "'This is it,' he says. 'No more scattered errands. No more guessing. The watch has the route, the clerk has the paper trail, and the river whispers filled in the rest. We know enough to strike the complex under the ward.'"
-    Write-Scene "The watch begins its quiet preparations while Borzig looks over tunnel sketches showing a sealed descent, a contraband hall, and the command vault at the heart of the route."
+    Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "BriefingPrep")
     Write-ColorLine ""
     Write-ColorLine "1. Descend with the watch through the broken maintenance shaft" "White"
     Write-ColorLine "2. Use the broker's lower route and go in fast" "White"
@@ -2024,23 +2110,23 @@ function Start-UnderstreetComplexQuest {
 
         switch ($choice) {
             "1" {
-                $approachText = "Borzig descends beside two watch veterans, boots splashing into black runoff beneath the district."
+                $approachText = Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachWatch"
                 $Game.Town.Relationships["NightCaptain"] = "Committed"
                 break
             }
             "2" {
-                $approachText = "Borzig takes the broker's route instead, entering through a mean little cut beneath old river stairs before the smugglers can shift their guard."
+                $approachText = Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachBroker"
                 $Game.Town.Relationships["UnderstreetBroker"] = "Proven"
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "Borzig studies the sketched route and the gathered clues one last time before committing to the descent."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudyAction")
 
                 if ($success) {
-                    $approachText = "The route finally clicks into place in Borzig's head. He leads the descent like he has already walked it once in the dark."
+                    $approachText = Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudySuccess"
                 }
                 else {
-                    $approachText = "Borzig gets enough from the map to move. It is not elegant, but it is enough to start the descent with purpose."
+                    $approachText = Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudyFail"
                 }
 
                 break
@@ -2058,7 +2144,7 @@ function Start-UnderstreetComplexQuest {
 
     Write-ColorLine ""
     Write-Scene "Below the city, the route opens into a real complex of sealed stairs, contraband chambers, hidden records, and the command vault at its heart."
-    Write-Scene "Borzig will have to move room by room if he wants to break it cleanly."
+    Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "MoveRoomByRoom")
     Write-ColorLine ""
 
     $explorationResult = Start-UnderstreetComplexExploration -Game $Game -HeroHP $HeroHP
@@ -2073,7 +2159,7 @@ function Start-UnderstreetComplexQuest {
     }
 
     Write-Scene "Serik falls hard across his own ledger table. The command vault is taken, the route maps are seized, and the old understreet network finally breaks open under guard hands."
-    Write-Scene "Whatever comes next for the city will grow out of this ruin, because Borzig has broken the hidden structure that held the whole scheme together."
+    Write-Scene (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "Victory")
     $Game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
     $Game.Town.ChapterTwoComplete = $true

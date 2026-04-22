@@ -702,6 +702,20 @@ function Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot {
     Assert-True -Condition ($oldArmory.Loot.Count -ge 2) -Message "Opening the armory locker should move its rewards into room loot."
 }
 
+function Test-BardUnderstreetFinaleUsesClassAwareText {
+    $game = Initialize-Game -Class "Bard"
+    $rooms = Get-UnderstreetComplexRooms
+    $sentryRoom = $rooms["sentry_turn"]
+
+    $briefing = Get-UnderstreetFinalClassText -Hero $game.Hero -Key "BriefingClues"
+    $approach = Get-UnderstreetFinalClassText -Hero $game.Hero -Key "ApproachBroker"
+    $formattedRoomText = Format-UnderstreetHeroText -Text $sentryRoom.Description -Hero $game.Hero
+
+    Assert-True -Condition ($briefing -like "*Gariand*" -and $briefing -like "*social pressure*") -Message "Bard finale briefing should use Gariand and bard-shaped clue language."
+    Assert-True -Condition ($approach -like "*half-truth*" -and $approach -like "*quiet smile*") -Message "Bard finale approach text should not read like the barbarian route."
+    Assert-True -Condition ($formattedRoomText -like "*Gariand*" -and $formattedRoomText -notlike "*Borzig*") -Message "Understreet room text should render with the current hero name for Bard."
+}
+
 function Test-TierTwoHidesTierOneStoryQuestsFromWorkSources {
     $game = Initialize-Game
     Set-StoryTier -Game $game -Tier 2
@@ -908,6 +922,7 @@ Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
 Test-UnderstreetComplexIncludesExtendedMazeLayout
 Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
+Test-BardUnderstreetFinaleUsesClassAwareText
 Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
