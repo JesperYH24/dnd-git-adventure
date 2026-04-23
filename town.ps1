@@ -992,6 +992,220 @@ function Start-QuestHubMenu {
     }
 }
 
+function Open-TownShopAction {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [string]$Action
+    )
+
+    switch ($Action) {
+        "Market" {
+            if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market")) {
+                Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Market")
+                Write-ColorLine ""
+                return
+            }
+
+            Show-TownShop -Title "Market" -IntroText (Get-TownShopIntroText -Shop "Market" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
+        }
+        "Smithy" {
+            if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy")) {
+                Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Smithy")
+                Write-ColorLine ""
+                return
+            }
+
+            Show-TownShop -Title "Smithy" -IntroText (Get-TownShopIntroText -Shop "Smithy" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
+        }
+        "Apothecary" {
+            Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
+        }
+        "InstrumentShop" {
+            Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
+        }
+        "Armorer" {
+            if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer")) {
+                Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Armorer")
+                Write-ColorLine ""
+                return
+            }
+
+            Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
+        }
+        "Sell" {
+            Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Back to shops"
+        }
+    }
+}
+
+function Start-TownShopsMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
+        $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+        Write-SectionTitle -Text "Shops & Services" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Shops"
+        Write-Scene $(if ($isNight) { "After dark, the city sells only what it can keep lit, guarded, or discreet." } else { "The city's practical business gathers around counters, stalls, workshops, and people with enough stock to solve problems for coin." })
+        Write-ColorLine ""
+        Write-ColorLine $(if ($isNight) { "1. Browse the last open stalls (market closed)" } else { "1. Browse the market" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market") { "White" } else { "DarkGray" })
+        Write-ColorLine $(if ($isNight) { "2. Visit the forge doors (smithy closed)" } else { "2. Visit the smithy" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy") { "White" } else { "DarkGray" })
+        Write-ColorLine $(if ($isNight) { "3. Visit the candlelit apothecary" } else { "3. Visit the apothecary" }) "White"
+        Write-ColorLine $(if ($isNight) { "4. Visit the quiet instrument shop" } else { "4. Visit the instrument shop" }) "White"
+        Write-ColorLine $(if ($isNight) { "5. Visit the armorer's hall (closed)" } else { "5. Visit the armorer" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer") { "White" } else { "DarkGray" })
+        Write-ColorLine $(if ($isNight) { "6. Find a late buyer" } else { "6. Find a buyer" }) "White"
+        Write-ColorLine "S. Status" "White"
+        Write-ColorLine "0. Back to town" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Market" }
+            "2" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Smithy" }
+            "3" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Apothecary" }
+            "4" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "InstrumentShop" }
+            "5" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Armorer" }
+            "6" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Sell" }
+            "S" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
+            "0" { return }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-TownWorkMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
+        $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+        Write-SectionTitle -Text "Work & Trouble" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Work"
+        Write-Scene $(if ($isNight) { "Night work has sharper edges: private jobs, ring wagers, and rooms that pay attention once lanterns are lit." } else { "Day work is easier to ask for openly: posted jobs, honest labor, and trouble that still pretends to be respectable." })
+        Write-ColorLine ""
+        Write-ColorLine $(if ($isNight) { "1. Seek late work" } else { "1. Seek work" }) "White"
+        Write-ColorLine $(if ($isNight) { "2. Head for the fighting ring" } else { "2. Visit the fighting ring (opens at night)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring") { "White" } else { "DarkGray" })
+
+        if ($Game.Hero.Class -eq "Bard") {
+            Write-ColorLine $(if ($isNight) { "3. Find a room and perform for coin" } else { "3. Find an audience and perform for coin (best after dark)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") { "White" } else { "DarkGray" })
+        }
+
+        Write-ColorLine "S. Status" "White"
+        Write-ColorLine "0. Back to town" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" {
+                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
+            }
+            "2" {
+                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring")) {
+                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Ring")
+                    Write-ColorLine ""
+                }
+                else {
+                    Start-FightingRing -Game $Game
+                }
+            }
+            "3" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance")) {
+                        Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Performance")
+                        Write-ColorLine ""
+                    }
+                    else {
+                        Start-BardPerformanceMenu -Game $Game
+                    }
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+            "S" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
+            "0" { return }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-TownInnHubMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    if ($null -ne $Game.Town.ActiveInn) {
+        $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
+
+        if ($innMenuResult -eq "EndGame") {
+            return "EndGame"
+        }
+
+        return "Back"
+    }
+
+    $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
+
+    if ($innResult -eq "Stayed") {
+        return (Start-InnVisitMenu -Game $Game -HeroHP $HeroHP)
+    }
+
+    return $innResult
+}
+
+function Start-TownCharacterMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    while ($true) {
+        Write-SectionTitle -Text "Hero & Records" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Hero"
+        Write-Scene "$($Game.Hero.Name) takes a moment away from the city's noise to check gear, notes, and next steps."
+        Write-ColorLine ""
+        Write-ColorLine "1. Check inventory" "White"
+        Write-ColorLine "2. Check quest log" "White"
+        Write-ColorLine "3. Status" "White"
+        Write-ColorLine "4. Save adventure" "White"
+        Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
+        Write-ColorLine "0. Back to town" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" { Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null }
+            "2" { Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP }
+            "3" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
+            "4" { Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null }
+            "T" { Toggle-TextSpeed | Out-Null }
+            "0" { return }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Start-TownMenu {
     param(
         $Game,
@@ -1047,50 +1261,12 @@ function Start-TownMenu {
             Write-ColorLine "What do you want to do?" "Cyan"
         }
         Write-ColorLine $(if ($isNight) { "1. Walk the lantern-lit streets" } else { "1. Walk the streets" }) "White"
-        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market") {
-            Write-ColorLine $(if ($isNight) { "2. Browse the last open stalls" } else { "2. Browse the market" }) "White"
-        }
-        else {
-            Write-ColorLine "2. Browse the market (closed for the night)" "DarkGray"
-        }
-        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy") {
-            Write-ColorLine $(if ($isNight) { "3. Visit the forge doors" } else { "3. Visit the smithy" }) "White"
-        }
-        else {
-            Write-ColorLine "3. Visit the smithy (closed for the night)" "DarkGray"
-        }
-        Write-ColorLine $(if ($isNight) { "4. Visit the candlelit apothecary" } else { "4. Visit the apothecary" }) "White"
-        Write-ColorLine $(if ($isNight) { "5. Visit the quiet instrument shop" } else { "5. Visit the instrument shop" }) "White"
-        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer") {
-            Write-ColorLine $(if ($isNight) { "6. Visit the armorer's hall" } else { "6. Visit the armorer" }) "White"
-        }
-        else {
-            Write-ColorLine "6. Visit the armorer (closed for the night)" "DarkGray"
-        }
-        Write-ColorLine $(if ($isNight) { "7. Find a late buyer" } else { "7. Find a buyer" }) "White"
-        Write-ColorLine $(if ($isNight) { "8. Seek late work" } else { "8. Seek work" }) "White"
-        if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring") {
-            Write-ColorLine $(if ($isNight) { "9. Head for the fighting ring" } else { "9. Visit the fighting ring" }) "White"
-        }
-        else {
-            Write-ColorLine "9. Visit the fighting ring (opens at night)" "DarkGray"
-        }
-        Write-ColorLine $(if ($isNight) { "10. Go to your inn" } else { "10. Visit your inn" }) "White"
-        Write-ColorLine "11. Check inventory" "White"
-        Write-ColorLine "12. Check quest log" "White"
+        Write-ColorLine "2. Shops & services" "White"
+        Write-ColorLine $(if ($isNight) { "3. Work, trouble, and night coin" } else { "3. Work, trouble, and day jobs" }) "White"
+        Write-ColorLine $(if ($null -ne $Game.Town.ActiveInn) { "4. Go to your inn" } else { "4. Find lodging" }) "White"
+        Write-ColorLine "5. Hero, inventory, and quest log" "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
-        if ($Game.Hero.Class -eq "Bard") {
-            if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") {
-                Write-ColorLine $(if ($isNight) { "P. Find a room and perform for coin" } else { "P. Find an audience and perform for coin" }) "White"
-            }
-            else {
-                Write-ColorLine "P. Find an audience and perform for coin (best after dark)" "DarkGray"
-            }
-        }
-        if ($null -eq $Game.Town.ActiveInn) {
-            Write-ColorLine "L. Find lodging for the night" "White"
-        }
         if ((Get-TownTimeOfDay -Game $Game) -eq "Day") {
             Write-ColorLine "W. Wait for nightfall" "White"
         }
@@ -1105,103 +1281,26 @@ function Start-TownMenu {
                 Start-TownStreetScene -Game $Game -ReturnLabel "Back to town"
             }
             "2" {
-                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market")) {
-                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Market")
-                    Write-ColorLine ""
-                }
-                else {
-                    Show-TownShop -Title "Market" -IntroText (Get-TownShopIntroText -Shop "Market" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-MarketOffers -Game $Game) -BuyerType "Market"
-                }
+                Start-TownShopsMenu -Game $Game -HeroHP $HeroHP
             }
             "3" {
-                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy")) {
-                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Smithy")
-                    Write-ColorLine ""
-                }
-                else {
-                    Show-TownShop -Title "Smithy" -IntroText (Get-TownShopIntroText -Shop "Smithy" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-SmithyOffers -Game $Game) -BuyerType "Smithy"
-                }
+                Start-TownWorkMenu -Game $Game -HeroHP $HeroHP
             }
             "4" {
-                Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
+                $innHubResult = Start-TownInnHubMenu -Game $Game -HeroHP $HeroHP
+
+                if ($innHubResult -eq "EndGame") {
+                    return "EndGame"
+                }
             }
             "5" {
-                Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
-            }
-            "6" {
-                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer")) {
-                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Armorer")
-                    Write-ColorLine ""
-                }
-                else {
-                    Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
-                }
-            }
-            "7" {
-                Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Back to town"
-            }
-            "8" {
-                Start-QuestHubMenu -Game $Game -HeroHP $HeroHP
-            }
-            "9" {
-                if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring")) {
-                    Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Ring")
-                    Write-ColorLine ""
-                }
-                else {
-                    Start-FightingRing -Game $Game
-                }
-            }
-            "10" {
-                if ($null -ne $Game.Town.ActiveInn) {
-                    $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
-
-                    if ($innMenuResult -eq "EndGame") {
-                        return "EndGame"
-                    }
-                }
-                else {
-                    Write-Scene "$($Game.Hero.Name) has not taken a room yet."
-                    Write-ColorLine ""
-                }
-            }
-            "11" {
-                Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null
-            }
-            "12" {
-                Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP
+                Start-TownCharacterMenu -Game $Game -HeroHP $HeroHP
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
             }
             "G" {
                 Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null
-            }
-            "P" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance")) {
-                        Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Performance")
-                        Write-ColorLine ""
-                    }
-                    else {
-                        Start-BardPerformanceMenu -Game $Game
-                    }
-                }
-                else {
-                    Write-ColorLine "Invalid choice. Try again." "Red"
-                    Write-ColorLine ""
-                }
-            }
-            "L" {
-                $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
-
-                if ($innResult -eq "Stayed") {
-                    $innMenuResult = Start-InnVisitMenu -Game $Game -HeroHP $HeroHP
-
-                    if ($innMenuResult -eq "EndGame") {
-                        return "EndGame"
-                    }
-                }
             }
             "W" {
                 Wait-For-Nightfall -Game $Game
