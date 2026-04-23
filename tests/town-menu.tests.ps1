@@ -34,6 +34,18 @@ function Test-TownMainMenuUsesSubmenus {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 7 -Message "The town main menu should route through shops, work, and character submenus without extra prompts."
 }
 
+function Test-TownHeroHudShowsNameHpAndCoin {
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.CurrencyCopper = 234
+
+    $hud = Get-TownHeroHudText -Game $game -HeroHP 7
+
+    Assert-True -Condition ($hud -like "*Gariand*") -Message "The compact town HUD should always show the current hero name."
+    Assert-True -Condition ($hud -like "*HP 7/$($game.Hero.HP)*") -Message "The compact town HUD should show current and max HP when current HP is provided."
+    Assert-True -Condition ($hud -like "*Coin*2 GP*3 SP*4 CP*") -Message "The compact town HUD should show the hero's current coin."
+}
+
 Test-TownMainMenuUsesSubmenus
+Test-TownHeroHudShowsNameHpAndCoin
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

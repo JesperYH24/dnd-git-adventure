@@ -1025,7 +1025,7 @@ function Start-TownQuestLogMenu {
     while ($true) {
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
         Show-QuestLogSummary -Game $Game -Hero $Game.Hero
-        Write-TownTimeTracker -Game $Game -Area "Quest Log"
+        Write-TownTimeTracker -Game $Game -Area "Quest Log" -HeroHP $HeroHP.Value
 
         Write-ColorLine "1. Accepted quests" "White"
         Write-ColorLine "2. Story clues" "White"
@@ -1057,7 +1057,7 @@ function Start-TownQuestLogMenu {
                 while ($true) {
                     Write-ColorLine ""
                     Write-ColorLine "===== ACCEPTED QUESTS =====" "Yellow"
-                    Write-TownTimeTracker -Game $Game -Area "Quest Log"
+                    Write-TownTimeTracker -Game $Game -Area "Quest Log" -HeroHP $HeroHP.Value
 
                     for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
                         $quest = $acceptedQuests[$i]

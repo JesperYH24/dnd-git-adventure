@@ -582,10 +582,37 @@ function Get-TownTimeTrackerMoodText {
     }
 }
 
+function Get-TownHeroHudText {
+    param(
+        $Game,
+        [Nullable[int]]$HeroHP = $null
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
+        return ""
+    }
+
+    $hero = $Game.Hero
+    $heroName = if (-not [string]::IsNullOrWhiteSpace([string]$hero.Name)) { [string]$hero.Name } else { "Hero" }
+    $heroClass = if (-not [string]::IsNullOrWhiteSpace([string]$hero.Class)) { [string]$hero.Class } else { "Adventurer" }
+    $currentHP = $hero.HP
+
+    if ($null -ne $HeroHP) {
+        $currentHP = [int]$HeroHP
+    }
+    elseif ($null -ne $Game.PSObject.Properties["HeroHP"]) {
+        $currentHP = [int]$Game.HeroHP
+    }
+
+    $currencyText = Get-HeroCurrencyText -Hero $hero
+    return "$heroName the $heroClass | HP $currentHP/$($hero.HP) | Coin $currencyText"
+}
+
 function Write-TownTimeTracker {
     param(
         $Game,
-        [string]$Area = "City"
+        [string]$Area = "City",
+        [Nullable[int]]$HeroHP = $null
     )
 
     if ($null -eq $Game -or $null -eq $Game.Town) {
@@ -595,11 +622,15 @@ function Write-TownTimeTracker {
     $color = Get-TownTimeTrackerColor -Game $Game
     $banner = Get-TownTimeTrackerBanner -Game $Game -Area $Area
     $moodText = Get-TownTimeTrackerMoodText -Game $Game -Area $Area
-    $borderLength = [Math]::Max($banner.Length, 38)
+    $heroHud = Get-TownHeroHudText -Game $Game -HeroHP $HeroHP
+    $borderLength = [Math]::Max([Math]::Max($banner.Length, $heroHud.Length), 38)
     $border = ("-".PadLeft($borderLength, "-"))
 
     Write-ColorLine ("  " + $border) $color
     Write-ColorLine ("  " + $banner) $color
+    if (-not [string]::IsNullOrWhiteSpace($heroHud)) {
+        Write-ColorLine ("  " + $heroHud) "White"
+    }
     Write-ColorLine ("  " + $moodText) "DarkGray"
     Write-ColorLine ("  " + $border) $color
 }

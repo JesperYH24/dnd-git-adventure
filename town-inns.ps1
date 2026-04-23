@@ -419,7 +419,7 @@ function Start-InnEveningMenu {
     while ($true) {
         $roomTitle = if ($isNight) { "Common Room" } else { "Dining Room" }
         Write-SectionTitle -Text $roomTitle -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Common Room"
+        Write-TownTimeTracker -Game $Game -Area "Common Room" -HeroHP $HeroHP.Value
 
         switch ($inn.Id) {
             "bent_nail" {
@@ -687,7 +687,7 @@ function Start-InnVisitMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== $($inn.Name.ToUpper()) =====" "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Inn Visit"
+        Write-TownTimeTracker -Game $Game -Area "Inn Visit" -HeroHP $HeroHP.Value
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
         if (-not [bool]$Game.Town.InnFlags["InnVisitSeen_$($inn.Id)"]) {
             Write-Scene "$($inn.Name) wraps around $($Game.Hero.Name) like its own little world of floorboards, low voices, and people who plan to sleep under the same roof tonight."
@@ -768,7 +768,7 @@ function Resolve-InnWorkOffRoom {
 
     while ($true) {
         Write-SectionTitle -Text "Work Off the Room" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Inn Visit"
+        Write-TownTimeTracker -Game $Game -Area "Inn Visit" -HeroHP $HeroHP.Value
         Write-Scene "$($Inn.Keeper) looks $heroName over, then points toward the sort of work that keeps an inn alive after dark."
         Write-Scene "If $heroName cannot pay in coin tonight, the bill can be paid in sweat."
         Write-ColorLine ""
@@ -1381,7 +1381,7 @@ function Start-InnMenu {
     while ($true) {
         Write-ColorLine ""
         Write-ColorLine "===== INN ROOM =====" "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Inn Room"
+        Write-TownTimeTracker -Game $Game -Area "Inn Room" -HeroHP $HeroHP.Value
         $roomVisitKey = "InnRoomVisited_$($inn.Id)"
 
         if (-not $Game.Town.InnFlags[$roomVisitKey]) {
@@ -1481,7 +1481,7 @@ function Start-InnSelectionMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Find Lodging" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Lodging"
+        Write-TownTimeTracker -Game $Game -Area "Lodging" -HeroHP $HeroHP.Value
         Write-Scene "Night settles over the city, and $($Game.Hero.Name) must choose what kind of roof will hold until morning."
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
         Write-ColorLine ""

@@ -313,7 +313,7 @@ function Show-TownQuestSource {
     while ($true) {
         $quests = @(Get-TownQuestList -Game $Game -Source $Source)
         Write-SectionTitle -Text $Title -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area $Title
+        Write-TownTimeTracker -Game $Game -Area $Title -HeroHP $HeroHP.Value
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
 
@@ -494,7 +494,7 @@ function Start-TownQuestPreparationMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Prepare for Quest" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Quest Preparation"
+        Write-TownTimeTracker -Game $Game -Area "Quest Preparation" -HeroHP $HeroHP.Value
         Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
             -BarbarianText "$($Quest.Name) waits when Borzig is ready. He can make final adjustments before stepping out." `
             -BardText "$($Quest.Name) waits when Gariand is ready. He can make final adjustments, steady his nerves, and choose how he wants to carry himself before stepping out.")
@@ -893,7 +893,7 @@ function Start-BardPerformanceMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Find an Audience" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Performance"
+        Write-TownTimeTracker -Game $Game -Area "Performance" -HeroHP $Game.Hero.HP
         Write-Scene "A bard can make coin in this city without lifting a blade, if the room is right and the performance lands."
         Write-EmphasisLine -Text "Performances today: $($Game.Town.PerformanceCountToday)/3" -Color "Yellow"
         Write-ColorLine "1. Perform in the market square" "White"
@@ -952,7 +952,7 @@ function Start-QuestHubMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Seek Work"
+        Write-TownTimeTracker -Game $Game -Area "Seek Work" -HeroHP $HeroHP.Value
         Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
             -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
             -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act.")
@@ -1049,7 +1049,7 @@ function Start-TownShopsMenu {
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
         Write-SectionTitle -Text "Shops & Services" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Shops"
+        Write-TownTimeTracker -Game $Game -Area "Shops" -HeroHP $HeroHP.Value
         Write-Scene $(if ($isNight) { "After dark, the city sells only what it can keep lit, guarded, or discreet." } else { "The city's practical business gathers around counters, stalls, workshops, and people with enough stock to solve problems for coin." })
         Write-ColorLine ""
         Write-ColorLine $(if ($isNight) { "1. Browse the last open stalls (market closed)" } else { "1. Browse the market" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market") { "White" } else { "DarkGray" })
@@ -1091,7 +1091,7 @@ function Start-TownWorkMenu {
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
         Write-SectionTitle -Text "Work & Trouble" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Work"
+        Write-TownTimeTracker -Game $Game -Area "Work" -HeroHP $HeroHP.Value
         Write-Scene $(if ($isNight) { "Night work has sharper edges: private jobs, ring wagers, and rooms that pay attention once lanterns are lit." } else { "Day work is easier to ask for openly: posted jobs, honest labor, and trouble that still pretends to be respectable." })
         Write-ColorLine ""
         Write-ColorLine $(if ($isNight) { "1. Seek late work" } else { "1. Seek work" }) "White"
@@ -1178,7 +1178,7 @@ function Start-TownCharacterMenu {
 
     while ($true) {
         Write-SectionTitle -Text "Hero & Records" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Hero"
+        Write-TownTimeTracker -Game $Game -Area "Hero" -HeroHP $HeroHP.Value
         Write-Scene "$($Game.Hero.Name) takes a moment away from the city's noise to check gear, notes, and next steps."
         Write-ColorLine ""
         Write-ColorLine "1. Check inventory" "White"
@@ -1237,7 +1237,7 @@ function Start-TownMenu {
 
         Write-ColorLine ""
         Write-ColorLine "===== TOWN =====" "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Town"
+        Write-TownTimeTracker -Game $Game -Area "Town" -HeroHP $HeroHP.Value
 
         if (-not $Game.Town.StreetFlags["TownMenuVisited"]) {
             Write-Scene "Stone streets spread out before $($Game.Hero.Name), loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
