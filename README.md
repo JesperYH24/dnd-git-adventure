@@ -291,6 +291,8 @@ When playing as `Bard`, several early city quests now support a different feel f
 
 The final quest now plays as a more involved mini-dungeon with branching rooms, dead ends, a boss confrontation, and safe rooms that Borzig can secure for a short rest while pushing toward the end of the assault.
 
+After `The Understreet Complex`, the `Quest Giver` side now has its first post-finale hook: `The Silent Knife`. It turns the anonymous patron setup into a live city threat, foils an assassination attempt against the clerk, and reveals Lady Veyra of the High Ledger as the higher-position benefactor behind the private jobs.
+
 Day jobs now work as level-based job tracks instead of one-off filler. Each track keeps its own order of assignments, unlocks new continuations at later levels, and lets a higher-level hero catch up on missed earlier steps one day at a time. Current day-job tracks are:
 
 - `Market Runner`: `Missing Delivery`, `Wrong Ledger`, `High-Value Hand-Off`

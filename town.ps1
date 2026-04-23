@@ -235,6 +235,18 @@ function Get-TownQuestSourceIntroText {
                     -BardText "The watch hall changes tone when Gariand enters now. Some guards still distrust a polished tongue, but none of them mistake him for a lightweight anymore, and the harder jobs are no longer hidden from him.")
             }
             "Quest Giver" {
+                if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+                    if ($isNight) {
+                        return (Get-ClassAwareTownText -Hero $Game.Hero `
+                            -BarbarianText "The clerk's office now wears Lady Veyra's hidden seal openly after dark. Every whispered job feels tied to council ledgers, dangerous debts, and enemies who learned Borzig is hard to remove." `
+                            -BardText "The clerk's office now wears Lady Veyra's hidden seal openly after dark. Every whispered job sounds like a verse from a higher, colder song: council ledgers, dangerous debts, and enemies who learned Gariand is hard to silence.")
+                    }
+
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The Quest Giver is no longer just a seal and a careful clerk. Lady Veyra of the High Ledger has a name in Borzig's story now, and her office feels like a door into the city's upper machinery." `
+                        -BardText "The Quest Giver is no longer just a seal and a careful clerk. Lady Veyra of the High Ledger has a name in Gariand's story now, and her office feels like a stage door into the city's upper machinery.")
+                }
+
                 if ($isNight) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "The patron's clerk looks more guarded at night, as if every ledger opened after dusk carries extra risk. The work offered now feels quieter, more deliberate, and less deniable." `

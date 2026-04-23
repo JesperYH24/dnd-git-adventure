@@ -593,6 +593,46 @@ function Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair {
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $false -Message "The Understreet Complex should stay locked if the opening Guard Station and Quest Giver leads were not both completed."
 }
 
+function Test-SilentKnifeStaysHiddenUntilUnderstreetCleared {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "patron_silent_knife"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Silent Knife should stay hidden before Chapter Two is complete."
+
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Silent Knife should unlock as a post-Understreet Quest Giver hook."
+}
+
+function Test-SilentKnifeRevealsTheMysteriousBenefactor {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "patron_silent_knife" | Out-Null
+    Use-StoryCombatWinStub
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_silent_knife"
+
+    $quest = Find-TownQuest -Game $game -QuestId "patron_silent_knife"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Silent Knife should complete after the assassination attempt is stopped."
+    Assert-Equal -Actual $game.Town.StoryFlags["SilentKnifeFoiled"] -Expected $true -Message "The Silent Knife should record that the attempted murder was foiled."
+    Assert-Equal -Actual $game.Town.StoryFlags["BenefactorRevealed"] -Expected $true -Message "The Silent Knife should reveal the mysterious benefactor."
+    Assert-Equal -Actual $game.Town.Relationships["LadyVeyra"] -Expected "Indebted" -Message "Lady Veyra should become a tracked city relationship."
+    Assert-Equal -Actual $game.Hero.XP -Expected 220 -Message "The Silent Knife should grant its listed story XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 220 -Message "The Silent Knife should pay its listed copper reward."
+}
+
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
@@ -936,6 +976,8 @@ Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair
+Test-SilentKnifeStaysHiddenUntilUnderstreetCleared
+Test-SilentKnifeRevealsTheMysteriousBenefactor
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo

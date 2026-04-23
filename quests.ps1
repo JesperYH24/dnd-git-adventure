@@ -60,6 +60,7 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "guard_broken_seal" -Name "Broken Seal Patrol" -Source "Guard Station" -Description "Now that real clues have surfaced, the watch wants a harder patrol into a breached maintenance route beneath the ward." -Objective "Join the guard patrol and confirm what is moving below the city." -QuestType "Story" -Tier 3 -RewardCopper 190 -RewardXP 180 -RequiredStoryClues 2)
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 170)
         (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
+        (New-TownQuest -Id "patron_silent_knife" -Name "The Silent Knife" -Source "Quest Giver" -Description "Someone is trying to cut the patron's clerk out of the story before he can reveal who has been directing the private investigation." -Objective "Protect the clerk, stop the assassins, and learn who the mysterious patron really is." -QuestType "Story" -Tier 4 -RewardCopper 220 -RewardXP 220)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before the market eats the loss." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90 -DayJobTrackId "market_runner" -DayJobStep 1 -RequiredHeroLevel 1)
         (New-TownQuest -Id "dayjob_market_delivery_2" -Name "Market Runner: Wrong Ledger" -Source "Quest Board" -Description "The market runners trust {hero} with a touchier problem: a paid delivery logged under the wrong stall." -Objective "Sort out the bad ledger mark and get the right goods to the right hands." -QuestType "DayJob" -RewardCopper 115 -DayJobTrackId "market_runner" -DayJobStep 2 -RequiredHeroLevel 2)
         (New-TownQuest -Id "dayjob_market_delivery_3" -Name "Market Runner: High-Value Hand-Off" -Source "Quest Board" -Description "A better-paying runner job needs a known face to move sealed goods through crowded daylight." -Objective "Carry the sealed goods across the market without losing the package or the crowd." -QuestType "DayJob" -RewardCopper 140 -DayJobTrackId "market_runner" -DayJobStep 3 -RequiredHeroLevel 3)
@@ -129,6 +130,8 @@ function Get-StoryClueNotes {
         @{ Flag = "SecuredLedgerEvidence"; Category = "Evidence"; Text = "Hard ledger evidence now ties the missing goods to the underground network." }
         @{ Flag = "HelpedLocalVictim"; Category = "Street"; Text = "A shaken local witness added weight to the courier trail moving through the district." }
         @{ Flag = "UnderstreetComplexCleared"; Category = "Resolution"; Text = "The Understreet Complex was broken and its command structure exposed." }
+        @{ Flag = "SilentKnifeFoiled"; Category = "Assassins"; Text = "An attempted murder against the patron's clerk failed before it could silence the ledger trail." }
+        @{ Flag = "BenefactorRevealed"; Category = "Patron"; Text = "The mysterious Quest Giver is Lady Veyra of the High Ledger, a higher city power than the clerk ever admitted." }
     )
 
     foreach ($definition in $definitions) {
@@ -416,6 +419,10 @@ function Test-TownQuestBaseUnlock {
 
         $evidenceCount = @($finalEvidenceFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
         return $evidenceCount -ge 2
+    }
+
+    if ($Quest.Id -eq "patron_silent_knife") {
+        return [bool]$Game.Town.ChapterTwoComplete -or [bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]
     }
 
     if ($Quest.RequiredStoryClues -le 0) {

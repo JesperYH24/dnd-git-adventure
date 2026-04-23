@@ -386,6 +386,26 @@ function Get-UnderstreetCaptainEnemy {
     }
 }
 
+function Get-SilentKnifeAssassinEnemy {
+    return [PSCustomObject]@{
+        name = "silent knife assassin"
+        article = "A"
+        definite = "The Silent Knife Assassin"
+        combatantType = "Opponent"
+        hp = 24
+        xp = 0
+        armorClass = 14
+        attackBonus = 5
+        initiativeBonus = 4
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 11
+        isBoss = $false
+    }
+}
+
 function Invoke-StoryCombat {
     param(
         $Game,
@@ -2162,6 +2182,76 @@ function Start-UnderstreetComplexQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_understreet_complex" -CompletionText "Captain Halden clasps $($Game.Hero.Name)'s forearm over the captured command ledgers. 'That was the heart of it,' he says. 'The city will breathe easier because you went down there.'" -ProgressText "Chapter Two Complete: $($Game.Hero.Name) has broken the understreet command network beneath the city."
 }
 
+function Start-PatronSilentKnifeQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "patron_silent_knife"
+
+    if ($null -eq $quest) {
+        Write-Scene "The patron's next move has not reached {hero} yet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "The clerk will not speak this plainly until {hero} accepts the private warning."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The Silent Knife has already failed, and the clerk is still breathing."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Silent Knife" -Color "Yellow"
+    Write-Scene "The clerk's office is too quiet when $($Game.Hero.Name) arrives. No scratching quills, no sanded pages, no nervous assistant pretending not to listen."
+    Write-Scene "A lamp gutters beside an open ledger. The clerk is pressed against the back archive door with one hand over a bleeding sleeve, and two black-sealed knives have been driven through the patron's wax mark."
+
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-Scene "$($Game.Hero.Name) hears the lie in the room before he sees the blade: one breath too steady behind the screen, one floorboard refusing the rhythm of panic."
+    }
+    else {
+        Write-Scene "$($Game.Hero.Name) feels the ambush before it fully moves. The room has the stillness of men waiting for a throat to turn."
+    }
+
+    $combatResult = Invoke-StoryCombat `
+        -Game $Game `
+        -HeroHP $HeroHP `
+        -Monster (Get-SilentKnifeAssassinEnemy) `
+        -Title "Assassin in the Ledger Office" `
+        -IntroText "A masked killer slips from the archive screen with a narrow blade, aiming first for the clerk and then for anyone foolish enough to stand between him and the contract."
+
+    if (-not $combatResult.Won) {
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
+        return
+    }
+
+    $Game.Town.StoryFlags["SilentKnifeFoiled"] = $true
+    $Game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $Game.Town.Relationships["QuestGiver"] = "Revealed"
+    $Game.Town.Relationships["LadyVeyra"] = "Indebted"
+
+    Write-Scene "The clerk survives long enough to stop pretending the seal belongs to a minor merchant."
+    Write-Scene "'You should know whose enemies you just made,' he says, voice thin but steady. 'My patron is Lady Veyra of the High Ledger. She holds city accounts, merchant charters, and more favors than the watch is comfortable admitting.'"
+    Write-Scene "A sealed note waits in the assassin's coat: no name, only a command to silence the clerk before Veyra can turn Understreet evidence toward the council chamber."
+    Write-EmphasisLine -Text "New Lead: Lady Veyra of the High Ledger has stepped out from behind the Quest Giver's mask." -Color "Yellow"
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "patron_silent_knife" -CompletionText "Lady Veyra's reply arrives before dawn: formal thanks, dangerous coin, and an invitation that feels less like a reward than the opening move of a larger game." -ProgressText "Chapter Three Hook: $($Game.Hero.Name) has foiled an assassination attempt and revealed the mysterious patron as Lady Veyra of the High Ledger."
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -2688,6 +2778,7 @@ function Start-TownQuest {
         "guard_night_watch" { Start-NightWatchReliefQuest -Game $Game -HeroHP $HeroHP }
         "guard_night_courier" { Start-NightCourierInterceptQuest -Game $Game -HeroHP $HeroHP }
         "guard_understreet_complex" { Start-UnderstreetComplexQuest -Game $Game -HeroHP $HeroHP }
+        "patron_silent_knife" { Start-PatronSilentKnifeQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
