@@ -253,6 +253,27 @@ function Test-InnRoomReturnsToInnWithoutJumpingToTown {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "Returning from the room should happen in one quick step."
 }
 
+function Test-FirstInnRoomBackOpensInnForEveryInn {
+    $inns = @(Get-TownInns)
+
+    for ($i = 0; $i -lt $inns.Count; $i++) {
+        $game = Initialize-Game
+        $heroHP = $game.Hero.HP
+        $game.Hero.CurrencyCopper = 1000
+        $game.Town.MustChooseFirstInn = $true
+        Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+        Set-TestReadHostSequence -Values @(($i + 1).ToString(), "6", "0", "0")
+
+        $global:RollDiceOverride = { param([int]$Sides) return 99 }
+
+        $result = Start-TownMenu -Game $game -HeroHP ([ref]$heroHP)
+
+        Assert-Equal -Actual $result -Expected "EndGame" -Message "The town menu should exit normally after testing the first inn back flow for $($inns[$i].Name)."
+        Assert-Equal -Actual $game.Town.ActiveInn.Id -Expected $inns[$i].Id -Message "The first lodging flow should keep the selected inn booking for $($inns[$i].Name)."
+        Assert-Equal -Actual $script:ReadHostIndex -Expected 4 -Message "The first lodging flow should go inn selection -> room back -> inn back -> town exit for $($inns[$i].Name)."
+    }
+}
+
 function Test-BardCanPrepareInspirationInInnRoom {
     $game = Initialize-Game -Class "Bard"
     $heroHP = $game.Hero.HP
@@ -285,6 +306,7 @@ Test-CommonRoomStaysOpenUntilBackedOut
 Test-LanternRestFirstNightSupportsBardAudienceLoop
 Test-SilverKettleFirstNightCanOpenPrivateBardVenue
 Test-InnRoomReturnsToInnWithoutJumpingToTown
+Test-FirstInnRoomBackOpensInnForEveryInn
 Test-BardCanPrepareInspirationInInnRoom
 
 $global:RollDiceOverride = $null

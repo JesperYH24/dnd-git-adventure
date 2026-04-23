@@ -925,6 +925,25 @@ function Start-BardPerformanceMenu {
     }
 }
 
+function Start-InnRoomThenVisitMenu {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+
+    if ($innMenuResult -eq "EndGame") {
+        return "EndGame"
+    }
+
+    if ($innMenuResult -eq "BackToInn") {
+        return (Start-InnVisitMenu -Game $Game -HeroHP $HeroHP)
+    }
+
+    return $innMenuResult
+}
+
 function Start-QuestHubMenu {
     param(
         $Game,
@@ -992,7 +1011,7 @@ function Start-TownMenu {
             $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
 
             if ($innResult -eq "Stayed") {
-                $innMenuResult = Start-InnMenu -Game $Game -HeroHP $HeroHP
+                $innMenuResult = Start-InnRoomThenVisitMenu -Game $Game -HeroHP $HeroHP
 
                 if ($innMenuResult -eq "EndGame") {
                     return "EndGame"
