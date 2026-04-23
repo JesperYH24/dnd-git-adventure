@@ -293,6 +293,10 @@ The final quest now plays as a more involved mini-dungeon with branching rooms, 
 
 After `The Understreet Complex`, the `Quest Giver` side now has its first post-finale hook: `The Silent Knife`. It turns the anonymous patron setup into a live city threat, foils an assassination attempt against the clerk, and reveals Lady Veyra of the High Ledger as the higher-position benefactor behind the private jobs.
 
+The High Ledger connection is intentional story setup. Lady Veyra is not just a rich anonymous patron; she sits close to the records that decide what the city officially owes, owns, taxes, forgives, or buries. That lets her notice hidden patterns before the watch can prove them, but it also makes open action politically dangerous. The clerk and the old `Quest Giver` mask exist because every public move from the High Ledger could become a council problem.
+
+That makes Lady Veyra useful without making her automatically safe. She can pay, protect, open doors, and turn evidence into official pressure, but she can also ruin reputations, freeze charters, and decide which truths become part of the city's written reality.
+
 Day jobs now work as level-based job tracks instead of one-off filler. Each track keeps its own order of assignments, unlocks new continuations at later levels, and lets a higher-level hero catch up on missed earlier steps one day at a time. Current day-job tracks are:
 
 - `Market Runner`: `Missing Delivery`, `Wrong Ledger`, `High-Value Hand-Off`
@@ -450,10 +454,23 @@ powershell -ExecutionPolicy Bypass -File .\tests\tutorial-skip.tests.ps1
 ### Near-term priorities
 
 - continue the story after `The Understreet Complex` with the consequences of breaking the network beneath the city
+- develop Lady Veyra and the `High Ledger` into the next major quest-giver hub after `The Silent Knife`
+- rename or reframe the revealed `Quest Giver` path in play so it feels like Veyra's ledger office rather than an anonymous patron forever
+- start the next Lady Veyra chain with a first economy-focused quest such as `False Debts`, where forged records have financially erased a victim or family
+- let the post-Understreet chain connect assassins, council pressure, charters, false debts, and money trails into the next level-progression story
 - build the next post-Understreet story chain with enough structure and replay value to carry Borzig toward the next level breakpoints
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
+
+### Lady Veyra / High Ledger direction
+
+- treat the High Ledger as the place where the city's official truth gets written: debts, taxes, charters, seized goods, forgiven payments, and buried names
+- keep Veyra politically constrained, so she needs the hero to create proof before she can safely move the city's machinery
+- make the clerk remain useful as the public face, but let the player gradually understand that the work now reaches into higher city power
+- give `Barbarian` routes a hard-proof identity: protection, intimidation, seizures, broken doors, and surviving people who want records destroyed
+- give `Bard` routes a soft-power identity: salons, testimony, social pressure, forged confidence, overheard confessions, and performances used as cover
+- let future quests ask whether Veyra is simply helping the city or also choosing which version of the city survives in the ledgers
 
 ### Medium-term world and progression work
 
