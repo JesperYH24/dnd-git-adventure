@@ -95,6 +95,19 @@ function Get-StoryClueCount {
     return @($Game.Town.StoryFlags.Keys | Where-Object { $Game.Town.StoryFlags[$_] -eq $true }).Count
 }
 
+function Test-OpeningGuardAndPatronLeadsComplete {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    $guardQuest = Find-TownQuest -Game $Game -QuestId "guard_night_watch"
+    $patronQuest = Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats"
+
+    return ($null -ne $guardQuest -and $guardQuest.Completed -and $null -ne $patronQuest -and $patronQuest.Completed)
+}
+
 function Get-StoryClueNotes {
     param($Game)
 
@@ -158,7 +171,7 @@ function Get-StoryClueProgressSummary {
     }
 
     if ($currentTier -le 1) {
-        return "Chapter Two Notes: Tier 1 active. Complete a Tier 1 story quest to unlock Tier 2 city work."
+        return "Chapter Two Notes: Tier 1 active. Complete both the Guard Station patrol and the Quest Giver storehouse lead to unlock Tier 2 city work."
     }
 
     return "Chapter Two Notes: Tier $currentTier active. $(Get-QuestHeroName -Game $Game) still needs a confirmed understreet access lead."
@@ -241,6 +254,10 @@ function Get-TownQuestTimeLockText {
 function Get-CurrentStoryQuestTier {
     param($Game)
 
+    if (-not (Test-OpeningGuardAndPatronLeadsComplete -Game $Game)) {
+        return 1
+    }
+
     $tierThreeStrong = Get-StrongStoryQuestCountForTier -Game $Game -Tier 3
     $tierThreeCompleted = Get-CompletedStoryQuestCountForTier -Game $Game -Tier 3
 
@@ -255,14 +272,7 @@ function Get-CurrentStoryQuestTier {
         return 3
     }
 
-    $tierOneStrong = Get-StrongStoryQuestCountForTier -Game $Game -Tier 1
-    $tierOneCompleted = Get-CompletedStoryQuestCountForTier -Game $Game -Tier 1
-
-    if ($tierOneStrong -ge 1 -or $tierOneCompleted -ge 2) {
-        return 2
-    }
-
-    return 1
+    return 2
 }
 
 function Get-CompletedStoryQuestCountForTier {
@@ -316,6 +326,11 @@ function Get-StoryTierProgressStatus {
     $strongNeeded = 1
     $fallbackCompletedNeeded = 2
 
+    if ($currentTier -eq 1) {
+        $strongNeeded = 2
+        $fallbackCompletedNeeded = 2
+    }
+
     if ($currentTier -eq 2) {
         $strongNeeded = 2
         $fallbackCompletedNeeded = 3
@@ -326,7 +341,10 @@ function Get-StoryTierProgressStatus {
     $nextTier = $currentTier + 1
     $statusText = "Story Tier $currentTier is active. Strong progress on this tier: $strongCount/$strongNeeded."
 
-    if ($strongCount -lt $strongNeeded) {
+    if ($currentTier -eq 1 -and -not (Test-OpeningGuardAndPatronLeadsComplete -Game $Game)) {
+        $statusText += " Tier 2 requires both the Guard Station patrol and the Quest Giver storehouse lead."
+    }
+    elseif ($strongCount -lt $strongNeeded) {
         $statusText += " Weak outcomes can still complete quests, but $(Get-QuestHeroName -Game $Game) may need $fallbackCompletedNeeded total Tier $currentTier story quests to unlock Tier $nextTier."
     }
 

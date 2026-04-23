@@ -10,6 +10,7 @@ function Set-StoryTier {
 
     if ($Tier -ge 2) {
         (Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed = $true
+        (Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed = $true
     }
 
     if ($Tier -ge 3) {
@@ -158,6 +159,22 @@ function Test-OnlyOneStoryQuestCanBeStartedPerDay {
 
     Assert-Equal -Actual $game.Hero.XP -Expected $xpAfterFirst -Message "Starting a second story quest on the same day should not grant more XP."
     Assert-Equal -Actual $secondQuest.Completed -Expected $false -Message "The second story quest should wait until the next day."
+}
+
+function Test-TierTwoRequiresBothOpeningInvestigationLeads {
+    $guardOnlyGame = Initialize-Game
+    (Find-TownQuest -Game $guardOnlyGame -QuestId "guard_night_watch").Completed = $true
+
+    $patronOnlyGame = Initialize-Game
+    (Find-TownQuest -Game $patronOnlyGame -QuestId "patron_storehouse_rats").Completed = $true
+
+    $bothGame = Initialize-Game
+    (Find-TownQuest -Game $bothGame -QuestId "guard_night_watch").Completed = $true
+    (Find-TownQuest -Game $bothGame -QuestId "patron_storehouse_rats").Completed = $true
+
+    Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $guardOnlyGame) -Expected 1 -Message "The guard opening lead alone should not unlock Tier 2 because the clerk/storehouse half of the investigation is still missing."
+    Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $patronOnlyGame) -Expected 1 -Message "The patron opening lead alone should not unlock Tier 2 because the guard/tunnel half of the investigation is still missing."
+    Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $bothGame) -Expected 2 -Message "Tier 2 should unlock only after both opening investigation leads are complete."
 }
 
 function Test-BrokenSealPatrolUnlocksAfterTwoStoryClues {
@@ -561,16 +578,19 @@ function Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues {
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $true -Message "The Understreet Complex should unlock once Borzig has tunnel access and at least two major story clues."
 }
 
-function Test-UnderstreetComplexUnlocksFromBrokenSealAccessEvenWithoutNightWatch {
+function Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair {
     $game = Initialize-Game
     $finalQuest = Find-TownQuest -Game $game -QuestId "guard_understreet_complex"
 
-    Set-StoryTier -Game $game -Tier 4
+    (Find-TownQuest -Game $game -QuestId "patron_storehouse_rats").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "patron_ledger_of_ash").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "guard_night_courier").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "guard_broken_seal").Completed = $true
     $game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
     $game.Town.StoryFlags["ConfirmedUndergroundRoute"] = $true
 
-    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $true -Message "The Understreet Complex should unlock for saves that reached Broken Seal Patrol without the tier-1 guard quest."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $finalQuest) -Expected $false -Message "The Understreet Complex should stay locked if the opening Guard Station and Quest Giver leads were not both completed."
 }
 
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
@@ -716,7 +736,7 @@ function Test-BardUnderstreetFinaleUsesClassAwareText {
     Assert-True -Condition ($formattedRoomText -like "*Gariand*" -and $formattedRoomText -notlike "*Borzig*") -Message "Understreet room text should render with the current hero name for Bard."
 }
 
-function Test-TierTwoHidesTierOneStoryQuestsFromWorkSources {
+function Test-TierTwoKeepsRequiredOpeningLeadsAndAddsCurrentWork {
     $game = Initialize-Game
     Set-StoryTier -Game $game -Tier 2
 
@@ -724,8 +744,8 @@ function Test-TierTwoHidesTierOneStoryQuestsFromWorkSources {
     $patron = @(Get-TownQuestList -Game $game -Source "Quest Giver")
     $board = @(Get-TownQuestList -Game $game -Source "Quest Board")
 
-    Assert-Equal -Actual (@($guard | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 1 -Message "Tier 2 should replace the opening guard story job with the current tier's guard work."
-    Assert-Equal -Actual (@($patron | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 1 -Message "Tier 2 should replace the opening patron story job with the current tier's patron work."
+    Assert-Equal -Actual (@($guard | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 1 -Message "Tier 2 should keep the completed opening guard lead visible without adding unrelated guard work before its clue exists."
+    Assert-Equal -Actual (@($patron | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 2 -Message "Tier 2 should keep the completed opening patron lead visible and add the current ledger work."
     Assert-Equal -Actual (@($board | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 0 -Message "Tier 1 board story jobs should disappear from work once tier 2 opens."
 }
 
@@ -892,6 +912,7 @@ Test-StorehouseTroubleCompletesAndGrantsItemReward
 Test-DayJobPaysCoinButNoXP
 Test-DayJobVeteranRateImprovesPayAtLevelThree
 Test-OnlyOneStoryQuestCanBeStartedPerDay
+Test-TierTwoRequiresBothOpeningInvestigationLeads
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
 Test-BentNailWhispersUnlocksFromBentNailInfo
 Test-BentNailWhispersCompletesAndSetsBrokerFlag
@@ -914,7 +935,7 @@ Test-WarehouseLedgerCompletesAndSecuresEvidence
 Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself
 Test-UnderstreetComplexStaysLockedWithoutTunnelAccess
 Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
-Test-UnderstreetComplexUnlocksFromBrokenSealAccessEvenWithoutNightWatch
+Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
@@ -923,7 +944,7 @@ Test-UnderstreetShortRestHealsAndClearsBuff
 Test-UnderstreetComplexIncludesExtendedMazeLayout
 Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
 Test-BardUnderstreetFinaleUsesClassAwareText
-Test-TierTwoHidesTierOneStoryQuestsFromWorkSources
+Test-TierTwoKeepsRequiredOpeningLeadsAndAddsCurrentWork
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueProgressSummaryTracksTierAndEvidence
