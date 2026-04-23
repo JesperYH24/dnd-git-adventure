@@ -45,6 +45,7 @@ function Test-QuestNarrativeDoesNotReintroduceBorzigLocks {
     $questBorzigMatches = [regex]::Matches($questText, "\bBorzig\b")
 
     Assert-Equal -Actual ([regex]::Matches($cityQuestText, "\bBorzig\b").Count) -Expected 0 -Message "City quest narrative should use {hero} or class branches instead of hardcoded Borzig."
+    Assert-Equal -Actual ([regex]::Matches($cityQuestText, "\bGariand\b").Count) -Expected 0 -Message "City quest narrative should use the active bard name instead of hardcoded Gariand."
     Assert-Equal -Actual $questBorzigMatches.Count -Expected 1 -Message "Quest definitions should only keep Borzig as the fallback hero name."
 }
 

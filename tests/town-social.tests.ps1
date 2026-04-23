@@ -97,6 +97,29 @@ function Test-BardTownShopsUseDifferentIntroTone {
     Assert-True -Condition ($armorerText -like "*performer*" -or $armorerText -like "*mobility*") -Message "Armorer intro should still frame armor through the bard's movement and presentation."
 }
 
+function Test-TownTextUsesCurrentHeroName {
+    $barbarian = Get-Hero -Class "Barbarian"
+    $barbarian.Name = "Ragna"
+    $bard = Get-Hero -Class "Bard"
+    $bard.Name = "Lysa"
+    $silverKettle = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    $marketText = Get-TownShopIntroText -Shop "Market" -Hero $barbarian
+    $bardMarketText = Get-TownShopIntroText -Shop "Market" -Hero $bard
+    $innGreeting = Get-InnKeeperGreeting -Inn $silverKettle -Hero $barbarian
+    $ringGreeting = Get-RingMasterGreeting -Hero $barbarian
+    $game = Initialize-Game -Class "Barbarian"
+    $game.Hero.Name = "Ragna"
+    $hadrikTalk = Get-HadrikCityTalk -Game $game
+
+    Assert-True -Condition ($marketText -like "*Ragna*") -Message "Class-aware town text should use the current barbarian name."
+    Assert-True -Condition ($bardMarketText -like "*Lysa*") -Message "Class-aware town text should use the current bard name."
+    Assert-True -Condition ($innGreeting -like "*Ragna*") -Message "Innkeeper greetings should use the current hero name."
+    Assert-True -Condition ($ringGreeting -like "*Ragna*") -Message "Ringmaster greetings should use the current hero name."
+    Assert-True -Condition ($hadrikTalk -like "*Ragna*") -Message "Hadrik city talk should use the current hero name."
+    Assert-True -Condition ($marketText -notlike "*Borzig*" -and $bardMarketText -notlike "*Gariand*" -and $innGreeting -notlike "*Borzig*" -and $ringGreeting -notlike "*Borzig*" -and $hadrikTalk -notlike "*Borzig*") -Message "Town polish should not leak old default hero names into renamed heroes."
+}
+
 function Test-BarbarianSpecialtyShopToneFitsBorzig {
     $game = Initialize-Game -Class "Barbarian"
 
@@ -431,6 +454,7 @@ Test-LanternRestMerchantsFavorBardToolsForBards
 Test-SilverKettleUpperTablesAdvanceBardSocialStanding
 Test-BardQuestSourceTextReflectsSocialAllianceRole
 Test-BardTownShopsUseDifferentIntroTone
+Test-TownTextUsesCurrentHeroName
 Test-BarbarianSpecialtyShopToneFitsBorzig
 Test-InnkeeperGreetingChangesWithHeroStyle
 Test-StreetNpcIntrosRecognizeBardAsGariand

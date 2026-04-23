@@ -17,11 +17,17 @@ function Get-ClassAwareTownText {
         [string]$BardText
     )
 
+    $selectedText = $BarbarianText
+
     if ($null -ne $Hero -and $Hero.Class -eq "Bard" -and -not [string]::IsNullOrWhiteSpace($BardText)) {
-        return $BardText
+        $selectedText = $BardText
     }
 
-    return $BarbarianText
+    if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["Name"] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) {
+        $selectedText = $selectedText.Replace("Borzig", [string]$Hero.Name).Replace("Gariand", [string]$Hero.Name)
+    }
+
+    return (Resolve-HeroNarrativeText -Text $selectedText -Hero $Hero)
 }
 
 function Get-TownShopIntroText {
@@ -164,11 +170,13 @@ function Show-PostUnderstreetHook {
         return
     }
 
+    $heroName = $Game.Hero.Name
+
     Write-SectionTitle -Text "Aftermath" -Color "Green"
-    Write-Scene "Word spreads faster than Borzig expected. By dawn, half the city knows the hidden route under the ward has been broken open."
+    Write-Scene "Word spreads faster than $heroName expected. By dawn, half the city knows the hidden route under the ward has been broken open."
     Write-Scene "Captain Halden sends quiet thanks. Merchants start asking what else was hidden below. The wrong people are suddenly too silent."
-    Write-Scene "And in more than one district, Borzig hears the same uneasy thought repeated in different words: if the understreet was only one branch, what larger hand planted it here?"
-    Write-EmphasisLine -Text "New Chapter Hook: Borzig's victory under the city has exposed a wider network still worth hunting." -Color "Yellow"
+    Write-Scene "And in more than one district, $heroName hears the same uneasy thought repeated in different words: if the understreet was only one branch, what larger hand planted it here?"
+    Write-EmphasisLine -Text "New Chapter Hook: $heroName's victory under the city has exposed a wider network still worth hunting." -Color "Yellow"
     Write-ColorLine ""
 
     $Game.Town.ChapterThreeHookSeen = $true
@@ -427,7 +435,7 @@ function Wait-For-Nightfall {
     }
 
     Set-TownTimeOfDay -Game $Game -TimeOfDay "Night"
-    Write-Scene "Borzig lets the bright edge of the day burn down into lantern light, shuttered stalls, and the slower dangers that only wake after dusk."
+    Write-Scene "$($Game.Hero.Name) lets the bright edge of the day burn down into lantern light, shuttered stalls, and the slower dangers that only wake after dusk."
     Write-ColorLine ""
 }
 
@@ -816,16 +824,16 @@ function Resolve-BardPerformance {
     if ($total -ge ($effectiveCheckDC + 5)) {
         $rewardCopper = [int]$venue.GreatRewardCopper
         $outcome = "Great"
-        Write-Scene ($venue.GreatSuccessText.Replace("Borzig", $Game.Hero.Name))
+        Write-Scene (Resolve-HeroNarrativeText -Text $venue.GreatSuccessText -Hero $Game.Hero)
     }
     elseif ($total -ge $effectiveCheckDC) {
         $rewardCopper = [int]$venue.GoodRewardCopper
         $outcome = "Good"
-        Write-Scene ($venue.SuccessText.Replace("Borzig", $Game.Hero.Name))
+        Write-Scene (Resolve-HeroNarrativeText -Text $venue.SuccessText -Hero $Game.Hero)
     }
     else {
         $rewardCopper = [int]$venue.PoorRewardCopper
-        Write-Scene ($venue.FailureText.Replace("Borzig", $Game.Hero.Name))
+        Write-Scene (Resolve-HeroNarrativeText -Text $venue.FailureText -Hero $Game.Hero)
     }
 
     if ($permitRewardCopper -gt 0 -and $outcome -ne "Poor") {
@@ -845,7 +853,7 @@ function Resolve-BardPerformance {
     if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great" -and -not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
         $Game.Town.InnFlags["SilverKettlePatronFavor"] = $true
         $Game.Town.Relationships["MerchantPatron"] = "Favorable"
-        Write-EmphasisLine -Text "A patron remembers the set and starts asking after Borzig by name." -Color "Yellow"
+        Write-EmphasisLine -Text "A patron remembers the set and starts asking after $($Game.Hero.Name) by name." -Color "Yellow"
     }
 
     if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great") {
@@ -966,7 +974,7 @@ function Start-TownMenu {
         # The first city night is mandatory so the tutorial always lands on the inn chapter ending.
         if ($Game.Town.MustChooseFirstInn -and -not $Game.Town.ChapterOneComplete) {
             Write-SectionTitle -Text "Night Falls" -Color "Yellow"
-            Write-Scene "The city can wait until morning. Borzig needs a roof, a locked door, and one real night's sleep before the next chapter begins."
+            Write-Scene "The city can wait until morning. $($Game.Hero.Name) needs a roof, a locked door, and one real night's sleep before the next chapter begins."
             Write-ColorLine ""
 
             $innResult = Start-InnSelectionMenu -Game $Game -HeroHP $HeroHP
@@ -987,18 +995,18 @@ function Start-TownMenu {
         Write-TownTimeTracker -Game $Game -Area "Town"
 
         if (-not $Game.Town.StreetFlags["TownMenuVisited"]) {
-            Write-Scene "Stone streets spread out before Borzig, loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
+            Write-Scene "Stone streets spread out before $($Game.Hero.Name), loud with merchants, carts, and the clatter of a city living by its own stubborn rhythm."
             Write-Scene "The city no longer feels like refuge alone. It feels like a place where the next chapter might actually begin."
             $Game.Town.StreetFlags["TownMenuVisited"] = $true
         }
         elseif ($Game.Town.ChapterTwoComplete) {
-            Write-Scene "The city watches Borzig differently now, with more respect and sharper attention."
+            Write-Scene "The city watches $($Game.Hero.Name) differently now, with more respect and sharper attention."
         }
         elseif ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
             Write-Scene "Lantern light and late footsteps have taken over the streets. The city is quieter now, but never truly calm."
         }
         else {
-            Write-Scene "The city is awake around Borzig again, full of noise, work, and unfinished business."
+            Write-Scene "The city is awake around $($Game.Hero.Name) again, full of noise, work, and unfinished business."
         }
         Write-ColorLine ""
         if ($isNight) {

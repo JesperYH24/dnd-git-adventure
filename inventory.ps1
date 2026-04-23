@@ -251,7 +251,7 @@ function Open-BackpackMenu {
     )
 
     if ($InCombat) {
-        Write-Scene "Borzig cannot rummage through the backpack in the middle of a fight."
+        Write-Scene "$($Hero.Name) cannot rummage through the backpack in the middle of a fight."
         return $false
     }
 
@@ -303,7 +303,7 @@ function Open-BackpackMenu {
             }
 
             if ($movableItems.Count -eq 0) {
-                Write-Scene "Borzig has nothing on hand to move into the backpack."
+                Write-Scene "$($Hero.Name) has nothing on hand to move into the backpack."
                 continue
             }
 

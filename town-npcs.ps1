@@ -50,6 +50,7 @@ function Get-InnKeeperGreeting {
     )
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $heroName = Get-HeroTownName -Hero $Hero
 
     switch ($Inn.Id) {
         "bent_nail" {
@@ -58,22 +59,22 @@ function Get-InnKeeperGreeting {
             }
 
             if ($persona.IsBarbarian -or $persona.IsStrong) {
-                return "Marta squints up at Borzig's shoulders and grunts. 'You look like the kind who breaks furniture instead of rules. Pay first and keep the trouble pointed away from my bar.'"
+                return "Marta squints up at $heroName's shoulders and grunts. 'You look like the kind who breaks furniture instead of rules. Pay first and keep the trouble pointed away from my bar.'"
             }
 
             if ($persona.IsBardLike -or $persona.IsCharming) {
-                return "Marta gives Borzig a narrow look. 'Pretty words do not buy a bed here. Coin does. If you've got both, keep the words short and the purse visible.'"
+                return "Marta gives $heroName a narrow look. 'Pretty words do not buy a bed here. Coin does. If you've got both, keep the words short and the purse visible.'"
             }
 
             if ($persona.IsKnightLike) {
-                return "Marta eyes Borzig's posture like it belongs in a cleaner room. 'You'll not fix this place by standing straighter, soldier. Pay, sleep, and mind your temper.'"
+                return "Marta eyes $heroName's posture like it belongs in a cleaner room. 'You'll not fix this place by standing straighter, soldier. Pay, sleep, and mind your temper.'"
             }
 
             return $Inn.KeeperText
         }
         "lantern_rest" {
             if ($RepeatVisit) {
-                return "Oren gives Borzig an easy nod. 'Back again. Same room, same clean sheets, same promise that this place stays calmer than most.'"
+                return "Oren gives $heroName an easy nod. 'Back again. Same room, same clean sheets, same promise that this place stays calmer than most.'"
             }
 
             if ($persona.IsBardLike -or $persona.IsCharming) {
@@ -85,7 +86,7 @@ function Get-InnKeeperGreeting {
             }
 
             if ($persona.IsBarbarian -or $persona.IsStrong) {
-                return "Oren measures Borzig with a practiced host's calm. 'We've had caravan guards rougher than you and merchants softer. Leave both at the door and we'll get along well enough.'"
+                return "Oren measures $heroName with a practiced host's calm. 'We've had caravan guards rougher than you and merchants softer. Leave both at the door and we'll get along well enough.'"
             }
 
             return $Inn.KeeperText
@@ -104,7 +105,7 @@ function Get-InnKeeperGreeting {
             }
 
             if ($persona.IsBarbarian -or $persona.IsStrong) {
-                return "Madam Seraphine studies Borzig like a wolf invited into a ballroom. 'Strength has its uses, darling, but under my roof it will wear boots clean enough not to offend the carpets.'"
+                return "Madam Seraphine studies $heroName like a wolf invited into a ballroom. 'Strength has its uses, darling, but under my roof it will wear boots clean enough not to offend the carpets.'"
             }
 
             return $Inn.KeeperText
@@ -230,6 +231,7 @@ function Get-RingMasterGreeting {
     param($Hero)
 
     $persona = Get-HeroTownPersona -Hero $Hero
+    $heroName = Get-HeroTownName -Hero $Hero
     $ringWins = 0
 
     if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"]) {
@@ -245,23 +247,23 @@ function Get-RingMasterGreeting {
     }
 
     if ($ringWins -ge 5) {
-        return "Ringmaster Dorr gives Borzig a harder look than before, half measuring and half approving. 'The crowd knows you now. That means the next lot will come in sharper.'"
+        return "Ringmaster Dorr gives $heroName a harder look than before, half measuring and half approving. 'The crowd knows you now. That means the next lot will come in sharper.'"
     }
 
     if ($ringWins -gt 0) {
-        return "Ringmaster Dorr points at Borzig with two thick fingers. 'You're not new anymore. The pit remembers faces that win.'"
+        return "Ringmaster Dorr points at $heroName with two thick fingers. 'You're not new anymore. The pit remembers faces that win.'"
     }
 
     if ($persona.IsStrong -and $persona.IsTough) {
-        return "Ringmaster Dorr looks Borzig over and bares his teeth in approval. 'Good. Real shoulders, real lungs, real scars. The crowd knows what to do with that.'"
+        return "Ringmaster Dorr looks $heroName over and bares his teeth in approval. 'Good. Real shoulders, real lungs, real scars. The crowd knows what to do with that.'"
     }
 
     if ($persona.IsQuick) {
-        return "Ringmaster Dorr watches Borzig's footwork before he says a word. 'Fast feet survive longer than loud mouths in my pit. Keep them moving and the crowd might remember you.'"
+        return "Ringmaster Dorr watches $heroName's footwork before he says a word. 'Fast feet survive longer than loud mouths in my pit. Keep them moving and the crowd might remember you.'"
     }
 
     if ($persona.IsBardLike -or $persona.IsCharming) {
-        return "Ringmaster Dorr snorts at first, then catches the way Borzig holds the room. 'If you can fight half as well as you carry yourself, the bettors will love you.'"
+        return "Ringmaster Dorr snorts at first, then catches the way $heroName holds the room. 'If you can fight half as well as you carry yourself, the bettors will love you.'"
     }
 
     if ($persona.IsKnightLike) {
@@ -424,19 +426,20 @@ function Get-HadrikCityTalk {
     param($Game)
 
     $persona = Get-HeroTownPersona -Hero $Game.Hero
+    $heroName = Get-HeroTownName -Hero $Game.Hero
 
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["HadrikCityTalk_Post"]) {
             $Game.Town.StreetFlags["HadrikCityTalk_Post"] = $true
             if ($persona.IsBarbarian -or $persona.IsStrong) {
-                return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken, and the rougher ones keep asking what Borzig carries when he expects a real fight. City's gone from frightened to opportunistic in record time.'"
+                return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken, and the rougher ones keep asking what $heroName carries when a real fight is expected. City's gone from frightened to opportunistic in record time.'"
             }
 
             return "Hadrik lowers his voice. 'Merchants pay faster now that the understreet route is broken. The city has gone from frightened to opportunistic in record time.'"
         }
 
         if ($persona.IsBarbarian -or $persona.IsStrong) {
-            return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel. Folk see Borzig now and think of contracts, not cave salvage.'"
+            return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel. Folk see $heroName now and think of contracts, not cave salvage.'"
         }
 
         return "Hadrik snorts. 'Same city, more confidence, and twice the demand for good steel.'"
@@ -445,14 +448,14 @@ function Get-HadrikCityTalk {
     if (-not $Game.Town.StreetFlags["HadrikCityTalk"]) {
         $Game.Town.StreetFlags["HadrikCityTalk"] = $true
         if ($persona.IsBarbarian -or $persona.IsStrong) {
-            return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need Borzig or someone built like him before the week is out.'"
+            return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need $heroName or someone built like that before the week is out.'"
         }
 
         return "Hadrik lowers his voice and leans on the doorframe. 'Funny thing about the city: the rich buy polished blades, but the real money comes from the folk who know they'll need steel before the week is out.'"
     }
 
     if ($persona.IsBarbarian -or $persona.IsStrong) {
-        return "Hadrik scratches soot from his jaw. 'City still wants steel, and folk glance at Borzig like proof of why. Means the forge sleeps last.'"
+        return "Hadrik scratches soot from his jaw. 'City still wants steel, and folk glance at $heroName like proof of why. Means the forge sleeps last.'"
     }
 
     return "Hadrik scratches soot from his jaw. 'City still wants steel. City always wants steel. Means the forge sleeps last.'"
@@ -697,6 +700,7 @@ function Start-TownStreetScene {
     )
 
     $showIntro = $true
+    $heroName = Get-HeroTownName -Hero $Game.Hero
 
     while ($true) {
         Write-SectionTitle -Text "City Streets" -Color "Cyan"
@@ -705,20 +709,20 @@ function Start-TownStreetScene {
         if ($showIntro -and -not $Game.Town.StreetFlags["StreetSceneVisited"]) {
             if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
                 if ($Game.Hero.Class -eq "Bard") {
-                    Write-Scene "Gariand moves through narrow lanes under lantern glow, where voices drop lower, shutters sit half-closed, and every rumor sounds a little more deliberate."
+                    Write-Scene "$heroName moves through narrow lanes under lantern glow, where voices drop lower, shutters sit half-closed, and every rumor sounds a little more deliberate."
                     Write-Scene "Night turns the streets into a different kind of stage. Gratitude, fear, and opportunity all speak softer, but none of them speak less."
                 }
                 else {
-                    Write-Scene "Borzig moves through narrow lanes under lantern glow, where doors are shut, conversations turn quiet, and the city feels alert in a harder way than it does by day."
+                    Write-Scene "$heroName moves through narrow lanes under lantern glow, where doors are shut, conversations turn quiet, and the city feels alert in a harder way than it does by day."
                     Write-Scene "Some faces still want to thank him. Others only watch, as if night itself might decide what kind of trouble comes next."
                 }
             }
             elseif ($Game.Hero.Class -eq "Bard") {
-                Write-Scene "Gariand moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers and curious tavern retellings."
+                Write-Scene "$heroName moves through narrow lanes lit by lanterns, where relieved citizens speak the name in hushed half-whispers and curious tavern retellings."
                 Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble, certain he can talk his way into rooms they cannot reach."
             }
             else {
-                Write-Scene "Borzig moves through narrow lanes lit by lanterns, where relieved citizens speak his name in hushed half-whispers."
+                Write-Scene "$heroName moves through narrow lanes lit by lanterns, where relieved citizens speak the name in hushed half-whispers."
                 Write-Scene "Some want to thank him. Others want to warn him. A few are already trying to pull him toward the next kind of trouble."
             }
             $Game.Town.StreetFlags["StreetSceneVisited"] = $true
@@ -726,22 +730,22 @@ function Start-TownStreetScene {
         elseif ($showIntro) {
             if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
                 if ($Game.Hero.Class -eq "Bard") {
-                    Write-Scene "At night the streets read Gariand differently. Familiar faces still recognize him, but now they measure whether he looks like a witness, a rumor-carrier, or the answer to some private problem."
+                    Write-Scene "At night the streets read $heroName differently. Familiar faces still recognize him, but now they measure whether he looks like a witness, a rumor-carrier, or the answer to some private problem."
                 }
                 else {
-                    Write-Scene "At night the streets read Borzig differently. The city watches him less like a passerby and more like someone who might actually matter before dawn."
+                    Write-Scene "At night the streets read $heroName differently. The city watches him less like a passerby and more like someone who might actually matter before dawn."
                 }
             }
             elseif ($Game.Hero.Class -eq "Bard") {
                 if ([int]$Game.Town.PerformanceCountTotal -ge 6) {
-                    Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, and more than one passerby recognizes the city's working performer before the next whisper even starts."
+                    Write-Scene "The streets know $heroName a little better now. Familiar faces still watch for him, and more than one passerby recognizes the city's working performer before the next whisper even starts."
                 }
                 else {
-                    Write-Scene "The streets know Gariand a little better now. Familiar faces still watch for him, each hoping to be remembered when the city's whispers need carrying somewhere useful."
+                    Write-Scene "The streets know $heroName a little better now. Familiar faces still watch for him, each hoping to be remembered when the city's whispers need carrying somewhere useful."
                 }
             }
             else {
-                Write-Scene "The streets know Borzig a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
+                Write-Scene "The streets know $heroName a little better now. Familiar faces still watch for him, each hoping to be remembered for the right reason."
             }
         }
 

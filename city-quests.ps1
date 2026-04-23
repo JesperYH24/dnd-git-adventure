@@ -1124,9 +1124,9 @@ function Start-NightWatchReliefQuest {
 
     Write-SectionTitle -Text "Night Watch Relief" -Color "Yellow"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-Scene "Captain Halden meets Gariand under a guttering lantern and studies him like a man still deciding how much polish to trust."
+        Write-Scene "Captain Halden meets $($Game.Hero.Name) under a guttering lantern and studies him like a man still deciding how much polish to trust."
         Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'And now merchants are whispering about missing stock on top of it. Walk the line, listen sharp, and come back with something better than rumors. If you can pull truth out of frightened people before steel has to, do it.'"
-        Write-Scene "Gariand joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
+        Write-Scene "$($Game.Hero.Name) joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
     }
     else {
         Write-Scene "Captain Halden meets {hero} under a guttering lantern and speaks without wasting a word."
@@ -1206,9 +1206,9 @@ function Start-StorehouseTroubleQuest {
 
     Write-SectionTitle -Text "Storehouse Trouble" -Color "Yellow"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-Scene "The patron's clerk presses a cold iron key into Gariand's hand and points him toward the river quarter."
+        Write-Scene "The patron's clerk presses a cold iron key into $($Game.Hero.Name)'s hand and points him toward the river quarter."
         Write-Scene "'The watch keeps asking about tunnels and night movement,' the clerk mutters. 'You hear different things in better rooms than my factors do. I want to know where the goods are going, and who thinks they can hide it behind respectable paper.'"
-        Write-Scene "Inside the locked storehouse Gariand finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
+        Write-Scene "Inside the locked storehouse $($Game.Hero.Name) finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
     }
     else {
         Write-Scene "The patron's clerk presses a cold iron key into {hero}'s hand and points him toward the river quarter."
@@ -1462,7 +1462,7 @@ function Start-LedgerOfAshQuest {
 
     Write-SectionTitle -Text "Ledger of Ash" -Color "Yellow"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-Scene "The patron's clerk spreads a smoke-smudged ledger across a narrow desk and shows Gariand which entries do not add up."
+        Write-Scene "The patron's clerk spreads a smoke-smudged ledger across a narrow desk and shows $($Game.Hero.Name) which entries do not add up."
         Write-Scene "Some payments are too clean. Some names repeat in different hands. Someone is paying to move goods without asking what they are."
         Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful. You hear how men talk when they think wit is the same thing as safety. Use that.'"
     }
@@ -1635,10 +1635,10 @@ function Start-BrokenSealPatrolQuest {
 
     Write-SectionTitle -Text "Broken Seal Patrol" -Color "Yellow"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-Scene "Captain Halden sends Gariand with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
+        Write-Scene "Captain Halden sends $($Game.Hero.Name) with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
         Write-Scene "The lock is split, the stones are marked, and the air from below smells like wet mortar and torch smoke."
         Write-Scene "'Your merchant clerk was right about organized movement,' one watchman mutters. 'No one protects a dead tunnel like this unless coin is riding through it.'"
-        Write-Scene "The other guard eyes Gariand sidelong. 'You were right too. Same names in the nice rooms and the ugly ones. Means this rot has roots.'"
+        Write-Scene "The other guard eyes $($Game.Hero.Name) sidelong. 'You were right too. Same names in the nice rooms and the ugly ones. Means this rot has roots.'"
     }
     else {
         Write-Scene "Captain Halden sends {hero} with two watchmen to a maintenance hatch that should have been sealed from the inside years ago."
@@ -1897,7 +1897,7 @@ function Start-WarehouseLedgerRecoveryQuest {
 
     Write-SectionTitle -Text "Warehouse Ledger Recovery" -Color "Yellow"
     if ($Game.Hero.Class -eq "Bard") {
-        Write-Scene "The patron's clerk meets Gariand in a side passage and keeps his voice low."
+        Write-Scene "The patron's clerk meets $($Game.Hero.Name) in a side passage and keeps his voice low."
         Write-Scene "'There is a second ledger,' he says. 'Not the one they show inspectors. The real one. If it vanishes, so do the names that matter. And if the watch is about to move underground, I want them moving with proof in hand. You can get men talking long past the point they mean to. I need that tonight.'"
     }
     else {

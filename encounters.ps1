@@ -53,12 +53,12 @@ function Resolve-RoomEncounter {
         Write-ColorLine ""
         Write-Scene "The heat in the chamber surges all at once."
         Write-Scene "Gold shifts under something vast, ancient, and still half-hidden in smoke."
-        Write-Scene "Then one blazing eye opens, and the whole cavern seems to lean toward Borzig."
+        Write-Scene "Then one blazing eye opens, and the whole cavern seems to lean toward $($Game.Hero.Name)."
         Write-ColorLine ""
         Write-EmphasisLine -Text "Stone explodes beside him under a single lazy sweep of the beast's claws." -Color "Red"
         Write-ColorLine ""
         Write-Scene "This is not a battle for a level 1 hero."
-        Write-Scene "Borzig has one chance: survive, escape, and carry this warning back to town."
+        Write-Scene "$($Game.Hero.Name) has one chance: survive, escape, and carry this warning back to town."
         Write-ColorLine ""
 
         $Game.Quest.SeenDragon = $true

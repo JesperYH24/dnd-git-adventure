@@ -12,10 +12,12 @@ function Resolve-InnEvent {
         $EventRoll = Roll-Dice -Sides 100
     }
 
+    $heroName = $Game.Hero.Name
+
     switch ($Inn.Id) {
         "bent_nail" {
             if ($EventRoll -le 35) {
-                Write-Scene "A drunken carter mistakes Borzig's silence for mockery, and the common room suddenly wants a fight."
+                Write-Scene "A drunken carter mistakes $heroName's silence for mockery, and the common room suddenly wants a fight."
                 $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
                     Name = "Ropearm Jerek"
                     Definite = "Ropearm Jerek"
@@ -29,7 +31,7 @@ function Resolve-InnEvent {
 
                 if ($wonBrawl) {
                     Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 3 | Out-Null
-                    Write-Scene "Marta barks the room quiet and tosses Borzig 3 SP from the pile of side bets."
+                    Write-Scene "Marta barks the room quiet and tosses $heroName 3 SP from the pile of side bets."
                 }
                 else {
                     Write-Scene "Marta hauls the loser out by the collar and tells both fools to sleep it off."
@@ -41,7 +43,7 @@ function Resolve-InnEvent {
             if ($EventRoll -le 65) {
                 if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
                     $Game.Town.InnFlags["BentNailShadyRumor"] = $true
-                    Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys. Borzig learns where the city's shadier business tends to gather."
+                    Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys. $heroName learns where the city's shadier business tends to gather."
                 }
                 else {
                     Write-Scene "The same hard-eyed smugglers are here again, still talking low and watching everyone."
@@ -52,7 +54,7 @@ function Resolve-InnEvent {
         }
         "lantern_rest" {
             if ($EventRoll -le 15) {
-                Write-Scene "A mercenary with too much ale and too much pride takes offense when Borzig refuses to trade boasts."
+                Write-Scene "A mercenary with too much ale and too much pride takes offense when $heroName refuses to trade boasts."
                 $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
                     Name = "Mercenary Pell"
                     Definite = "Mercenary Pell"
@@ -65,10 +67,10 @@ function Resolve-InnEvent {
                 }) -Title "Lantern Rest Scuffle"
 
                 if ($wonBrawl) {
-                    Write-Scene "The room settles fast once Pell hits the boards. Oren sends Borzig's stew up free of charge."
+                    Write-Scene "The room settles fast once Pell hits the boards. Oren sends $heroName's stew up free of charge."
                 }
                 else {
-                    Write-Scene "Oren breaks it up before it turns ugly and quietly warns Borzig that not every paying guest deserves patience."
+                    Write-Scene "Oren breaks it up before it turns ugly and quietly warns $heroName that not every paying guest deserves patience."
                 }
 
                 return
@@ -80,15 +82,15 @@ function Resolve-InnEvent {
                     if ($Game.Hero.Class -eq "Bard") {
                         $Game.Town.Relationships["LanternAudience"] = "Warm"
                         Set-TownOfferDiscount -Game $Game -OfferId "instrument_shop_stage_lute" -DiscountCopper 20
-                        Write-Scene "A caravan factor shares road gossip over supper, then decides Gariand belongs in better company than the back corner. By dessert, the instrument maker near the square has been told to shave the price on a Stage Lute."
+                        Write-Scene "A caravan factor shares road gossip over supper, then decides $heroName belongs in better company than the back corner. By dessert, the instrument maker near the square has been told to shave the price on a Stage Lute."
                     }
                     else {
                         Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
-                        Write-Scene "A caravan factor shares road gossip over supper, then tells the market to give Borzig a better rate on basic healing supplies."
+                        Write-Scene "A caravan factor shares road gossip over supper, then tells the market to give $heroName a better rate on basic healing supplies."
                     }
                 }
                 else {
-                    Write-Scene "Travelers trade the latest road rumors across the room, but nothing sharper than that reaches Borzig tonight."
+                    Write-Scene "Travelers trade the latest road rumors across the room, but nothing sharper than that reaches $heroName tonight."
                 }
 
                 return
@@ -96,7 +98,7 @@ function Resolve-InnEvent {
         }
         "silver_kettle" {
             if ($EventRoll -le 10) {
-                Write-Scene "A silk-draped bravo mistakes Borzig's plain clothes for weakness and ends up demanding satisfaction with bare hands."
+                Write-Scene "A silk-draped bravo mistakes $heroName's plain clothes for weakness and ends up demanding satisfaction with bare hands."
                 $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
                     Name = "House Duelist Corven"
                     Definite = "House Duelist Corven"
@@ -112,7 +114,7 @@ function Resolve-InnEvent {
                     Write-Scene "Even the shocked nobles have to admit the result. Madam Seraphine has the mess erased before dawn."
                 }
                 else {
-                    Write-Scene "The house guards end it the instant Borzig is outmatched, which is still kinder than most cheap inns manage."
+                    Write-Scene "The house guards end it the instant $heroName is outmatched, which is still kinder than most cheap inns manage."
                 }
 
                 return
@@ -125,16 +127,16 @@ function Resolve-InnEvent {
                         $Game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
                         $Game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
                         $Game.Town.Relationships["MerchantPatron"] = "Favorable"
-                        Write-Scene "Between candlelight and quiet music, a patron at the upper tables takes notice of Gariand and quietly decides he belongs in smaller, richer rooms. Before the night is done, a private salon invitation is left waiting with the bill."
+                        Write-Scene "Between candlelight and quiet music, a patron at the upper tables takes notice of $heroName and quietly decides the performer belongs in smaller, richer rooms. Before the night is done, a private salon invitation is left waiting with the bill."
                     }
                     else {
                         $Game.Town.Relationships["MagistrateClerk"] = "Introduced"
                         Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
-                        Write-Scene "Between candlelight and quiet music, a magistrate's clerk takes notice of Borzig and offers a proper introduction to more respectable circles."
+                        Write-Scene "Between candlelight and quiet music, a magistrate's clerk takes notice of $heroName and offers a proper introduction to more respectable circles."
                     }
                 }
                 else {
-                    Write-Scene "The upper tables continue their soft, expensive gossip. Borzig is watched now with recognition instead of suspicion."
+                    Write-Scene "The upper tables continue their soft, expensive gossip. $heroName is watched now with recognition instead of suspicion."
                 }
 
                 return
@@ -152,17 +154,19 @@ function Resolve-BentNailEveningChoice {
         [int]$RiskRoll = 0
     )
 
+    $heroName = $Game.Hero.Name
+
     if ($Choice -eq "1") {
         $currentTier = Get-CurrentStoryQuestTier -Game $Game
 
         if ($currentTier -lt 2) {
             if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
                 $Game.Town.InnFlags["BentNailShadyRumor"] = $true
-                Write-Scene "Borzig catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back only gives him one measuring look before the table closes around its own secrets."
-                Write-EmphasisLine -Text "The Bent Nail lead is noted. Come back once Tier 2 city work opens and the room has reason to take Borzig seriously." -Color "Yellow"
+                Write-Scene "$heroName catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back only gives the table one measuring look before it closes around its own secrets."
+                Write-EmphasisLine -Text "The Bent Nail lead is noted. Come back once Tier 2 city work opens and the room has reason to take $heroName seriously." -Color "Yellow"
             }
             else {
-                Write-Scene "The same hard-eyed regulars are still here, but they are not ready to trust Borzig with more than dockside rumor yet."
+                Write-Scene "The same hard-eyed regulars are still here, but they are not ready to trust $heroName with more than dockside rumor yet."
                 Write-EmphasisLine -Text "The deeper Bent Nail lead should open once Tier 2 story quests are available." -Color "Yellow"
             }
 
@@ -172,11 +176,11 @@ function Resolve-BentNailEveningChoice {
         if (-not $Game.Town.InnFlags["BentNailBrokerInfo"]) {
             $Game.Town.InnFlags["BentNailBrokerInfo"] = $true
             $Game.Town.Relationships["UnderstreetBroker"] = "Named"
-            Write-Scene "Borzig keeps his head down and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
-            Write-EmphasisLine -Text "Borzig leaves the table with a cleaner read on who in the Bent Nail still knows the understreet routes by name." -Color "Yellow"
+            Write-Scene "$heroName keeps low and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
+            Write-EmphasisLine -Text "$heroName leaves the table with a cleaner read on who in the Bent Nail still knows the understreet routes by name." -Color "Yellow"
         }
         else {
-            Write-Scene "The same smugglers are still talking around Borzig, but tonight they offer nothing sharper than what he already knows."
+            Write-Scene "The same smugglers are still talking around $heroName, but tonight they offer nothing sharper than what was already learned."
         }
 
         return
@@ -203,13 +207,13 @@ function Resolve-BentNailEveningChoice {
         }
         else {
             Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 2 | Out-Null
-            Write-Scene "For once the table laughs with Borzig instead of at him, and he walks away with 2 SP in easy winnings."
+            Write-Scene "For once the table laughs with $heroName instead of at the joke, and the winnings come away clean: 2 SP."
         }
 
         return
     }
 
-    Write-Scene "Borzig keeps to the wall and lets the room talk around him."
+    Write-Scene "$heroName keeps to the wall and lets the room talk around the silence."
 }
 
 function Resolve-LanternRestEveningChoice {
@@ -218,6 +222,8 @@ function Resolve-LanternRestEveningChoice {
         [string]$Choice,
         [int]$RiskRoll = 0
     )
+
+    $heroName = $Game.Hero.Name
 
         if ($Choice -eq "1") {
             if (-not $Game.Town.InnFlags["LanternTradeAdvice"]) {
@@ -233,19 +239,19 @@ function Resolve-LanternRestEveningChoice {
 
                     if ($Game.Hero.Level -ge 3) {
                         Set-TownOfferDiscount -Game $Game -OfferId "market_throwing_axe" -DiscountCopper 30
-                        Write-Scene "The caravan guards make room for Borzig, compare bruises, and point him toward a trader carrying balanced axes meant for fighters who expect a chase before the real violence starts."
-                        Write-EmphasisLine -Text "Borzig earns warm standing among the Lantern Rest mercenaries. The Balanced Throwing Axe is now cheaper at the market." -Color "Yellow"
+                        Write-Scene "The caravan guards make room for $heroName, compare bruises, and point toward a trader carrying balanced axes meant for fighters who expect a chase before the real violence starts."
+                        Write-EmphasisLine -Text "$heroName earns warm standing among the Lantern Rest mercenaries. The Balanced Throwing Axe is now cheaper at the market." -Color "Yellow"
                     }
                     else {
                         Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
-                        Write-Scene "Merchants and caravan guards swap practical road talk with Borzig and end up pointing him toward a market hand axe that suits ugly work in alleys, wagons, and close quarters."
-                        Write-EmphasisLine -Text "Borzig earns practical market favor at the Lantern Rest. The Hand Axe is now cheaper at the market." -Color "Yellow"
+                        Write-Scene "Merchants and caravan guards swap practical road talk with $heroName and end up pointing toward a market hand axe that suits ugly work in alleys, wagons, and close quarters."
+                        Write-EmphasisLine -Text "$heroName earns practical market favor at the Lantern Rest. The Hand Axe is now cheaper at the market." -Color "Yellow"
                     }
                 }
                 else {
                     Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
-                    Write-Scene "Merchants compare ledgers over stew and quietly point Borzig toward which traders gouge and which ones fear a hard bargain."
-                    Write-EmphasisLine -Text "Borzig learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
+                    Write-Scene "Merchants compare ledgers over stew and quietly point $heroName toward which traders gouge and which ones fear a hard bargain."
+                    Write-EmphasisLine -Text "$heroName learns practical market information. The Hand Axe is now cheaper at the market." -Color "Yellow"
                 }
         }
         else {
@@ -270,7 +276,7 @@ function Resolve-LanternRestEveningChoice {
             }
             else {
                 Write-Scene "Caravan guards swap route warnings with watchmen and mention a captain who pays well for reliable steel on dirty night work."
-                Write-EmphasisLine -Text "Borzig hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
+                Write-EmphasisLine -Text "$heroName hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
             }
         }
         else {
@@ -278,7 +284,7 @@ function Resolve-LanternRestEveningChoice {
                 Write-Scene "The guards greet $($Game.Hero.Name) like a man who might solve a bad scene before it becomes a report, but tonight they have no fresher rumor than that."
             }
             else {
-                Write-Scene "The guards nod to Borzig like a familiar face now, but tonight they have no fresh work to whisper about."
+                Write-Scene "The guards nod to $heroName like a familiar face now, but tonight they have no fresh work to whisper about."
             }
         }
 
@@ -290,7 +296,7 @@ function Resolve-LanternRestEveningChoice {
     }
 
     if ($RiskRoll -le 25) {
-        Write-Scene "Too much ale and too many boasts sour the room, and a visiting sword hand decides Borzig looks like trouble worth testing."
+        Write-Scene "Too much ale and too many boasts sour the room, and a visiting sword hand decides $heroName looks like trouble worth testing."
         Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
             Name = "Road Guard Hestin"
             Definite = "Road Guard Hestin"
@@ -304,7 +310,7 @@ function Resolve-LanternRestEveningChoice {
         }) -Title "Lantern Rest Dispute" | Out-Null
     }
     else {
-        Write-Scene "The common room stays loud but harmless, and Borzig comes away with nothing worse than a sore voice."
+        Write-Scene "The common room stays loud but harmless, and $heroName comes away with nothing worse than a sore voice."
     }
 }
 
@@ -314,6 +320,8 @@ function Resolve-SilverKettleEveningChoice {
         [string]$Choice,
         [int]$RiskRoll = 0
     )
+
+    $heroName = $Game.Hero.Name
 
         if ($Choice -eq "1") {
             if (-not $Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
@@ -327,12 +335,12 @@ function Resolve-SilverKettleEveningChoice {
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
                     Set-TownOfferDiscount -Game $Game -OfferId "apothecary_battle_tonic" -DiscountCopper 40
-                    Write-Scene "Borzig listens while quiet money talks about hard work no clerk can be seen asking for. Before the glasses are empty, one patron has already named the apothecary who keeps stronger restoratives aside for fighters expected to finish ugly contracts."
-                    Write-EmphasisLine -Text "Borzig gains upper-room contract insight. Future city payouts can improve, and stronger healing supplies are now easier to afford." -Color "Yellow"
+                    Write-Scene "$heroName listens while quiet money talks about hard work no clerk can be seen asking for. Before the glasses are empty, one patron has already named the apothecary who keeps stronger restoratives aside for fighters expected to finish ugly contracts."
+                    Write-EmphasisLine -Text "$heroName gains upper-room contract insight. Future city payouts can improve, and stronger healing supplies are now easier to afford." -Color "Yellow"
                 }
                 else {
-                    Write-Scene "Borzig listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
-                    Write-EmphasisLine -Text "Borzig gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
+                    Write-Scene "$heroName listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
+                    Write-EmphasisLine -Text "$heroName gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
                 }
         }
         else {
@@ -340,7 +348,7 @@ function Resolve-SilverKettleEveningChoice {
                 Write-Scene "The contract talk has changed now that $($Game.Hero.Name) is known. The room speaks around him less like hired muscle and more like expensive company."
             }
             else {
-                Write-Scene "The contract talk is still there if Borzig wants it, but the useful part has already been learned."
+                Write-Scene "The contract talk is still there if $heroName wants it, but the useful part has already been learned."
             }
         }
 
@@ -359,8 +367,8 @@ function Resolve-SilverKettleEveningChoice {
             }
             else {
                 Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
-                Write-Scene "A wealthy patron takes to Borzig's plain honesty and leaves 5 SP with Madam Seraphine to cover his next meal and wine."
-                Write-EmphasisLine -Text "Borzig earns a small favor among the upper tables." -Color "Yellow"
+                Write-Scene "A wealthy patron takes to $heroName's plain honesty and leaves 5 SP with Madam Seraphine to cover the next meal and wine."
+                Write-EmphasisLine -Text "$heroName earns a small favor among the upper tables." -Color "Yellow"
             }
         }
         else {
@@ -368,7 +376,7 @@ function Resolve-SilverKettleEveningChoice {
                 Write-Scene "The upper room remembers $($Game.Hero.Name) well enough now that introductions come easier than requests. The Silver Kettle clearly expects to see him again."
             }
             else {
-                Write-Scene "The upper room remembers Borzig well enough now, and that alone opens more doors than a second introduction would."
+                Write-Scene "The upper room remembers $heroName well enough now, and that alone opens more doors than a second introduction would."
             }
         }
 
@@ -380,7 +388,7 @@ function Resolve-SilverKettleEveningChoice {
     }
 
     if ($RiskRoll -le 10) {
-        Write-Scene "A silk-clad bravo mistakes Borzig's silence for contempt, and even this polished room cannot stop the old language of fists."
+        Write-Scene "A silk-clad bravo mistakes $heroName's silence for contempt, and even this polished room cannot stop the old language of fists."
         Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
             Name = "Velvet-Hand Corin"
             Definite = "Velvet-Hand Corin"
@@ -394,7 +402,7 @@ function Resolve-SilverKettleEveningChoice {
         }) -Title "Silver Kettle Insult" | Out-Null
     }
     else {
-        Write-Scene "Borzig takes the evening in quiet comfort, and the room's easy courtesy leaves him feeling better received than expected."
+        Write-Scene "$heroName takes the evening in quiet comfort, and the room's easy courtesy leaves the stay feeling better received than expected."
     }
 }
 
@@ -424,7 +432,7 @@ function Start-InnEveningMenu {
                     }
 
                     if ($isNight -and (Get-CurrentStoryQuestTier -Game $Game) -lt 2) {
-                        Write-EmphasisLine -Text "The back tables are watching Borzig, but the real Bent Nail whispers will likely open up once Tier 2 city work is unlocked." -Color "Yellow"
+                        Write-EmphasisLine -Text "The back tables are watching $($Game.Hero.Name), but the real Bent Nail whispers will likely open up once Tier 2 city work is unlocked." -Color "Yellow"
                     }
                 }
                 if ($isNight) {
@@ -600,14 +608,14 @@ function Get-InnAmbientVisitText {
                 @(
                     "The Bent Nail leans into the hour with rough laughter, chipped mugs, and the feeling that half the room has heard something useful and plans to sell it badly.",
                     "Tonight the Bent Nail sounds like dice, boots, and low arguments that never quite become fights.",
-                    $(if ($isBard) { "A few eyes follow $($Game.Hero.Name) with the half-grin reserved for someone this room already considers worth hearing." } else { "A few hard cases glance Borzig's way and then think better of turning curiosity into a challenge." })
+                    $(if ($isBard) { "A few eyes follow $($Game.Hero.Name) with the half-grin reserved for someone this room already considers worth hearing." } else { "A few hard cases glance $($Game.Hero.Name)'s way and then think better of turning curiosity into a challenge." })
                 )
             }
             else {
                 @(
                     "By daylight the Bent Nail is more stew kettle than brawl pit, full of dockworkers chewing through thick bread and bad tempers slowly.",
                     "The room smells of boiled onions, stale ale, and a floor that survived last night well enough to host today's meal service.",
-                    $(if ($isBard) { "A few regulars watch $($Game.Hero.Name) over chipped bowls like they are deciding whether a performer belongs in a room this blunt before sundown." } else { "A few hard-used laborers give Borzig the short nod reserved for someone who looks like he eats without complaint and leaves without fuss." })
+                    $(if ($isBard) { "A few regulars watch $($Game.Hero.Name) over chipped bowls like they are deciding whether a performer belongs in a room this blunt before sundown." } else { "A few hard-used laborers give $($Game.Hero.Name) the short nod reserved for someone who looks like they eat without complaint and leave without fuss." })
                 )
             }
         }
@@ -616,14 +624,14 @@ function Get-InnAmbientVisitText {
                 @(
                     "The Lantern Rest feels bright in a practical way: warm plates, steady voices, and travelers trying to believe tomorrow's road will be kinder than the last one.",
                     "Caravan talk and merchant gossip weave through the Lantern Rest tonight, easy enough to listen to without ever fully trusting.",
-                    $(if ($isBard) { "At the Lantern Rest, the room seems glad to have $($Game.Hero.Name) under the same roof again, as if good company might yet turn into a good evening." } else { "At the Lantern Rest, the room gives Borzig the respectful space reserved for someone who looks capable of finishing bad business without making more of it." })
+                    $(if ($isBard) { "At the Lantern Rest, the room seems glad to have $($Game.Hero.Name) under the same roof again, as if good company might yet turn into a good evening." } else { "At the Lantern Rest, the room gives $($Game.Hero.Name) the respectful space reserved for someone who looks capable of finishing bad business without making more of it." })
                 )
             }
             else {
                 @(
                     "The Lantern Rest carries the comfort of a proper meal service by day: hot bread, decent stew, and ledgers being discussed over plates instead of cups.",
                     "Merchants and caravan hands eat like people planning routes, repairs, and tomorrow's departures one mouthful at a time.",
-                    $(if ($isBard) { "At the Lantern Rest by day, $($Game.Hero.Name) looks less like entertainment and more like the sort of guest worth inviting to the better table before the coffee cools." } else { "At the Lantern Rest by day, the room gives Borzig the practical courtesy reserved for someone who might travel out on the same dangerous roads." })
+                    $(if ($isBard) { "At the Lantern Rest by day, $($Game.Hero.Name) looks less like entertainment and more like the sort of guest worth inviting to the better table before the coffee cools." } else { "At the Lantern Rest by day, the room gives $($Game.Hero.Name) the practical courtesy reserved for someone who might travel out on the same dangerous roads." })
                 )
             }
         }
@@ -632,14 +640,14 @@ function Get-InnAmbientVisitText {
                 @(
                     "The Silver Kettle carries itself with polished calm, all measured voices and the soft certainty that somebody important is always one table away from overhearing everything.",
                     "Soft glass, lower laughter, and carefully aimed conversation make the Silver Kettle feel expensive long before the bill arrives.",
-                    $(if ($isBard) { "More than one table at the Silver Kettle seems to notice $($Game.Hero.Name) on arrival and quietly adjust the room around that fact." } else { "The Silver Kettle still studies Borzig like an unusual guest, but by now even its finer tables do so with more curiosity than doubt." })
+                    $(if ($isBard) { "More than one table at the Silver Kettle seems to notice $($Game.Hero.Name) on arrival and quietly adjust the room around that fact." } else { "The Silver Kettle still studies $($Game.Hero.Name) like an unusual guest, but by now even its finer tables do so with more curiosity than doubt." })
                 )
             }
             else {
                 @(
                     "By day the Silver Kettle serves its elegance on plates as much as in manners, with polished cutlery, quiet luncheon talk, and servants who move like part of the decor.",
                     "The room sounds softer in daylight: fine dishes, measured voices, and people discussing contracts as if appetite and ambition were the same course.",
-                    $(if ($isBard) { "At the Silver Kettle by day, more than one table seems to recognize that $($Game.Hero.Name) might be worth hearing later, even while the room is still pretending lunch is only lunch." } else { "The Silver Kettle studies Borzig over white linen and bright silver, as if deciding whether he is a curiosity, a contract, or both." })
+                    $(if ($isBard) { "At the Silver Kettle by day, more than one table seems to recognize that $($Game.Hero.Name) might be worth hearing later, even while the room is still pretending lunch is only lunch." } else { "The Silver Kettle studies $($Game.Hero.Name) over white linen and bright silver, as if deciding whether this is a curiosity, a contract, or both." })
                 )
             }
         }
@@ -756,11 +764,13 @@ function Resolve-InnWorkOffRoom {
         $Inn
     )
 
+    $heroName = $Game.Hero.Name
+
     while ($true) {
         Write-SectionTitle -Text "Work Off the Room" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Inn Visit"
-        Write-Scene "$($Inn.Keeper) looks Borzig over, then points toward the sort of work that keeps an inn alive after dark."
-        Write-Scene "If he cannot pay in coin tonight, he can pay in sweat."
+        Write-Scene "$($Inn.Keeper) looks $heroName over, then points toward the sort of work that keeps an inn alive after dark."
+        Write-Scene "If $heroName cannot pay in coin tonight, the bill can be paid in sweat."
         Write-ColorLine ""
         Write-ColorLine "1. Haul kegs and split firewood (STR)" "White"
         Write-ColorLine "2. Scrub tables and reset the room (CON)" "White"
@@ -780,15 +790,15 @@ function Resolve-InnWorkOffRoom {
         switch ($choice) {
             "1" {
                 $ability = "STR"
-                $taskText = "Borzig shoulders casks, drags split wood, and keeps the cellar moving until his back burns."
+                $taskText = "$heroName shoulders casks, drags split wood, and keeps the cellar moving until every breath feels earned."
             }
             "2" {
                 $ability = "CON"
-                $taskText = "Borzig spends the late hours hauling benches straight, scrubbing down tables, and keeping on his feet long past comfort."
+                $taskText = "$heroName spends the late hours hauling benches straight, scrubbing down tables, and staying upright long past comfort."
             }
             "3" {
                 $ability = "STR"
-                $taskText = "Borzig stands the late door, hauling drunks apart before fists become blood on the floorboards."
+                $taskText = "$heroName stands the late door, hauling drunks apart before fists become blood on the floorboards."
             }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -818,7 +828,7 @@ function Resolve-InnWorkOffRoom {
                 default { 10 }
             }
             Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $tipCopper | Out-Null
-            Write-Scene "$($Inn.Keeper) grudgingly admits the work was worth more than a bed and slips Borzig a small tip."
+            Write-Scene "$($Inn.Keeper) grudgingly admits the work was worth more than a bed and slips $heroName a small tip."
         }
         elseif ($total -ge $dc) {
             Write-Scene "$($Inn.Keeper) decides the work settles the bill well enough."
@@ -836,7 +846,7 @@ function Resolve-InnWorkOffRoom {
         $HeroHP.Value = $Game.Hero.HP
         Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
 
-        Write-Scene "Borzig drops into bed exhausted. The room is paid for, but the night leaves him too worn out for the fighting ring tomorrow."
+        Write-Scene "$heroName drops into bed exhausted. The room is paid for, but the night leaves the body too worn out for the fighting ring tomorrow."
 
         if ($tipCopper -gt 0) {
             Write-EmphasisLine -Text "$($Game.Hero.Name) also earns $(Convert-CopperToCurrencyText -Copper $tipCopper) for the effort." -Color "Yellow"
@@ -846,7 +856,7 @@ function Resolve-InnWorkOffRoom {
             $Game.Town.ChapterOneComplete = $true
             Write-ColorLine ""
             Write-SectionTitle -Text "Chapter One Complete" -Color "Green"
-            Write-EmphasisLine -Text "Borzig survives the cave, reaches the city, and earns his first true night behind safe walls." -Color "Green"
+            Write-EmphasisLine -Text "$heroName survives the cave, reaches the city, and earns the first true night behind safe walls." -Color "Green"
             Write-Scene "The tutorial ends with sore hands, a cheap room, and the feeling that city life has to be earned one hard night at a time."
         }
 
@@ -1045,7 +1055,7 @@ function Get-InnkeeperHouseTalk {
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"] = $true
-                    return "Marta scratches at the bar and gives Borzig a sideways look. 'Strange thing. Ever since you broke that mess under the ward, even the rough houses are sleeping lighter.'"
+                    return "Marta scratches at the bar and gives $($Game.Hero.Name) a sideways look. 'Strange thing. Ever since you broke that mess under the ward, even the rough houses are sleeping lighter.'"
                 }
 
                 return "Marta grunts. 'House is rough as ever, but the whole quarter feels less trapped than it did.'"
@@ -1079,7 +1089,7 @@ function Get-InnkeeperHouseTalk {
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperHouseTalk_Post_$($inn.Id)"] = $true
-                    return "Madam Seraphine folds her hands and studies Borzig with frank approval. 'Victory changes a room long before it changes a ledger. People are spending more confidently because you reminded them fear can fail.'"
+                    return "Madam Seraphine folds her hands and studies $($Game.Hero.Name) with frank approval. 'Victory changes a room long before it changes a ledger. People are spending more confidently because you reminded them fear can fail.'"
                 }
 
                 return "Madam Seraphine smiles into her glass. 'Confidence suits the city better than panic ever did.'"
@@ -1277,7 +1287,7 @@ function Start-InnBookingConversation {
 
         switch ($choice) {
             "1" {
-                Write-Scene "$($inn.Keeper) gives a short nod and leaves the room booked under Borzig's name."
+                Write-Scene "$($inn.Keeper) gives a short nod and leaves the room booked under $($Game.Hero.Name)'s name."
                 Write-ColorLine ""
                 return "Keep"
             }
@@ -1308,10 +1318,10 @@ function Start-InnkeeperMenu {
         Write-TownTimeTracker -Game $Game -Area "Innkeeper"
         if ($showIntro) {
             if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
-                Write-Scene "$($inn.Keeper) keeps one eye on the room, the other on Borzig, and the rest of their attention on the sort of evening service that can turn rowdy or profitable without warning."
+                Write-Scene "$($inn.Keeper) keeps one eye on the room, the other on $($Game.Hero.Name), and the rest of their attention on the sort of evening service that can turn rowdy or profitable without warning."
             }
             else {
-                Write-Scene "$($inn.Keeper) moves through the day's service with practiced calm, pausing long enough to give Borzig the attention due a paying guest."
+                Write-Scene "$($inn.Keeper) moves through the day's service with practiced calm, pausing long enough to give $($Game.Hero.Name) the attention due a paying guest."
             }
             $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
             $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
@@ -1472,7 +1482,7 @@ function Start-InnSelectionMenu {
     while ($true) {
         Write-SectionTitle -Text "Find Lodging" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Lodging"
-        Write-Scene "Night settles over the city, and Borzig must choose what kind of roof he wants over his head."
+        Write-Scene "Night settles over the city, and $($Game.Hero.Name) must choose what kind of roof will hold until morning."
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
         Write-ColorLine ""
 

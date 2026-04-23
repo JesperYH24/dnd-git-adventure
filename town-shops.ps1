@@ -240,11 +240,12 @@ function Get-TownBuyerIntroText {
     )
 
     $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
+    $heroName = if ($null -ne $Game -and $null -ne $Game.Hero) { [string]$Game.Hero.Name } else { "the hero" }
 
     switch ($BuyerType) {
         "GeneralBuyer" {
             if ($isNight) { return "The quartermaster works more quietly at night, weighing gear by lamplight and quoting prices with the tired efficiency reserved for late business and people who need coin before dawn." }
-            return "A calm-eyed quartermaster weighs every piece Borzig lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin."
+            return "A calm-eyed quartermaster weighs every piece $heroName lays down and quotes a fair working price without much drama. Even he gives the rough cave-worn gear an extra second look before naming coin."
         }
         "Market" {
             if ($isNight) { return "The market trader keeps one late table open for night business, moving goods fast and paying less for anything too bulky, too bloody, or too difficult to explain after dark." }
@@ -266,7 +267,7 @@ function Get-TownBuyerIntroText {
             if ($isNight) { return "The apothecary handles late trade like triage, studying bottles and sealed mixtures with tired care while clearly wishing fewer customers needed remedies after dark." }
             return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite."
         }
-        default { return "A trader looks over Borzig's gear and starts naming coin." }
+        default { return "A trader looks over $heroName's gear and starts naming coin." }
     }
 }
 
@@ -539,7 +540,7 @@ function Open-TownSellMenu {
         $sellableItems = @(Get-SellableHeroItems -Hero $Hero)
 
         if ($sellableItems.Count -eq 0) {
-            Write-ColorLine "Borzig has nothing worth selling." "DarkGray"
+            Write-ColorLine "$($Hero.Name) has nothing worth selling." "DarkGray"
             Write-ColorLine ""
             return
         }
@@ -610,7 +611,7 @@ function Move-InventoryItemToStash {
     $item = $Hero.Inventory[$InventoryIndex]
 
     if ($item.Type -eq "Utility" -and $item.Name -eq "Backpack" -and (Get-BackpackUsedSlots -Hero $Hero) -gt 0) {
-        Write-Scene "Borzig cannot stash the backpack while it still holds gear."
+        Write-Scene "$($Hero.Name) cannot stash the backpack while it still holds gear."
         return
     }
 
@@ -662,7 +663,7 @@ function Start-InnStorageMenu {
     while ($true) {
         Write-SectionTitle -Text "Manage Storage" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Storage"
-        Write-Scene "A lockbox and a travel chest sit under the bed, ready to hold whatever Borzig does not want to carry through the city."
+        Write-Scene "A lockbox and a travel chest sit under the bed, ready to hold whatever $($Hero.Name) does not want to carry through the city."
         Write-ColorLine "Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "DarkCyan"
         Write-ColorLine ""
         Write-ColorLine "1. Store gear from inventory" "White"
