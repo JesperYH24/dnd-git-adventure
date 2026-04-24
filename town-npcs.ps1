@@ -766,6 +766,9 @@ function Start-TownStreetScene {
             Write-ColorLine "2. Hadrik has gone back to the forge" "DarkGray"
         }
         Write-ColorLine "3. Speak with Watchman Belor" "White"
+        if (Test-DocksDistrictUnlocked -Game $Game) {
+            Write-ColorLine "4. Head toward the docks" "White"
+        }
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. $ReturnLabel" "DarkGray"
         Write-ColorLine ""
@@ -794,8 +797,92 @@ function Start-TownStreetScene {
             "3" {
                 Start-BelorConversation -Game $Game
             }
+            "4" {
+                if (-not (Test-DocksDistrictUnlocked -Game $Game)) {
+                    Write-ColorLine "The way to the docks is just another street until a real reason pulls $heroName there." "DarkYellow"
+                    Write-ColorLine ""
+                }
+                else {
+                    Start-DocksDistrictScene -Game $Game -HeroHP $Game.Hero.HP
+                }
+            }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $Game.Hero.HP
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Invalid choice. Try again." "Red"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
+function Start-DocksDistrictScene {
+    param(
+        $Game,
+        [int]$HeroHP
+    )
+
+    $showIntro = $true
+    $heroName = Get-HeroTownName -Hero $Game.Hero
+
+    while ($true) {
+        $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+        Write-SectionTitle -Text "Docks" -Color "DarkCyan"
+        Write-TownTimeTracker -Game $Game -Area "Docks" -HeroHP $HeroHP
+
+        if ($showIntro -and -not $Game.Town.StreetFlags["DocksVisited"]) {
+            if ($isNight) {
+                if ($Game.Hero.Class -eq "Bard") {
+                    Write-Scene "$heroName steps onto wet dock planks under swaying lanterns, where rope creaks, gulls complain, and every low conversation sounds like it was bought an hour ago."
+                    Write-Scene "This is the docks' honest face after dark: not clean, not lawful, but very clear about who gets paid to look away."
+                }
+                else {
+                    Write-Scene "$heroName steps onto wet dock planks under swaying lanterns, where tar, river mist, and hard voices make the whole quarter feel like a knife waiting in a sleeve."
+                    Write-Scene "The docks are awake in the dark. Cargo still moves, money still changes hands, and nobody here pretends honest work is the only kind being done."
+                }
+            }
+            elseif ($Game.Hero.Class -eq "Bard") {
+                Write-Scene "$heroName finds the docks louder by day than rumor ever admits. Porters shout over chains, tally clerks argue with crews, and every ledger looks one edit away from becoming a lie."
+                Write-Scene "Even in daylight, the quarter feels like the back room of a deal too large to name openly."
+            }
+            else {
+                Write-Scene "$heroName reaches the docks through tar stink, shouted cargo counts, and river spray. Men work hard here, but the wrong kind of quiet still clings between the stacks."
+                Write-Scene "If Lady Veyra's enemies hired a blade through the city, this feels like the sort of place where the coin changed hands."
+            }
+
+            $Game.Town.StreetFlags["DocksVisited"] = $true
+        }
+        elseif ($showIntro) {
+            if ($isNight) {
+                Write-Scene "Night leaves the docks all lantern glare, wet rope, and people pretending not to recognize dangerous names."
+            }
+            else {
+                Write-Scene "By day the docks move in plain sight, but plain sight only means the lies have to dress themselves like commerce."
+            }
+        }
+
+        $showIntro = $false
+
+        Write-ColorLine ""
+        Write-ColorLine $(if ($isNight) { "What do you do among the night crews?" } else { "What do you do along the working piers?" }) "Cyan"
+        Write-ColorLine "1. Follow dockside leads and posted work" "White"
+        Write-ColorLine "S. Status" "White"
+        Write-ColorLine "0. Back to the streets" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = (Read-Host "Choose").ToUpper()
+
+        switch ($choice) {
+            "1" {
+                Show-TownQuestSource -Title "Docks" -IntroText "Wet planks, shouted cargo counts, and paid dockside silence make the river quarter feel like its own city. If someone hired a knife against Lady Veyra, the tide may have carried the name here." -Source "Docks" -Game $Game -HeroHP ([ref]$HeroHP)
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP
             }
             "0" {
                 return

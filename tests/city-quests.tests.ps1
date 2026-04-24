@@ -633,6 +633,47 @@ function Test-SilentKnifeRevealsTheMysteriousBenefactor {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 220 -Message "The Silent Knife should pay its listed copper reward."
 }
 
+function Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The dockside contract quest should stay hidden before Lady Veyra is revealed."
+
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The dockside contract quest should unlock once Lady Veyra has been revealed."
+}
+
+function Test-DocksBlackContractFindsHigherPatron {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["DocksUnlocked"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "docks_black_contract" | Out-Null
+    Use-ReadHostSequence -Values @("3")
+    Use-StoryCombatWinStub
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_black_contract"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The dockside contract quest should complete once the killer is stopped."
+    Assert-Equal -Actual $game.Town.StoryFlags["NamedVeyraContractBroker"] -Expected $true -Message "The docks quest should confirm the contract passed through a named dockside broker."
+    Assert-Equal -Actual $game.Town.StoryFlags["HigherPatronSuspected"] -Expected $true -Message "The docks quest should reveal that Lady Veyra's enemies sit higher than the docks themselves."
+    Assert-Equal -Actual $game.Town.Relationships["LadyVeyra"] -Expected "Warned" -Message "Lady Veyra's relationship state should update once the dockside proof reaches her."
+    Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The docks quest should grant its listed story XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 250 -Message "The docks quest should pay its listed copper reward."
+}
+
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
@@ -978,6 +1019,8 @@ Test-UnderstreetComplexUnlocksWithTunnelAccessAndTwoStrongClues
 Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair
 Test-SilentKnifeStaysHiddenUntilUnderstreetCleared
 Test-SilentKnifeRevealsTheMysteriousBenefactor
+Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal
+Test-DocksBlackContractFindsHigherPatron
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
@@ -1003,4 +1046,12 @@ Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
 
 Write-Host "City quest tests passed." -ForegroundColor Green
+$global:StoryCombatOverride = $null
+$global:TownQuestPreparationOverride = $null
 $global:RollDiceOverride = $null
+if (Test-Path Function:\global:Roll-Dice) {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+if (Test-Path Function:\global:Read-Host) {
+    Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+}

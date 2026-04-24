@@ -406,6 +406,26 @@ function Get-SilentKnifeAssassinEnemy {
     }
 }
 
+function Get-DocksContractKillerEnemy {
+    return [PSCustomObject]@{
+        name = "contract killer"
+        article = "A"
+        definite = "The Contract Killer"
+        combatantType = "Opponent"
+        hp = 28
+        xp = 0
+        armorClass = 15
+        attackBonus = 6
+        initiativeBonus = 4
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 13
+        isBoss = $false
+    }
+}
+
 function Invoke-StoryCombat {
     param(
         $Game,
@@ -2241,6 +2261,7 @@ function Start-PatronSilentKnifeQuest {
 
     $Game.Town.StoryFlags["SilentKnifeFoiled"] = $true
     $Game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $Game.Town.StoryFlags["DocksUnlocked"] = $true
     $Game.Town.Relationships["QuestGiver"] = "Revealed"
     $Game.Town.Relationships["LadyVeyra"] = "Indebted"
 
@@ -2248,8 +2269,182 @@ function Start-PatronSilentKnifeQuest {
     Write-Scene "'You should know whose enemies you just made,' he says, voice thin but steady. 'My patron is Lady Veyra of the High Ledger. She holds city accounts, merchant charters, and more favors than the watch is comfortable admitting.'"
     Write-Scene "A sealed note waits in the assassin's coat: no name, only a command to silence the clerk before Veyra can turn Understreet evidence toward the council chamber."
     Write-EmphasisLine -Text "New Lead: Lady Veyra of the High Ledger has stepped out from behind the Quest Giver's mask." -Color "Yellow"
+    Write-EmphasisLine -Text "New District Unlocked: The docks are now worth visiting for fresh leads." -Color "Yellow"
 
     Complete-StoryQuestAndReport -Game $Game -QuestId "patron_silent_knife" -CompletionText "Lady Veyra's reply arrives before dawn: formal thanks, dangerous coin, and an invitation that feels less like a reward than the opening move of a larger game." -ProgressText "Chapter Three Hook: $($Game.Hero.Name) has foiled an assassination attempt and revealed the mysterious patron as Lady Veyra of the High Ledger."
+}
+
+function Start-DocksBlackContractQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_black_contract"
+
+    if ($null -eq $quest) {
+        Write-Scene "The docks have not yielded the next lead yet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Lady Veyra's dockside lead will stay cold until {hero} agrees to follow it."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The dockside contract trail has already been broken open."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Black Contract on the Tide" -Color "Yellow"
+    Write-Scene "Lady Veyra's clerk sends $($Game.Hero.Name) to a tar-dark wharf where a tally shack sits between honest cargo and work no manifest ever admits."
+    Write-Scene "The dock boss talks too carefully. One crewman vanishes the moment Veyra's name is spoken, and a black wax fleck on the wharf ledger matches the assassin's note too neatly to be chance."
+
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-Scene "$($Game.Hero.Name) can hear the shape of the lie almost at once. The dockside story has too many rehearsed pauses in it, like men trying to sing one verse while hiding the chorus."
+    }
+    else {
+        Write-Scene "$($Game.Hero.Name) can feel where the fear sits. The docks are full of hard people, but only one kind of fear makes dockhands look at the tide instead of at each other."
+    }
+
+    Write-ColorLine ""
+    Write-ColorLine "1. Lean on the wharf boss until he gives up the runner's name (STR)" "White"
+    Write-ColorLine "2. Read the damp ledger and tide marks for the hidden hand-off (INT)" "White"
+    Write-ColorLine "3. Work the crews and bait the right liar into talking (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Turn dockside gossip into a performance and pull the contract trail into the open (CHA)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Stare the whole pier down until the weakest nerve finally breaks (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $cleanLead = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 12 -ActionText "{hero} plants one hand on the wharf desk hard enough to rattle ink, rope hooks, and the boss's last bit of nerve."
+                if ($success) {
+                    Write-Scene "The wharf boss folds and names a contract runner called Marris Vane, a knife-broker who keeps changing berths and clients to stay ahead of the watch."
+                    $cleanLead = $true
+                }
+                else {
+                    Write-Scene "The boss will not give the name cleanly, but he does point {hero} toward a tide ledger, a black-sealed berth mark, and a runner who left in too much haste."
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} studies the damp tally sheets, tide chalk, and berth marks until the fake freight line gives itself away."
+                if ($success) {
+                    Write-Scene "A false cargo entry ties the black wax mark to Marris Vane, a dockside broker who handled contract money under cover of ordinary freight."
+                    $cleanLead = $true
+                }
+                else {
+                    Write-Scene "{hero} still proves the hand-off used dock ledgers as cover, even if the broker's name stays just out of reach."
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} walks the piers, trading half-truths, sharp questions, and just enough confidence to make the right dockhand answer the wrong one."
+                if ($success) {
+                    Write-Scene "Three overlapping stories finally point to the same man: Marris Vane, who brokers private knives for clients too polished to get blood on their own gloves."
+                    $cleanLead = $true
+                }
+                else {
+                    Write-Scene "The crews close ranks, but not before {hero} proves the killing contract passed through the docks and not some random alley grudge."
+                }
+
+                break
+            }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns rumor into rhythm, letting dockside vanity, wounded pride, and loose tongues do the dangerous work for him."
+                    if ($success) {
+                        Write-Scene "The gossip turns against itself. By the time the laughter dies, Marris Vane's name is hanging over the pier like a bell nobody can unring."
+                        $cleanLead = $true
+                    }
+                    else {
+                        Write-Scene "Even without a clean name, the performance shakes loose one solid truth: the docks were only the middle of the chain, not the beginning."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the middle of the pier and waits out every bluff in the place until somebody finally decides lying is harder than telling the truth."
+                    if ($success) {
+                        Write-Scene "One of the younger hands cracks first and spits out Marris Vane's name like he is trying to get poison out of his mouth."
+                        $cleanLead = $true
+                    }
+                    else {
+                        Write-Scene "No one breaks cleanly, but the whole pier gives away enough to prove the contract moved through dockside hands."
+                    }
+
+                    break
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["NamedVeyraContractBroker"] = $true
+
+    Write-ColorLine ""
+    Write-Scene "$($Game.Hero.Name) follows the shaken trail to a rope-shadowed berth where the broker's hired killer tries to cut the evidence loose and vanish with the tide."
+
+    $combatResult = Invoke-StoryCombat `
+        -Game $Game `
+        -HeroHP $HeroHP `
+        -Monster (Get-DocksContractKillerEnemy) `
+        -Title "Dockside Contract Killer" `
+        -IntroText "A contract killer springs from behind a hanging net with a short blade and a river hook, fighting to keep Lady Veyra's enemies hidden."
+
+    if (-not $combatResult.Won) {
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
+        return
+    }
+
+    if ($cleanLead) {
+        Write-Scene "The killer goes down with a ledger scrap still tucked in his cuff. It names Marris Vane as broker and marks the contract as 'elevated commission,' paid through a shell charter no ordinary dock gang could afford."
+    }
+    else {
+        Write-Scene "The killer goes down before he can burn the last ledger scrap. Even without the clean broker chain, the note is enough to show the contract was funded through a shell charter far above dockside coin."
+    }
+
+    Write-Scene "Questioned under steel and river rain, the surviving dock hands admit the order did not begin here. The docks only moved the money and found the knife. The request came from higher city people who wanted Lady Veyra silenced before she could turn her ledgers upward."
+    Write-EmphasisLine -Text "New Lead: the contract on Lady Veyra was paid from above the docks, not below them." -Color "Yellow"
+
+    $Game.Town.StoryFlags["HigherPatronSuspected"] = $true
+    $Game.Town.Relationships["LadyVeyra"] = "Warned"
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: this was never only about smugglers, and the people above her have finally shown their hand." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and learned it was ordered by higher city powers."
 }
 
 function Start-WhispersBeneathBentNailQuest {
@@ -2779,6 +2974,7 @@ function Start-TownQuest {
         "guard_night_courier" { Start-NightCourierInterceptQuest -Game $Game -HeroHP $HeroHP }
         "guard_understreet_complex" { Start-UnderstreetComplexQuest -Game $Game -HeroHP $HeroHP }
         "patron_silent_knife" { Start-PatronSilentKnifeQuest -Game $Game -HeroHP $HeroHP }
+        "docks_black_contract" { Start-DocksBlackContractQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }

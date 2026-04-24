@@ -45,7 +45,18 @@ function Test-TownHeroHudShowsNameHpAndCoin {
     Assert-True -Condition ($hud -like "*Coin*2 GP*3 SP*4 CP*") -Message "The compact town HUD should show the hero's current coin."
 }
 
+function Test-DocksDistrictUnlocksAfterLadyVeyraReveal {
+    $game = Initialize-Game
+
+    Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $false -Message "The docks district should stay locked before Lady Veyra is revealed."
+
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+
+    Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $true -Message "The docks district should unlock once Lady Veyra's identity becomes part of the story."
+}
+
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
+Test-DocksDistrictUnlocksAfterLadyVeyraReveal
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

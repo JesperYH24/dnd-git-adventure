@@ -61,6 +61,7 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 170)
         (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
         (New-TownQuest -Id "patron_silent_knife" -Name "The Silent Knife" -Source "Quest Giver" -Description "Someone is trying to cut the patron's clerk out of the story before he can reveal who has been directing the private investigation." -Objective "Protect the clerk, stop the assassins, and learn who the mysterious patron really is." -QuestType "Story" -Tier 4 -RewardCopper 220 -RewardXP 220)
+        (New-TownQuest -Id "docks_black_contract" -Name "Black Contract on the Tide" -Source "Docks" -Description "Lady Veyra's enemies hired the killing hand through the docks. The river quarter may know who took the contract, and who stood behind it." -Objective "Go to the docks, find the contract trail, and learn who truly wanted Lady Veyra dead." -QuestType "Story" -Tier 4 -RewardCopper 250 -RewardXP 240)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before the market eats the loss." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90 -DayJobTrackId "market_runner" -DayJobStep 1 -RequiredHeroLevel 1)
         (New-TownQuest -Id "dayjob_market_delivery_2" -Name "Market Runner: Wrong Ledger" -Source "Quest Board" -Description "The market runners trust {hero} with a touchier problem: a paid delivery logged under the wrong stall." -Objective "Sort out the bad ledger mark and get the right goods to the right hands." -QuestType "DayJob" -RewardCopper 115 -DayJobTrackId "market_runner" -DayJobStep 2 -RequiredHeroLevel 2)
         (New-TownQuest -Id "dayjob_market_delivery_3" -Name "Market Runner: High-Value Hand-Off" -Source "Quest Board" -Description "A better-paying runner job needs a known face to move sealed goods through crowded daylight." -Objective "Carry the sealed goods across the market without losing the package or the crowd." -QuestType "DayJob" -RewardCopper 140 -DayJobTrackId "market_runner" -DayJobStep 3 -RequiredHeroLevel 3)
@@ -132,6 +133,8 @@ function Get-StoryClueNotes {
         @{ Flag = "UnderstreetComplexCleared"; Category = "Resolution"; Text = "The Understreet Complex was broken and its command structure exposed." }
         @{ Flag = "SilentKnifeFoiled"; Category = "Assassins"; Text = "An attempted murder against the patron's clerk failed before it could silence the ledger trail." }
         @{ Flag = "BenefactorRevealed"; Category = "Patron"; Text = "The mysterious Quest Giver is Lady Veyra of the High Ledger, a higher city power than the clerk ever admitted." }
+        @{ Flag = "NamedVeyraContractBroker"; Category = "Docks"; Text = "A dockside broker admitted who carried Lady Veyra's death contract through the river quarter." }
+        @{ Flag = "HigherPatronSuspected"; Category = "Conspiracy"; Text = "The order to kill Lady Veyra came from higher city hands, not a local dockside grudge." }
     )
 
     foreach ($definition in $definitions) {
@@ -166,6 +169,14 @@ function Get-StoryClueProgressSummary {
     $majorEvidenceCount = @($majorEvidenceFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
 
     if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
+        if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
+            return "Chapter Three Notes: The docks have confirmed Lady Veyra's enemies answer to higher city powers still hiding behind charters, clerks, and paid blades."
+        }
+
+        if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+            return "Chapter Three Notes: Lady Veyra has been revealed, and fresh leads now point toward the docks where her enemies hired the knife."
+        }
+
         return "Chapter Two Notes: The understreet network has been broken, but the fallout is still moving through the city."
     }
 
@@ -423,6 +434,10 @@ function Test-TownQuestBaseUnlock {
 
     if ($Quest.Id -eq "patron_silent_knife") {
         return [bool]$Game.Town.ChapterTwoComplete -or [bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]
+    }
+
+    if ($Quest.Id -eq "docks_black_contract") {
+        return [bool]$Game.Town.StoryFlags["BenefactorRevealed"]
     }
 
     if ($Quest.RequiredStoryClues -le 0) {

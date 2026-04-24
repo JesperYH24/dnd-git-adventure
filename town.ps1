@@ -10,6 +10,16 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Test-DocksDistrictUnlocked {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    return [bool]$Game.Town.StoryFlags["DocksUnlocked"] -or [bool]$Game.Town.StoryFlags["BenefactorRevealed"]
+}
+
 function Get-ClassAwareTownText {
     param(
         $Hero,
@@ -207,6 +217,10 @@ function Get-TownQuestSourceIntroText {
                 $Game.Town.StreetFlags[$visitKey] = $true
                 return "The patron's clerk keeps the ledgers close and his voice lower than usual. Night work in this office feels less like posting jobs and more like choosing who can be trusted with quiet damage."
             }
+            "Docks" {
+                $Game.Town.StreetFlags[$visitKey] = $true
+                return "Lanterns sway over wet pilings and tar-black water while the docks decide which names are safe to say after dark. The air tastes of salt, rope, and the kind of paid silence Lady Veyra now needs broken."
+            }
         }
     }
 
@@ -256,6 +270,17 @@ function Get-TownQuestSourceIntroText {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The patron's clerk has stopped treating Borzig like hired muscle. Now the work is more careful, more valuable, and rarely clean." `
                     -BardText "The patron's clerk has stopped treating Gariand like charming decoration. Now the work is more careful, more valuable, and offered with the uneasy respect reserved for someone who can move between ledgers, guard posts, and whispered rooms.")
+            }
+            "Docks" {
+                if ($isNight) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The docks wake into their truer life after dark. Lantern crews, smugglers, brokers, and hired knives all move under the same ropes, and Borzig has come looking for whoever carried Lady Veyra's death warrant down here." `
+                        -BardText "The docks wake into their truer life after dark. Lantern crews, smugglers, brokers, and paid silence all share the same tide, and Gariand has come looking for whoever turned Lady Veyra's murder into dockside business.")
+                }
+
+                return (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "By daylight the docks look almost honest: cargo cranes, shouting crews, and ledgers gone damp with spray. But after Lady Veyra's reveal, Borzig knows this is where contracts, cargo, and fear touch the same rope." `
+                    -BardText "By daylight the docks look almost honest: shouted tallies, wet ledgers, and crews pretending not to notice who pays for quiet. After Lady Veyra's reveal, Gariand can hear how much of the city's hidden music starts here.")
             }
         }
     }
@@ -962,6 +987,9 @@ function Start-QuestHubMenu {
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"
         Write-ColorLine "3. Speak with the quest giver's clerk" "White"
+        if (Test-DocksDistrictUnlocked -Game $Game) {
+            Write-ColorLine "4. Follow leads down at the docks" "White"
+        }
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
@@ -977,6 +1005,15 @@ function Start-QuestHubMenu {
             }
             "3" {
                 Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game -HeroHP $HeroHP
+            }
+            "4" {
+                if (-not (Test-DocksDistrictUnlocked -Game $Game)) {
+                    Write-ColorLine "There is no reason to chase dockside leads yet." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Show-TownQuestSource -Title "Docks" -IntroText "Wet planks, shouted cargo counts, and paid dockside silence make the river quarter feel like its own city. If someone hired a knife against Lady Veyra, the tide may have carried the name here." -Source "Docks" -Game $Game -HeroHP $HeroHP
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value

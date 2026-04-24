@@ -50,7 +50,7 @@ function Set-TestOutputStubs {
 function Test-MonsterFirstTurnStateSync {
     Set-TestOutputStubs
 
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 18 }
@@ -82,6 +82,8 @@ function Test-MonsterFirstTurnStateSync {
     $game.HeroBlockArmorBonus = $heroBlockArmorBonus
 
     Assert-Equal -Actual $game.HeroHP -Expected 9 -Message "Adventure state should keep the reduced hero HP after a monster-first turn."
+
+    $global:RollDiceOverride = $null
 }
 
 Test-MonsterFirstTurnStateSync
