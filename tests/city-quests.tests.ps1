@@ -675,6 +675,48 @@ function Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 250 -Message "The docks quest should pay its listed copper reward."
 }
 
+function Test-BrokersWakeUnlocksAfterDocksFirstChain {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Broker's Wake should stay hidden before the first docks chain maps the district."
+
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Broker's Wake should unlock after the docks become a free-roam district."
+}
+
+function Test-BrokersWakeProfilesOrganizationWithoutNobleReveal {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_brokers_wake" | Out-Null
+    Use-ReadHostSequence -Values @("3")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_brokers_wake"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Broker's Wake should complete after the organization is profiled."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksOrganizationProfiled"] -Expected $true -Message "The quest should record what the dockside organization does."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksCharterScribeLead"] -Expected $true -Message "The quest should point toward the charter scribe as the next lead."
+    Assert-Equal -Actual ([bool]$game.Town.StoryFlags["HigherPatronSuspected"]) -Expected $false -Message "The organization profile should not reveal the higher patron yet."
+    Assert-Equal -Actual $game.Hero.XP -Expected 210 -Message "The Broker's Wake should grant its listed story XP."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 210 -Message "The Broker's Wake should pay its listed copper reward."
+    $global:RollDiceOverride = $null
+}
+
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
@@ -1022,6 +1064,8 @@ Test-SilentKnifeStaysHiddenUntilUnderstreetCleared
 Test-SilentKnifeRevealsTheMysteriousBenefactor
 Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal
 Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron
+Test-BrokersWakeUnlocksAfterDocksFirstChain
+Test-BrokersWakeProfilesOrganizationWithoutNobleReveal
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo

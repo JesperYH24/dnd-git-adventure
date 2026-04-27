@@ -2448,6 +2448,161 @@ function Start-DocksBlackContractQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: the docks have shown where the knife came from, and now the district itself is worth searching." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and opened the river quarter for deeper investigation."
 }
 
+function Start-DocksBrokersWakeQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_brokers_wake"
+
+    if ($null -eq $quest) {
+        Write-Scene "The docks have no deeper organization lead ready yet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "The docks will not give up Marris Vane's wider network until {hero} commits to following the broker's wake."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "{hero} has already learned what the dockside organization does and where its next paper trail begins."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
+        Write-Scene "Marris Vane's local trail needs to be broken before the wider organization can be understood."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Broker's Wake" -Color "Yellow"
+    Write-Scene "With Marris Vane dead or scattered into rumor, the docks breathe around the empty space he left. Nobody mourns him loudly. Too many people still owe money to the shape of him."
+    Write-Scene "$($Game.Hero.Name) moves between Auntie Brindle's salvage stairs, the tide-ledger shack, Warehouse Row, and the old knife berth, looking for the pattern underneath the contract."
+    Write-Scene "It is not just murder-for-hire. The organization used the docks to make ordinary cargo look lawful, turn debt into obedience, move blackmail quietly, and hire blades only when paperwork failed."
+    Write-ColorLine ""
+    Write-ColorLine "1. Trace forged freight through the tide ledgers (INT)" "White"
+    Write-ColorLine "2. Follow debt collectors from Warehouse Row (WIS)" "White"
+    Write-ColorLine "3. Work dock gossip until the protection scheme shows itself (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Turn the docks into a listening room and make the rumors harmonize (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Walk the old knife berth like a warning and make the cowards name the business (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $cleanProfile = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares tide marks, copied manifests, and dock stamps until the honest freight stops looking honest."
+                if ($success) {
+                    Write-Scene "The ledgers reveal a tidy machine: forged cargo lines hide payments, debt notes, and names marked for pressure."
+                    $cleanProfile = $true
+                }
+                else {
+                    Write-Scene "The ledgers stay slippery, but even the missing pages show the same truth: cargo is cover for something organized."
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} watches who leaves Warehouse Row empty-handed, who returns frightened, and who suddenly pays debts they claimed they did not owe."
+                if ($success) {
+                    Write-Scene "The pattern sharpens: debt collectors, false freight, and dockside guards are all parts of the same business."
+                    $cleanProfile = $true
+                }
+                else {
+                    Write-Scene "The collectors notice the attention and scatter, but not before {hero} sees how debt keeps the docks obedient."
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} trades stories, drinks in bad places, and lets frightened workers correct each other's lies."
+                if ($success) {
+                    Write-Scene "The gossip lines up: the organization sells protection, hides cargo, lends cruel money, and hires knives when someone important needs silence."
+                    $cleanProfile = $true
+                }
+                else {
+                    Write-Scene "The talk comes in broken pieces, but every piece points to the same machine wearing different masks."
+                }
+
+                break
+            }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) plays just enough, jokes just enough, and leaves enough silence for people to fill it with truth." -CheckTag "Performance"
+                    if ($success) {
+                        Write-Scene "By the end of the set, half the room has told on the other half. The organization is not a gang. It is a service: freight, debt, blackmail, and murder priced by need."
+                        $cleanProfile = $true
+                    }
+                    else {
+                        Write-Scene "The room enjoys the performance too much to confess cleanly, but the nervous laughter still points toward the same business."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the old knife berth until the men who used to feel safe there start remembering urgent appointments elsewhere."
+                    if ($success) {
+                        Write-Scene "One runner breaks before anyone touches him. He names the business plainly: freight laundering, debt hooks, blackmail books, and paid violence."
+                        $cleanProfile = $true
+                    }
+                    else {
+                        Write-Scene "No one gives a full confession, but fear draws the map well enough. The berth served a larger machine."
+                    }
+
+                    break
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $Game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+
+    if ($cleanProfile) {
+        Write-Scene "By dusk, $($Game.Hero.Name) has a clean profile of the organization: it launders freight through false manifests, buys obedience through debt, keeps blackmail ledgers, and sells murder as a final service."
+    }
+    else {
+        Write-Scene "The picture is rough but clear enough: the organization is not one knife or one broker, but a dockside service that turns cargo, debt, secrets, and fear into leverage."
+    }
+
+    Write-Scene "The next lead is not a noble name yet. It is a profession: a charter scribe who can make stolen cargo look legal and make illegal coin look like paperwork."
+    Write-EmphasisLine -Text "New Lead: find the charter scribe who papers over the organization's dockside business." -Color "Yellow"
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_brokers_wake" -CompletionText "Lady Veyra's reply is cautious approval. Knowing what the organization does is useful; finding who writes its clean papers will be dangerous." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has profiled the dockside organization behind Lady Veyra's contract."
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -2976,6 +3131,7 @@ function Start-TownQuest {
         "guard_understreet_complex" { Start-UnderstreetComplexQuest -Game $Game -HeroHP $HeroHP }
         "patron_silent_knife" { Start-PatronSilentKnifeQuest -Game $Game -HeroHP $HeroHP }
         "docks_black_contract" { Start-DocksBlackContractQuest -Game $Game -HeroHP $HeroHP }
+        "docks_brokers_wake" { Start-DocksBrokersWakeQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
