@@ -371,13 +371,20 @@ function Test-FightingRingOptionOneStartsTournament {
     Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
     $game.Hero.CurrencyCopper = 200
     $script:BrawlStarted = $false
+    $script:RingChoices = [System.Collections.Generic.Queue[string]]::new()
+    $script:RingChoices.Enqueue("1")
+    $script:RingChoices.Enqueue("0")
 
     function global:Read-Host {
         param([string]$Prompt)
-        return "1"
+        if ($script:RingChoices.Count -gt 0) {
+            return $script:RingChoices.Dequeue()
+        }
+
+        return "0"
     }
 
-    function global:Start-BrawlLoop {
+    function Start-BrawlLoop {
         param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
         $script:BrawlStarted = $true
         return $false
@@ -409,3 +416,12 @@ Test-FightingRingOptionOneStartsTournament
 
 Write-Host "Ring tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null
+if (Test-Path Function:\global:Read-Host) {
+    Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+}
+if (Test-Path Function:\global:Start-BrawlLoop) {
+    Remove-Item Function:\global:Start-BrawlLoop -ErrorAction SilentlyContinue
+}
+if (Test-Path Function:\Start-BrawlLoop) {
+    Remove-Item Function:\Start-BrawlLoop -ErrorAction SilentlyContinue
+}

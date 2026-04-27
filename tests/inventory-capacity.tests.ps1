@@ -65,15 +65,14 @@ function Test-LootedPotionsCanBeUsed {
 }
 
 function Test-BackpackCannotBeManagedInCombat {
-    $global:capturedScenes = @()
-    function global:Write-Scene { param([string]$Text) $global:capturedScenes += $Text }
-
     $hero = Get-Hero
     $hero.BackpackInventory += (New-ConsumableItem -Name "Battle Tonic" -Value 0 -HealAmount 18 -SlotCost 1)
+    $startingBackpackCount = $hero.BackpackInventory.Count
 
-    Open-BackpackMenu -Hero $hero -InCombat | Out-Null
+    $result = Open-BackpackMenu -Hero $hero -InCombat
 
-    Assert-True -Condition ([bool]($global:capturedScenes | Where-Object { $_ -like "*cannot rummage through the backpack*" })) -Message "Backpack management should be blocked in combat."
+    Assert-Equal -Actual $result -Expected $false -Message "Backpack management should be blocked in combat."
+    Assert-Equal -Actual $hero.BackpackInventory.Count -Expected $startingBackpackCount -Message "Blocking backpack access in combat should leave stored gear untouched."
 }
 
 Test-PersonalInventoryAndBackpackAreSeparate

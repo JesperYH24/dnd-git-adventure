@@ -142,7 +142,7 @@ function Test-BardCanPrepareInspirationFromInstrument {
 }
 
 function Test-ShortRestRestoresPreparedBardicInspiration {
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         if ($Sides -eq 6) { return 3 }
@@ -158,6 +158,7 @@ function Test-ShortRestRestoresPreparedBardicInspiration {
 
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "A short rest should restore the bard's prepared inspiration dice."
     Assert-Equal -Actual $restResult.RestoredBardicInspiration -Expected 1 -Message "Short rest feedback should report how many inspiration dice came back."
+    $global:RollDiceOverride = $null
 }
 
 function Test-TutorialMonsterArmorClassStaysForgiving {
@@ -180,7 +181,7 @@ function Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength {
     function global:Write-Action { param([string]$Text, [string]$Color) }
     function global:Write-ColorLine { param([string]$Text, [string]$Color) }
 
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 20 }
@@ -202,6 +203,7 @@ function Test-HeroCriticalHitUsesMaxDiePlusNewRollPlusStrength {
     Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
     Assert-Equal -Actual $monsterHP -Expected 9 -Message "Hero crit should deal max weapon die plus a new die roll plus Strength modifier."
+    $global:RollDiceOverride = $null
 }
 
 function Test-TutorialXPLevelsHeroToTwo {
@@ -228,7 +230,7 @@ function Test-LevelUpCanUseRolledHPGain {
     function global:Write-ColorLine { param([string]$Text, [string]$Color) }
     function global:Write-SectionTitle { param([string]$Text, [string]$Color) }
     function global:Write-EmphasisLine { param([string]$Text, [string]$Color) }
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         if ($Sides -eq 12) { return 10 }
@@ -249,6 +251,7 @@ function Test-LevelUpCanUseRolledHPGain {
     Assert-Equal -Actual $levelUpResult.Results[0].Gain -Expected 12 -Message "Rolled HP gain should add Constitution modifier to the die roll."
     Assert-Equal -Actual $hero.HP -Expected 26 -Message "A strong HP roll should raise max HP accordingly."
     Assert-Equal -Actual $heroHP -Expected 26 -Message "Current HP should rise by the rolled HP gain."
+    $global:RollDiceOverride = $null
 }
 
 Test-BetterArmorRaisesArmorClass

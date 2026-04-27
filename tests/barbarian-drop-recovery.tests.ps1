@@ -13,6 +13,7 @@ function Assert-Equal {
 }
 
 function Set-TestOutputStubs {
+    $global:RollDiceOverride = $null
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
     function global:Write-Scene { param([string]$Text) }
     function global:Write-Action { param([string]$Text, [string]$Color) }
@@ -60,7 +61,7 @@ function Test-BarbarianCanRecoverFromDroppedWeaponWithGrapple {
     }
 
     $script:rollIndex = 0
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         $script:rollIndex += 1
@@ -89,3 +90,7 @@ function Test-BarbarianCanRecoverFromDroppedWeaponWithGrapple {
 Test-BarbarianCanRecoverFromDroppedWeaponWithGrapple
 
 Write-Host "Barbarian drop recovery tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null
+if (Test-Path Function:\global:Roll-Dice) {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}

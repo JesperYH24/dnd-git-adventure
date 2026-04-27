@@ -24,6 +24,7 @@ function Assert-True {
 }
 
 function Set-TestOutputStubs {
+    $global:RollDiceOverride = $null
     function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
     function global:Write-Scene { param([string]$Text) }
     function global:Write-Action { param([string]$Text, [string]$Color) }
@@ -56,7 +57,7 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
     }
 
     $script:rollIndex = 0
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         $script:rollIndex += 1
@@ -79,6 +80,7 @@ function Test-HasteBuffGrantsInitiativeAdvantage {
 
     Assert-Equal -Actual $heroStarts -Expected $true -Message "Haste should let the hero take the better initiative roll."
     Assert-Equal -Actual $monsterStarts -Expected $false -Message "The monster should not start if haste lets the hero win initiative."
+    $global:RollDiceOverride = $null
 }
 
 function Test-ShadowSanctumGoldRollOverflowStaysInRoom {
@@ -90,7 +92,7 @@ function Test-ShadowSanctumGoldRollOverflowStaysInRoom {
         return ""
     }
 
-    function global:Roll-Dice {
+    $global:RollDiceOverride = {
         param([int]$Sides = 20)
 
         if ($Sides -eq 20) { return 20 }
@@ -107,6 +109,7 @@ function Test-ShadowSanctumGoldRollOverflowStaysInRoom {
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Type -Expected "Currency" -Message "The leftover sanctum reward should still be currency."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Denomination -Expected "GP" -Message "The leftover sanctum reward should keep its gold denomination."
     Assert-Equal -Actual $game.Rooms["ashen_threshold"].Loot[0].Amount -Expected 5 -Message "A natural 20 should be capped at a non-breaking 6 GP reward."
+    $global:RollDiceOverride = $null
 }
 
 function Test-ShadowSanctumGoldRewardTableCapsNaturalTwenty {
@@ -121,3 +124,7 @@ Test-ShadowSanctumGoldRollOverflowStaysInRoom
 Test-ShadowSanctumGoldRewardTableCapsNaturalTwenty
 
 Write-Host "Currency and buff tests passed." -ForegroundColor Green
+$global:RollDiceOverride = $null
+if (Test-Path Function:\global:Roll-Dice) {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}

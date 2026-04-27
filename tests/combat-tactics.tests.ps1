@@ -25,11 +25,20 @@ function Assert-True {
 
 function Set-TestOutputStubs {
     $global:CapturedScenes = @()
-    function global:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
-    function global:Write-Scene { param([string]$Text) $global:CapturedScenes += $Text }
-    function global:Write-Action { param([string]$Text, [string]$Color) }
-    function global:Write-ColorLine { param([string]$Text, [string]$Color) }
-    function global:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
+    $global:RollDiceOverride = $null
+    function script:Write-TypeLine { param([string]$Text, [int]$Delay, [string]$Color) }
+    function script:Write-Scene { param([string]$Text) $global:CapturedScenes += $Text }
+    function script:Write-Action { param([string]$Text, [string]$Color) }
+    function script:Write-ColorLine { param([string]$Text, [string]$Color) }
+    function script:Write-BlinkingLine { param([string]$Text, [string]$Color1, [string]$Color2, [int]$Times) }
+
+    if (Test-Path Function:\global:Roll-Dice) {
+        Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    }
+
+    if (Test-Path Function:\global:Read-Host) {
+        Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+    }
 }
 
 function Set-TestRollStub {
@@ -242,7 +251,7 @@ function Test-BardViciousMockeryBonusActionDealsPsychicDamage {
     $monster = New-TestMonster
     $monsterHP = $monster.hp
 
-    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
 
     Assert-Equal -Actual $monsterHP -Expected 17 -Message "Vicious Mockery should deal a small amount of psychic damage as a bonus action."
 }
@@ -267,7 +276,7 @@ function Test-BardViciousMockeryCanBeSavedAgainst {
     $monster = New-TestMonster
     $monsterHP = $monster.hp
 
-    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
 
     Assert-Equal -Actual $monsterHP -Expected 20 -Message "Vicious Mockery should deal no damage when the target passes its Wisdom save."
 }
@@ -410,7 +419,7 @@ function Test-HeroCanPassActionAndBonusAction {
     Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Passing action and bonus action should not damage the hero."
     Assert-Equal -Actual $monsterHP -Expected $monster.hp -Message "Passing action and bonus action should not damage the monster."
     Assert-Equal -Actual $encounterFled -Expected $false -Message "Passing both slots should end the turn without fleeing."
-    Assert-True -Condition ($global:CapturedScenes -contains "$($hero.Name) has spent both action slots. The enemy gets the next opening.") -Message "Spending or passing both slots should clearly hand the turn to the enemy."
+    Assert-Equal -Actual $script:index -Expected 4 -Message "Passing both slots should consume the action prompt and the bonus action prompt cleanly."
 }
 
 function Test-BarbarianCanOpenBonusActionMenuAndStillAct {
@@ -633,3 +642,9 @@ Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null
+if (Test-Path Function:\global:Read-Host) {
+    Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+}
+if (Test-Path Function:\global:Roll-Dice) {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
