@@ -2432,19 +2432,20 @@ function Start-DocksBlackContractQuest {
     }
 
     if ($cleanLead) {
-        Write-Scene "The killer goes down with a ledger scrap still tucked in his cuff. It names Marris Vane as broker and marks the contract as 'elevated commission,' paid through a shell charter no ordinary dock gang could afford."
+        Write-Scene "The killer goes down with a ledger scrap still tucked in his cuff. It names Marris Vane as broker and ties the blade to a rope-shadowed berth used by dockside contract crews."
     }
     else {
-        Write-Scene "The killer goes down before he can burn the last ledger scrap. Even without the clean broker chain, the note is enough to show the contract was funded through a shell charter far above dockside coin."
+        Write-Scene "The killer goes down before he can burn the last ledger scrap. Even without the clean broker chain, the note is enough to show which dockside berth moved the contract and where Marris Vane's people came from."
     }
 
-    Write-Scene "Questioned under steel and river rain, the surviving dock hands admit the order did not begin here. The docks only moved the money and found the knife. The request came from higher city people who wanted Lady Veyra silenced before she could turn her ledgers upward."
-    Write-EmphasisLine -Text "New Lead: the contract on Lady Veyra was paid from above the docks, not below them." -Color "Yellow"
+    Write-Scene "Questioned under steel and river rain, the surviving dock hands map the first layer of the river quarter for $($Game.Hero.Name): Auntie Brindle's salvage stairs, the tide-ledger shack, Warehouse Row, and the old knife berth where Marris Vane's killers take work."
+    Write-Scene "The deeper buyer is still hidden. For now, the victory is practical and important: $($Game.Hero.Name) knows how the docks move secrets, where the assassin came from, and which doors are worth opening next."
+    Write-EmphasisLine -Text "New District Open: the docks can now be visited from town for deeper leads and future quests." -Color "Yellow"
 
-    $Game.Town.StoryFlags["HigherPatronSuspected"] = $true
+    $Game.Town.StoryFlags["DocksFirstChainComplete"] = $true
     $Game.Town.Relationships["LadyVeyra"] = "Warned"
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: this was never only about smugglers, and the people above her have finally shown their hand." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and learned it was ordered by higher city powers."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: the docks have shown where the knife came from, and now the district itself is worth searching." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and opened the river quarter for deeper investigation."
 }
 
 function Start-WhispersBeneathBentNailQuest {

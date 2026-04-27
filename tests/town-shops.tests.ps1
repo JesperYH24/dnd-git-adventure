@@ -100,6 +100,20 @@ function Test-TutorialLootHasUsefulButModestSaleValue {
     Assert-True -Condition ($totalGeneralSale -ge 25 -and $totalGeneralSale -le 40) -Message "Tutorial loot should be worth carrying without breaking the city's early economy."
 }
 
+function Test-DocksideOdditiesPaysWellForJunk {
+    $junk = [PSCustomObject]@{
+        Name = "Cracked Basilisk Scale"
+        Type = "Junk"
+        Value = 40
+        SlotCost = 1
+    }
+    $weapon = New-WeaponItem -Name "Rusty Knife" -Value 40 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -RequiredSTR 8 -SlotCost 1
+
+    Assert-Equal -Actual (Get-TownBuyerLabel -BuyerType "DocksideOddities") -Expected "Rag-and-Bone Collector" -Message "The docks oddity shop should have its own buyer label."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "DocksideOddities" -Item $junk) -gt (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $junk)) -Message "Auntie Brindle should pay better than normal buyers for strange junk."
+    Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "DocksideOddities" -Item $weapon) -le (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $weapon)) -Message "The oddity shop should not outpay normal buyers for ordinary weapons."
+}
+
 function Test-HeroCanBuyFromTownShop {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -163,5 +177,6 @@ Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
 Test-NewSpecialtyShopsStockRealClassGear
 Test-TutorialLootHasUsefulButModestSaleValue
+Test-DocksideOdditiesPaysWellForJunk
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

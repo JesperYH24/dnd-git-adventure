@@ -20,6 +20,216 @@ function Test-DocksDistrictUnlocked {
     return [bool]$Game.Town.StoryFlags["DocksUnlocked"] -or [bool]$Game.Town.StoryFlags["BenefactorRevealed"]
 }
 
+function Test-DocksDistrictOpenToTown {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
+        return $true
+    }
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_black_contract"
+    return ($null -ne $quest -and [bool]$quest.Completed)
+}
+
+function Test-DocksOddityShopDiscovered {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    return [bool]$Game.Town.StoryFlags["DocksOddityShopDiscovered"]
+}
+
+function Test-DocksOddityShopVisited {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    return [bool]$Game.Town.StoryFlags["DocksOddityShopVisited"]
+}
+
+function Test-DocksTallyShackDiscovered {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    return [bool]$Game.Town.StoryFlags["DocksTallyShackDiscovered"]
+}
+
+function Get-DocksDistrictProgressText {
+    param($Game)
+
+    if (-not (Test-DocksOddityShopDiscovered -Game $Game)) {
+        return "Docks Discovery: the first useful doorway is still hidden among the salvage stalls."
+    }
+
+    if (-not (Test-DocksOddityShopVisited -Game $Game)) {
+        return "Docks Discovery: Auntie Brindle's impossible shop is the first place worth understanding."
+    }
+
+    if (-not (Test-DocksTallyShackDiscovered -Game $Game)) {
+        return "Docks Lead: Auntie Brindle knows which bit of discarded black wax matters, if {hero} asks the right way."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
+        return "Docks Lead: the knife berth and shell-charter trail proved the order against Lady Veyra came from higher city hands."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
+        return "Docks Open: Auntie Brindle, the tide-ledger shack, Warehouse Row, and the old knife berth now form a district {hero} can revisit for deeper leads."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["NamedVeyraContractBroker"]) {
+        return "Docks Lead: Warehouse Row has given up the broker's name. The old knife berth is the next place to press."
+    }
+
+    return "Docks Lead: the tide-ledger shack is open now. Follow the black wax mark from salvage to paperwork."
+}
+
+function Show-DocksOddityShopDiscovery {
+    param($Game)
+
+    if (Test-DocksOddityShopDiscovered -Game $Game) {
+        return
+    }
+
+    $Game.Town.StoryFlags["DocksOddityShopDiscovered"] = $true
+    Write-SectionTitle -Text "A Door Made of Other Doors" -Color "Yellow"
+    Write-TownTimeTracker -Game $Game -Area "Docks" -HeroHP $Game.Hero.HP
+    Write-Scene "The first place the docks reveal is not a tavern, a pier office, or a smugglers' den. It is a crooked little shop wedged under a stair, built from mismatched doors and hung with bottle glass that clicks in the river wind."
+    Write-Scene "A wild-haired old woman in a patched shawl leans out through a curtain of beads, holding what might be a rat skull, a fishing lure, or both."
+    Write-Scene "'People throw away the best parts,' she says. 'Monster teeth. Bent buckles. Old bones. Bottle stoppers. Shameful little trinkets. Bring them to Auntie Brindle before some clean-handed fool sweeps them into the river.'"
+    Write-EmphasisLine -Text "New Docks Discovery: Auntie Brindle's Rag-and-Bone Teapot buys odd junk and unwanted salvage for better coin than respectable shops." -Color "Yellow"
+    Write-ColorLine ""
+}
+
+function Open-DocksOddityShop {
+    param($Game)
+
+    Show-DocksOddityShopDiscovery -Game $Game
+    $Game.Town.StoryFlags["DocksOddityShopVisited"] = $true
+    Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "DocksideOddities" -ExitLabel "Back to the docks"
+}
+
+function Discover-DocksTallyShack {
+    param($Game)
+
+    if (-not (Test-DocksOddityShopVisited -Game $Game)) {
+        Write-Scene "The black-contract trail keeps slipping away until {hero} has taken a proper look at Auntie Brindle's shelves. In the docks, even rubbish has witnesses."
+        Write-ColorLine ""
+        return
+    }
+
+    if (Test-DocksTallyShackDiscovered -Game $Game) {
+        Write-Scene "Auntie Brindle has already pointed {hero} toward the tide-ledger shack and its too-careful wharf boss."
+        Write-ColorLine ""
+        return
+    }
+
+    $Game.Town.StoryFlags["DocksTallyShackDiscovered"] = $true
+    Write-SectionTitle -Text "The Wax in the Rubbish" -Color "Yellow"
+    Write-TownTimeTracker -Game $Game -Area "Docks" -HeroHP $Game.Hero.HP
+    Write-Scene "Auntie Brindle plucks a black wax fleck from a tray of broken seals, fish hooks, and things with too many tiny teeth."
+    Write-Scene "'This was not thrown away by accident,' she says, suddenly less mad than she looked a breath ago. 'Tide-ledger wax. Wharf boss wax. Men use it when cargo needs to look boring.'"
+    Write-Scene "She points with a knitting needle toward a damp tally shack beyond the salvage stairs. 'Start there. Then the docks will show you the next ugly little room.'"
+    Write-EmphasisLine -Text "New Docks Area: the Tide-Ledger Shack is now open as the next step in Lady Veyra's contract trail." -Color "Yellow"
+    Write-ColorLine ""
+}
+
+function Start-DocksDistrictMenu {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [string]$ReturnLabel = "Back to seek work"
+    )
+
+    Show-DocksOddityShopDiscovery -Game $Game
+
+    while ($true) {
+        Write-SectionTitle -Text "Docks" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Docks" -HeroHP $HeroHP.Value
+        Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
+            -BarbarianText "The docks do not open all at once for Borzig. They show one useful crack at a time: a junk shop first, then whispers, then doors with heavier locks." `
+            -BardText "The docks do not open all at once for Gariand. They reveal themselves like a crooked song: one odd shop, one useful name, one dangerous refrain at a time.")
+        Write-EmphasisLine -Text (Get-DocksDistrictProgressText -Game $Game) -Color "Yellow"
+        Write-ColorLine ""
+        Write-ColorLine "1. Visit Auntie Brindle's Rag-and-Bone Teapot" "White"
+        if (Test-DocksTallyShackDiscovered -Game $Game) {
+            Write-ColorLine "2. Follow the black wax mark to the Tide-Ledger Shack" "White"
+        }
+        elseif (Test-DocksOddityShopVisited -Game $Game) {
+            Write-ColorLine "2. Ask Auntie Brindle about the black wax clue" "White"
+        }
+        else {
+            Write-ColorLine "2. Follow Lady Veyra's black-contract lead (start with Auntie Brindle first)" "DarkGray"
+        }
+        if ([bool]$Game.Town.StoryFlags["NamedVeyraContractBroker"]) {
+            Write-ColorLine "3. Recheck Warehouse Row and the broker's old berth" "White"
+        }
+        if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
+            Write-ColorLine "4. Study the shell-charter trail above the docks" "White"
+        }
+        Write-ColorLine "S. Status" "White"
+        Write-ColorLine "0. $ReturnLabel" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                Open-DocksOddityShop -Game $Game
+            }
+            "2" {
+                if (-not (Test-DocksTallyShackDiscovered -Game $Game)) {
+                    Discover-DocksTallyShack -Game $Game
+                    continue
+                }
+
+                Show-TownQuestSource -Title "Docks" -IntroText "Beyond Auntie Brindle's impossible shelves, wet planks, shouted cargo counts, and paid dockside silence make the river quarter feel like its own city. If someone hired a knife against Lady Veyra, the tide may have carried the name here." -Source "Docks" -Game $Game -HeroHP $HeroHP
+            }
+            "3" {
+                if (-not [bool]$Game.Town.StoryFlags["NamedVeyraContractBroker"]) {
+                    Write-ColorLine "Warehouse Row has not opened up yet." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Write-Scene "Warehouse Row is louder now that Marris Vane's name is loose. Every shut door feels like it knows which clerk paid too much for silence."
+                Write-ColorLine ""
+            }
+            "4" {
+                if (-not [bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
+                    Write-ColorLine "The trail has not climbed above the docks yet." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Write-Scene "The shell-charter marks point away from rope, tar, and warehouse ledgers toward cleaner hands higher in the city."
+                Write-ColorLine ""
+            }
+            "S" {
+                Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            }
+            "0" {
+                return
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+            }
+        }
+    }
+}
+
 function Get-ClassAwareTownText {
     param(
         $Hero,
@@ -987,7 +1197,7 @@ function Start-QuestHubMenu {
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"
         Write-ColorLine "3. Speak with the quest giver's clerk" "White"
-        if (Test-DocksDistrictUnlocked -Game $Game) {
+        if ((Test-DocksDistrictUnlocked -Game $Game) -and -not (Test-DocksDistrictOpenToTown -Game $Game)) {
             Write-ColorLine "4. Follow leads down at the docks" "White"
         }
         Write-ColorLine "S. Status" "White"
@@ -1013,7 +1223,13 @@ function Start-QuestHubMenu {
                     continue
                 }
 
-                Show-TownQuestSource -Title "Docks" -IntroText "Wet planks, shouted cargo counts, and paid dockside silence make the river quarter feel like its own city. If someone hired a knife against Lady Veyra, the tide may have carried the name here." -Source "Docks" -Game $Game -HeroHP $HeroHP
+                if (Test-DocksDistrictOpenToTown -Game $Game) {
+                    Write-ColorLine "The docks are open as their own district now. Visit them from the town menu." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Start-DocksDistrictMenu -Game $Game -HeroHP $HeroHP
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
@@ -1302,6 +1518,9 @@ function Start-TownMenu {
         Write-ColorLine $(if ($isNight) { "3. Work, trouble, and night coin" } else { "3. Work, trouble, and day jobs" }) "White"
         Write-ColorLine $(if ($null -ne $Game.Town.ActiveInn) { "4. Go to your inn" } else { "4. Find lodging" }) "White"
         Write-ColorLine "5. Hero, inventory, and quest log" "White"
+        if (Test-DocksDistrictOpenToTown -Game $Game) {
+            Write-ColorLine "6. Visit the docks district" "White"
+        }
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
         if ((Get-TownTimeOfDay -Game $Game) -eq "Day") {
@@ -1332,6 +1551,15 @@ function Start-TownMenu {
             }
             "5" {
                 Start-TownCharacterMenu -Game $Game -HeroHP $HeroHP
+            }
+            "6" {
+                if (Test-DocksDistrictOpenToTown -Game $Game) {
+                    Start-DocksDistrictMenu -Game $Game -HeroHP $HeroHP -ReturnLabel "Back to town"
+                }
+                else {
+                    Write-ColorLine "Invalid choice. Try again." "Red"
+                    Write-ColorLine ""
+                }
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value

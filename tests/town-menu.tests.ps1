@@ -49,14 +49,78 @@ function Test-DocksDistrictUnlocksAfterLadyVeyraReveal {
     $game = Initialize-Game
 
     Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $false -Message "The docks district should stay locked before Lady Veyra is revealed."
+    Assert-Equal -Actual (Test-DocksDistrictOpenToTown -Game $game) -Expected $false -Message "The docks should not be open from the town menu before the docks story chain is solved."
 
     $game.Town.StoryFlags["BenefactorRevealed"] = $true
 
     Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $true -Message "The docks district should unlock once Lady Veyra's identity becomes part of the story."
+    Assert-Equal -Actual (Test-DocksDistrictOpenToTown -Game $game) -Expected $false -Message "The Veyra reveal should unlock the docks lead, not the open town district."
+}
+
+function Test-DocksDistrictFirstVisitDiscoversOddityShop {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    Set-TestReadHostSequence -Values @("0")
+
+    Start-DocksDistrictMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual (Test-DocksOddityShopDiscovered -Game $game) -Expected $true -Message "The first docks visit should discover Auntie Brindle's shop before other dock leads expand."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 1 -Message "The docks district menu should allow the player to back out cleanly after the first discovery."
+}
+
+function Test-DocksDistrictRequiresOddityShopBeforeTallyShack {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    Set-TestReadHostSequence -Values @("2", "0")
+
+    Start-DocksDistrictMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual (Test-DocksOddityShopDiscovered -Game $game) -Expected $true -Message "Entering the docks should still discover Auntie Brindle first."
+    Assert-Equal -Actual (Test-DocksOddityShopVisited -Game $game) -Expected $false -Message "Trying to skip ahead should not count as visiting the oddity shop."
+    Assert-Equal -Actual (Test-DocksTallyShackDiscovered -Game $game) -Expected $false -Message "The tide-ledger shack should stay locked until Auntie Brindle has been visited."
+}
+
+function Test-DocksDistrictOddityShopUnlocksTallyShackLead {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    Set-TestReadHostSequence -Values @("1", "0", "2", "0")
+
+    Start-DocksDistrictMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual (Test-DocksOddityShopVisited -Game $game) -Expected $true -Message "Visiting Auntie Brindle should mark the first docks step complete."
+    Assert-Equal -Actual (Test-DocksTallyShackDiscovered -Game $game) -Expected $true -Message "Asking Auntie about the clue should unlock the tide-ledger shack."
+}
+
+function Test-DocksDistrictOpensFromTownAfterBlackContractChain {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.MustChooseFirstInn = $false
+    $game.Town.ChapterOneComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["DocksOddityShopDiscovered"] = $true
+    $game.Town.StoryFlags["DocksOddityShopVisited"] = $true
+    $game.Town.StoryFlags["DocksTallyShackDiscovered"] = $true
+    $game.Town.StoryFlags["NamedVeyraContractBroker"] = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    Set-TestReadHostSequence -Values @("6", "0", "0")
+
+    $result = Start-TownMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual (Test-DocksDistrictOpenToTown -Game $game) -Expected $true -Message "Completing the first docks chain should open the docks as a town district."
+    Assert-Equal -Actual ([bool]$game.Town.StoryFlags["HigherPatronSuspected"]) -Expected $false -Message "Opening the docks should not require discovering the higher patron yet."
+    Assert-Equal -Actual $result -Expected "EndGame" -Message "The player should be able to visit the open docks district from town and return."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 3 -Message "The town menu should route into the opened docks district without extra prompts."
 }
 
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
+Test-DocksDistrictFirstVisitDiscoversOddityShop
+Test-DocksDistrictRequiresOddityShopBeforeTallyShack
+Test-DocksDistrictOddityShopUnlocksTallyShackLead
+Test-DocksDistrictOpensFromTownAfterBlackContractChain
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

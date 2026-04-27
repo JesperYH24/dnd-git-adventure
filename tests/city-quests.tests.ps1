@@ -648,7 +648,7 @@ function Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal {
     Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The dockside contract quest should unlock once Lady Veyra has been revealed."
 }
 
-function Test-DocksBlackContractFindsHigherPatron {
+function Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
 
@@ -668,7 +668,8 @@ function Test-DocksBlackContractFindsHigherPatron {
 
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "The dockside contract quest should complete once the killer is stopped."
     Assert-Equal -Actual $game.Town.StoryFlags["NamedVeyraContractBroker"] -Expected $true -Message "The docks quest should confirm the contract passed through a named dockside broker."
-    Assert-Equal -Actual $game.Town.StoryFlags["HigherPatronSuspected"] -Expected $true -Message "The docks quest should reveal that Lady Veyra's enemies sit higher than the docks themselves."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksFirstChainComplete"] -Expected $true -Message "The first docks chain should mark the river quarter as mapped enough to revisit."
+    Assert-Equal -Actual ([bool]$game.Town.StoryFlags["HigherPatronSuspected"]) -Expected $false -Message "The first docks chain should not reveal the higher patron yet."
     Assert-Equal -Actual $game.Town.Relationships["LadyVeyra"] -Expected "Warned" -Message "Lady Veyra's relationship state should update once the dockside proof reaches her."
     Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The docks quest should grant its listed story XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 250 -Message "The docks quest should pay its listed copper reward."
@@ -1020,7 +1021,7 @@ Test-UnderstreetComplexStaysLockedWithoutOpeningSourcePair
 Test-SilentKnifeStaysHiddenUntilUnderstreetCleared
 Test-SilentKnifeRevealsTheMysteriousBenefactor
 Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal
-Test-DocksBlackContractFindsHigherPatron
+Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo

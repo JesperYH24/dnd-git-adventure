@@ -134,6 +134,7 @@ function Get-StoryClueNotes {
         @{ Flag = "SilentKnifeFoiled"; Category = "Assassins"; Text = "An attempted murder against the patron's clerk failed before it could silence the ledger trail." }
         @{ Flag = "BenefactorRevealed"; Category = "Patron"; Text = "The mysterious Quest Giver is Lady Veyra of the High Ledger, a higher city power than the clerk ever admitted." }
         @{ Flag = "NamedVeyraContractBroker"; Category = "Docks"; Text = "A dockside broker admitted who carried Lady Veyra's death contract through the river quarter." }
+        @{ Flag = "DocksFirstChainComplete"; Category = "Docks"; Text = "The first dockside trail mapped Auntie Brindle's salvage shop, the tide-ledger shack, Warehouse Row, and the old knife berth." }
         @{ Flag = "HigherPatronSuspected"; Category = "Conspiracy"; Text = "The order to kill Lady Veyra came from higher city hands, not a local dockside grudge." }
     )
 
@@ -171,6 +172,10 @@ function Get-StoryClueProgressSummary {
     if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
         if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
             return "Chapter Three Notes: The docks have confirmed Lady Veyra's enemies answer to higher city powers still hiding behind charters, clerks, and paid blades."
+        }
+
+        if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
+            return "Chapter Three Notes: The first docks trail exposed where Lady Veyra's assassin came from. The river quarter is now open for deeper leads."
         }
 
         if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {

@@ -229,6 +229,7 @@ function Get-TownBuyerLabel {
         "Smithy" { return "Smith" }
         "Armorer" { return "Armorer" }
         "Apothecary" { return "Apothecary" }
+        "DocksideOddities" { return "Rag-and-Bone Collector" }
         default { return "Trader" }
     }
 }
@@ -267,6 +268,10 @@ function Get-TownBuyerIntroText {
             if ($isNight) { return "The apothecary handles late trade like triage, studying bottles and sealed mixtures with tired care while clearly wishing fewer customers needed remedies after dark." }
             return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite."
         }
+        "DocksideOddities" {
+            if ($isNight) { return "Auntie Brindle's little shop glows behind blue bottle-lamps, every shelf packed with cracked horns, shed scales, bent spoons, old buttons, and things she insists still remember who threw them away." }
+            return "Auntie Brindle peers over a hill of sorted rubbish with bright, delighted eyes. 'Nothing is junk, dear. Only a thing whose story was interrupted. Show me what the sensible folk were foolish enough to abandon.'"
+        }
         default { return "A trader looks over $heroName's gear and starts naming coin." }
     }
 }
@@ -301,6 +306,12 @@ function Get-SaleAffinityMultiplier {
         "Apothecary" {
             if ($Item.Type -eq "Consumable") { return 0.5 }
             return 0.3
+        }
+        "DocksideOddities" {
+            if ($Item.Type -eq "Junk") { return 0.85 }
+            if ($Item.Type -eq "Utility") { return 0.6 }
+            if ($Item.Type -eq "Consumable") { return 0.55 }
+            return 0.45
         }
         default { return 0.4 }
     }
