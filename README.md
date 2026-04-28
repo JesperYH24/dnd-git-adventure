@@ -10,8 +10,9 @@ The project currently includes:
 - a full town hub with day/night state
 - `Barbarian` and `Bard` as playable starting classes
 - Chapter Two story content through `The Understreet Complex`
+- the Lady Veyra reveal and a linear Docks discovery chain
+- an open Docks district with its first organization quest, `The Broker's Wake`
 - repeatable level-based day jobs
-- a post-Chapter-Two hook through `The Silent Knife`
 
 ## Start the game
 

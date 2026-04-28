@@ -78,6 +78,7 @@ Den:
   - work / quests
   - inn
   - hero / inventory / quest log
+- öppnar Docks som vanlig stadsdel först efter den linjära Docks-kedjan
 
 Tänk:  
 `town.ps1` = spelets "trafikpolis i stan"
@@ -394,6 +395,8 @@ Ansvar:
 - story combat
 - Understreet-finale
 - `The Silent Knife`
+- den linjära Docks-upptäckten
+- Docks-quests som `Black Contract on the Tide` och `The Broker's Wake`
 
 Tänk:  
 `city-quests.ps1` beskriver **hur questen spelas**

@@ -106,6 +106,42 @@ This quest:
 - turns the anonymous patron setup into an active city threat
 - foils an assassination attempt against the clerk
 - reveals Lady Veyra of the High Ledger as the power behind the private jobs
+- unlocks the first Docks lead without making Docks a free-roam district yet
+
+## Docks and the contract organization
+
+The Docks begin as a linear investigation rather than a normal town district.
+
+First Docks chain:
+
+- the hero follows Lady Veyra's assassination trail from town work leads
+- the first stop reveals Auntie Brindle's Rag-and-Bone Teapot, a strange junk-buying shop
+- Auntie points the hero toward black wax, dock ledgers, and the `Tide-Ledger Shack`
+- `Black Contract on the Tide` follows the route from wharf records to the hired killers
+- Marris Vane is exposed as the dockside broker who handled the contract
+- the quest identifies where the assassins came from, but not yet the higher patron behind them
+
+When that first chain is complete, Docks opens as a visitable town district.
+
+Open Docks currently includes:
+
+- Auntie Brindle's Rag-and-Bone Teapot
+- `Tide-Ledger Shack`
+- `Warehouse Row`
+- `Old Knife Berth`
+- a Docks quest lead for the organization behind Lady Veyra's contract
+
+The first open-Docks organization quest is `The Broker's Wake`.
+
+It shows that the group behind the contract is not only a murder crew. They also use:
+
+- false manifests
+- dock debt pressure
+- protection money
+- blackmail
+- paid blades
+
+`The Broker's Wake` ends with a lead toward a charter scribe who can make dirty dock business look legal on paper. The higher noble or council-level patron is still deliberately unrevealed.
 
 ## Why High Ledger matters
 

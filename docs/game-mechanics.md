@@ -70,6 +70,17 @@
 - inn-specific dining-room and common-room activities based on time of day, inn quality, and clientele
 - first inn-room back-navigation now correctly returns to the inn wrapper instead of dropping straight to town
 
+## Docks district flow
+
+Docks is intentionally more linear at first than the main town hub.
+
+- after `The Silent Knife`, Docks appears as a story lead rather than a free-roam district
+- the first visit discovers Auntie Brindle's Rag-and-Bone Teapot
+- the player follows dock clues through the tally shack, warehouse pressure, and old berth trail
+- once `Black Contract on the Tide` is complete, Docks becomes a normal town destination
+- open Docks then offers area visits, Auntie's junk buyer shop, and the next quest lead
+- `The Broker's Wake` profiles the organization behind Lady Veyra's contract without revealing the higher patron yet
+
 ## Ring and side systems
 
 - nighttime fighting ring

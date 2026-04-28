@@ -2,11 +2,12 @@
 
 ## Near-term priorities
 
-- continue the story after `The Understreet Complex`
-- develop Lady Veyra and the `High Ledger` into the next major quest-giver hub after `The Silent Knife`
+- continue the Docks organization chain after `The Broker's Wake`
+- build the charter-scribe lead into the next quest, where dirty dock business becomes legal on paper
+- keep the higher noble or council-level patron hidden until the hero has stronger dockside proof
+- develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - rename or reframe the revealed `Quest Giver` path in play so it feels like Veyra's ledger office rather than an anonymous patron forever
-- start the next Lady Veyra chain with a first economy-focused quest such as `False Debts`, where forged records have financially erased a victim or family
-- let the post-Understreet chain connect assassins, council pressure, charters, false debts, and money trails into the next level-progression story
+- let the post-Understreet chain connect assassins, dock charters, false debts, council pressure, and money trails into the next level-progression story
 - build the next post-Understreet story chain with enough structure and replay value to carry the hero toward the next level breakpoints
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
@@ -17,6 +18,7 @@
 - treat the High Ledger as the place where the city's official truth gets written: debts, taxes, charters, seized goods, forgiven payments, and buried names
 - keep Veyra politically constrained, so she needs the hero to create proof before she can safely move the city's machinery
 - make the clerk remain useful as the public face, but let the player gradually understand that the work now reaches into higher city power
+- let the Docks chain prove what the contract organization does before it proves who protects it
 - give `Barbarian` routes a hard-proof identity: protection, intimidation, seizures, broken doors, and surviving people who want records destroyed
 - give `Bard` routes a soft-power identity: salons, testimony, social pressure, forged confidence, overheard confessions, and performances used as cover
 - let future quests ask whether Veyra is simply helping the city or also choosing which version of the city survives in the ledgers
