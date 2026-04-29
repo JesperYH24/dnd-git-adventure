@@ -83,6 +83,7 @@ Docks is intentionally more linear at first than the main town hub.
 - `Docks Tier 2`: complete `2` strong organization quests, or `3` total completed Tier 2 quests after weak outcomes, to unlock the clean-paper lead
 - `Docks Tier 3`: `The Charter Scribe` cracks the organization's legal-paper shield and makes the hero level 4-ready before the next climax
 - `Docks Tier 4`: after the level 4 long rest, complete `2` strong higher-city paper-trail quests, or `3` total completed Tier 4 quests after weak outcomes, before the chain points above the docks
+- `Docks Tier 5`: `The Civic Vault` opens as a dungeon-style climax under the Civic Keep, using room navigation, combat encounters, searchable clues, loot, locked cache rewards, and short-rest rooms
 - weak Docks outcomes still complete the quest, but pay less and may require an extra quest before the next tier opens
 - Docks story XP is distributed across the whole chain instead of being topped up as a final remainder reward
 

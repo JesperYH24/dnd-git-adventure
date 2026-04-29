@@ -101,6 +101,7 @@ function New-UnderstreetQuestRoom {
     $room | Add-Member -NotePropertyName LockedCacheFailText -NotePropertyValue ""
     $room | Add-Member -NotePropertyName EncounterRewardFlag -NotePropertyValue ""
     $room | Add-Member -NotePropertyName EncounterRewardText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName DangerText -NotePropertyValue ""
     return $room
 }
 
@@ -242,6 +243,70 @@ function Get-UnderstreetComplexRooms {
     $rooms["record_chamber"].SearchDC = 13
     $rooms["record_chamber"].HiddenLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
     $rooms["record_chamber"].SearchRewardText = "Lore: the reserve folio confirms the understreet was only one branch of a larger smuggling network."
+
+    return $rooms
+}
+
+function Get-CivicVaultRooms {
+    $rooms = @{
+        hidden_culvert = (New-UnderstreetQuestRoom -Id "hidden_culvert" -Name "Hidden Culvert" -Description "Mira Kest's last dock lead ends beneath a rain-slick service arch below the Civic Keep. A sealed culvert runs behind the public walls, narrow enough that no honor guard would ever admit it exists." -Exits @{ east = "seal_lift" })
+        seal_lift = (New-UnderstreetQuestRoom -Id "seal_lift" -Name "Seal Lift" -Description "A brass lift cage rises through old stone. City seals have been hammered over older symbols, as if the keep swallowed a private stronghold and called it government." -Exits @{ west = "hidden_culvert"; east = "petition_gallery"; south = "ledger_refuge" } -EncounterFactory "Get-CivicVaultWardenEnemy" -EncounterTitle "Seal Lift" -EncounterIntro "A seal warden steps from behind the lift chain with a city-stamped shield and a private killer's stance.")
+        ledger_refuge = (New-UnderstreetQuestRoom -Id "ledger_refuge" -Name "Ledger Refuge" -Description "A cramped audit room hides behind the lift wall. The desk has been stripped in haste, but the door bars from the inside and the shelves still hold bandage cloth, old wine, and emergency ink." -Exits @{ north = "seal_lift" } -CanShortRest $true)
+        petition_gallery = (New-UnderstreetQuestRoom -Id "petition_gallery" -Name "Petition Gallery" -Description "Rows of rejected petitions hang from wires like dried leaves. Each carries a civic stamp, a denial mark, and a second private notation deciding whether the petitioner was useful, dangerous, or disposable." -Exits @{ west = "seal_lift"; east = "servant_sluice"; north = "mirror_cells" } -EncounterFactory "Get-CivicVaultAdvocateEnemy" -EncounterTitle "Petition Gallery" -EncounterIntro "A whisper advocate folds a petition knife out of his sleeve and attacks before the hanging names can be read.")
+        mirror_cells = (New-UnderstreetQuestRoom -Id "mirror_cells" -Name "Mirror Cells" -Description "Small interview cells line a mirrored hall. The glass is not for prisoners. It lets unseen listeners watch clerks turn fear into signatures." -Exits @{ south = "petition_gallery" })
+        servant_sluice = (New-UnderstreetQuestRoom -Id "servant_sluice" -Name "Servant Sluice" -Description "A laundry sluice crosses the hidden route, carrying clean linen above and dirty water below. Footprints show servants use this place to avoid noble eyes, and conspirators use it to avoid servants." -Exits @{ west = "petition_gallery"; east = "charter_archive" } -CanShortRest $true)
+        charter_archive = (New-UnderstreetQuestRoom -Id "charter_archive" -Name "Charter Archive" -Description "The archive smells of wax, dust, and purchased law. Shell charters, debt transfers, and dock exemptions sit in tidy rows, turning river crime into respectable civic language." -Exits @{ west = "servant_sluice"; east = "war_room" })
+        war_room = (New-UnderstreetQuestRoom -Id "war_room" -Name "Private War Room" -Description "A map of the city covers the table. Pins mark docks, inns, guard routes, and Lady Veyra's office. This is not defense planning. It is ownership drawn in thread and knife-scratches." -Exits @{ west = "charter_archive"; east = "hidden_court" } -EncounterFactory "Get-CivicVaultKnightEnemy" -EncounterTitle "Private War Room" -EncounterIntro "An oath-black knight closes the war-room door and raises a city-forged blade with no city mercy in it.")
+        hidden_court = (New-UnderstreetQuestRoom -Id "hidden_court" -Name "Hidden Court" -Description "The final chamber is a court in miniature: judge's bench, council seal, private gallows hook, and a ledger of decisions that never reached public law. Lord Varric Halewick waits beneath his own crest, wearing civic authority like armor." -Exits @{ west = "war_room" } -EncounterFactory "Get-CivicVaultLordEnemy" -EncounterTitle "Hidden Court" -EncounterIntro "Lord Varric Halewick smiles like a man offended by interruption, then draws the blade that signed Lady Veyra's death contract." -BossRoom $true)
+    }
+
+    foreach ($room in $rooms.Values) {
+        $room.DangerText = "The keep above feels clean and official. Down here, every quiet stone suggests the city has been taught to lie politely."
+    }
+
+    $rooms["ledger_refuge"].SearchHintText = "A torn civic requisition sits under the desk blotter, too carefully hidden to be rubbish."
+    $rooms["ledger_refuge"].SearchPromptText = "Search the audit desk and emergency shelves for useful supplies or names."
+    $rooms["ledger_refuge"].SearchSuccessText = "{hero} finds a cache of field supplies and a requisition signed with Lord Halewick's private seal."
+    $rooms["ledger_refuge"].SearchFailureText = "{hero} finds useful supplies, but the desk's paper trail has been scraped almost clean."
+    $rooms["ledger_refuge"].SearchDC = 12
+    $rooms["ledger_refuge"].HiddenLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
+    $rooms["ledger_refuge"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 15)
+    $rooms["ledger_refuge"].SearchRewardText = "Lore: the requisition proves Lord Halewick's private office supplied the hidden keep route."
+
+    $rooms["mirror_cells"].SearchHintText = "One mirror sits a finger-width out of line, and old wax has pooled beneath its frame."
+    $rooms["mirror_cells"].SearchPromptText = "Search the mirror frames and listening cells for a hidden key or recorded confession."
+    $rooms["mirror_cells"].SearchSuccessText = "{hero} works the warped mirror loose and finds a black-sealed archive key behind the glass."
+    $rooms["mirror_cells"].SearchFailureText = "{hero} misses the clean mechanism, but the loose mirror still gives up the black-sealed archive key when it shifts."
+    $rooms["mirror_cells"].SearchDC = 13
+    $rooms["mirror_cells"].SearchRewardFlag = "CivicVaultArchiveKey"
+    $rooms["mirror_cells"].SearchRewardText = "{hero} recovers the black-sealed archive key."
+
+    $rooms["charter_archive"].SearchHintText = "A high shelf of sealed charters has fresher dust around it than the rest."
+    $rooms["charter_archive"].SearchPromptText = "Search the fresh shelf marks and sealed charter rows for the real owner behind the dock shell companies."
+    $rooms["charter_archive"].SearchSuccessText = "The shell charters converge on one private signatory: Lord Varric Halewick, Civic Master of Works."
+    $rooms["charter_archive"].SearchFailureText = "The charter rows blur into legal fog, but enough repeated seal pressure remains to name Halewick's office."
+    $rooms["charter_archive"].SearchDC = 14
+    $rooms["charter_archive"].SearchRewardFlag = "LordHalewickNamed"
+    $rooms["charter_archive"].SearchRewardText = "Lore: Lord Varric Halewick is the higher patron behind the dockside contract network."
+    $rooms["charter_archive"].LockedCacheName = "black-sealed arms coffer"
+    $rooms["charter_archive"].LockedCacheHintText = "A black-sealed arms coffer sits beneath the charter shelf, too martial for an archive."
+    $rooms["charter_archive"].LockedCacheForceDC = 14
+    $rooms["charter_archive"].LockedCachePickDC = 13
+    $rooms["charter_archive"].LockedCacheKeyFlag = "CivicVaultArchiveKey"
+    $rooms["charter_archive"].LockedCacheOpenText = "The coffer opens on a velvet-wrapped guard blade, a city-stamped potion, and coin meant for quiet violence."
+    $rooms["charter_archive"].LockedCacheFailText = "The coffer refuses to open, and its black seal cracks just enough to warn that forcing it again would destroy the contents."
+    $rooms["charter_archive"].LockedCacheLoot += (New-WeaponItem -Name "Civic Guard Blade" -Value 320 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -SlotCost 1)
+    $rooms["charter_archive"].LockedCacheLoot += (New-ConsumableItem -Name "Potion of Haste" -Value 160 -HealAmount 0 -BuffType "Haste" -BuffName "Potion of Haste" -InitiativeAdvantage $true -SlotCost 1)
+    $rooms["charter_archive"].LockedCacheLoot += (New-CurrencyItem -Denomination "GP" -Amount 2)
+
+    $rooms["war_room"].SearchHintText = "The city map has one pin set deeper than the rest, marking a route no public guard patrol uses."
+    $rooms["war_room"].SearchPromptText = "Search the private war map for the order that sent a knife after Lady Veyra."
+    $rooms["war_room"].SearchSuccessText = "{hero} finds the assassination order cross-referenced with dock payments, guard blind spots, and Veyra's High Ledger schedule."
+    $rooms["war_room"].SearchFailureText = "{hero} cannot decode every pin, but the map still makes one truth plain: Veyra's death was planned from inside the Civic Keep."
+    $rooms["war_room"].SearchDC = 13
+    $rooms["war_room"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 20)
+    $rooms["war_room"].SearchRewardFlag = "VeyraContractOrderFound"
+    $rooms["war_room"].SearchRewardText = "Lore: the war map ties Lady Veyra's contract to the Civic Keep's private command rooms."
 
     return $rooms
 }
@@ -423,6 +488,86 @@ function Get-DocksContractKillerEnemy {
         damageMin = 4
         damageMax = 13
         isBoss = $false
+    }
+}
+
+function Get-CivicVaultWardenEnemy {
+    return [PSCustomObject]@{
+        name = "seal warden"
+        article = "A"
+        definite = "The Seal Warden"
+        combatantType = "Opponent"
+        hp = 30
+        xp = 0
+        armorClass = 15
+        attackBonus = 6
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 8
+        damageBonus = 3
+        damageMin = 4
+        damageMax = 11
+        isBoss = $false
+    }
+}
+
+function Get-CivicVaultAdvocateEnemy {
+    return [PSCustomObject]@{
+        name = "whisper advocate"
+        article = "A"
+        definite = "The Whisper Advocate"
+        combatantType = "Opponent"
+        hp = 26
+        xp = 0
+        armorClass = 14
+        attackBonus = 6
+        initiativeBonus = 4
+        damageDiceCount = 1
+        damageDiceSides = 6
+        damageBonus = 4
+        damageMin = 5
+        damageMax = 10
+        isBoss = $false
+    }
+}
+
+function Get-CivicVaultKnightEnemy {
+    return [PSCustomObject]@{
+        name = "oath-black knight"
+        article = "An"
+        definite = "The Oath-Black Knight"
+        combatantType = "Opponent"
+        hp = 36
+        xp = 0
+        armorClass = 16
+        attackBonus = 7
+        initiativeBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 4
+        damageMin = 5
+        damageMax = 14
+        isBoss = $false
+    }
+}
+
+function Get-CivicVaultLordEnemy {
+    return [PSCustomObject]@{
+        name = "Lord Varric Halewick"
+        article = ""
+        definite = "Lord Varric Halewick"
+        combatantType = "Opponent"
+        hp = 44
+        xp = 0
+        armorClass = 16
+        attackBonus = 7
+        initiativeBonus = 3
+        damageDiceCount = 1
+        damageDiceSides = 10
+        damageBonus = 4
+        damageMin = 5
+        damageMax = 14
+        isBoss = $true
     }
 }
 
@@ -828,7 +973,12 @@ function Show-UnderstreetRoom {
     }
 
     if (-not $Room.Visited) {
-        Write-Scene "The understreet air feels close and dangerous, as if the whole place is listening for one wrong step."
+        if (-not [string]::IsNullOrWhiteSpace($Room.DangerText)) {
+            Write-Scene (Format-UnderstreetHeroText -Text $Room.DangerText -Hero $Hero)
+        }
+        else {
+            Write-Scene "The understreet air feels close and dangerous, as if the whole place is listening for one wrong step."
+        }
     }
 
     if ($Room.Secured) {
@@ -1112,6 +1262,97 @@ function Start-UnderstreetComplexExploration {
                 }
                 "Q" {
                     Write-Scene "$($Game.Hero.Name) withdraws from the understreet to regroup in the city above."
+                    Write-ColorLine ""
+                    return "Withdrawn"
+                }
+                default {
+                    Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
+    }
+
+    return "Defeated"
+}
+
+function Start-CivicVaultExploration {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $rooms = Get-CivicVaultRooms
+    $currentRoomId = "hidden_culvert"
+    $previousRoomId = $null
+
+    while ($HeroHP.Value -gt 0) {
+        $room = $rooms[$currentRoomId]
+        Show-UnderstreetRoom -Room $room -Hero $Game.Hero
+
+        $encounterResult = Resolve-UnderstreetRoomEncounter `
+            -Game $Game `
+            -Room $room `
+            -HeroHP $HeroHP `
+            -PreviousRoomId $previousRoomId `
+            -CurrentRoomId ([ref]$currentRoomId)
+
+        if ($encounterResult -eq "Defeated") {
+            Write-Scene "$($Game.Hero.Name) is forced out of the Civic Vault before Lord Halewick's hidden court can be broken."
+            Write-ColorLine ""
+            return "Defeated"
+        }
+
+        if ($encounterResult -eq "Fled") {
+            Write-Scene "$($Game.Hero.Name) gives ground and falls back through the civic vault before the fight can finish him."
+            Write-ColorLine ""
+            continue
+        }
+
+        if ($encounterResult -eq "Victory") {
+            return "Victory"
+        }
+
+        $room.Visited = $true
+
+        while ($true) {
+            $exitMap = Show-UnderstreetRoomActions -Room $room -Hero $Game.Hero -HeroHP $HeroHP.Value
+            $choice = (Read-Host "Choose").ToUpper()
+
+            if ($exitMap.ContainsKey($choice)) {
+                $previousRoomId = $currentRoomId
+                $currentRoomId = $exitMap[$choice]
+                break
+            }
+
+            switch ($choice) {
+                "F" {
+                    Search-UnderstreetRoom -Game $Game -Room $room
+                }
+                "C" {
+                    Resolve-UnderstreetLockedCache -Game $Game -Room $room
+                }
+                "R" {
+                    Secure-UnderstreetRoomAndRest -Game $Game -Room $room -HeroHP $HeroHP
+                }
+                "I" {
+                    Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP -Room $room | Out-Null
+                }
+                "L" {
+                    Resolve-RoomLoot -Hero $Game.Hero -Room $room
+                }
+                "S" {
+                    $statusSnapshot = Get-HeroStatusSnapshot -Hero $Game.Hero -HeroHP $HeroHP.Value -Game $Game
+                    Write-ColorLine ""
+                    Write-ColorLine "Status:" "Cyan"
+                    Write-HeroStatusDetails -Hero $Game.Hero -HeroHP $HeroHP.Value -Snapshot $statusSnapshot
+                    Write-ColorLine ""
+                }
+                "T" {
+                    Toggle-TextSpeed | Out-Null
+                }
+                "Q" {
+                    Write-Scene "$($Game.Hero.Name) withdraws from the hidden Civic Keep route to regroup before the city notices."
                     Write-ColorLine ""
                     return "Withdrawn"
                 }
@@ -3409,6 +3650,79 @@ function Start-DocksCustomsStampQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "docks_customs_stamp" -CompletionText "Lady Veyra sets the stamped slip beside the shell charter and counting-house transfers. 'The docks did not buy this kind of cleanliness alone,' she says." -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
+function Start-DocksCivicVaultQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_civic_vault"
+
+    if ($null -eq $quest) {
+        Write-Scene "The hidden keep route has not surfaced yet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "Mira Kest will not risk the Civic Keep route until {hero} agrees to follow the final lead."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "The Civic Vault has already been broken open."
+        Write-ColorLine ""
+        return
+    }
+
+    if ([int]$Game.Hero.Level -lt 4) {
+        Write-Scene "$($Game.Hero.Name) should reach level 4 before walking into the hidden rooms beneath the Civic Keep."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["HigherPatronSuspected"] -and (Get-CurrentDocksQuestTier -Game $Game) -lt 5) {
+        Write-Scene "The dockside paper trail has not climbed high enough to reveal the Civic Keep route."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Civic Vault" -Color "Yellow"
+    Write-Scene "Mira Kest brings $($Game.Hero.Name) to a rain-black culvert beneath the Civic Keep and presses a folded shell charter into his hand."
+    Write-Scene "'The docks did not buy Lady Veyra's death,' she says. 'They delivered it. The buyer sits above us in clean stone and calls it governance.'"
+    Write-Scene "The hidden entrance leads under the place where the city is ruled: service passages, sealed archives, private cells, and the room where Lord Varric Halewick turns civic authority into a criminal engine."
+    Write-ColorLine ""
+
+    $explorationResult = Start-CivicVaultExploration -Game $Game -HeroHP $HeroHP
+
+    if ($explorationResult -eq "Defeated") {
+        Resolve-TownQuestDefeatRecovery -Game $Game -HeroHP $HeroHP -QuestId $quest.Id | Out-Null
+        return
+    }
+
+    if ($explorationResult -eq "Withdrawn") {
+        Write-Scene "$($Game.Hero.Name) escapes the Civic Vault with the route still dangerous and unfinished."
+        Write-ColorLine ""
+        return
+    }
+
+    $Game.Town.StoryFlags["CivicVaultCleared"] = $true
+    $Game.Town.StoryFlags["LordHalewickNamed"] = $true
+    $Game.Town.StoryFlags["VeyraContractOrderFound"] = $true
+    $Game.Town.Relationships["LadyVeyra"] = "Avenged"
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_civic_vault" -CompletionText "Lord Varric Halewick's hidden court falls quiet. The proof pulled from his vault gives Lady Veyra what rumor never could: a name, a motive, and the civic machinery behind the murder contract." -ProgressText "Chapter Three Climax: $($Game.Hero.Name) has breached the Civic Vault beneath the keep and exposed Lord Varric Halewick as the power behind Lady Veyra's death contract."
+}
+
 function Start-WhispersBeneathBentNailQuest {
     param(
         $Game,
@@ -3946,6 +4260,7 @@ function Start-TownQuest {
         "docks_shell_charter" { Start-DocksShellCharterQuest -Game $Game -HeroHP $HeroHP }
         "docks_counting_house_pressure" { Start-DocksCountingHousePressureQuest -Game $Game -HeroHP $HeroHP }
         "docks_customs_stamp" { Start-DocksCustomsStampQuest -Game $Game -HeroHP $HeroHP }
+        "docks_civic_vault" { Start-DocksCivicVaultQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }

@@ -165,6 +165,17 @@ After the level 4 long rest, Docks Tier 4 opens:
 - completing `2` strong Docks Tier 4 quests marks `HigherPatronSuspected`, confirming that the contract organization answers to higher city hands without naming the patron yet
 - if Docks Tier 4 results are weak, `3` total completed Tier 4 quests can still finish the current Docks chain
 
+Once the higher-city trail is complete, Docks Tier 5 opens `The Civic Vault`.
+
+This is the current Chapter Three climax dungeon:
+
+- Mira Kest finds a hidden service route beneath the Civic Keep
+- the hero enters a dungeon-like secret base under the place where the city is ruled
+- rooms include the `Hidden Culvert`, `Seal Lift`, `Ledger Refuge`, `Petition Gallery`, `Mirror Cells`, `Servant Sluice`, `Charter Archive`, `Private War Room`, and `Hidden Court`
+- the dungeon reuses the Understreet-style room system: navigation, encounters, searchable clues, room loot, a locked cache, and short rests in defensible rooms
+- the locked archive cache can reward a `Civic Guard Blade`, a `Potion of Haste`, and coin
+- the final boss is `Lord Varric Halewick`, the civic power behind Lady Veyra's death contract
+
 The level 4 XP curve is meant to feel earned across the whole Docks arc:
 
 - `Black Contract on the Tide`: 300 XP
@@ -175,6 +186,7 @@ The level 4 XP curve is meant to feel earned across the whole Docks arc:
 - `The Blackmail Book`: 230 XP
 - `The Charter Scribe`: 300 XP
 - post-level-4 Docks work continues with `The Shell Charter` at 320 XP, `Counting House Pressure` at 340 XP, and `The Customs Stamp` at 300 XP
+- `The Civic Vault`: 420 XP as the Chapter Three climax dungeon
 
 ## Why High Ledger matters
 

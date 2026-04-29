@@ -11,7 +11,7 @@ The project currently includes:
 - `Barbarian` and `Bard` as playable starting classes
 - Chapter Two story content through `The Understreet Complex`
 - the Lady Veyra reveal and a linear Docks discovery chain
-- an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, and `The Customs Stamp`
+- an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, `The Customs Stamp`, and the dungeon-style `Civic Vault` climax
 - level 4 readiness with Ability Score Increase support before the post-charter Docks tier opens
 - repeatable level-based day jobs
 

@@ -1048,6 +1048,71 @@ function Test-DocksTierFourQuestsExposeHigherCityTrail {
     $global:RollDiceOverride = $null
 }
 
+function Set-DocksCivicVaultReadyState {
+    param($Game)
+
+    Set-StoryTier -Game $Game -Tier 4
+    $Game.Town.ChapterTwoComplete = $true
+    $Game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $Game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $Game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $Game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+    $Game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+    $Game.Town.StoryFlags["HigherPatronSuspected"] = $true
+    $Game.Hero.Level = 4
+    $Game.Hero.LevelCap = 4
+
+    (Find-TownQuest -Game $Game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_salvage_witness").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_brokers_wake").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_debt_hooks").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_charter_scribe").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_shell_charter").Completed = $true
+    (Find-TownQuest -Game $Game -QuestId "docks_counting_house_pressure").Completed = $true
+}
+
+function Test-CivicVaultUnlocksAfterDocksHigherPatronTrail {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "docks_civic_vault"
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Civic Vault should stay hidden before the Docks higher-patron trail is complete."
+
+    Set-DocksCivicVaultReadyState -Game $game
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 5 -Message "The completed Docks paper trail should advance to the Civic Vault tier."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Civic Vault should unlock after enough Docks Tier 4 proof points above the docks."
+}
+
+function Test-CivicVaultIncludesDungeonRoomsRestAndLoot {
+    $rooms = Get-CivicVaultRooms
+
+    Assert-True -Condition ($rooms.Count -ge 8) -Message "The Civic Vault should be a real dungeon-sized room layout."
+    Assert-Equal -Actual $rooms["hidden_culvert"].Exits["east"] -Expected "seal_lift" -Message "The Civic Vault should start from a secret culvert entrance."
+    Assert-True -Condition $rooms["ledger_refuge"].CanShortRest -Message "The Civic Vault should include a defensible short-rest room."
+    Assert-True -Condition ($rooms["charter_archive"].LockedCacheLoot.Count -ge 2) -Message "The Civic Vault archive should include locked progression loot."
+    Assert-Equal -Actual $rooms["hidden_court"].BossRoom -Expected $true -Message "The Civic Vault should end in a boss chamber."
+}
+
+function Test-CivicVaultCompletesAndNamesHalewick {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    Set-DocksCivicVaultReadyState -Game $game
+
+    Accept-TownQuest -Game $game -QuestId "docks_civic_vault" | Out-Null
+    Use-StoryCombatWinStub
+    Use-ReadHostSequence -Values @("1", "1", "1", "1", "1", "1", "1")
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_civic_vault"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_civic_vault"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Civic Vault should complete after the hidden court boss is defeated."
+    Assert-Equal -Actual $game.Town.StoryFlags["CivicVaultCleared"] -Expected $true -Message "Completing the Civic Vault should mark the dungeon as cleared."
+    Assert-Equal -Actual $game.Town.StoryFlags["LordHalewickNamed"] -Expected $true -Message "The Civic Vault should name Lord Varric Halewick as the higher patron."
+    Assert-Equal -Actual $game.Town.StoryFlags["VeyraContractOrderFound"] -Expected $true -Message "The Civic Vault should secure the order behind Lady Veyra's contract."
+    Assert-Equal -Actual $game.Hero.XP -Expected 420 -Message "The Civic Vault should grant its listed XP reward."
+}
+
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
@@ -1407,6 +1472,9 @@ Test-DocksQuestXpCurveNaturallyReachesLevelFour
 Test-DocksTierFourRequiresLevelFourAfterCharterScribe
 Test-DocksWeakTierFourNeedsFallbackQuest
 Test-DocksTierFourQuestsExposeHigherCityTrail
+Test-CivicVaultUnlocksAfterDocksHigherPatronTrail
+Test-CivicVaultIncludesDungeonRoomsRestAndLoot
+Test-CivicVaultCompletesAndNamesHalewick
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
