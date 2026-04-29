@@ -35,6 +35,26 @@ function Get-HeroAbilityModifier {
     return Get-AbilityModifier -Score $score
 }
 
+function Get-HeroAbilityNames {
+    return @("STR", "DEX", "CON", "INT", "WIS", "CHA")
+}
+
+function Normalize-HeroAbilityName {
+    param([string]$Ability)
+
+    if ([string]::IsNullOrWhiteSpace($Ability)) {
+        return ""
+    }
+
+    $normalized = $Ability.Trim().ToUpper()
+
+    if ($normalized -in (Get-HeroAbilityNames)) {
+        return $normalized
+    }
+
+    return ""
+}
+
 function Format-AbilityModifier {
     param([int]$Modifier)
 
@@ -386,8 +406,129 @@ function Add-HeroAbilityScoreIncrease {
         [int]$Amount
     )
 
-    $currentScore = Get-HeroAbilityScore -Hero $Hero -Ability $Ability
-    $Hero.$Ability = $currentScore + $Amount
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+
+    if ([string]::IsNullOrWhiteSpace($normalizedAbility) -or $Amount -le 0) {
+        return 0
+    }
+
+    $currentScore = Get-HeroAbilityScore -Hero $Hero -Ability $normalizedAbility
+    $newScore = [Math]::Min(20, $currentScore + $Amount)
+    $Hero.$normalizedAbility = $newScore
+
+    return ($newScore - $currentScore)
+}
+
+function New-HeroAbilityScoreIncreaseEntry {
+    param(
+        $Hero,
+        [string]$Ability,
+        [int]$Amount
+    )
+
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+    $appliedAmount = Add-HeroAbilityScoreIncrease -Hero $Hero -Ability $normalizedAbility -Amount $Amount
+
+    return [PSCustomObject]@{
+        Ability = $normalizedAbility
+        Amount = $appliedAmount
+    }
+}
+
+function Resolve-HeroAbilityScoreIncreasePlan {
+    param(
+        [string]$Mode,
+        [string]$PrimaryAbility
+    )
+
+    $modeText = if ([string]::IsNullOrWhiteSpace($Mode)) { "" } else { $Mode.Trim().ToUpper() }
+
+    switch ($modeText) {
+        { $_ -in @("1", "PRIMARY") } {
+            return @([PSCustomObject]@{ Ability = $PrimaryAbility; Amount = 2 })
+        }
+        { $_ -in @("2", "TOUGH") } {
+            return @([PSCustomObject]@{ Ability = "CON"; Amount = 2 })
+        }
+        { $_ -in @("3", "BALANCED") } {
+            return @(
+                [PSCustomObject]@{ Ability = $PrimaryAbility; Amount = 1 },
+                [PSCustomObject]@{ Ability = "CON"; Amount = 1 }
+            )
+        }
+    }
+
+    $compactMode = $modeText -replace "\s", ""
+
+    if ($compactMode -match "^(STR|DEX|CON|INT|WIS|CHA)(\+2)?$") {
+        return @([PSCustomObject]@{ Ability = $matches[1]; Amount = 2 })
+    }
+
+    if ($compactMode -match "^\+2(STR|DEX|CON|INT|WIS|CHA)$") {
+        return @([PSCustomObject]@{ Ability = $matches[1]; Amount = 2 })
+    }
+
+    $splitAbilities = @($compactMode -split "[+,/]" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+
+    if ($splitAbilities.Count -eq 2) {
+        $firstAbility = Normalize-HeroAbilityName -Ability $splitAbilities[0]
+        $secondAbility = Normalize-HeroAbilityName -Ability $splitAbilities[1]
+
+        if (-not [string]::IsNullOrWhiteSpace($firstAbility) -and
+            -not [string]::IsNullOrWhiteSpace($secondAbility) -and
+            $firstAbility -ne $secondAbility) {
+            return @(
+                [PSCustomObject]@{ Ability = $firstAbility; Amount = 1 },
+                [PSCustomObject]@{ Ability = $secondAbility; Amount = 1 }
+            )
+        }
+    }
+
+    return $null
+}
+
+function Read-HeroAbilityScoreIncreasePlan {
+    param([string]$PrimaryAbility)
+
+    while ($true) {
+        Write-SectionTitle -Text "Ability Score Increase" -Color "Green"
+        Write-ColorLine "1. Sharpen class focus (+2 $PrimaryAbility)" "White"
+        Write-ColorLine "2. Build endurance (+2 CON)" "White"
+        Write-ColorLine "3. Balanced growth (+1 $PrimaryAbility, +1 CON)" "White"
+        Write-ColorLine "4. Custom focus (+2 any ability)" "White"
+        Write-ColorLine "5. Custom split (+1/+1 two abilities)" "White"
+        Write-ColorLine ""
+        $choice = (Read-Host "Choose ability increase").ToUpper()
+
+        if ($choice -in @("1", "2", "3", "PRIMARY", "TOUGH", "BALANCED")) {
+            return Resolve-HeroAbilityScoreIncreasePlan -Mode $choice -PrimaryAbility $PrimaryAbility
+        }
+
+        if ($choice -in @("4", "CUSTOM", "FOCUS")) {
+            $ability = Normalize-HeroAbilityName -Ability (Read-Host "Choose ability for +2 (STR/DEX/CON/INT/WIS/CHA)")
+
+            if (-not [string]::IsNullOrWhiteSpace($ability)) {
+                return @([PSCustomObject]@{ Ability = $ability; Amount = 2 })
+            }
+        }
+
+        if ($choice -in @("5", "SPLIT")) {
+            $firstAbility = Normalize-HeroAbilityName -Ability (Read-Host "First +1 ability")
+            $secondAbility = Normalize-HeroAbilityName -Ability (Read-Host "Second +1 ability")
+
+            if (-not [string]::IsNullOrWhiteSpace($firstAbility) -and
+                -not [string]::IsNullOrWhiteSpace($secondAbility) -and
+                $firstAbility -ne $secondAbility) {
+                return @(
+                    [PSCustomObject]@{ Ability = $firstAbility; Amount = 1 },
+                    [PSCustomObject]@{ Ability = $secondAbility; Amount = 1 }
+                )
+            }
+        }
+
+        Write-ColorLine "Choose a valid ASI option. Split increases must use two different abilities." "DarkYellow"
+        Write-ColorLine ""
+    }
 }
 
 function Resolve-HeroAbilityScoreIncrease {
@@ -409,50 +550,60 @@ function Resolve-HeroAbilityScoreIncrease {
     }
 
     $primaryAbility = Get-HeroPrimaryAbilityForASI -Hero $Hero
+    $oldConstitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
 
     if ([string]::IsNullOrWhiteSpace($Mode) -and (Get-Command Get-UiOutputSuppressed -ErrorAction SilentlyContinue) -and (Get-UiOutputSuppressed)) {
         $Mode = "1"
     }
 
-    while ([string]::IsNullOrWhiteSpace($Mode)) {
-        Write-SectionTitle -Text "Ability Score Increase" -Color "Green"
-        Write-ColorLine "1. Sharpen class focus (+2 $primaryAbility)" "White"
-        Write-ColorLine "2. Build endurance (+2 CON)" "White"
-        Write-ColorLine "3. Balanced growth (+1 $primaryAbility, +1 CON)" "White"
-        Write-ColorLine ""
-        $Mode = (Read-Host "Choose ability increase").ToUpper()
+    $increasePlan = Resolve-HeroAbilityScoreIncreasePlan -Mode $Mode -PrimaryAbility $primaryAbility
 
-        if ($Mode -notin @("1", "2", "3", "PRIMARY", "TOUGH", "BALANCED")) {
-            Write-ColorLine "Choose 1, 2, or 3." "DarkYellow"
-            Write-ColorLine ""
-            $Mode = ""
-        }
+    if ($null -eq $increasePlan) {
+        $increasePlan = Read-HeroAbilityScoreIncreasePlan -PrimaryAbility $primaryAbility
     }
 
     $increases = @()
 
-    switch ($Mode) {
-        { $_ -in @("2", "TOUGH") } {
-            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability "CON" -Amount 2
-            $increases += [PSCustomObject]@{ Ability = "CON"; Amount = 2 }
-        }
-        { $_ -in @("3", "BALANCED") } {
-            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability $primaryAbility -Amount 1
-            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability "CON" -Amount 1
-            $increases += [PSCustomObject]@{ Ability = $primaryAbility; Amount = 1 }
-            $increases += [PSCustomObject]@{ Ability = "CON"; Amount = 1 }
-        }
-        default {
-            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability $primaryAbility -Amount 2
-            $increases += [PSCustomObject]@{ Ability = $primaryAbility; Amount = 2 }
-        }
+    foreach ($increase in $increasePlan) {
+        $increases += New-HeroAbilityScoreIncreaseEntry -Hero $Hero -Ability $increase.Ability -Amount $increase.Amount
     }
 
+    $newConstitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
+    $maxHPDelta = ($newConstitutionModifier - $oldConstitutionModifier) * [Math]::Max(1, [int]$Hero.Level)
     $Hero.AbilityScoreIncreasesApplied[$levelKey] = $true
 
     return [PSCustomObject]@{
         Level = $Level
         Increases = $increases
+        MaxHPDelta = $maxHPDelta
+    }
+}
+
+function Sync-HeroMaxHPFromAbilityScores {
+    param(
+        $Hero,
+        $HeroHP = $null,
+        $MaxHPDelta = $null
+    )
+
+    $oldMaxHP = [int]$Hero.HP
+    $delta = if ($null -ne $MaxHPDelta) { [int]$MaxHPDelta } else { (Get-HeroMaxHP -Hero $Hero) - $oldMaxHP }
+    $newMaxHP = $oldMaxHP + $delta
+    $Hero.HP = $newMaxHP
+
+    if ($null -ne $HeroHP) {
+        if ($delta -gt 0) {
+            $HeroHP.Value += $delta
+        }
+        elseif ($HeroHP.Value -gt $newMaxHP) {
+            $HeroHP.Value = $newMaxHP
+        }
+    }
+
+    return [PSCustomObject]@{
+        OldMaxHP = $oldMaxHP
+        NewMaxHP = $newMaxHP
+        Delta = $delta
     }
 }
 
@@ -473,7 +624,8 @@ function Resolve-HeroLongRestLevelUp {
     param(
         $Hero,
         [ref]$HeroHP,
-        [string]$HPMode = ""
+        [string]$HPMode = "",
+        [string]$ASIMode = ""
     )
 
     $availableLevelUps = Get-HeroAvailableLevelUps -Hero $Hero
@@ -484,13 +636,20 @@ function Resolve-HeroLongRestLevelUp {
         $hpGainResult = Resolve-HeroLevelUpHPGain -Hero $Hero -Mode $HPMode
         $Hero.Level += 1
         $Hero.HP = $oldMaxHP + $hpGainResult.Gain
-        $abilityScoreIncrease = Resolve-HeroAbilityScoreIncrease -Hero $Hero -Level $Hero.Level
+        $abilityScoreIncrease = Resolve-HeroAbilityScoreIncrease -Hero $Hero -Level $Hero.Level -Mode $ASIMode
+        $hpSync = if ($null -ne $abilityScoreIncrease -and [int]$abilityScoreIncrease.MaxHPDelta -ne 0) {
+            Sync-HeroMaxHPFromAbilityScores -Hero $Hero -MaxHPDelta $abilityScoreIncrease.MaxHPDelta
+        }
+        else {
+            $null
+        }
         $levelUpResults += [PSCustomObject]@{
             Level = $Hero.Level
             Gain = $hpGainResult.Gain
             Mode = $hpGainResult.Mode
             Roll = $hpGainResult.Roll
             AbilityScoreIncrease = $abilityScoreIncrease
+            MaxHPSync = $hpSync
         }
     }
 
@@ -713,14 +872,14 @@ function Get-HeroArmorClass {
                     $dexBonus = [Math]::Min($dexBonus, [int]$item.DexBonusCap)
                 }
 
-                $armorBonus += [Math]::Max(0, $dexBonus)
+                $armorBonus += $dexBonus
             }
         }
     }
 
     if ($Hero.Class -eq "Barbarian" -and -not $hasEquippedArmor) {
         $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
-        return $Hero.BaseArmorClass + [Math]::Max(0, $dexterityModifier) + [Math]::Max(0, $constitutionModifier)
+        return $Hero.BaseArmorClass + $dexterityModifier + $constitutionModifier
     }
 
     return $Hero.BaseArmorClass + $armorBonus
@@ -736,7 +895,7 @@ function Get-HeroUnarmoredDefenseStatus {
     $hasEquippedArmor = [bool]($Hero.Inventory | Where-Object { $_.Type -eq "Armor" -and $_.Equipped } | Select-Object -First 1)
     $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
     $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
-    $armorClass = $Hero.BaseArmorClass + [Math]::Max(0, $dexterityModifier) + [Math]::Max(0, $constitutionModifier)
+    $armorClass = $Hero.BaseArmorClass + $dexterityModifier + $constitutionModifier
 
     return [PSCustomObject]@{
         Active = (-not $hasEquippedArmor)

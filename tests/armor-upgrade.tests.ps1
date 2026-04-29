@@ -83,6 +83,112 @@ function Test-GreatAxeDamageProfile {
     Assert-Equal -Actual $weapon.TotalDamageMax -Expected 14 -Message "Great Axe maximum damage should include the hero's Strength modifier."
 }
 
+function Test-StrengthAsiUpdatesWeaponAttackAndDamage {
+    $hero = Get-Hero
+
+    $result = Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "STR+2"
+    $weapon = Get-HeroWeaponProfile -Hero $hero
+
+    Assert-Equal -Actual $hero.STR -Expected 17 -Message "A Strength ASI should raise the barbarian's Strength score."
+    Assert-Equal -Actual $result.Increases[0].Amount -Expected 2 -Message "The ASI result should report the applied Strength increase."
+    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 5 -Message "Strength ASI should improve Strength weapon attack rolls."
+    Assert-Equal -Actual $weapon.DamageBonus -Expected 3 -Message "Strength ASI should improve Strength weapon damage."
+    Assert-Equal -Actual $weapon.TotalDamageMax -Expected 15 -Message "Great Axe max damage should include the improved Strength modifier."
+}
+
+function Test-DexterityAsiUpdatesLightArmorAndFinesseWeapon {
+    $hero = Get-Hero -Class "Bard"
+
+    Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "DEX+2" | Out-Null
+    $weapon = Get-HeroWeaponProfile -Hero $hero
+
+    Assert-Equal -Actual $hero.DEX -Expected 16 -Message "A Dexterity ASI should raise the bard's Dexterity score."
+    Assert-Equal -Actual (Get-HeroAbilityModifier -Hero $hero -Ability "DEX") -Expected 3 -Message "Dexterity ASI should improve Dexterity checks and initiative modifier."
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 14 -Message "Dexterity ASI should improve light armor armor class."
+    Assert-Equal -Actual $weapon.Ability -Expected "DEX" -Message "The bard's rapier should still use Dexterity."
+    Assert-Equal -Actual $weapon.TotalAttackBonus -Expected 5 -Message "Dexterity ASI should improve finesse weapon attack rolls."
+    Assert-Equal -Actual $weapon.DamageBonus -Expected 3 -Message "Dexterity ASI should improve finesse weapon damage."
+}
+
+function Test-ConstitutionAsiRetroactivelyUpdatesMaxHPAndUnarmoredDefense {
+    $hero = Get-Hero
+    $hero.Level = 4
+    $hero.HP = Get-HeroMaxHP -Hero $hero
+    $heroHP = $hero.HP
+
+    $asi = Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "CON+2"
+    $hpSync = Sync-HeroMaxHPFromAbilityScores -Hero $hero -HeroHP ([ref]$heroHP) -MaxHPDelta $asi.MaxHPDelta
+
+    Assert-Equal -Actual $hero.CON -Expected 17 -Message "A Constitution ASI should raise the barbarian's Constitution score."
+    Assert-Equal -Actual $asi.MaxHPDelta -Expected 4 -Message "Constitution ASI should report one max HP per level when the modifier rises."
+    Assert-Equal -Actual $hpSync.Delta -Expected 4 -Message "Constitution ASI should retroactively add one HP per level."
+    Assert-Equal -Actual $hero.HP -Expected 45 -Message "Max HP should be recalculated from the improved Constitution modifier."
+    Assert-Equal -Actual $heroHP -Expected 45 -Message "Current HP should rise with retroactive max HP during a rest."
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 15 -Message "Constitution ASI should improve barbarian Unarmored Defense."
+}
+
+function Test-ConstitutionAsiPreservesRolledMaxHP {
+    $hero = Get-Hero
+    $hero.Level = 4
+    $hero.HP = 50
+    $heroHP = 50
+
+    $asi = Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "CON+2"
+    Sync-HeroMaxHPFromAbilityScores -Hero $hero -HeroHP ([ref]$heroHP) -MaxHPDelta $asi.MaxHPDelta | Out-Null
+
+    Assert-Equal -Actual $hero.HP -Expected 54 -Message "CON ASI should add a level-based delta instead of overwriting rolled max HP."
+    Assert-Equal -Actual $heroHP -Expected 54 -Message "Current HP should preserve rolled max HP plus the CON ASI delta."
+}
+
+function Test-CharismaAsiUpdatesBardSaveSkillsAndInspiration {
+    $hero = Get-Hero -Class "Bard"
+
+    Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "CHA+2" | Out-Null
+    $check = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA" -CheckTag "Performance"
+
+    Assert-Equal -Actual $hero.CHA -Expected 17 -Message "A Charisma ASI should raise the bard's Charisma score."
+    Assert-Equal -Actual (Get-HeroSpellSaveDC -Hero $hero) -Expected 13 -Message "Charisma ASI should improve bard spell save DC."
+    Assert-Equal -Actual $check.TotalModifier -Expected 5 -Message "Charisma ASI should improve Charisma skill checks."
+    Assert-Equal -Actual (Get-HeroBardicInspirationMaxDice -Hero $hero) -Expected 4 -Message "Charisma ASI should improve prepared Bardic Inspiration dice."
+}
+
+function Test-IntelligenceAsiUpdatesInvestigationChecks {
+    $hero = Get-Hero -Class "Bard"
+
+    Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "INT+2" | Out-Null
+    $check = Get-HeroAbilityCheckModifier -Hero $hero -Ability "INT" -CheckTag "Investigation"
+
+    Assert-Equal -Actual $hero.INT -Expected 12 -Message "An Intelligence ASI should raise Intelligence."
+    Assert-Equal -Actual $check.TotalModifier -Expected 1 -Message "Intelligence ASI should improve Investigation-style checks."
+}
+
+function Test-AbilityScoreIncreaseCanSplitDifferentAbilities {
+    $hero = Get-Hero -Class "Bard"
+
+    Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "DEX+CHA" | Out-Null
+
+    Assert-Equal -Actual $hero.DEX -Expected 15 -Message "A split ASI should add +1 to the first chosen ability."
+    Assert-Equal -Actual $hero.CHA -Expected 16 -Message "A split ASI should add +1 to the second chosen ability."
+}
+
+function Test-AbilityScoreIncreaseCapsScoresAtTwenty {
+    $hero = Get-Hero
+    $hero.STR = 19
+
+    $result = Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "STR+2"
+
+    Assert-Equal -Actual $hero.STR -Expected 20 -Message "ASI should respect the DnD 5e ability score cap of 20."
+    Assert-Equal -Actual $result.Increases[0].Amount -Expected 1 -Message "The ASI result should report only the amount actually applied before the cap."
+}
+
+function Test-UnarmoredDefenseUsesRawDexterityAndConstitutionModifiers {
+    $hero = Get-Hero
+    $hero.DEX = 8
+    $hero.CON = 8
+
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected 8 -Message "Unarmored Defense should use raw DEX and CON modifiers, including penalties."
+}
+
 function Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP {
     $hero = Get-Hero
     $weapon = Get-HeroWeaponProfile -Hero $hero
@@ -260,6 +366,15 @@ Test-BarbarianUnarmoredDefenseDoesNotStackWithArmor
 Test-BarbarianUnarmoredDefenseStatusExplainsArmorClass
 Test-BarbarianUnarmoredDefenseStatusTurnsOffWithArmor
 Test-GreatAxeDamageProfile
+Test-StrengthAsiUpdatesWeaponAttackAndDamage
+Test-DexterityAsiUpdatesLightArmorAndFinesseWeapon
+Test-ConstitutionAsiRetroactivelyUpdatesMaxHPAndUnarmoredDefense
+Test-ConstitutionAsiPreservesRolledMaxHP
+Test-CharismaAsiUpdatesBardSaveSkillsAndInspiration
+Test-IntelligenceAsiUpdatesInvestigationChecks
+Test-AbilityScoreIncreaseCanSplitDifferentAbilities
+Test-AbilityScoreIncreaseCapsScoresAtTwenty
+Test-UnarmoredDefenseUsesRawDexterityAndConstitutionModifiers
 Test-BarbarianStartsWithPointBuyStatsAndLevelOneHP
 Test-BardStartsWithLightCombatProfileAndCharismaEdge
 Test-InitializeGameCanStartWithChosenClass
