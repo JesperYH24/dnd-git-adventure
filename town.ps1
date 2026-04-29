@@ -10,6 +10,10 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Get-DocksContactName {
+    return "Mira Kest"
+}
+
 function Test-DocksDistrictUnlocked {
     param($Game)
 
@@ -68,6 +72,8 @@ function Test-DocksTallyShackDiscovered {
 function Get-DocksDistrictProgressText {
     param($Game)
 
+    $docksContactName = Get-DocksContactName
+
     if (-not (Test-DocksOddityShopDiscovered -Game $Game)) {
         return "Docks Discovery: the first useful doorway is still hidden among the salvage stalls."
     }
@@ -81,19 +87,19 @@ function Get-DocksDistrictProgressText {
     }
 
     if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
-        return "Docks Lead: the knife berth and shell-charter trail proved the order against Lady Veyra came from higher city hands."
+        return "Docks Lead: $docksContactName has enough shell-charter proof to say the order against Lady Veyra came from higher city hands."
     }
 
     if ([bool]$Game.Town.StoryFlags["DocksCharterScribeExposed"]) {
-        return "Docks Breakthrough: the charter scribe who made dirty dock business look legal is exposed. Rest before the next larger move."
+        return "Docks Breakthrough: $docksContactName has the charter scribe's dirty paper trail. Rest before the next larger move."
     }
 
     if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
-        return "Docks Lead: the organization behind the contract moves freight, debt, secrets, and blades. The charter scribe who cleans its papers is the next loose thread."
+        return "Docks Lead: $docksContactName has sorted the organization into freight, debt, secrets, and blades. The charter scribe is the next loose thread."
     }
 
     if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
-        return "Docks Open: Auntie Brindle, the tide-ledger shack, Warehouse Row, and the old knife berth now form a district {hero} can revisit for deeper leads."
+        return "Docks Open: $docksContactName, Lady Veyra's dock contact, can now turn each ugly dockside clue into deeper leads."
     }
 
     if ([bool]$Game.Town.StoryFlags["NamedVeyraContractBroker"]) {
@@ -206,7 +212,7 @@ function Start-DocksDistrictMenu {
             Write-ColorLine "2. Revisit the Tide-Ledger Shack" "White"
             Write-ColorLine "3. Walk Warehouse Row" "White"
             Write-ColorLine "4. Check the Old Knife Berth" "White"
-            Write-ColorLine "5. Follow leads on the contract organization" "White"
+            Write-ColorLine "5. Meet Mira Kest for Lady Veyra's dock leads" "White"
         }
         else {
             if (Test-DocksTallyShackDiscovered -Game $Game) {
@@ -279,7 +285,7 @@ function Start-DocksDistrictMenu {
                     continue
                 }
 
-                Show-TownQuestSource -Title "Docks Leads" -IntroText "Now that the river quarter is open, the smaller sounds matter: who gets credit, who pays debt, who receives protection, and who never has to touch the knife they bought." -Source "Docks" -Game $Game -HeroHP $HeroHP
+                Show-TownQuestSource -Title "Mira Kest's Dock Leads" -IntroText "Mira Kest waits where rope shadow hides Lady Veyra's seal inside a ledger strap. Now that the river quarter is open, she can turn smaller sounds into work: who gets credit, who pays debt, who receives protection, and who never has to touch the knife they bought." -Source "Docks" -Game $Game -HeroHP $HeroHP
             }
             "6" {
                 if (-not [bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
@@ -487,6 +493,7 @@ function Get-TownQuestSourceIntroText {
     $visitKey = Get-TownSourceVisitKey -Source $Source
     $isRepeatVisit = [bool]$Game.Town.StreetFlags[$visitKey]
     $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+    $docksContactName = Get-DocksContactName
 
     if ($isNight -and -not $isRepeatVisit) {
         switch ($Source) {
@@ -504,7 +511,7 @@ function Get-TownQuestSourceIntroText {
             }
             "Docks" {
                 $Game.Town.StreetFlags[$visitKey] = $true
-                return "Lanterns sway over wet pilings and tar-black water while the docks decide which names are safe to say after dark. The air tastes of salt, rope, and the kind of paid silence Lady Veyra now needs broken."
+                return "Lanterns sway over wet pilings and tar-black water while $docksContactName waits with Lady Veyra's quiet seal tucked out of sight. The air tastes of salt, rope, and the kind of paid silence Veyra needs broken."
             }
         }
     }
@@ -559,14 +566,14 @@ function Get-TownQuestSourceIntroText {
             "Docks" {
                 if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
-                        -BarbarianText "The docks feel less like a mystery now and more like a machine Borzig has started to understand: false freight, debt hooks, blackmail books, and knives waiting behind paperwork." `
-                        -BardText "The docks feel less like a mystery now and more like a song Gariand has learned the ugly chords to: false freight, debt hooks, blackmail books, and knives waiting behind paperwork.")
+                        -BarbarianText "$docksContactName has helped Borzig see the machine under the docks: false freight, debt hooks, blackmail books, and knives waiting behind paperwork." `
+                        -BardText "$docksContactName has helped Gariand hear the ugly chords under the docks: false freight, debt hooks, blackmail books, and knives waiting behind paperwork.")
                 }
 
                 if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
-                        -BarbarianText "The docks are open to Borzig now. Auntie Brindle watches the salvage stairs, clerks sweat in the tide-ledger shack, Warehouse Row keeps its doors heavy, and the old knife berth still feels hungry." `
-                        -BardText "The docks are open to Gariand now. Auntie Brindle watches the salvage stairs, clerks sweat in the tide-ledger shack, Warehouse Row keeps its doors heavy, and the old knife berth still feels hungry.")
+                        -BarbarianText "The docks are open to Borzig now, but $docksContactName gives the danger a shape. Auntie Brindle watches the salvage stairs, Warehouse Row keeps its doors heavy, and each new lead comes through Veyra's dock contact." `
+                        -BardText "The docks are open to Gariand now, but $docksContactName gives the danger a rhythm. Auntie Brindle watches the salvage stairs, Warehouse Row keeps its doors heavy, and each new lead comes through Veyra's dock contact.")
                 }
 
                 if ($isNight) {

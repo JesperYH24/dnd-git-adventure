@@ -125,13 +125,15 @@ Docks Tier 1:
 
 When `Black Contract on the Tide` is complete, Docks opens as a visitable town district. When enough Tier 1 work is strong, or when the fallback total is complete, the organization tier opens.
 
+From this point, Lady Veyra's dock contact `Mira Kest` becomes the in-world lead hub. Mechanically the quests still use `Source = "Docks"`, but the player-facing text frames later clues as Mira turning dockside rumors, ledgers, and witnesses into actionable work.
+
 Open Docks currently includes:
 
 - Auntie Brindle's Rag-and-Bone Teapot
 - `Tide-Ledger Shack`
 - `Warehouse Row`
 - `Old Knife Berth`
-- a Docks quest lead for the organization behind Lady Veyra's contract
+- `Mira Kest's Dock Leads` for the organization behind Lady Veyra's contract
 
 Docks Tier 2:
 

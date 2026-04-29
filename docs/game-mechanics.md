@@ -78,6 +78,7 @@ Docks is intentionally more linear at first than the main town hub.
 - after `The Silent Knife`, Docks appears as a story lead rather than a free-roam district
 - the first visit discovers Auntie Brindle's Rag-and-Bone Teapot
 - the player follows dock clues through the tally shack, warehouse pressure, and old berth trail
+- after the first chain opens Docks, Lady Veyra's contact `Mira Kest` becomes the player-facing source for later dock leads
 - `Docks Tier 1`: complete `2` strong dockside clue quests, or `3` total completed Tier 1 quests after weak outcomes, to reach the organization layer
 - `Docks Tier 2`: complete `2` strong organization quests, or `3` total completed Tier 2 quests after weak outcomes, to unlock the clean-paper lead
 - `Docks Tier 3`: `The Charter Scribe` cracks the organization's legal-paper shield and makes the hero level 4-ready before the next climax

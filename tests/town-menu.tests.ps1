@@ -115,6 +115,22 @@ function Test-DocksDistrictOpensFromTownAfterBlackContractChain {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 3 -Message "The town menu should route into the opened docks district without extra prompts."
 }
 
+function Test-DocksOpenLeadsComeFromVeyraContact {
+    $game = Initialize-Game
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["DocksOddityShopDiscovered"] = $true
+    $game.Town.StoryFlags["DocksOddityShopVisited"] = $true
+    $game.Town.StoryFlags["DocksTallyShackDiscovered"] = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    $progressText = Get-DocksDistrictProgressText -Game $game
+    $introText = Get-TownQuestSourceIntroText -Source "Docks" -DefaultIntroText "unused" -Game $game
+
+    Assert-True -Condition ($progressText -like "*Mira Kest*") -Message "Open Docks progress text should name Lady Veyra's dock contact."
+    Assert-True -Condition ($introText -like "*Mira Kest*") -Message "Docks quest-source text should present later leads through Lady Veyra's dock contact."
+}
+
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
@@ -122,5 +138,6 @@ Test-DocksDistrictFirstVisitDiscoversOddityShop
 Test-DocksDistrictRequiresOddityShopBeforeTallyShack
 Test-DocksDistrictOddityShopUnlocksTallyShackLead
 Test-DocksDistrictOpensFromTownAfterBlackContractChain
+Test-DocksOpenLeadsComeFromVeyraContact
 
 Write-Host "Town menu tests passed." -ForegroundColor Green
