@@ -112,16 +112,18 @@ This quest:
 
 The Docks begin as a linear investigation rather than a normal town district.
 
-First Docks chain:
+Docks Tier 1:
 
 - the hero follows Lady Veyra's assassination trail from town work leads
 - the first stop reveals Auntie Brindle's Rag-and-Bone Teapot, a strange junk-buying shop
 - Auntie points the hero toward black wax, dock ledgers, and the `Tide-Ledger Shack`
 - `Black Contract on the Tide` follows the route from wharf records to the hired killers
-- Marris Vane is exposed as the dockside broker who handled the contract
-- the quest identifies where the assassins came from, but not yet the higher patron behind them
+- `Salvage Witness` turns Auntie Brindle's thrown-away evidence into a second usable clue
+- `Tide-Ledger Marks` lets the hero strengthen a weak contract trail through dockside paperwork
+- completing `2` strong Docks Tier 1 quests opens the next Docks tier
+- if Docks Tier 1 results are weak, `3` total completed Tier 1 quests can still open the next tier
 
-When that first chain is complete, Docks opens as a visitable town district.
+When `Black Contract on the Tide` is complete, Docks opens as a visitable town district. When enough Tier 1 work is strong, or when the fallback total is complete, the organization tier opens.
 
 Open Docks currently includes:
 
@@ -131,17 +133,46 @@ Open Docks currently includes:
 - `Old Knife Berth`
 - a Docks quest lead for the organization behind Lady Veyra's contract
 
-The first open-Docks organization quest is `The Broker's Wake`.
+Docks Tier 2:
 
-It shows that the group behind the contract is not only a murder crew. They also use:
+- `The Broker's Wake` profiles what the organization actually does
+- `Debt Hooks on Warehouse Row` proves how the organization buys obedience through debt and protection money
+- `The Blackmail Book` proves the organization also keeps people useful through shame, secrets, and leverage
+- completing `2` strong Docks Tier 2 quests unlocks the clean-paper lead
+- if Docks Tier 2 results are weak, `3` total completed Tier 2 quests can still unlock the clean-paper lead
 
-- false manifests
-- dock debt pressure
-- protection money
-- blackmail
-- paid blades
+Together they show that the group behind the contract is not only a murder crew. It uses false manifests, dock debt pressure, protection money, blackmail, and paid blades. The higher noble or council-level patron is still deliberately unrevealed.
 
-`The Broker's Wake` ends with a lead toward a charter scribe who can make dirty dock business look legal on paper. The higher noble or council-level patron is still deliberately unrevealed.
+Docks Tier 3 is `The Charter Scribe`.
+
+It:
+
+- follows the clean-paper trail from dirty dock business into legal charters
+- exposes the scribe who makes stolen cargo and coercive debt look lawful
+- removes the organization's current legal shield without revealing the higher patron yet
+- raises the hero's level cap to 4
+- gives enough milestone XP for level 4 readiness before the next Docks / High Ledger climax
+
+On the next long rest, level 4 can apply an Ability Score Increase.
+
+After the level 4 long rest, Docks Tier 4 opens:
+
+- `The Shell Charter` follows Odran Pell's exposed seal into a clean company with no honest owner
+- `Counting House Pressure` proves dockside protection money is being cleaned through legal desks
+- `The Customs Stamp` traces repeated official clearance marks on cargo that should never pass inspection
+- completing `2` strong Docks Tier 4 quests marks `HigherPatronSuspected`, confirming that the contract organization answers to higher city hands without naming the patron yet
+- if Docks Tier 4 results are weak, `3` total completed Tier 4 quests can still finish the current Docks chain
+
+The level 4 XP curve is meant to feel earned across the whole Docks arc:
+
+- `Black Contract on the Tide`: 300 XP
+- `Salvage Witness`: 220 XP
+- `Tide-Ledger Marks`: 180 XP
+- `The Broker's Wake`: 270 XP
+- `Debt Hooks on Warehouse Row`: 250 XP
+- `The Blackmail Book`: 230 XP
+- `The Charter Scribe`: 300 XP
+- post-level-4 Docks work continues with `The Shell Charter` at 320 XP, `Counting House Pressure` at 340 XP, and `The Customs Stamp` at 300 XP
 
 ## Why High Ledger matters
 

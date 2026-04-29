@@ -2444,8 +2444,11 @@ function Start-DocksBlackContractQuest {
 
     $Game.Town.StoryFlags["DocksFirstChainComplete"] = $true
     $Game.Town.Relationships["LadyVeyra"] = "Warned"
+    $advanceOutcome = if ($cleanLead) { "Strong" } else { "Weak" }
+    $rewardXP = if ($cleanLead) { $null } else { 220 }
+    $rewardCopper = if ($cleanLead) { $null } else { 180 }
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: the docks have shown where the knife came from, and now the district itself is worth searching." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and opened the river quarter for deeper investigation."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_black_contract" -CompletionText "Lady Veyra receives the dockside proof in cold silence. Her answer comes back brief: the docks have shown where the knife came from, and now the district itself is worth searching." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has traced Lady Veyra's death contract through the docks and opened the river quarter for deeper investigation." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-DocksBrokersWakeQuest {
@@ -2589,6 +2592,9 @@ function Start-DocksBrokersWakeQuest {
 
     $Game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
     $Game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+    $advanceOutcome = if ($cleanProfile) { "Strong" } else { "Weak" }
+    $rewardXP = if ($cleanProfile) { $null } else { 190 }
+    $rewardCopper = if ($cleanProfile) { $null } else { 150 }
 
     if ($cleanProfile) {
         Write-Scene "By dusk, $($Game.Hero.Name) has a clean profile of the organization: it launders freight through false manifests, buys obedience through debt, keeps blackmail ledgers, and sells murder as a final service."
@@ -2600,7 +2606,807 @@ function Start-DocksBrokersWakeQuest {
     Write-Scene "The next lead is not a noble name yet. It is a profession: a charter scribe who can make stolen cargo look legal and make illegal coin look like paperwork."
     Write-EmphasisLine -Text "New Lead: find the charter scribe who papers over the organization's dockside business." -Color "Yellow"
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_brokers_wake" -CompletionText "Lady Veyra's reply is cautious approval. Knowing what the organization does is useful; finding who writes its clean papers will be dangerous." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has profiled the dockside organization behind Lady Veyra's contract."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_brokers_wake" -CompletionText "Lady Veyra's reply is cautious approval. Knowing what the organization does is useful; finding who writes its clean papers will be dangerous." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has profiled the dockside organization behind Lady Veyra's contract." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksSalvageWitnessQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_salvage_witness"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "Auntie Brindle's salvage witness is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Salvage Witness" -Color "Yellow"
+    Write-Scene "Auntie Brindle produces a cracked bottle seal, a strip of black wax, and a bit of glove leather from a tray labeled 'things fools thought were gone.'"
+    Write-Scene "Somewhere in that rubbish is proof that the contract against Lady Veyra passed through careful hands, not dockside chance."
+    Write-ColorLine ""
+    Write-ColorLine "1. Sort the rubbish like evidence instead of junk (INT)" "White"
+    Write-ColorLine "2. Read Auntie's strange pattern of keepsakes (WIS)" "White"
+    Write-ColorLine "3. Coax Auntie into naming who brought the scraps in (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Trade a little song for Auntie's sharpest memory (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Hold the salvage room steady while Auntie circles the truth (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 11 -ActionText "{hero} lays each scrap out by seal, stain, and river grit until the trail starts behaving like evidence." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} stops trying to make Auntie's shelves normal and follows the odd logic underneath them." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} lets Auntie talk sideways until the name hidden in the story finally comes out straight." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) plays softly enough that Auntie forgets to pretend she has forgotten." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands like a wall between Auntie's shop and the dock noise until the old woman can think."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The scraps resolve into a clean little witness: the black wax, glove leather, and bottle seal all passed through the same careful runner."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The proof is less elegant than anyone would like, but Auntie's rubbish still points at a deliberate contract trail."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksSalvageWitnessSecured"] = $true
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 150 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 110 }
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_salvage_witness" -CompletionText "Auntie Brindle wraps the useful scraps in oilcloth and pats them like sleeping mice. 'There,' she says. 'Now the rubbish remembers for you.'" -ProgressText "Docks Tier 1 Progress: $($Game.Hero.Name) has turned Auntie Brindle's salvage into usable contract evidence." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksDebtHooksQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_debt_hooks"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The Warehouse Row debt trail is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Debt Hooks on Warehouse Row" -Color "Yellow"
+    Write-Scene "Warehouse Row looks honest until $($Game.Hero.Name) starts watching who pays whom after the official ledgers close."
+    Write-Scene "The organization does not only threaten people with knives. It buys hunger, rent, and shame, then calls the debt a service."
+    Write-ColorLine ""
+    Write-ColorLine "1. Trace the false debt marks through warehouse ledgers (INT)" "White"
+    Write-ColorLine "2. Follow the collectors without being seen too early (WIS)" "White"
+    Write-ColorLine "3. Convince a dock family to show the payment slips (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Make the collectors brag where frightened workers can hear them (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Put yourself between the collectors and their next victim (STR)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares debt marks, cargo losses, and service fees until the numbers start confessing." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} follows the collectors by the spaces they leave behind: shut doors, sudden quiet, and paid fear." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} earns enough trust for a dock family to reveal the slips they were told to burn." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the row into a listening room and lets the collectors perform their own guilt." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The debt hooks come loose with names attached: false service fees, dock families under pressure, and collectors moving under the same seal."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The collectors scatter before the full ledger is clean, but they leave enough slips behind to prove the protection scheme."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksDebtLedgerSecured"] = $true
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 170 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 130 }
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_debt_hooks" -CompletionText "By nightfall Warehouse Row is quieter, but not because it is safe. It is quieter because the organization knows one of its debt hooks has been pulled into the light." -ProgressText "Docks Tier 2 Progress: $($Game.Hero.Name) has proven the dockside organization buys obedience through debt and protection money." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksTideLedgerMarksQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_tide_ledger_marks"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The tide-ledger marks are not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Tide-Ledger Marks" -Color "Yellow"
+    Write-Scene "The tide-ledger shack keeps little marks in the margins: boring to honest eyes, useful to people who move contracts under cargo names."
+    Write-Scene "If $($Game.Hero.Name) can make sense of those marks, even a muddy contract trail can become proof."
+    Write-ColorLine ""
+    Write-ColorLine "1. Decode the copied margin marks (INT)" "White"
+    Write-ColorLine "2. Watch which clerk panics when the marks are named (WIS)" "White"
+    Write-ColorLine "3. Convince a dock runner to explain the shorthand (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Turn the ledger shorthand into a call-and-response memory trick (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Hold the ledger desk until the nervous clerk reads it aloud (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares tide marks, copied initials, and berth numbers until the fake freight code opens." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} names the wrong mark first and watches the right clerk flinch at the right lie." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives a runner enough room to pretend this is advice instead of confession." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) makes the shorthand catchy enough that a dockhand corrects the verse without thinking." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) waits beside the desk like bad weather until the clerk decides reading is safer than silence."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The margin marks turn into a clean contract map: who received black wax, who passed berth access, and which cargo name hid the knife."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The code never opens completely, but the marks still prove the contract trail was planned through the tide-ledger shack."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksTideLedgerMarksSecured"] = $true
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 120 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 90 }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_tide_ledger_marks" -CompletionText "Auntie Brindle laughs when she sees the copied marks. 'There. Paper remembers almost as well as rubbish.'" -ProgressText "Docks Tier 1 Progress: $($Game.Hero.Name) has turned tide-ledger marks into another contract clue." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksBlackmailBookQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_blackmail_book"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The blackmail book is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Blackmail Book" -Color "Yellow"
+    Write-Scene "The old knife berth has a hiding place no one admits exists: a dry box under warped planks, filled with names and little ruinous notes."
+    Write-Scene "The organization did not only buy obedience with debt. It kept people useful by keeping their worst days indexed."
+    Write-ColorLine ""
+    Write-ColorLine "1. Read the coded shame-list without missing the pattern (INT)" "White"
+    Write-ColorLine "2. Search the berth for the second half of the cipher (WIS)" "White"
+    Write-ColorLine "3. Talk a frightened name in the book into confirming the system (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Make one blackmail story sound survivable enough to be told (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Break the dry box open and keep the berth from taking it back (STR)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} reads names, symbols, and old favors until the book's cruelty becomes a ledger." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} searches the berth by what the book refuses to say and finds the missing cipher scrap." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives one frightened worker a way to tell the truth without being alone in it." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns confession into something less lonely, and the book loses some of its power." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The book opens cleanly: names, leverage, and payment routes all tied to the same dockside service."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "Some names stay coded, but the book still proves the organization uses shame as another kind of chain."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksBlackmailBookRecovered"] = $true
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 160 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 120 }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_blackmail_book" -CompletionText "Lady Veyra has the book copied twice and locked three ways. 'Debt buys the hand,' she says. 'Shame buys the silence.'" -ProgressText "Docks Tier 2 Progress: $($Game.Hero.Name) has exposed the organization's blackmail ledger." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksCharterScribeQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_charter_scribe"
+
+    if ($null -eq $quest) {
+        Write-Scene "The charter-scribe lead is not ready yet."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not $quest.Accepted) {
+        Write-Scene "{hero} needs to accept the charter-scribe lead before Lady Veyra risks moving official papers."
+        Write-ColorLine ""
+        return
+    }
+
+    if ($quest.Completed) {
+        Write-Scene "{hero} has already exposed the scribe who made dirty dock business look lawful."
+        Write-ColorLine ""
+        return
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["DocksCharterScribeLead"]) {
+        Write-Scene "The docks have not yet revealed which kind of paper-worker protects the organization."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Charter Scribe" -Color "Yellow"
+    Write-Scene "Lady Veyra does not send $($Game.Hero.Name) after a lord, not yet. She sends him after ink."
+    Write-Scene "The charter scribe works out of a counting room above the tide ledgers, where dock claims become lawful cargo, debt hooks become service fees, and stolen freight learns to wear a clean seal."
+    Write-Scene "This is the step before the next real strike: break the paperwork shield, and the organization loses the respectable mask that lets it survive."
+    Write-ColorLine ""
+    Write-ColorLine "1. Audit the false charters until the same hand appears twice (INT)" "White"
+    Write-ColorLine "2. Watch who carries clean papers back to dirty warehouses (WIS)" "White"
+    Write-ColorLine "3. Pressure the clerks into naming the scribe's private seal (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Turn the counting room into a salon and let vanity confess (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Stand between the clerks and the door until paper courage fails (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $cleanProof = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+
+        switch ($choice) {
+            "1" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares seal pressure, copied clauses, and cargo exemptions until the same careful fraud shows through."
+                if ($success) {
+                    Write-Scene "The charters line up too neatly. One private seal has cleaned three dirty shipments and two debt transfers."
+                    $cleanProof = $true
+                }
+                else {
+                    Write-Scene "The records are built to blur, but even blurred ink shows a repeating pattern around the same private seal."
+                }
+
+                break
+            }
+            "2" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} ignores the desk and follows the runners who leave it with papers held too carefully."
+                if ($success) {
+                    Write-Scene "The runners reveal the route: clean charters leave the scribe's room and return to warehouses already marked by the organization."
+                    $cleanProof = $true
+                }
+                else {
+                    Write-Scene "The runners scatter before the full route is clear, but they still lead back to the scribe's private seal."
+                }
+
+                break
+            }
+            "3" {
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} turns fear, patience, and a little pressure into a question the clerks cannot keep dodging."
+                if ($success) {
+                    Write-Scene "One clerk finally says the name behind the seal: Master Odran Pell, charter scribe to clean hands and dirty cargo alike."
+                    $cleanProof = $true
+                }
+                else {
+                    Write-Scene "The clerks never give the name cleanly, but their panic gives Lady Veyra enough to identify the seal."
+                }
+
+                break
+            }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) flatters the room, lets clerks compete to sound important, and listens for the name they admire too much." -CheckTag "Performance"
+                    if ($success) {
+                        Write-Scene "Pride does what fear would not. The room hands over Odran Pell's name while trying to sound clever."
+                        $cleanProof = $true
+                    }
+                    else {
+                        Write-Scene "The clerks enjoy the attention enough to loosen the seal trail, even if the name has to be pulled from the margins later."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) says little, blocks the exit, and lets silence become heavier than the ledgers."
+                    if ($success) {
+                        Write-Scene "The youngest clerk breaks first and names Odran Pell before the room can stop him."
+                        $cleanProof = $true
+                    }
+                    else {
+                        Write-Scene "Nobody breaks cleanly, but the clerks expose the private seal by trying too hard not to look at it."
+                    }
+
+                    break
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+    $Game.Town.StoryFlags["DocksLevelFourReady"] = $true
+    $Game.Hero.LevelCap = [Math]::Max([int]$Game.Hero.LevelCap, 4)
+
+    if ($cleanProof) {
+        Write-Scene "$($Game.Hero.Name) leaves with clean proof: the organization has a legal mask, and Odran Pell has been writing it one charter at a time."
+    }
+    else {
+        Write-Scene "$($Game.Hero.Name) leaves with enough proof for Lady Veyra to move. The scribe is exposed, even if the next patron still hides above the docks."
+    }
+
+    Write-EmphasisLine -Text "Level 4 Readiness: the next long rest can turn this breakthrough into an Ability Score Increase." -Color "Green"
+    $advanceOutcome = if ($cleanProof) { "Strong" } else { "Weak" }
+    $rewardXP = if ($cleanProof) { $null } else { 220 }
+    $rewardCopper = if ($cleanProof) { $null } else { 190 }
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_charter_scribe" -CompletionText "Lady Veyra's answer arrives under a sharper seal than before: the dockside organization has lost its clean paper shield. The next move will be larger, and $($Game.Hero.Name) should rest before taking it." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has exposed the charter scribe and is ready to grow toward level 4 before the next climax." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Update-DocksTierFourPatronSuspicion {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StoryFlags) {
+        return $false
+    }
+
+    $tierFourProofFlags = @(
+        "DocksShellCharterSecured"
+        "DocksCountingHouseExposed"
+        "DocksCustomsStampTraced"
+    )
+    $proofCount = @($tierFourProofFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
+
+    if ($proofCount -ge 2) {
+        $Game.Town.StoryFlags["HigherPatronSuspected"] = $true
+        return $true
+    }
+
+    return $false
+}
+
+function Start-DocksShellCharterQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_shell_charter"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The shell-charter lead is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Shell Charter" -Color "Yellow"
+    Write-Scene "Odran Pell's private seal does not point to a person at first. It points to a company with a clean name, no workers, and cargo claims that always seem to survive inspection."
+    Write-Scene "Lady Veyra calls it a shell charter: a respectable paper skin wrapped around dockside crime."
+    Write-ColorLine ""
+    Write-ColorLine "1. Compare the charter filings against real cargo movement (INT)" "White"
+    Write-ColorLine "2. Follow the clerk who renews the empty company's seal (WIS)" "White"
+    Write-ColorLine "3. Lean on a nervous owner-of-record until the name above him cracks (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Make the shell owner's dinner-story collapse in public (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Carry the false cargo manifest straight through their front door (STR)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} lines up filings, cargo weights, and missing crews until the shell charter starts to look hollow." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) lets the shell owner boast in rhythm until the lie trips over its own rhyme." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The shell charter gives up a clean thread: a respectable holding name tied to cargo that should never have cleared the docks."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The shell owner wriggles free of the cleanest proof, but not before leaving enough marks for Lady Veyra to follow upward."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksShellCharterSecured"] = $true
+    $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
+    $progressText = if ($patronNowSuspected) {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has linked the shell charter and counting-house trail to higher city hands."
+    }
+    else {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has tied Odran Pell's shell charter to respectable ownership above the docks."
+    }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 230 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 200 }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_shell_charter" -CompletionText "Lady Veyra studies the shell charter in silence, then taps the empty company name. 'No honest business is this clean,' she says. 'Someone polished it for a reason.'" -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksCountingHousePressureQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_counting_house_pressure"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The counting-house trail is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Counting House Pressure" -Color "Yellow"
+    Write-Scene "The counting house beside the tide-ledgers smells of ink, tea, and fear hidden under good manners."
+    Write-Scene "Its books should show losses from the docks. Instead they show tidy service fees, adjustment marks, and transfers that make protection money look like lawful expense."
+    Write-ColorLine ""
+    Write-ColorLine "1. Break the laundering pattern out of the ledgers (INT)" "White"
+    Write-ColorLine "2. Watch which payments leave after the official desk closes (WIS)" "White"
+    Write-ColorLine "3. Turn one junior accountant before the seniors bury the books (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Make the clerks correct each other's lies out loud (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Lock the room down with presence before the ledgers walk away (CON)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} turns neat fees into a map of dirty money moving through lawful desks." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) conducts the room like a nervous chorus until each clerk corrects the wrong lie." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) plants himself by the only door and lets the ledgers become heavier than the clerks can carry."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The counting-house pattern breaks open: dockside threats become service fees, service fees become clean transfers, and clean transfers climb toward names the clerks will not say."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The seniors bury part of the trail, but not all of it. Enough clean transfers remain to prove the docks are feeding someone above them."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksCountingHouseExposed"] = $true
+    $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
+    $progressText = if ($patronNowSuspected) {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has linked the shell charter and counting-house trail to higher city hands."
+    }
+    else {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has shown how dockside protection money is cleaned through legal desks."
+    }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 240 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 210 }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_counting_house_pressure" -CompletionText "Lady Veyra seals the copied transfers separately from the rest. 'This is no dock gang pretending at politics,' she says. 'This is politics using a dock gang.'" -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-DocksCustomsStampQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "docks_customs_stamp"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "The customs-stamp trail is not ready right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "The Customs Stamp" -Color "Yellow"
+    Write-Scene "A stamped cargo slip should be boring. This one is too perfect: same pressure, same ink, same authority on three shipments that should never have passed."
+    Write-Scene "The mark does not name the higher patron, but it may name the official desk willing to clean the way upward."
+    Write-ColorLine ""
+    Write-ColorLine "1. Compare stamp pressure and cargo exemptions (INT)" "White"
+    Write-ColorLine "2. Follow the night clerk who carries the stamp key (WIS)" "White"
+    Write-ColorLine "3. Make a customs runner admit which desk signs first (CHA)" "White"
+    if ($Game.Hero.Class -eq "Bard") {
+        Write-ColorLine "4. Stage a harmless paperwork argument until the real clerk corrects it (Performance)" "White"
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        Write-ColorLine "4. Put the stamped crate where every official has to look at it (STR)" "White"
+    }
+    Write-ColorLine ""
+
+    $strongOutcome = $false
+
+    while ($true) {
+        $choice = Read-Host "Choose"
+        $success = $false
+
+        switch ($choice) {
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares ink, pressure, and exemption clauses until the stamp reveals its desk." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." }
+            "4" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) starts a ridiculous paperwork quarrel and lets the guilty expert correct him too quickly." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) carries the stamped crate into the open and makes moving it quietly impossible."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
+            default {
+                Write-ColorLine "Choose a listed option." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+        }
+
+        if ($success) {
+            Write-Scene "The customs stamp points upward: not to the patron's name yet, but to the official desk that keeps dirty cargo clean."
+            $strongOutcome = $true
+        }
+        else {
+            Write-Scene "The official desk stays unnamed, but the repeated stamp proves someone with lawful authority has been opening the way."
+        }
+
+        break
+    }
+
+    $Game.Town.StoryFlags["DocksCustomsStampTraced"] = $true
+    $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
+    $progressText = if ($patronNowSuspected) {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has enough higher-city paper proof to show the docks are protected from above."
+    }
+    else {
+        "Docks Tier 4 Progress: $($Game.Hero.Name) has traced the false customs stamp toward official protection above the docks."
+    }
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardXP = if ($strongOutcome) { $null } else { 210 }
+    $rewardCopper = if ($strongOutcome) { $null } else { 180 }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_customs_stamp" -CompletionText "Lady Veyra sets the stamped slip beside the shell charter and counting-house transfers. 'The docks did not buy this kind of cleanliness alone,' she says." -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Start-WhispersBeneathBentNailQuest {
@@ -3131,7 +3937,15 @@ function Start-TownQuest {
         "guard_understreet_complex" { Start-UnderstreetComplexQuest -Game $Game -HeroHP $HeroHP }
         "patron_silent_knife" { Start-PatronSilentKnifeQuest -Game $Game -HeroHP $HeroHP }
         "docks_black_contract" { Start-DocksBlackContractQuest -Game $Game -HeroHP $HeroHP }
+        "docks_salvage_witness" { Start-DocksSalvageWitnessQuest -Game $Game -HeroHP $HeroHP }
+        "docks_tide_ledger_marks" { Start-DocksTideLedgerMarksQuest -Game $Game -HeroHP $HeroHP }
         "docks_brokers_wake" { Start-DocksBrokersWakeQuest -Game $Game -HeroHP $HeroHP }
+        "docks_debt_hooks" { Start-DocksDebtHooksQuest -Game $Game -HeroHP $HeroHP }
+        "docks_blackmail_book" { Start-DocksBlackmailBookQuest -Game $Game -HeroHP $HeroHP }
+        "docks_charter_scribe" { Start-DocksCharterScribeQuest -Game $Game -HeroHP $HeroHP }
+        "docks_shell_charter" { Start-DocksShellCharterQuest -Game $Game -HeroHP $HeroHP }
+        "docks_counting_house_pressure" { Start-DocksCountingHousePressureQuest -Game $Game -HeroHP $HeroHP }
+        "docks_customs_stamp" { Start-DocksCustomsStampQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }

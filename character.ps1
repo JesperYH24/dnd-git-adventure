@@ -357,6 +357,105 @@ function Resolve-HeroLevelUpHPGain {
     }
 }
 
+function Get-HeroPrimaryAbilityForASI {
+    param($Hero)
+
+    if ($Hero.Class -eq "Bard") {
+        return "CHA"
+    }
+
+    return "STR"
+}
+
+function Ensure-HeroAbilityScoreIncreaseState {
+    param($Hero)
+
+    if ($null -eq $Hero.PSObject.Properties["AbilityScoreIncreasesApplied"]) {
+        $Hero | Add-Member -NotePropertyName AbilityScoreIncreasesApplied -NotePropertyValue @{}
+    }
+
+    if ($null -eq $Hero.AbilityScoreIncreasesApplied) {
+        $Hero.AbilityScoreIncreasesApplied = @{}
+    }
+}
+
+function Add-HeroAbilityScoreIncrease {
+    param(
+        $Hero,
+        [string]$Ability,
+        [int]$Amount
+    )
+
+    $currentScore = Get-HeroAbilityScore -Hero $Hero -Ability $Ability
+    $Hero.$Ability = $currentScore + $Amount
+}
+
+function Resolve-HeroAbilityScoreIncrease {
+    param(
+        $Hero,
+        [int]$Level,
+        [string]$Mode = ""
+    )
+
+    if (($Level % 4) -ne 0) {
+        return $null
+    }
+
+    Ensure-HeroAbilityScoreIncreaseState -Hero $Hero
+    $levelKey = [string]$Level
+
+    if ($Hero.AbilityScoreIncreasesApplied.ContainsKey($levelKey)) {
+        return $null
+    }
+
+    $primaryAbility = Get-HeroPrimaryAbilityForASI -Hero $Hero
+
+    if ([string]::IsNullOrWhiteSpace($Mode) -and (Get-Command Get-UiOutputSuppressed -ErrorAction SilentlyContinue) -and (Get-UiOutputSuppressed)) {
+        $Mode = "1"
+    }
+
+    while ([string]::IsNullOrWhiteSpace($Mode)) {
+        Write-SectionTitle -Text "Ability Score Increase" -Color "Green"
+        Write-ColorLine "1. Sharpen class focus (+2 $primaryAbility)" "White"
+        Write-ColorLine "2. Build endurance (+2 CON)" "White"
+        Write-ColorLine "3. Balanced growth (+1 $primaryAbility, +1 CON)" "White"
+        Write-ColorLine ""
+        $Mode = (Read-Host "Choose ability increase").ToUpper()
+
+        if ($Mode -notin @("1", "2", "3", "PRIMARY", "TOUGH", "BALANCED")) {
+            Write-ColorLine "Choose 1, 2, or 3." "DarkYellow"
+            Write-ColorLine ""
+            $Mode = ""
+        }
+    }
+
+    $increases = @()
+
+    switch ($Mode) {
+        { $_ -in @("2", "TOUGH") } {
+            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability "CON" -Amount 2
+            $increases += [PSCustomObject]@{ Ability = "CON"; Amount = 2 }
+        }
+        { $_ -in @("3", "BALANCED") } {
+            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability $primaryAbility -Amount 1
+            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability "CON" -Amount 1
+            $increases += [PSCustomObject]@{ Ability = $primaryAbility; Amount = 1 }
+            $increases += [PSCustomObject]@{ Ability = "CON"; Amount = 1 }
+        }
+        default {
+            Add-HeroAbilityScoreIncrease -Hero $Hero -Ability $primaryAbility -Amount 2
+            $increases += [PSCustomObject]@{ Ability = $primaryAbility; Amount = 2 }
+        }
+    }
+
+    $Hero.AbilityScoreIncreasesApplied[$levelKey] = $true
+
+    return [PSCustomObject]@{
+        Level = $Level
+        Increases = $increases
+    }
+}
+
 function Grant-HeroXP {
     param(
         $Hero,
@@ -385,11 +484,13 @@ function Resolve-HeroLongRestLevelUp {
         $hpGainResult = Resolve-HeroLevelUpHPGain -Hero $Hero -Mode $HPMode
         $Hero.Level += 1
         $Hero.HP = $oldMaxHP + $hpGainResult.Gain
+        $abilityScoreIncrease = Resolve-HeroAbilityScoreIncrease -Hero $Hero -Level $Hero.Level
         $levelUpResults += [PSCustomObject]@{
             Level = $Hero.Level
             Gain = $hpGainResult.Gain
             Mode = $hpGainResult.Mode
             Roll = $hpGainResult.Roll
+            AbilityScoreIncrease = $abilityScoreIncrease
         }
     }
 

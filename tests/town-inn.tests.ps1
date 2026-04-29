@@ -119,6 +119,24 @@ function Test-BookedInnNightRestTriggersLevelUp {
     Assert-Equal -Actual $heroHP -Expected $game.Hero.HP -Message "The hero should wake with full HP after leveling during a long rest."
 }
 
+function Test-LevelFourLongRestAppliesAbilityScoreIncrease {
+    $game = Initialize-Game
+    $heroHP = 10
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+    $game.Town.ActiveInn = $inn
+    $game.Hero.CurrencyCopper = 500
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 4
+    $game.Hero.XP = 2700
+    $game.Hero.STR = 15
+
+    Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+
+    Assert-Equal -Actual $game.Hero.Level -Expected 4 -Message "A long rest should apply the pending level 4 gain."
+    Assert-Equal -Actual $game.Hero.STR -Expected 17 -Message "Level 4 should apply the default barbarian Ability Score Increase in quiet test mode."
+    Assert-Equal -Actual $game.Hero.AbilityScoreIncreasesApplied["4"] -Expected $true -Message "The level 4 ASI should only be marked once."
+}
+
 function Test-StashCanStoreAndRetrieveGear {
     $hero = Get-Hero
     $startingInventoryCount = $hero.Inventory.Count
@@ -297,6 +315,7 @@ Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
 Test-BookedInnNightRestRestoresPreparedBardicInspiration
 Test-BookedInnNightRestTriggersLevelUp
+Test-LevelFourLongRestAppliesAbilityScoreIncrease
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear

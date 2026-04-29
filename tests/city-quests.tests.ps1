@@ -661,6 +661,7 @@ function Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron {
     Accept-TownQuest -Game $game -QuestId "docks_black_contract" | Out-Null
     Use-ReadHostSequence -Values @("3")
     Use-StoryCombatWinStub
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_black_contract"
 
@@ -671,23 +672,54 @@ function Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron {
     Assert-Equal -Actual $game.Town.StoryFlags["DocksFirstChainComplete"] -Expected $true -Message "The first docks chain should mark the river quarter as mapped enough to revisit."
     Assert-Equal -Actual ([bool]$game.Town.StoryFlags["HigherPatronSuspected"]) -Expected $false -Message "The first docks chain should not reveal the higher patron yet."
     Assert-Equal -Actual $game.Town.Relationships["LadyVeyra"] -Expected "Warned" -Message "Lady Veyra's relationship state should update once the dockside proof reaches her."
-    Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The docks quest should grant its listed story XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 300 -Message "The docks quest should grant its listed story XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 250 -Message "The docks quest should pay its listed copper reward."
+    $global:RollDiceOverride = $null
 }
 
-function Test-BrokersWakeUnlocksAfterDocksFirstChain {
+function Test-SalvageWitnessCompletesAsDocksTierOneQuest {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_salvage_witness" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_salvage_witness"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_salvage_witness"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Salvage Witness should complete as a Docks Tier 1 clue quest."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksSalvageWitnessSecured"] -Expected $true -Message "Salvage Witness should secure Auntie's evidence flag."
+    Assert-Equal -Actual $game.Hero.XP -Expected 220 -Message "Salvage Witness should grant its listed story XP."
+    $global:RollDiceOverride = $null
+}
+
+function Test-BrokersWakeUnlocksAfterEnoughDocksTierOneWork {
     $game = Initialize-Game
     $quest = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+    $blackContract = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+    $salvageWitness = Find-TownQuest -Game $game -QuestId "docks_salvage_witness"
 
     Set-StoryTier -Game $game -Tier 4
     $game.Town.ChapterTwoComplete = $true
     $game.Town.StoryFlags["BenefactorRevealed"] = $true
 
-    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Broker's Wake should stay hidden before the first docks chain maps the district."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Broker's Wake should stay hidden before enough Docks Tier 1 work is complete."
 
+    $blackContract.Completed = $true
     $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
 
-    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Broker's Wake should unlock after the docks become a free-roam district."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "One Docks Tier 1 quest should not unlock Docks Tier 2 by itself."
+
+    $salvageWitness.Completed = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Broker's Wake should unlock after two Docks Tier 1 quests are complete."
 }
 
 function Test-BrokersWakeProfilesOrganizationWithoutNobleReveal {
@@ -697,6 +729,8 @@ function Test-BrokersWakeProfilesOrganizationWithoutNobleReveal {
     Set-StoryTier -Game $game -Tier 4
     $game.Town.ChapterTwoComplete = $true
     $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
     $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
     $game.Town.StoryQuestDoneToday = $false
 
@@ -712,8 +746,305 @@ function Test-BrokersWakeProfilesOrganizationWithoutNobleReveal {
     Assert-Equal -Actual $game.Town.StoryFlags["DocksOrganizationProfiled"] -Expected $true -Message "The quest should record what the dockside organization does."
     Assert-Equal -Actual $game.Town.StoryFlags["DocksCharterScribeLead"] -Expected $true -Message "The quest should point toward the charter scribe as the next lead."
     Assert-Equal -Actual ([bool]$game.Town.StoryFlags["HigherPatronSuspected"]) -Expected $false -Message "The organization profile should not reveal the higher patron yet."
-    Assert-Equal -Actual $game.Hero.XP -Expected 210 -Message "The Broker's Wake should grant its listed story XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 270 -Message "The Broker's Wake should grant its listed story XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 210 -Message "The Broker's Wake should pay its listed copper reward."
+    $global:RollDiceOverride = $null
+}
+
+function Test-DebtHooksCompletesAsDocksTierTwoQuest {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_debt_hooks" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_debt_hooks"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_debt_hooks"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Debt Hooks should complete as a Docks Tier 2 quest."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksDebtLedgerSecured"] -Expected $true -Message "Debt Hooks should secure proof of the debt/protection scheme."
+    Assert-Equal -Actual $game.Hero.XP -Expected 250 -Message "Debt Hooks should grant its listed story XP."
+    $global:RollDiceOverride = $null
+}
+
+function Test-CharterScribeUnlocksAfterEnoughDocksTierTwoWork {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "docks_charter_scribe"
+    $brokersWake = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+    $debtHooks = Find-TownQuest -Game $game -QuestId "docks_debt_hooks"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "The Charter Scribe should stay hidden before the organization profile creates the paper trail."
+
+    $brokersWake.Completed = $true
+    $game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $false -Message "One Docks Tier 2 quest should not unlock Docks Tier 3 by itself."
+
+    $debtHooks.Completed = $true
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $quest) -Expected $true -Message "The Charter Scribe should unlock once two Docks Tier 2 quests are complete."
+}
+
+function Test-DocksProgressionUsesSeparateQuestTiers {
+    $game = Initialize-Game
+    $blackContract = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+    $salvageWitness = Find-TownQuest -Game $game -QuestId "docks_salvage_witness"
+    $brokersWake = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+    $debtHooks = Find-TownQuest -Game $game -QuestId "docks_debt_hooks"
+    $charterScribe = Find-TownQuest -Game $game -QuestId "docks_charter_scribe"
+    $shellCharter = Find-TownQuest -Game $game -QuestId "docks_shell_charter"
+    $countingHouse = Find-TownQuest -Game $game -QuestId "docks_counting_house_pressure"
+
+    Set-StoryTier -Game $game -Tier 4
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 0 -Message "Docks tiers should stay closed before Lady Veyra is revealed."
+
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 1 -Message "The Lady Veyra reveal should open Docks Tier 1."
+    Assert-Equal -Actual (Get-TownQuestTierLabel -Quest $blackContract) -Expected "Docks Tier 1" -Message "Black Contract should be labeled as the first Docks tier."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $blackContract) -Expected $true -Message "Docks Tier 1 should unlock Black Contract on the Tide."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $salvageWitness) -Expected $true -Message "Docks Tier 1 should also offer a second clue quest."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $brokersWake) -Expected $false -Message "Docks Tier 2 should not unlock before the first docks chain is complete."
+
+    $blackContract.Completed = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 1 -Message "One Docks Tier 1 quest should keep the current Docks tier at 1."
+
+    $salvageWitness.Completed = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 2 -Message "Completing two Docks Tier 1 quests should open Docks Tier 2."
+    Assert-Equal -Actual (Get-TownQuestTierLabel -Quest $brokersWake) -Expected "Docks Tier 2" -Message "The Broker's Wake should be labeled as Docks Tier 2."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $brokersWake) -Expected $true -Message "Docks Tier 2 should unlock The Broker's Wake."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $debtHooks) -Expected $true -Message "Docks Tier 2 should also offer a second organization quest."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $charterScribe) -Expected $false -Message "Docks Tier 3 should not unlock before the organization is profiled."
+
+    $brokersWake.Completed = $true
+    $game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 2 -Message "One Docks Tier 2 quest should keep the current Docks tier at 2."
+
+    $debtHooks.Completed = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 3 -Message "Completing two Docks Tier 2 quests should open Docks Tier 3."
+    Assert-Equal -Actual (Get-TownQuestTierLabel -Quest $charterScribe) -Expected "Docks Tier 3" -Message "The Charter Scribe should be labeled as Docks Tier 3."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $charterScribe) -Expected $true -Message "Docks Tier 3 should unlock The Charter Scribe."
+
+    $charterScribe.Completed = $true
+    $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+    $game.Hero.Level = 3
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 4 -Message "Completing the Charter Scribe should advance the docks to Tier 4."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $shellCharter) -Expected $false -Message "Docks Tier 4 should wait for the level 4 long rest before offering the shell charter."
+
+    $game.Hero.Level = 4
+
+    Assert-Equal -Actual (Get-TownQuestTierLabel -Quest $shellCharter) -Expected "Docks Tier 4" -Message "The Shell Charter should be labeled as Docks Tier 4."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $shellCharter) -Expected $true -Message "Docks Tier 4 should unlock The Shell Charter at level 4."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $countingHouse) -Expected $true -Message "Docks Tier 4 should also offer Counting House Pressure at level 4."
+}
+
+function Test-DocksWeakTierOneNeedsFallbackQuest {
+    $game = Initialize-Game
+    $blackContract = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+    $salvageWitness = Find-TownQuest -Game $game -QuestId "docks_salvage_witness"
+    $tideLedger = Find-TownQuest -Game $game -QuestId "docks_tide_ledger_marks"
+    $brokersWake = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+
+    $blackContract.Completed = $true
+    $blackContract.AdvanceOutcome = "Weak"
+    $salvageWitness.Completed = $true
+    $salvageWitness.AdvanceOutcome = "Weak"
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 1 -Message "Two weak Docks Tier 1 quests should not unlock Tier 2 by themselves."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $brokersWake) -Expected $false -Message "The Broker's Wake should wait when Tier 1 only has weak progress."
+
+    $tideLedger.Completed = $true
+    $tideLedger.AdvanceOutcome = "Weak"
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 2 -Message "Three completed weak Docks Tier 1 quests should unlock Tier 2 as fallback progress."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $brokersWake) -Expected $true -Message "The Broker's Wake should unlock through fallback completed Docks Tier 1 work."
+}
+
+function Test-CharterScribeSetsLevelFourReadiness {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
+    $game.Hero.XP = 2400
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_brokers_wake").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_debt_hooks").Completed = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $game.Town.StoryFlags["DocksCharterScribeLead"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_charter_scribe" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_charter_scribe"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_charter_scribe"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Charter Scribe should complete once the legal shield is cracked."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksCharterScribeExposed"] -Expected $true -Message "The quest should mark the scribe behind the clean-paper trail as exposed."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksLevelFourReady"] -Expected $true -Message "The quest should mark the story beat that prepares the hero for level 4."
+    Assert-Equal -Actual $game.Hero.LevelCap -Expected 4 -Message "Completing the charter-scribe quest should raise the level cap to 4."
+    Assert-Equal -Actual $game.Hero.XP -Expected 2700 -Message "The charter-scribe quest should complete the natural Docks-chain XP curve to level 4."
+    Assert-Equal -Actual (Get-HeroAvailableLevelUps -Hero $game.Hero) -Expected 1 -Message "The hero should be level-up ready after the charter-scribe breakthrough."
+    $global:RollDiceOverride = $null
+}
+
+function Test-DocksQuestXpCurveNaturallyReachesLevelFour {
+    $game = Initialize-Game
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 4
+    $game.Hero.XP = 1360
+
+    $blackContract = Find-TownQuest -Game $game -QuestId "docks_black_contract"
+    $salvageWitness = Find-TownQuest -Game $game -QuestId "docks_salvage_witness"
+    $brokersWake = Find-TownQuest -Game $game -QuestId "docks_brokers_wake"
+    $debtHooks = Find-TownQuest -Game $game -QuestId "docks_debt_hooks"
+    $charterScribe = Find-TownQuest -Game $game -QuestId "docks_charter_scribe"
+
+    Grant-HeroXP -Hero $game.Hero -XP ([int]$blackContract.RewardXP)
+    Assert-Equal -Actual $game.Hero.XP -Expected 1660 -Message "Black Contract on the Tide should make meaningful progress toward level 4 without reaching it alone."
+    Assert-Equal -Actual (Get-HeroAvailableLevelUps -Hero $game.Hero) -Expected 0 -Message "The first docks quest should not trigger level 4 by itself."
+
+    Grant-HeroXP -Hero $game.Hero -XP ([int]$salvageWitness.RewardXP)
+    Assert-Equal -Actual $game.Hero.XP -Expected 1880 -Message "Completing Docks Tier 1 should move the hero meaningfully toward level 4."
+
+    Grant-HeroXP -Hero $game.Hero -XP ([int]$brokersWake.RewardXP)
+    Assert-Equal -Actual $game.Hero.XP -Expected 2150 -Message "The Broker's Wake should keep building the Docks XP curve."
+    Assert-Equal -Actual (Get-HeroAvailableLevelUps -Hero $game.Hero) -Expected 0 -Message "The organization profile should still leave the level-up for the pre-climax breakthrough."
+
+    Grant-HeroXP -Hero $game.Hero -XP ([int]$debtHooks.RewardXP)
+    Assert-Equal -Actual $game.Hero.XP -Expected 2400 -Message "Completing Docks Tier 2 should leave the final tier as the pre-climax breakthrough."
+
+    Grant-HeroXP -Hero $game.Hero -XP ([int]$charterScribe.RewardXP)
+    Assert-Equal -Actual $game.Hero.XP -Expected 2700 -Message "The Docks quest chain should naturally reach the level 4 threshold after The Charter Scribe."
+    Assert-Equal -Actual (Get-HeroAvailableLevelUps -Hero $game.Hero) -Expected 1 -Message "The completed Docks XP curve should make the hero level 4-ready."
+}
+
+function Test-DocksTierFourRequiresLevelFourAfterCharterScribe {
+    $game = Initialize-Game
+    $shellCharter = Find-TownQuest -Game $game -QuestId "docks_shell_charter"
+    $countingHouse = Find-TownQuest -Game $game -QuestId "docks_counting_house_pressure"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_brokers_wake").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_debt_hooks").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_charter_scribe").Completed = $true
+    $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+    $game.Hero.Level = 3
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 4 -Message "The post-charter docks tier should be active after the scribe is exposed."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $shellCharter) -Expected $false -Message "The Shell Charter should stay locked until the hero has taken the level 4 rest."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $countingHouse) -Expected $false -Message "Counting House Pressure should stay locked until the hero has taken the level 4 rest."
+
+    $game.Hero.Level = 4
+
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $shellCharter) -Expected $true -Message "The Shell Charter should unlock after the hero reaches level 4."
+    Assert-Equal -Actual (Is-TownQuestUnlocked -Game $game -Quest $countingHouse) -Expected $true -Message "Counting House Pressure should unlock after the hero reaches level 4."
+}
+
+function Test-DocksWeakTierFourNeedsFallbackQuest {
+    $game = Initialize-Game
+    $shellCharter = Find-TownQuest -Game $game -QuestId "docks_shell_charter"
+    $countingHouse = Find-TownQuest -Game $game -QuestId "docks_counting_house_pressure"
+    $customsStamp = Find-TownQuest -Game $game -QuestId "docks_customs_stamp"
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Hero.Level = 4
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_brokers_wake").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_debt_hooks").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_charter_scribe").Completed = $true
+    $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+
+    $shellCharter.Completed = $true
+    $shellCharter.AdvanceOutcome = "Weak"
+    $countingHouse.Completed = $true
+    $countingHouse.AdvanceOutcome = "Weak"
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 4 -Message "Two weak Docks Tier 4 quests should not finish the current Docks chain."
+
+    $customsStamp.Completed = $true
+    $customsStamp.AdvanceOutcome = "Weak"
+
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 5 -Message "Three completed weak Docks Tier 4 quests should finish the current Docks chain as fallback progress."
+}
+
+function Test-DocksTierFourQuestsExposeHigherCityTrail {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Hero.Level = 4
+    $game.Hero.LevelCap = 4
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_brokers_wake").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_debt_hooks").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_charter_scribe").Completed = $true
+    $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+
+    Accept-TownQuest -Game $game -QuestId "docks_shell_charter" | Out-Null
+    Use-ReadHostSequence -Values @("1")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_shell_charter"
+
+    $game.Town.StoryQuestDoneToday = $false
+    Accept-TownQuest -Game $game -QuestId "docks_counting_house_pressure" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_counting_house_pressure"
+
+    $shellCharter = Find-TownQuest -Game $game -QuestId "docks_shell_charter"
+    $countingHouse = Find-TownQuest -Game $game -QuestId "docks_counting_house_pressure"
+
+    Assert-Equal -Actual $shellCharter.Completed -Expected $true -Message "The Shell Charter should complete as a Docks Tier 4 quest."
+    Assert-Equal -Actual $countingHouse.Completed -Expected $true -Message "Counting House Pressure should complete as a Docks Tier 4 quest."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksShellCharterSecured"] -Expected $true -Message "The Shell Charter should secure the shell-company proof flag."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksCountingHouseExposed"] -Expected $true -Message "Counting House Pressure should secure the counting-house proof flag."
+    Assert-Equal -Actual $game.Town.StoryFlags["HigherPatronSuspected"] -Expected $true -Message "Completing both Docks Tier 4 quests should finally point toward higher city hands."
+    Assert-Equal -Actual (Get-CurrentDocksQuestTier -Game $game) -Expected 5 -Message "Completing both Docks Tier 4 quests should finish the current Docks tier chain."
     $global:RollDiceOverride = $null
 }
 
@@ -1064,8 +1395,18 @@ Test-SilentKnifeStaysHiddenUntilUnderstreetCleared
 Test-SilentKnifeRevealsTheMysteriousBenefactor
 Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal
 Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron
-Test-BrokersWakeUnlocksAfterDocksFirstChain
+Test-SalvageWitnessCompletesAsDocksTierOneQuest
+Test-BrokersWakeUnlocksAfterEnoughDocksTierOneWork
 Test-BrokersWakeProfilesOrganizationWithoutNobleReveal
+Test-DebtHooksCompletesAsDocksTierTwoQuest
+Test-CharterScribeUnlocksAfterEnoughDocksTierTwoWork
+Test-DocksProgressionUsesSeparateQuestTiers
+Test-DocksWeakTierOneNeedsFallbackQuest
+Test-CharterScribeSetsLevelFourReadiness
+Test-DocksQuestXpCurveNaturallyReachesLevelFour
+Test-DocksTierFourRequiresLevelFourAfterCharterScribe
+Test-DocksWeakTierFourNeedsFallbackQuest
+Test-DocksTierFourQuestsExposeHigherCityTrail
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo

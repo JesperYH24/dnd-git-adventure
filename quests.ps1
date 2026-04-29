@@ -11,6 +11,7 @@ function New-TownQuest {
         [int]$RewardXP = 0,
         [string]$RewardItemName = "",
         [int]$RequiredStoryClues = 0,
+        [int]$DocksTier = 0,
         [string]$DayJobTrackId = "",
         [int]$DayJobStep = 0,
         [int]$RequiredHeroLevel = 1
@@ -28,6 +29,7 @@ function New-TownQuest {
         RewardXP = $RewardXP
         RewardItemName = $RewardItemName
         RequiredStoryClues = $RequiredStoryClues
+        DocksTier = $DocksTier
         DayJobTrackId = $DayJobTrackId
         DayJobStep = $DayJobStep
         RequiredHeroLevel = $RequiredHeroLevel
@@ -61,8 +63,16 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 170)
         (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
         (New-TownQuest -Id "patron_silent_knife" -Name "The Silent Knife" -Source "Quest Giver" -Description "Someone is trying to cut the patron's clerk out of the story before he can reveal who has been directing the private investigation." -Objective "Protect the clerk, stop the assassins, and learn who the mysterious patron really is." -QuestType "Story" -Tier 4 -RewardCopper 220 -RewardXP 220)
-        (New-TownQuest -Id "docks_black_contract" -Name "Black Contract on the Tide" -Source "Docks" -Description "Lady Veyra's enemies hired the killing hand through the docks. The river quarter may know who took the contract, and who stood behind it." -Objective "Go to the docks, find the contract trail, and learn who truly wanted Lady Veyra dead." -QuestType "Story" -Tier 4 -RewardCopper 250 -RewardXP 240)
-        (New-TownQuest -Id "docks_brokers_wake" -Name "The Broker's Wake" -Source "Docks" -Description "With Marris Vane's berth exposed, the docks can finally show what the organization behind the contract actually does." -Objective "Revisit the open docks, question the people left in Marris Vane's wake, and learn what business the contract network protects." -QuestType "Story" -Tier 4 -RewardCopper 210 -RewardXP 210)
+        (New-TownQuest -Id "docks_black_contract" -Name "Black Contract on the Tide" -Source "Docks" -Description "Lady Veyra's enemies hired the killing hand through the docks. The river quarter may know who took the contract, and who stood behind it." -Objective "Go to the docks, find the contract trail, and learn who truly wanted Lady Veyra dead." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 250 -RewardXP 300)
+        (New-TownQuest -Id "docks_salvage_witness" -Name "Salvage Witness" -Source "Docks" -Description "Auntie Brindle has found a thrown-away thing that remembers more about Lady Veyra's contract than its owner intended." -Objective "Work Auntie's salvage clue into usable witness proof before the docks bury it again." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 160 -RewardXP 220)
+        (New-TownQuest -Id "docks_tide_ledger_marks" -Name "Tide-Ledger Marks" -Source "Docks" -Description "The tide-ledger shack has copied marks that do not belong to honest freight. Even a weak contract trail may be strengthened by the paper it left behind." -Objective "Audit the tide-ledger marks and turn dockside paperwork into another contract clue." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 140 -RewardXP 180)
+        (New-TownQuest -Id "docks_brokers_wake" -Name "The Broker's Wake" -Source "Docks" -Description "With Marris Vane's berth exposed, the docks can finally show what the organization behind the contract actually does." -Objective "Revisit the open docks, question the people left in Marris Vane's wake, and learn what business the contract network protects." -QuestType "Story" -Tier 4 -DocksTier 2 -RewardCopper 210 -RewardXP 270)
+        (New-TownQuest -Id "docks_debt_hooks" -Name "Debt Hooks on Warehouse Row" -Source "Docks" -Description "Warehouse workers keep paying debts that no honest ledger can explain. The organization may be buying obedience one family at a time." -Objective "Follow the debt pressure on Warehouse Row and secure proof of the protection scheme." -QuestType "Story" -Tier 4 -DocksTier 2 -RewardCopper 190 -RewardXP 250)
+        (New-TownQuest -Id "docks_blackmail_book" -Name "The Blackmail Book" -Source "Docks" -Description "Someone in the old knife berth kept a little book of names, favors, and shame. It may show why honest dock folk keep obeying the organization." -Objective "Recover the blackmail book and learn how the organization keeps useful people afraid." -QuestType "Story" -Tier 4 -DocksTier 2 -RewardCopper 180 -RewardXP 230)
+        (New-TownQuest -Id "docks_charter_scribe" -Name "The Charter Scribe" -Source "Docks" -Description "The dockside organization survives because someone makes dirty freight look lawful. Lady Veyra needs the charter scribe found before the next strike." -Objective "Find the scribe who cleans the organization's papers and crack its legal shield before the next climax." -QuestType "Story" -Tier 4 -DocksTier 3 -RewardCopper 260 -RewardXP 300)
+        (New-TownQuest -Id "docks_shell_charter" -Name "The Shell Charter" -Source "Docks" -Description "Odran Pell's exposed seal points to a clean charter with no honest owner. Someone above the docks is hiding money behind a paper company." -Objective "Trace the shell charter through the river quarter and find whose respectable name keeps dirty cargo safe." -QuestType "Story" -Tier 4 -DocksTier 4 -RewardCopper 280 -RewardXP 320 -RequiredHeroLevel 4)
+        (New-TownQuest -Id "docks_counting_house_pressure" -Name "Counting House Pressure" -Source "Docks" -Description "A counting house near the tide-ledgers keeps balancing losses that should ruin it. The dockside organization may be laundering protection coin through legal desks." -Objective "Pressure the counting house trail and secure proof that dockside crime is being cleaned for higher city hands." -QuestType "Story" -Tier 4 -DocksTier 4 -RewardCopper 300 -RewardXP 340 -RequiredHeroLevel 4)
+        (New-TownQuest -Id "docks_customs_stamp" -Name "The Customs Stamp" -Source "Docks" -Description "A customs stamp keeps appearing on cargo that should never pass inspection. The mark may show which official desk helps dockside money climb." -Objective "Trace the false customs stamp and secure one more higher-city paper trail." -QuestType "Story" -Tier 4 -DocksTier 4 -RewardCopper 260 -RewardXP 300 -RequiredHeroLevel 4)
         (New-TownQuest -Id "dayjob_market_delivery" -Name "Missing Delivery" -Source "Quest Board" -Description "A market runner needs someone reliable to recover a missing crate before the market eats the loss." -Objective "Find the missing crate and settle the problem without bloodshed." -QuestType "DayJob" -RewardCopper 90 -DayJobTrackId "market_runner" -DayJobStep 1 -RequiredHeroLevel 1)
         (New-TownQuest -Id "dayjob_market_delivery_2" -Name "Market Runner: Wrong Ledger" -Source "Quest Board" -Description "The market runners trust {hero} with a touchier problem: a paid delivery logged under the wrong stall." -Objective "Sort out the bad ledger mark and get the right goods to the right hands." -QuestType "DayJob" -RewardCopper 115 -DayJobTrackId "market_runner" -DayJobStep 2 -RequiredHeroLevel 2)
         (New-TownQuest -Id "dayjob_market_delivery_3" -Name "Market Runner: High-Value Hand-Off" -Source "Quest Board" -Description "A better-paying runner job needs a known face to move sealed goods through crowded daylight." -Objective "Carry the sealed goods across the market without losing the package or the crowd." -QuestType "DayJob" -RewardCopper 140 -DayJobTrackId "market_runner" -DayJobStep 3 -RequiredHeroLevel 3)
@@ -137,6 +147,9 @@ function Get-StoryClueNotes {
         @{ Flag = "NamedVeyraContractBroker"; Category = "Docks"; Text = "A dockside broker admitted who carried Lady Veyra's death contract through the river quarter." }
         @{ Flag = "DocksFirstChainComplete"; Category = "Docks"; Text = "The first dockside trail mapped Auntie Brindle's salvage shop, the tide-ledger shack, Warehouse Row, and the old knife berth." }
         @{ Flag = "DocksOrganizationProfiled"; Category = "Docks"; Text = "The docks revealed the organization behind Lady Veyra's contract moves forged freight, debt pressure, blackmail, and paid knives through the river quarter." }
+        @{ Flag = "DocksCharterScribeExposed"; Category = "Docks"; Text = "The charter scribe who cleaned the organization's dirty dock papers has been exposed, leaving the next city-level shield vulnerable." }
+        @{ Flag = "DocksShellCharterSecured"; Category = "Docks"; Text = "Odran Pell's shell charter now links the dockside organization to respectable ownership above the river quarter." }
+        @{ Flag = "DocksCountingHouseExposed"; Category = "Docks"; Text = "The counting-house trail shows protection money being washed through legal desks before it leaves the docks." }
         @{ Flag = "HigherPatronSuspected"; Category = "Conspiracy"; Text = "The order to kill Lady Veyra came from higher city hands, not a local dockside grudge." }
     )
 
@@ -174,6 +187,10 @@ function Get-StoryClueProgressSummary {
     if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
         if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
             return "Chapter Three Notes: The docks have confirmed Lady Veyra's enemies answer to higher city powers still hiding behind charters, clerks, and paid blades."
+        }
+
+        if ([bool]$Game.Town.StoryFlags["DocksCharterScribeExposed"]) {
+            return "Chapter Three Notes: The dockside organization has lost the scribe who made its dirty work look legal. $($Game.Hero.Name) is ready to grow before the next climax."
         }
 
         if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
@@ -298,6 +315,203 @@ function Get-CurrentStoryQuestTier {
     }
 
     return 2
+}
+
+function Get-CurrentDocksQuestTier {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StoryFlags) {
+        return 0
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+        return 0
+    }
+
+    $tierOneStrong = Get-StrongDocksQuestCountForTier -Game $Game -DocksTier 1
+    $tierOneCompleted = Get-CompletedDocksQuestCountForTier -Game $Game -DocksTier 1
+
+    if ($tierOneStrong -lt 2 -and $tierOneCompleted -lt 3) {
+        return 1
+    }
+
+    $tierTwoStrong = Get-StrongDocksQuestCountForTier -Game $Game -DocksTier 2
+    $tierTwoCompleted = Get-CompletedDocksQuestCountForTier -Game $Game -DocksTier 2
+
+    if ($tierTwoStrong -lt 2 -and $tierTwoCompleted -lt 3) {
+        return 2
+    }
+
+    $tierThreeStrong = Get-StrongDocksQuestCountForTier -Game $Game -DocksTier 3
+    $tierThreeCompleted = Get-CompletedDocksQuestCountForTier -Game $Game -DocksTier 3
+
+    if ($tierThreeStrong -lt 1 -and $tierThreeCompleted -lt 1) {
+        return 3
+    }
+
+    $tierFourStrong = Get-StrongDocksQuestCountForTier -Game $Game -DocksTier 4
+    $tierFourCompleted = Get-CompletedDocksQuestCountForTier -Game $Game -DocksTier 4
+
+    if ($tierFourStrong -lt 2 -and $tierFourCompleted -lt 3) {
+        return 4
+    }
+
+    return 5
+}
+
+function Get-TownQuestTierLabel {
+    param($Quest)
+
+    if ($null -eq $Quest -or $Quest.QuestType -ne "Story") {
+        return ""
+    }
+
+    if ($null -ne $Quest.PSObject.Properties["DocksTier"] -and [int]$Quest.DocksTier -gt 0) {
+        return "Docks Tier $($Quest.DocksTier)"
+    }
+
+    if ([int]$Quest.Tier -gt 0) {
+        return "Tier $($Quest.Tier)"
+    }
+
+    return ""
+}
+
+function Get-TownQuestTierSuffix {
+    param($Quest)
+
+    $tierLabel = Get-TownQuestTierLabel -Quest $Quest
+
+    if ([string]::IsNullOrWhiteSpace($tierLabel)) {
+        return ""
+    }
+
+    return " | $tierLabel"
+}
+
+function Get-CompletedDocksQuestCountForTier {
+    param(
+        $Game,
+        [int]$DocksTier
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Quests) {
+        return 0
+    }
+
+    return @($Game.Town.Quests | Where-Object {
+        $_.QuestType -eq "Story" -and
+        $_.Source -eq "Docks" -and
+        $_.Completed -and
+        $null -ne $_.PSObject.Properties["DocksTier"] -and
+        [int]$_.DocksTier -eq $DocksTier
+    }).Count
+}
+
+function Get-StrongDocksQuestCountForTier {
+    param(
+        $Game,
+        [int]$DocksTier
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Quests) {
+        return 0
+    }
+
+    return @($Game.Town.Quests | Where-Object {
+        $_.QuestType -eq "Story" -and
+        $_.Source -eq "Docks" -and
+        $_.Completed -and
+        $null -ne $_.PSObject.Properties["DocksTier"] -and
+        [int]$_.DocksTier -eq $DocksTier -and
+        ($null -eq $_.PSObject.Properties["AdvanceOutcome"] -or $_.AdvanceOutcome -ne "Weak")
+    }).Count
+}
+
+function Get-DocksTierStrongNeededCount {
+    param([int]$DocksTier)
+
+    switch ($DocksTier) {
+        1 { return 2 }
+        2 { return 2 }
+        3 { return 1 }
+        4 { return 2 }
+        default { return 0 }
+    }
+}
+
+function Get-DocksTierFallbackCompletedCount {
+    param([int]$DocksTier)
+
+    switch ($DocksTier) {
+        1 { return 3 }
+        2 { return 3 }
+        3 { return 1 }
+        4 { return 3 }
+        default { return 0 }
+    }
+}
+
+function Get-DocksTierRequiredCompletedCount {
+    param([int]$DocksTier)
+
+    return Get-DocksTierFallbackCompletedCount -DocksTier $DocksTier
+}
+
+function Get-DocksTierProgressStatus {
+    param($Game)
+
+    $currentTier = Get-CurrentDocksQuestTier -Game $Game
+
+    if ($currentTier -le 0) {
+        return [PSCustomObject]@{
+            CurrentTier = 0
+            CompletedCount = 0
+            RequiredCount = 0
+            StatusText = "Docks Tiers are locked. Lady Veyra must be revealed before the river quarter becomes a real lead."
+        }
+    }
+
+    if ($currentTier -ge 5) {
+        return [PSCustomObject]@{
+            CurrentTier = 5
+            CompletedCount = 0
+            RequiredCount = 0
+            StatusText = "Docks Tier chain complete. The shell papers and counting-house trail now point above the docks."
+        }
+    }
+
+    if ($currentTier -eq 4 -and $null -ne $Game.Hero -and [int]$Game.Hero.Level -lt 4) {
+        return [PSCustomObject]@{
+            CurrentTier = 4
+            CompletedCount = 0
+            RequiredCount = 3
+            StrongCount = 0
+            StrongNeeded = 2
+            FallbackCompletedNeeded = 3
+            StatusText = "Docks Tier 4 is almost open. $($Game.Hero.Name) should take the level 4 long rest before chasing the higher-city paper trail."
+        }
+    }
+
+    $completedCount = Get-CompletedDocksQuestCountForTier -Game $Game -DocksTier $currentTier
+    $strongCount = Get-StrongDocksQuestCountForTier -Game $Game -DocksTier $currentTier
+    $strongNeeded = Get-DocksTierStrongNeededCount -DocksTier $currentTier
+    $fallbackCompletedNeeded = Get-DocksTierFallbackCompletedCount -DocksTier $currentTier
+    $statusText = "Docks Tier $currentTier is active. Strong progress on this tier: $strongCount/$strongNeeded."
+
+    if ($strongCount -lt $strongNeeded) {
+        $statusText += " Weak outcomes still complete quests, but $($Game.Hero.Name) may need $fallbackCompletedNeeded total Docks Tier $currentTier quests to unlock the next dockside tier."
+    }
+
+    return [PSCustomObject]@{
+        CurrentTier = $currentTier
+        CompletedCount = $completedCount
+        RequiredCount = $fallbackCompletedNeeded
+        StrongCount = $strongCount
+        StrongNeeded = $strongNeeded
+        FallbackCompletedNeeded = $fallbackCompletedNeeded
+        StatusText = $statusText
+    }
 }
 
 function Get-CompletedStoryQuestCountForTier {
@@ -455,6 +669,10 @@ function Test-TownQuestBaseUnlock {
         return [bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]
     }
 
+    if ($Quest.Id -eq "docks_charter_scribe") {
+        return [bool]$Game.Town.StoryFlags["DocksCharterScribeLead"] -or (Get-CurrentDocksQuestTier -Game $Game) -ge 3
+    }
+
     if ($Quest.RequiredStoryClues -le 0) {
         return $true
     }
@@ -480,8 +698,16 @@ function Is-TownQuestUnlocked {
         return $true
     }
 
+    if ($null -ne $Quest.PSObject.Properties["RequiredHeroLevel"] -and [int]$Quest.RequiredHeroLevel -gt 1 -and [int]$Game.Hero.Level -lt [int]$Quest.RequiredHeroLevel) {
+        return $false
+    }
+
     if ($Quest.Completed -or $Quest.Accepted) {
         return $true
+    }
+
+    if ($Quest.Source -eq "Docks" -and $null -ne $Quest.PSObject.Properties["DocksTier"] -and [int]$Quest.DocksTier -gt 0) {
+        return [int]$Quest.DocksTier -eq (Get-CurrentDocksQuestTier -Game $Game)
     }
 
     $currentTier = Get-CurrentStoryQuestTier -Game $Game
@@ -906,7 +1132,7 @@ function Show-QuestLog {
 
             foreach ($townQuest in $acceptedQuests) {
                 Write-ColorLine "- $($townQuest.Name) [$($townQuest.Source)]" "White"
-                $tierText = if ($townQuest.QuestType -eq "Story" -and [int]$townQuest.Tier -gt 0) { " | Tier $($townQuest.Tier)" } else { "" }
+                $tierText = Get-TownQuestTierSuffix -Quest $townQuest
                 Write-ColorLine "  Type: $($townQuest.QuestType)$tierText" "DarkGray"
                 Write-ColorLine "  Objective: $($townQuest.Objective)" "DarkGray"
                 Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
@@ -1091,7 +1317,7 @@ function Start-TownQuestLogMenu {
 
                     for ($i = 0; $i -lt $acceptedQuests.Count; $i++) {
                         $quest = $acceptedQuests[$i]
-                        $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+                        $tierText = Get-TownQuestTierSuffix -Quest $quest
                         Write-ColorLine "$($i + 1). $($quest.Name) [$($quest.Source)$tierText]" "White"
                         Write-ColorLine "   Objective: $($quest.Objective)" "DarkGray"
                         Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"

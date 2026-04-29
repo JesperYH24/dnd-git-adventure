@@ -84,6 +84,10 @@ function Get-DocksDistrictProgressText {
         return "Docks Lead: the knife berth and shell-charter trail proved the order against Lady Veyra came from higher city hands."
     }
 
+    if ([bool]$Game.Town.StoryFlags["DocksCharterScribeExposed"]) {
+        return "Docks Breakthrough: the charter scribe who made dirty dock business look legal is exposed. Rest before the next larger move."
+    }
+
     if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
         return "Docks Lead: the organization behind the contract moves freight, debt, secrets, and blades. The charter scribe who cleans its papers is the next loose thread."
     }
@@ -635,7 +639,7 @@ function Show-TownQuestSource {
         Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
         Write-ColorLine ""
 
-        $tierStatus = Get-StoryTierProgressStatus -Game $Game
+        $tierStatus = if ($Source -eq "Docks") { Get-DocksTierProgressStatus -Game $Game } else { Get-StoryTierProgressStatus -Game $Game }
         Write-EmphasisLine -Text $tierStatus.StatusText -Color "Yellow"
         Write-ColorLine ""
 
@@ -678,7 +682,7 @@ function Show-TownQuestSource {
             $quest = $quests[$i]
             $status = if ($quest.Completed) { "Complete" } elseif ($quest.Accepted) { "Accepted" } else { "Available" }
             Write-ColorLine "$($i + 1). $($quest.Name) [$status]" "White"
-            $tierText = if ($quest.QuestType -eq "Story" -and [int]$quest.Tier -gt 0) { " | Tier $($quest.Tier)" } else { "" }
+            $tierText = Get-TownQuestTierSuffix -Quest $quest
             $dayJobText = if ($quest.QuestType -eq "DayJob") { " | Step $(Get-DayJobStep -Quest $quest) | Level $(Get-DayJobRequiredHeroLevel -Quest $quest)+" } else { "" }
             $timeText = Get-TownQuestRequiredTimeOfDay -Quest $quest
             Write-ColorLine "   Type: $($quest.QuestType)$tierText$dayJobText" "DarkGray"

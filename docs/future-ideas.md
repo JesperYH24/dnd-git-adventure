@@ -2,9 +2,9 @@
 
 ## Near-term priorities
 
-- continue the Docks organization chain after `The Broker's Wake`
-- build the charter-scribe lead into the next quest, where dirty dock business becomes legal on paper
-- keep the higher noble or council-level patron hidden until the hero has stronger dockside proof
+- build the next climax from the post-charter proof in `The Shell Charter` and `Counting House Pressure`
+- decide what kind of higher city patron the shell charter and counting-house trail should point toward
+- keep the higher noble or council-level patron unnamed until the newly level 4 hero has enough proof for a real confrontation
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - rename or reframe the revealed `Quest Giver` path in play so it feels like Veyra's ledger office rather than an anonymous patron forever
 - let the post-Understreet chain connect assassins, dock charters, false debts, council pressure, and money trails into the next level-progression story

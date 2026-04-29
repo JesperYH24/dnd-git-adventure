@@ -894,6 +894,11 @@ function Resolve-InnLongRestLevelUp {
         else {
             Write-Scene "He takes the fixed increase and gains $($result.Gain) max HP."
         }
+
+        if ($null -ne $result.AbilityScoreIncrease) {
+            $increaseText = @($result.AbilityScoreIncrease.Increases | ForEach-Object { "+$($_.Amount) $($_.Ability)" }) -join ", "
+            Write-Scene "His level 4 growth also settles into an Ability Score Increase: $increaseText."
+        }
     }
 
     Write-Scene "$($Game.Hero.Name) wakes fully restored at $($Game.Hero.HP) max HP."

@@ -396,7 +396,9 @@ Ansvar:
 - Understreet-finale
 - `The Silent Knife`
 - den linjära Docks-upptäckten
-- Docks-quests som `Black Contract on the Tide` och `The Broker's Wake`
+- Docks-quests som `Black Contract on the Tide`, `Tide-Ledger Marks`, `The Broker's Wake`, `The Blackmail Book`, `The Charter Scribe`, `The Shell Charter`, `Counting House Pressure`, och `The Customs Stamp`
+- Docks-specifika quest tiers efter Chapter Two, med strong/weak progression och flera quests per tier
+- level 4 story-readiness via Docks quest flags och XP, plus post-level-4 Docks Tier 4
 
 Tänk:  
 `city-quests.ps1` beskriver **hur questen spelas**

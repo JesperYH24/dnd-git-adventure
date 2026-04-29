@@ -6,7 +6,8 @@
 - playable class selection at the start of the adventure:
   - `Barbarian` as `Borzig`
   - `Bard` as `Gariand`
-- level-up readiness and long-rest leveling from level 1 to level 3
+- level-up readiness and long-rest leveling from level 1 to level 4
+- level 4 Ability Score Increase choices during long rest
 - local `save/load` support with manual save slots and backward-safe state normalization
 - inventory with ready-use slots, backpack storage, equipping, consumables, and persistent loot
 - currency system with `CP`, `SP`, `GP` and a gold pouch
@@ -77,9 +78,12 @@ Docks is intentionally more linear at first than the main town hub.
 - after `The Silent Knife`, Docks appears as a story lead rather than a free-roam district
 - the first visit discovers Auntie Brindle's Rag-and-Bone Teapot
 - the player follows dock clues through the tally shack, warehouse pressure, and old berth trail
-- once `Black Contract on the Tide` is complete, Docks becomes a normal town destination
-- open Docks then offers area visits, Auntie's junk buyer shop, and the next quest lead
-- `The Broker's Wake` profiles the organization behind Lady Veyra's contract without revealing the higher patron yet
+- `Docks Tier 1`: complete `2` strong dockside clue quests, or `3` total completed Tier 1 quests after weak outcomes, to reach the organization layer
+- `Docks Tier 2`: complete `2` strong organization quests, or `3` total completed Tier 2 quests after weak outcomes, to unlock the clean-paper lead
+- `Docks Tier 3`: `The Charter Scribe` cracks the organization's legal-paper shield and makes the hero level 4-ready before the next climax
+- `Docks Tier 4`: after the level 4 long rest, complete `2` strong higher-city paper-trail quests, or `3` total completed Tier 4 quests after weak outcomes, before the chain points above the docks
+- weak Docks outcomes still complete the quest, but pay less and may require an extra quest before the next tier opens
+- Docks story XP is distributed across the whole chain instead of being topped up as a final remainder reward
 
 ## Ring and side systems
 
