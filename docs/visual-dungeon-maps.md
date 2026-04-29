@@ -1,142 +1,170 @@
 # Dungeon Maps
 
+Det har dokumentet visar dungeon-layouts som top-down sketches.
+
+Formatet ar medvetet kartlikt:
+
+- rummen ligger dar de ungefar ligger i nord/syd/ost/vast
+- kartan anvander korta rumskoder for att inte bli for bred
+- legend under kartan forklarar namn, funktion och specialinnehall
+
+## Symbols
+
+- `S` = start / entry
+- `B` = boss room
+- `R` = short rest room
+- `K` = key / important unlock
+- `C` = cache / locked reward
+- `!` = encounter pressure
+- `?` = clue / search focus
+
+---
+
 ## Dungeon Overview
 
 ```mermaid
 flowchart LR
-    Tutorial["Tutorial Cave\nLevel 1 dungeon\nrooms.ps1"] --> TutorialBoss["Shadow Sanctum\nboss + capped d20 gold"]
-    Understreet["Understreet Complex\nLevel 3 dungeon\ncity-quests.ps1"] --> UnderstreetBoss["Command Vault\nCaptain Serik"]
-    Civic["Civic Vault\nLevel 4 dungeon\ncity-quests.ps1"] --> CivicBoss["Hidden Court\nLord Varric Halewick"]
+    Tutorial["Tutorial Cave\nLevel 1"] --> TutorialBoss["Shadow Sanctum\nboss + tutorial payout"]
+    Understreet["Understreet Complex\nLevel 3"] --> UnderstreetBoss["Command Vault\nCaptain Serik"]
+    Civic["Civic Vault\nLevel 4"] --> CivicBoss["Hidden Court\nLord Varric Halewick"]
 
-    Tutorial --> TutorialShape["Small looped cave\n2 approach paths merge before boss"]
-    Understreet --> UnderstreetShape["Branching smuggler base\nrests, clues, locked cache"]
-    Civic --> CivicShape["Hidden keep route\nlinear pressure with side rooms"]
+    Tutorial --> TutorialShape["Small forked cave\n2 paths merge before boss"]
+    Understreet --> UnderstreetShape["Branching smuggler base\nhubs, rests, key/cache loop"]
+    Civic --> CivicShape["Hidden civic route\nlinear pressure + side rooms"]
 ```
 
-## Tutorial Cave Map
+---
 
-Top-down sketch:
-
-```text
-                                      N
-                                      ^
-                                      |
-                         +-----------------------+      +-----------------------+      +-----------------------+
-                         | Collapsed Crossing    |------| Ashen Threshold       |------| Shadow Sanctum        |
-                         | broken bridge         | E/W  | paths converge        | E/W  | boss room             |
-                         +-----------------------+      +-----------------------+      +-----------------------+
-                                      |                            |
-                                      | N/S                        | N/S
-                                      |                            |
-                         +-----------------------+      +-----------------------+
-                         | Echo Hall             |      | Underground Lake      |
-                         | bones + echoes        |      | black water           |
-                         +-----------------------+      +-----------------------+
-                                      |                            |
-                                      | N/S                        | N/S
-                                      |                            |
-+-----------------------+      +-----------------------+
-| Cave Entrance         |------| Fungal Nest           |
-| start / can leave     | E/W  | glowing fungus        |
-+-----------------------+      +-----------------------+
-```
-
-Design read:
-
-- The cave has two early routes: a dry/bone path through `Echo Hall` and a wet/fungal path through `Fungal Nest`.
-- Both routes bend into `Ashen Threshold`, making the boss approach feel intentional instead of random.
-- `Shadow Sanctum` sits far east as the clear final room.
-
-## Understreet Complex Map
-
-Top-down sketch:
+## Tutorial Cave
 
 ```text
-                                      N
-                                      ^
-                                      |
-                         +-----------------------+
-                         |  Collapsed Barracks   |
-                         |  short rest dead end  |
-                         +-----------------------+
-                                      |
-                                      |
-                         +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+
-                         |  Sentry Turn          |------| Flooded Switchback    |------| Old Armory            |
-                         |  sentry encounter     |      | hound encounter       |      | warden + locked cache |
-                         +-----------------------+      +-----------------------+      +-----------------------+      | Smugglers' Lockup    |
-                                      |                            |                         |                    | gaoler dead end      |
-                                      |                            |                         |                    +-----------------------+
-+-----------------------+   +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+
-| Sealed Descent        |---| Contraband Hall       |------| Tally Crossing        |------| Record Chamber        |------| Command Vault         |
-| entry                 |   | lookout encounter     |      | central junction      |      | record keeper         | E/W  | boss room             |
-+-----------------------+   +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+
-                                      |                            |                         |
-                                      |                            |                         |
-                         +-----------------------+      +-----------------------+         |
-                         | Cistern Refuge        |      | Sump Gallery          |---------+
-                         | short rest dead end   |      | search clue           |
-                         +-----------------------+      +-----------------------+
-                                                                   |
-                                                                   |
-                                                       +-----------------------+
-                                                       | Whisper Cells         |
-                                                       | armory key            |
-                                                       +-----------------------+
-```
-
-Cleaner route view:
-
-```text
-Sealed Descent -> Contraband Hall -> Tally Crossing -> Record Chamber -> Command Vault
-                         |                |                ^
-                         |                |                |
-                  Cistern Rest       Sump Gallery      Old Armory
-                                           |                |
-                                      Whisper Cells     Smugglers' Lockup
+                         N
+                         ^
                          |
-                    Sentry Turn -> Flooded Switchback -> Old Armory
-                         |
-                  Collapsed Barracks Rest
+              [CC] --- [AT] --- [SS B]
+               |        |
+               |        |
+              [EH]    [UL]
+               |        |
+               |        |
+              [CE S]--[FN]
 ```
+
+Legend:
+
+- `[CE S]` Cave Entrance: start room, can leave cave.
+- `[EH]` Echo Hall: dry/bone route, high encounter pressure.
+- `[FN]` Fungal Nest: wet/fungal route, high encounter pressure.
+- `[CC]` Collapsed Crossing: upper route toward the merge.
+- `[UL]` Underground Lake: lower route toward the merge.
+- `[AT]` Ashen Threshold: both routes converge before the final room.
+- `[SS B]` Shadow Sanctum: boss room and tutorial reward moment.
 
 Design read:
 
-- `Contraband Hall` and `Tally Crossing` are the two real navigation hubs.
-- Rest rooms sit as defensible dead ends, which makes them readable and useful.
-- `Whisper Cells` feeds the armory-key loop; `Old Armory` then becomes a reward/risk branch before the boss route.
-- `Command Vault` is placed at the end of the evidence route, which makes the finale feel like the heart of the operation.
+- The cave has a strong beginner shape: fork, explore, merge, boss.
+- `Ashen Threshold` does good work as the final breath before the boss.
+- The lower route feels more organic/wet, while the upper route feels more ruined/structural.
 
-## Civic Vault Map
+---
 
-Top-down sketch:
+## Understreet Complex
 
 ```text
                                       N
                                       ^
                                       |
-                                                       +-----------------------+
-                                                       | Mirror Cells          |
-                                                       | archive key           |
-                                                       +-----------------------+
-                                                                   |
-                                                                   |
-+-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+
-| Hidden Culvert        |------| Seal Lift             |------| Petition Gallery      |------| Servant Sluice        |------| Charter Archive       |------| Private War Room      |------| Hidden Court          |
-| Docks entry           | E/W  | warden encounter      | E/W  | advocate encounter    | E/W  | short rest            | E/W  | proof + locked coffer | E/W  | knight encounter      | E/W  | boss room             |
-+-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+      +-----------------------+
-                                      |
-                                      |
-                         +-----------------------+
-                         | Ledger Refuge         |
-                         | short rest + supplies |
-                         +-----------------------+
+                         [CB R]
+                           |
+                         [ST !] --- [FS !] --- [OA ! C] --- [SL !]
+                           |           |          |
+                           |           |          |
+[SD S] --- [CH !] ------- [TC] ------ [RC !] --- [CV B]
+             |             |
+             |             |
+           [CR R]        [SG ?]
+                           |
+                         [WC K]
+```
+
+Legend:
+
+- `[SD S]` Sealed Descent: entry from the city route.
+- `[CH !]` Contraband Hall: first major pressure room and west-side hub.
+- `[CR R]` Cistern Refuge: short rest dead end below Contraband Hall.
+- `[ST !]` Sentry Turn: north branch encounter.
+- `[CB R]` Collapsed Barracks: short rest dead end above Sentry Turn.
+- `[FS !]` Flooded Switchback: hound encounter, connects top branch to armory.
+- `[TC]` Tally Crossing: central navigation hub.
+- `[SG ?]` Sump Gallery: clue/search branch.
+- `[WC K]` Whisper Cells: armory key branch.
+- `[OA ! C]` Old Armory: encounter plus locked cache payoff.
+- `[SL !]` Smugglers' Lockup: risky dead end off the armory.
+- `[RC !]` Record Chamber: evidence route and final guard before the boss.
+- `[CV B]` Command Vault: boss room.
+
+Primary route:
+
+```text
+[SD S] -> [CH !] -> [TC] -> [RC !] -> [CV B]
+```
+
+Optional pressure / reward loop:
+
+```text
+[TC] -> [SG ?] -> [WC K] -> [TC] -> [RC !] -> [OA ! C]
 ```
 
 Design read:
 
-- The Civic Vault is intentionally more linear than Understreet.
-- `Seal Lift` is the first hub: one safe side room and one forward route.
-- `Petition Gallery` is the second hub: one key side room and one forward route.
-- `Servant Sluice` gives a rest before the archive/war-room/boss pressure lane.
-- `Hidden Court` sits after `Private War Room`, so the boss feels protected by civic power rather than hidden in a random back room.
+- This is the best dungeon shape right now: two hubs, several meaningful side branches, and a clear finale lane.
+- The rest rooms are placed as safe-feeling dead ends, which makes them readable.
+- The `Whisper Cells` to `Old Armory` key/cache loop gives the dungeon a real exploration reward.
+- If we polish this later, the map could become even stronger by making the north route feel like a dangerous shortcut or alternate approach to `Record Chamber`.
+
+---
+
+## Civic Vault
+
+```text
+                                      N
+                                      ^
+                                      |
+                         [MC K]
+                           |
+[HC S] --- [SL !] ------- [PG !] --- [SS R] --- [CA ? C] --- [WR !] --- [HCt B]
+             |
+           [LR R]
+```
+
+Legend:
+
+- `[HC S]` Hidden Culvert: Docks-side entry under the Civic Keep.
+- `[SL !]` Seal Lift: first encounter and first small hub.
+- `[LR R]` Ledger Refuge: short rest and supplies below the lift.
+- `[PG !]` Petition Gallery: second hub and social-horror pressure room.
+- `[MC K]` Mirror Cells: archive key side room.
+- `[SS R]` Servant Sluice: short rest before the final pressure lane.
+- `[CA ? C]` Charter Archive: Halewick proof plus locked coffer.
+- `[WR !]` Private War Room: knight encounter before the boss.
+- `[HCt B]` Hidden Court: boss room with Lord Varric Halewick.
+
+Primary route:
+
+```text
+[HC S] -> [SL !] -> [PG !] -> [SS R] -> [CA ? C] -> [WR !] -> [HCt B]
+```
+
+Side-room rhythm:
+
+```text
+[SL !] -> [LR R]
+[PG !] -> [MC K]
+```
+
+Design read:
+
+- Civic Vault is much more linear than Understreet, which fits the feeling of a hidden service route under a seat of power.
+- The side rooms are cleanly placed: one rest room at the first hub, one key room at the second hub.
+- `Servant Sluice` creates a good calm-before-the-storm beat before archive, war room, and boss.
+- If we want this dungeon to feel grander later, the next improvement would be adding one more loop around `Charter Archive` so the final third is not only a straight line.
