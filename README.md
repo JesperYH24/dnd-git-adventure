@@ -42,6 +42,7 @@ powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 - [Game Mechanics](docs/game-mechanics.md)
 - [Story and Progression](docs/story-and-progression.md)
 - [Code Structure](docs/code-structure.md)
+- [Visualizations](docs/visualizations.md)
 - [Future Ideas](docs/future-ideas.md)
 
 ## Hidden test shortcut
