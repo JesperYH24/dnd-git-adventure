@@ -175,6 +175,8 @@ This is the current Chapter Three climax dungeon:
 - the dungeon reuses the Understreet-style room system: navigation, encounters, searchable clues, room loot, a locked cache, and short rests in defensible rooms
 - the locked archive cache can reward a `Civic Guard Blade`, a `Potion of Haste`, and coin
 - the final boss is `Lord Varric Halewick`, the civic power behind Lady Veyra's death contract
+- after the hidden-court fight, Halewick is forced up into the Civic Keep's public court room before magistrates and other high officials
+- Halewick curses the hero, threatens Lady Veyra and the city, reveals a smaller draconic form that echoes the great dragon presence from the tutorial cave, then bursts through the court windows and escapes into the sky
 
 The level 4 XP curve is meant to feel earned across the whole Docks arc:
 

@@ -1110,6 +1110,8 @@ function Test-CivicVaultCompletesAndNamesHalewick {
     Assert-Equal -Actual $game.Town.StoryFlags["CivicVaultCleared"] -Expected $true -Message "Completing the Civic Vault should mark the dungeon as cleared."
     Assert-Equal -Actual $game.Town.StoryFlags["LordHalewickNamed"] -Expected $true -Message "The Civic Vault should name Lord Varric Halewick as the higher patron."
     Assert-Equal -Actual $game.Town.StoryFlags["VeyraContractOrderFound"] -Expected $true -Message "The Civic Vault should secure the order behind Lady Veyra's contract."
+    Assert-Equal -Actual $game.Town.StoryFlags["LordHalewickDragonRevealed"] -Expected $true -Message "The Civic Vault finale should reveal Halewick's draconic nature."
+    Assert-Equal -Actual $game.Town.StoryFlags["LordHalewickEscaped"] -Expected $true -Message "The Civic Vault finale should leave Halewick alive as an escaped threat."
     Assert-Equal -Actual $game.Hero.XP -Expected 420 -Message "The Civic Vault should grant its listed XP reward."
 }
 

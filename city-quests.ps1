@@ -3650,6 +3650,27 @@ function Start-DocksCustomsStampQuest {
     Complete-StoryQuestAndReport -Game $Game -QuestId "docks_customs_stamp" -CompletionText "Lady Veyra sets the stamped slip beside the shell charter and counting-house transfers. 'The docks did not buy this kind of cleanliness alone,' she says." -ProgressText $progressText -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
+function Invoke-CivicVaultFinaleEscapeScene {
+    param($Game)
+
+    Write-SectionTitle -Text "The Court Above" -Color "Yellow"
+    Write-Scene "Lord Varric Halewick does not fall like a defeated man. He falls backward through the hidden court doors, one hand pressed to the wound, the other clawing for a brass lever worked into the judge's bench."
+    Write-Scene "Stone gears scream. The miniature court shudders upward on a concealed lift, dragging $($Game.Hero.Name), Halewick, and the stolen ledgers toward the clean marble levels of the Civic Keep."
+    Write-Scene "The platform breaks into a high public chamber: a grand court room beneath painted rafters, where magistrates, council clerks, guild factors, and silk-collared ministers freeze around their morning petitions."
+    Write-Scene "For one perfect breath, the city sees what was kept under it."
+    Write-Scene "Halewick staggers before them all, blood black against civic gold. 'You little gutter-hero,' he spits. 'You think a ledger makes truth? I wrote truth. I signed truth. I fed this city the lies it needed to stay obedient.'"
+    Write-Scene "His voice rises until the windows tremble. 'Lady Veyra will choke on every page she stole from me. The docks will burn. Your inns will whisper my name with their doors barred. And you-'"
+    Write-Scene "He points at $($Game.Hero.Name), and the finger is no longer quite a finger."
+    Write-Scene "The memory of the tutorial cave returns in a hot flash: the huge shadow in the Shadow Sanctum, the sense of wings behind smoke, the old fear of something too large for the room."
+    Write-Scene "Halewick is smaller than that first nightmare, but the shape is kin to it. His shoulders split the tailoring of his noble coat. Brass buttons ping across the marble. Scales push through skin like dark coins under wax."
+    Write-Scene "The high officials stumble back as his jaw lengthens and smoke leaks between new teeth. He is not the great cave dragon. Not yet. But he is made from the same terrible grammar."
+    Write-Scene "'This city was never yours to save,' the young dragon snarls."
+    Write-Scene "Then Halewick launches himself through the tall court windows in a burst of glass, flame, and civic banners. Wind slams through the chamber. Petitions scatter like frightened birds."
+    Write-Scene "Outside, bells begin to ring across the keep. Above the roofs, Lord Varric Halewick beats new wings once, twice, and vanishes into the cloudbank over the river."
+    Write-EmphasisLine -Text "Chapter Three Climax: Lord Varric Halewick has been exposed before the city's ruling court, but the dragon behind the civic mask has escaped." -Color "Yellow"
+    Write-ColorLine ""
+}
+
 function Start-DocksCivicVaultQuest {
     param(
         $Game,
@@ -3715,12 +3736,16 @@ function Start-DocksCivicVaultQuest {
         return
     }
 
+    Invoke-CivicVaultFinaleEscapeScene -Game $Game
+
     $Game.Town.StoryFlags["CivicVaultCleared"] = $true
     $Game.Town.StoryFlags["LordHalewickNamed"] = $true
     $Game.Town.StoryFlags["VeyraContractOrderFound"] = $true
-    $Game.Town.Relationships["LadyVeyra"] = "Avenged"
+    $Game.Town.StoryFlags["LordHalewickDragonRevealed"] = $true
+    $Game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $Game.Town.Relationships["LadyVeyra"] = "Vindicated"
 
-    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_civic_vault" -CompletionText "Lord Varric Halewick's hidden court falls quiet. The proof pulled from his vault gives Lady Veyra what rumor never could: a name, a motive, and the civic machinery behind the murder contract." -ProgressText "Chapter Three Climax: $($Game.Hero.Name) has breached the Civic Vault beneath the keep and exposed Lord Varric Halewick as the power behind Lady Veyra's death contract."
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_civic_vault" -CompletionText "Lord Varric Halewick's hidden court is broken, and the proof pulled from his vault gives Lady Veyra what rumor never could: a name, a motive, and the civic machinery behind the murder contract. Halewick himself escapes the grand court above in draconic form, leaving the city with witnesses, proof, and a new terror in the sky." -ProgressText "Chapter Three Climax: $($Game.Hero.Name) has breached the Civic Vault, exposed Lord Varric Halewick before the city's ruling court, and revealed the dragon behind Lady Veyra's death contract."
 }
 
 function Start-WhispersBeneathBentNailQuest {
