@@ -2,15 +2,14 @@
 
 ## Near-term priorities
 
-- build the next climax from the post-charter proof in `The Shell Charter` and `Counting House Pressure`
-- decide what kind of higher city patron the shell charter and counting-house trail should point toward
-- keep the higher noble or council-level patron unnamed until the newly level 4 hero has enough proof for a real confrontation
+- follow up on Lord Varric Halewick after the Civic Vault: he is exposed, draconic, and escaped rather than dead
+- decide what the city does after multiple high officials witness Halewick's transformation in the Civic Keep court room
+- turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - rename or reframe the revealed `Quest Giver` path in play so it feels like Veyra's ledger office rather than an anonymous patron forever
-- let the post-Understreet chain connect assassins, dock charters, false debts, council pressure, and money trails into the next level-progression story
-- build the next post-Understreet story chain with enough structure and replay value to carry the hero toward the next level breakpoints
+- build the next post-Civic-Vault story chain around witnesses, dragon panic, civic cover-ups, and Halewick's escape route
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
-- expand the level 3 city state with more veteran dialogue, tougher ring tracks, and new equipment tiers
+- expand the post-Civic-Vault city state with more witness reactions, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
 
 ## Lady Veyra / High Ledger direction
@@ -18,13 +17,14 @@
 - treat the High Ledger as the place where the city's official truth gets written: debts, taxes, charters, seized goods, forgiven payments, and buried names
 - keep Veyra politically constrained, so she needs the hero to create proof before she can safely move the city's machinery
 - make the clerk remain useful as the public face, but let the player gradually understand that the work now reaches into higher city power
-- let the Docks chain prove what the contract organization does before it proves who protects it
+- let Veyra react to Halewick's escape carefully: she has proof now, but proof against a dragon-politician may be more dangerous than suspicion
 - give `Barbarian` routes a hard-proof identity: protection, intimidation, seizures, broken doors, and surviving people who want records destroyed
 - give `Bard` routes a soft-power identity: salons, testimony, social pressure, forged confidence, overheard confessions, and performances used as cover
 - let future quests ask whether Veyra is simply helping the city or also choosing which version of the city survives in the ledgers
 
 ## Medium-term world and progression work
 
+- plan the next level progression after the Civic Vault and decide whether Halewick's escaped-dragon arc points toward level 5
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - add more day-job tracks that reinforce economy and city life without granting XP
 - more city districts and stronger NPC quest lines

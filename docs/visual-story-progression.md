@@ -20,6 +20,7 @@ flowchart TD
     CharterScribe --> Level4["Long rest to level 4\nAbility Score Increase"]
     Level4 --> DocksT4["Docks Tier 4\n2 strong or 3 total"]
     DocksT4 --> CivicVault["Docks Tier 5\nThe Civic Vault climax"]
+    CivicVault --> HalewickEscape["Halewick exposed\nsmaller dragon form escapes Civic Keep"]
 ```
 
 ## Level 2-3 City Quest Chain
@@ -108,4 +109,5 @@ flowchart TD
 
     T4Gate --> T5["Tier 5: climax"]
     T5 --> CivicVault["The Civic Vault\nLord Varric Halewick"]
+    CivicVault --> DragonEscape["Public court reveal\nHalewick escapes as a smaller dragon"]
 ```

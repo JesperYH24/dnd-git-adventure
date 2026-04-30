@@ -398,7 +398,7 @@ Ansvar:
 - den linjära Docks-upptäckten
 - Lady Veyras dockkontakt `Mira Kest` som player-facing lead hub efter första Docks-kedjan
 - Docks-quests som `Black Contract on the Tide`, `Tide-Ledger Marks`, `The Broker's Wake`, `The Blackmail Book`, `The Charter Scribe`, `The Shell Charter`, `Counting House Pressure`, och `The Customs Stamp`
-- `The Civic Vault`, en Understreet-liknande Docks-finale med dungeon rooms, short rest, ledtrådar, loot och boss
+- `The Civic Vault`, en Understreet-liknande Docks-finale med dungeon rooms, short rest, ledtrådar, loot, boss och Halewicks drakflykt
 - Docks-specifika quest tiers efter Chapter Two, med strong/weak progression och flera quests per tier
 - level 4 story-readiness via Docks quest flags och XP, plus post-level-4 Docks Tier 4
 
@@ -512,3 +512,19 @@ powershell -ExecutionPolicy Bypass -File .\tests\save-load.tests.ps1
 ```
 
 Om du ändrat något i town är `town-inn`, `town-menu`, `town-shop`, och `town-social` ofta bra att köra tidigt.
+
+---
+
+## Visual docs
+
+Visuella kartor finns från:
+
+`docs\visualizations.md`
+
+De är uppdelade efter ämne:
+
+- game/town flow
+- code map
+- story progression
+- dungeon maps
+- combat and leveling

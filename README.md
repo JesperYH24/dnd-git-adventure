@@ -12,8 +12,10 @@ The project currently includes:
 - Chapter Two story content through `The Understreet Complex`
 - the Lady Veyra reveal and a linear Docks discovery chain
 - an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, `The Customs Stamp`, and the dungeon-style `Civic Vault` climax
-- level 4 readiness with Ability Score Increase support before the post-charter Docks tier opens
+- a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
+- level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - repeatable level-based day jobs
+- split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
 
 ## Start the game
 

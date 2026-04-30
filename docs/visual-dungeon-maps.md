@@ -27,6 +27,7 @@ flowchart LR
     Tutorial["Tutorial Cave\nLevel 1"] --> TutorialBoss["Shadow Sanctum\nboss + tutorial payout"]
     Understreet["Understreet Complex\nLevel 3"] --> UnderstreetBoss["Command Vault\nCaptain Serik"]
     Civic["Civic Vault\nLevel 4"] --> CivicBoss["Hidden Court\nLord Varric Halewick"]
+    CivicBoss --> CivicEscape["Court above\npublic dragon reveal + escape"]
 
     Tutorial --> TutorialShape["Small forked cave\n2 paths merge before boss"]
     Understreet --> UnderstreetShape["Branching smuggler base\nhubs, rests, key/cache loop"]
@@ -148,6 +149,7 @@ Legend:
 - `[CA ? C]` Charter Archive: Halewick proof plus locked coffer.
 - `[WR !]` Private War Room: knight encounter before the boss.
 - `[HCt B]` Hidden Court: boss room with Lord Varric Halewick.
+- Court Above: post-boss public reveal where Halewick becomes a smaller dragon and escapes the Civic Keep.
 
 Primary route:
 
@@ -167,4 +169,4 @@ Design read:
 - Civic Vault is much more linear than Understreet, which fits the feeling of a hidden service route under a seat of power.
 - The side rooms are cleanly placed: one rest room at the first hub, one key room at the second hub.
 - `Servant Sluice` creates a good calm-before-the-storm beat before archive, war room, and boss.
-- If we want this dungeon to feel grander later, the next improvement would be adding one more loop around `Charter Archive` so the final third is not only a straight line.
+- The post-boss lift into the public court gives the linear route a bigger theatrical release instead of ending quietly underground.

@@ -7,7 +7,8 @@
   - `Barbarian` as `Borzig`
   - `Bard` as `Gariand`
 - level-up readiness and long-rest leveling from level 1 to level 4
-- level 4 Ability Score Increase choices during long rest
+- level 4 Ability Score Increase choices during long rest, including `+2` or split `+1/+1` choices capped at 20
+- derived-stat scaling from ability scores: STR/DEX attacks, DEX initiative and armor, CON HP and Unarmored Defense, CHA bard resources, and skill checks
 - local `save/load` support with manual save slots and backward-safe state normalization
 - inventory with ready-use slots, backpack storage, equipping, consumables, and persistent loot
 - currency system with `CP`, `SP`, `GP` and a gold pouch
@@ -81,9 +82,10 @@ Docks is intentionally more linear at first than the main town hub.
 - after the first chain opens Docks, Lady Veyra's contact `Mira Kest` becomes the player-facing source for later dock leads
 - `Docks Tier 1`: complete `2` strong dockside clue quests, or `3` total completed Tier 1 quests after weak outcomes, to reach the organization layer
 - `Docks Tier 2`: complete `2` strong organization quests, or `3` total completed Tier 2 quests after weak outcomes, to unlock the clean-paper lead
-- `Docks Tier 3`: `The Charter Scribe` cracks the organization's legal-paper shield and makes the hero level 4-ready before the next climax
+- `Docks Tier 3`: `The Charter Scribe` cracks the organization's legal-paper shield and makes the hero level 4-ready before the Civic Vault arc
 - `Docks Tier 4`: after the level 4 long rest, complete `2` strong higher-city paper-trail quests, or `3` total completed Tier 4 quests after weak outcomes, before the chain points above the docks
 - `Docks Tier 5`: `The Civic Vault` opens as a dungeon-style climax under the Civic Keep, using room navigation, combat encounters, searchable clues, loot, locked cache rewards, and short-rest rooms
+- the Civic Vault finale exposes Lord Varric Halewick before the city's public court, reveals his smaller draconic form, and leaves him escaped as a future threat
 - weak Docks outcomes still complete the quest, but pay less and may require an extra quest before the next tier opens
 - Docks story XP is distributed across the whole chain instead of being topped up as a final remainder reward
 

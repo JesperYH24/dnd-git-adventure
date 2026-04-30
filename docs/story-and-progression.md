@@ -2,10 +2,11 @@
 
 ## Current game flow
 
-The current build is split into two major phases:
+The current build is split into three major phases:
 
 1. Tutorial cave
 2. Town and Chapter Two city story
+3. Chapter Three Docks / Civic Keep story
 
 ## Tutorial cave
 
@@ -143,7 +144,7 @@ Docks Tier 2:
 - completing `2` strong Docks Tier 2 quests unlocks the clean-paper lead
 - if Docks Tier 2 results are weak, `3` total completed Tier 2 quests can still unlock the clean-paper lead
 
-Together they show that the group behind the contract is not only a murder crew. It uses false manifests, dock debt pressure, protection money, blackmail, and paid blades. The higher noble or council-level patron is still deliberately unrevealed.
+Together they show that the group behind the contract is not only a murder crew. It uses false manifests, dock debt pressure, protection money, blackmail, and paid blades. The higher patron is not confirmed until the later Civic Vault proof names Lord Varric Halewick.
 
 Docks Tier 3 is `The Charter Scribe`.
 
@@ -177,6 +178,7 @@ This is the current Chapter Three climax dungeon:
 - the final boss is `Lord Varric Halewick`, the civic power behind Lady Veyra's death contract
 - after the hidden-court fight, Halewick is forced up into the Civic Keep's public court room before magistrates and other high officials
 - Halewick curses the hero, threatens Lady Veyra and the city, reveals a smaller draconic form that echoes the great dragon presence from the tutorial cave, then bursts through the court windows and escapes into the sky
+- mechanically, the quest still completes and grants its rewards; narratively, Halewick remains alive as an exposed draconic threat
 
 The level 4 XP curve is meant to feel earned across the whole Docks arc:
 
