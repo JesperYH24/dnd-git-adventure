@@ -32,27 +32,25 @@ flowchart TD
     T1 --> GuardNight["Guard Station\nNight Watch Relief"]
     T1 --> Storehouse["Quest Giver / clerk\nStorehouse Trouble"]
     T1 --> Herbs["Quest Board\nMissing Herb Satchel"]
-    T1 --> LedgerAsh["Quest Giver / clerk\nLedger of Ash"]
 
     GuardNight --> T1Gate{"Tier 2 gate\nGuard Night Watch complete\nAND Storehouse Trouble complete"}
     Storehouse --> T1Gate
     Herbs --> T1Support["Optional support clue / XP"]
-    LedgerAsh --> T1Support
 
     T1Gate --> T2["Chapter Two Tier 2\nfollow-up investigation"]
+    T2 --> LedgerAsh["Quest Giver / clerk\nLedger of Ash"]
     T2 --> Courier["Guard Station\nNight Courier Intercept"]
     T2 --> BentNail["Bent Nail\nWhispers Beneath the Bent Nail"]
-    T2 --> LedgerRecovery["Quest Giver / clerk\nWarehouse Ledger Recovery"]
-    T2 --> BrokenSeal["Guard Station\nBroken Seal Patrol"]
 
     Courier --> T2Gate{"Tier 3 gate\n2 strong Tier 2 results\nOR 3 total Tier 2 completions"}
     BentNail --> T2Gate
-    LedgerRecovery --> T2Gate
-    BrokenSeal --> T2Gate
+    LedgerAsh --> T2Gate
 
     T2Gate --> T3["Chapter Two Tier 3\nunderstreet access proof"]
-    T3 --> AccessProof["Confirm route, broker, and ledger evidence"]
-    AccessProof --> T3Gate{"Finale gate\n1 strong Tier 3 result\nOR 2 total Tier 3 completions"}
+    T3 --> BrokenSeal["Guard Station\nBroken Seal Patrol"]
+    T3 --> LedgerRecovery["Quest Giver / clerk\nWarehouse Ledger Recovery"]
+    BrokenSeal --> T3Gate{"Finale gate\n1 strong Tier 3 result\nOR 2 total Tier 3 completions"}
+    LedgerRecovery --> T3Gate
 
     T3Gate --> Level3["Long rest to level 3"]
     Level3 --> Understreet["The Understreet Complex\nChapter Two dungeon finale"]

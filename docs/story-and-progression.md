@@ -54,13 +54,16 @@ Opening layer:
 - `Night Watch Relief`
 - `Storehouse Trouble`
 - `Missing Herb Satchel`
-- `Ledger of Ash`
 
 Follow-up quests:
 
-- `Broken Seal Patrol`
-- `Whispers Beneath the Bent Nail`
+- `Ledger of Ash`
 - `Night Courier Intercept`
+- `Whispers Beneath the Bent Nail`
+
+Understreet access quests:
+
+- `Broken Seal Patrol`
 - `Warehouse Ledger Recovery`
 
 Finale:
@@ -154,7 +157,7 @@ It:
 - exposes the scribe who makes stolen cargo and coercive debt look lawful
 - removes the organization's current legal shield without revealing the higher patron yet
 - raises the hero's level cap to 4
-- gives enough milestone XP for level 4 readiness before the next Docks / High Ledger climax
+- gives enough milestone XP for level 4 readiness before the Civic Vault arc
 
 On the next long rest, level 4 can apply an Ability Score Increase.
 

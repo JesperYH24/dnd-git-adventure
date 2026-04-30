@@ -3346,7 +3346,7 @@ function Start-DocksCharterScribeQuest {
     $advanceOutcome = if ($cleanProof) { "Strong" } else { "Weak" }
     $rewardXP = if ($cleanProof) { $null } else { 220 }
     $rewardCopper = if ($cleanProof) { $null } else { 190 }
-    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_charter_scribe" -CompletionText "Lady Veyra's answer arrives under a sharper seal than before: the dockside organization has lost its clean paper shield. The next move will be larger, and $($Game.Hero.Name) should rest before taking it." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has exposed the charter scribe and is ready to grow toward level 4 before the next climax." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+    Complete-StoryQuestAndReport -Game $Game -QuestId "docks_charter_scribe" -CompletionText "Lady Veyra's answer arrives under a sharper seal than before: the dockside organization has lost its clean paper shield. The next move will be larger, and $($Game.Hero.Name) should rest before taking it." -ProgressText "Chapter Three Progress: $($Game.Hero.Name) has exposed the charter scribe and is ready to grow toward level 4 before the Civic Vault arc." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
 }
 
 function Update-DocksTierFourPatronSuspicion {
