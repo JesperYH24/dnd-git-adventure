@@ -464,6 +464,22 @@ function Get-ChapterTwoAllianceStatusText {
     return ""
 }
 
+function Get-TownQuestSourceDisplayTitle {
+    param(
+        [string]$Source,
+        $Game
+    )
+
+    if ($Source -eq "Quest Giver" -and
+        $null -ne $Game -and
+        $null -ne $Game.Town -and
+        [bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+        return "High Ledger Office"
+    }
+
+    return $Source
+}
+
 function Show-PostUnderstreetHook {
     param($Game)
 
@@ -1290,7 +1306,13 @@ function Start-QuestHubMenu {
         Write-ColorLine ""
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"
-        Write-ColorLine "3. Speak with the quest giver's clerk" "White"
+        $privateWorkLabel = if ((Get-TownQuestSourceDisplayTitle -Source "Quest Giver" -Game $Game) -eq "High Ledger Office") {
+            "Visit Lady Veyra's High Ledger office"
+        }
+        else {
+            "Speak with the quest giver's clerk"
+        }
+        Write-ColorLine "3. $privateWorkLabel" "White"
         if ((Test-DocksDistrictUnlocked -Game $Game) -and -not (Test-DocksDistrictOpenToTown -Game $Game)) {
             Write-ColorLine "4. Follow leads down at the docks" "White"
         }
@@ -1308,7 +1330,7 @@ function Start-QuestHubMenu {
                 Show-TownQuestSource -Title "Guard Station" -IntroText "The watch hall smells of lamp oil, damp cloaks, and sleepless men. Steady work hangs here, though rarely easy work." -Source "Guard Station" -Game $Game -HeroHP $HeroHP
             }
             "3" {
-                Show-TownQuestSource -Title "Quest Giver" -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game -HeroHP $HeroHP
+                Show-TownQuestSource -Title (Get-TownQuestSourceDisplayTitle -Source "Quest Giver" -Game $Game) -IntroText "A clerk waits beneath the old patron's seal, ready to pass along jobs too awkward or dangerous for ordinary hirelings." -Source "Quest Giver" -Game $Game -HeroHP $HeroHP
             }
             "4" {
                 if (-not (Test-DocksDistrictUnlocked -Game $Game)) {

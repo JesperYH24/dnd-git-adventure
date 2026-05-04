@@ -50,11 +50,13 @@ function Test-DocksDistrictUnlocksAfterLadyVeyraReveal {
 
     Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $false -Message "The docks district should stay locked before Lady Veyra is revealed."
     Assert-Equal -Actual (Test-DocksDistrictOpenToTown -Game $game) -Expected $false -Message "The docks should not be open from the town menu before the docks story chain is solved."
+    Assert-Equal -Actual (Get-TownQuestSourceDisplayTitle -Source "Quest Giver" -Game $game) -Expected "Quest Giver" -Message "The private quest source should keep its anonymous title before Lady Veyra is revealed."
 
     $game.Town.StoryFlags["BenefactorRevealed"] = $true
 
     Assert-Equal -Actual (Test-DocksDistrictUnlocked -Game $game) -Expected $true -Message "The docks district should unlock once Lady Veyra's identity becomes part of the story."
     Assert-Equal -Actual (Test-DocksDistrictOpenToTown -Game $game) -Expected $false -Message "The Veyra reveal should unlock the docks lead, not the open town district."
+    Assert-Equal -Actual (Get-TownQuestSourceDisplayTitle -Source "Quest Giver" -Game $game) -Expected "High Ledger Office" -Message "After the reveal, the private quest source should be reframed around Lady Veyra's office."
 }
 
 function Test-DocksDistrictFirstVisitDiscoversOddityShop {

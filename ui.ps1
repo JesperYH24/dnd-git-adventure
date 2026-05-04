@@ -498,6 +498,13 @@ function Get-TownTimeTrackerBanner {
 
             return "[ Day $dayNumber ]  [ Private patron in daylight ]"
         }
+        "High Ledger Office" {
+            if ($timeOfDay -eq "Night") {
+                return "[ Day $dayNumber ]  [ High Ledger office after dark ]"
+            }
+
+            return "[ Day $dayNumber ]  [ High Ledger office in daylight ]"
+        }
     }
 
     if ($timeOfDay -eq "Night") {
@@ -523,6 +530,7 @@ function Get-TownTimeTrackerMoodText {
         "Quest Board" { return $(if ($isNight) { "The posted work looks meaner by lanternlight, as if the city's problems know they are being read by desperate people." } else { "Pinned notices and posted rewards still try to make danger look orderly in the daytime." }) }
         "Guard Station" { return $(if ($isNight) { "Lamp oil, tired boots, and the hard end of duty define the station once the city goes dark." } else { "In daylight the station still carries itself like official order can hold the whole city together." }) }
         "Quest Giver" { return $(if ($isNight) { "Discreet work belongs naturally to the night, when clerks speak lower and coin travels quieter." } else { "Even in daylight, this sort of work wears a private face and asks for discretion." }) }
+        "High Ledger Office" { return $(if ($isNight) { "Veyra's office feels sharper after dark, when sealed ledgers and quiet instructions can move without public eyes." } else { "In daylight the High Ledger makes private work look almost official, which may be the most dangerous part." }) }
         "Quest Preparation" { return $(if ($isNight) { "Night work leaves less room for hesitation and more room for mistakes." } else { "Daylight gives a little more room to prepare before the city asks something costly." }) }
         "Quest Log" { return $(if ($isNight) { "Open leads feel more immediate when the streets outside have already gone dark." } else { "The city's unfinished business reads cleaner in daylight, even when it is not." }) }
         "Performance" { return $(if ($isNight) { "Rooms listen harder after dark, when coin, vanity, and drink all loosen together." } else { "A daytime crowd hears you; a nighttime crowd remembers you." }) }

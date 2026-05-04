@@ -6,7 +6,6 @@
 - decide what the city does after multiple high officials witness Halewick's transformation in the Civic Keep court room
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
-- rename or reframe the revealed `Quest Giver` path in play so it feels like Veyra's ledger office rather than an anonymous patron forever
 - build the next post-Civic-Vault story chain around witnesses, dragon panic, civic cover-ups, and Halewick's escape route
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the post-Civic-Vault city state with more witness reactions, tougher ring tracks, and new equipment tiers
