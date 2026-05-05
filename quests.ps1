@@ -152,6 +152,7 @@ function Get-StoryClueNotes {
         @{ Flag = "DocksShellCharterSecured"; Category = "Docks"; Text = "Odran Pell's shell charter now links the dockside organization to respectable ownership above the river quarter." }
         @{ Flag = "DocksCountingHouseExposed"; Category = "Docks"; Text = "The counting-house trail shows protection money being washed through legal desks before it leaves the docks." }
         @{ Flag = "HigherPatronSuspected"; Category = "Conspiracy"; Text = "The order to kill Lady Veyra came from higher city hands, not a local dockside grudge." }
+        @{ Flag = "LordHalewickEscaped"; Category = "Dragon"; Text = "Lord Varric Halewick was publicly exposed in the Civic Keep, revealed a smaller draconic form, and escaped over the frightened city." }
     )
 
     foreach ($definition in $definitions) {
@@ -186,6 +187,10 @@ function Get-StoryClueProgressSummary {
     $majorEvidenceCount = @($majorEvidenceFlags | Where-Object { [bool]$Game.Town.StoryFlags[$_] }).Count
 
     if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
+        if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+            return "Chapter Three Notes: Lord Varric Halewick has been exposed before the city's high officials, revealed his draconic nature, and escaped. The city now has witnesses, panic, and a dragon-politician still loose."
+        }
+
         if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
             return "Chapter Three Notes: The docks have confirmed Lady Veyra's enemies answer to higher city powers still hiding behind charters, clerks, and paid blades."
         }

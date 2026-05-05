@@ -1115,6 +1115,21 @@ function Test-CivicVaultCompletesAndNamesHalewick {
     Assert-Equal -Actual $game.Hero.XP -Expected 420 -Message "The Civic Vault should grant its listed XP reward."
 }
 
+function Test-StorySummaryTracksEscapedHalewick {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+    $game.Town.StoryFlags["HigherPatronSuspected"] = $true
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+
+    $summary = Get-StoryClueProgressSummary -Game $game
+    $notes = @(Get-StoryClueNotes -Game $game)
+    $dragonNote = $notes | Where-Object { $_.Flag -eq "LordHalewickEscaped" } | Select-Object -First 1
+
+    Assert-True -Condition ($summary -like "*Halewick*draconic*escaped*") -Message "The story progress summary should prioritize the post-Civic-Vault escaped dragon state."
+    Assert-True -Condition ($null -ne $dragonNote) -Message "The quest log should include a story note for Halewick's public draconic escape."
+    Assert-Equal -Actual $dragonNote.Category -Expected "Dragon" -Message "Halewick's escape should be categorized as a dragon-state clue."
+}
+
 function Test-UnderstreetComplexCanBeAcceptedAfterUnlock {
     $game = Initialize-Game
 
@@ -1477,6 +1492,7 @@ Test-DocksTierFourQuestsExposeHigherCityTrail
 Test-CivicVaultUnlocksAfterDocksHigherPatronTrail
 Test-CivicVaultIncludesDungeonRoomsRestAndLoot
 Test-CivicVaultCompletesAndNamesHalewick
+Test-StorySummaryTracksEscapedHalewick
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo

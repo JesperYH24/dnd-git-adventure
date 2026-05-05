@@ -133,6 +133,41 @@ function Test-DocksOpenLeadsComeFromVeyraContact {
     Assert-True -Condition ($introText -like "*Mira Kest*") -Message "Docks quest-source text should present later leads through Lady Veyra's dock contact."
 }
 
+function Test-PostCivicVaultTownTextReactsToHalewickEscape {
+    $game = Initialize-Game
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $game.Town.StoryFlags["HigherPatronSuspected"] = $true
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+
+    $docksProgress = Get-DocksDistrictProgressText -Game $game
+    $ledgerIntro = Get-TownQuestSourceIntroText -Source "Quest Giver" -DefaultIntroText "unused" -Game $game
+    $docksIntro = Get-TownQuestSourceIntroText -Source "Docks" -DefaultIntroText "unused" -Game $game
+
+    Assert-True -Condition ($docksProgress -like "*Halewick*escaped*") -Message "Docks progress should react once Halewick has escaped after the Civic Vault."
+    Assert-True -Condition ($ledgerIntro -like "*High Ledger*Halewick*") -Message "The High Ledger intro should acknowledge the post-Civic-Vault alarm state."
+    Assert-True -Condition ($docksIntro -like "*Halewick*dragon*escape route*") -Message "The Docks intro should turn dragon panic into a new lead direction."
+}
+
+function Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape {
+    $game = Initialize-Game
+
+    Assert-Equal -Actual (Get-TownAmbientText -Game $game) -Expected "" -Message "Town ambience should stay quiet before the palace aftermath is known."
+
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $dayText = Get-TownAmbientText -Game $game
+
+    Assert-True -Condition ($dayText -like "*Civic Keep*") -Message "Day ambience should anchor the repair sounds at the Civic Keep."
+    Assert-True -Condition ($dayText -like "*hammers*" -and $dayText -like "*repair*") -Message "Day ambience should hint at palace repairs through sound."
+
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $nightText = Get-TownAmbientText -Game $game
+
+    Assert-True -Condition ($nightText -like "*hammer*" -and $nightText -like "*palace*") -Message "Night ambience should keep the palace repair sounds present in town."
+    Assert-True -Condition ($nightText -like "*guard*" -or $nightText -like "*lanterns*") -Message "Night ambience should make the repairs feel watched and uneasy."
+}
+
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
@@ -141,5 +176,7 @@ Test-DocksDistrictRequiresOddityShopBeforeTallyShack
 Test-DocksDistrictOddityShopUnlocksTallyShackLead
 Test-DocksDistrictOpensFromTownAfterBlackContractChain
 Test-DocksOpenLeadsComeFromVeyraContact
+Test-PostCivicVaultTownTextReactsToHalewickEscape
+Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

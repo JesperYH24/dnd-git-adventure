@@ -14,6 +14,24 @@ function Get-DocksContactName {
     return "Mira Kest"
 }
 
+function Get-TownAmbientText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return ""
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return ""
+    }
+
+    if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+        return "Even after dark, dull hammer taps carry from the Civic Keep. Somewhere above the palace courts, repairs continue under guard and covered lanterns."
+    }
+
+    return "From the Civic Keep, hammers and block-and-tackle creak over the rooftops. Palace masons repair stone no one in the street is ready to name out loud."
+}
+
 function Test-DocksDistrictUnlocked {
     param($Game)
 
@@ -73,6 +91,10 @@ function Get-DocksDistrictProgressText {
     param($Game)
 
     $docksContactName = Get-DocksContactName
+
+    if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return "Docks Aftershock: $docksContactName says every tide-runner has heard the bells. Halewick was exposed in the Civic Keep, became something draconic, and escaped into the city's frightened sky."
+    }
 
     if (-not (Test-DocksOddityShopDiscovered -Game $Game)) {
         return "Docks Discovery: the first useful doorway is still hidden among the salvage stalls."
@@ -557,6 +579,12 @@ function Get-TownQuestSourceIntroText {
                     -BardText "The watch hall changes tone when Gariand enters now. Some guards still distrust a polished tongue, but none of them mistake him for a lightweight anymore, and the harder jobs are no longer hidden from him.")
             }
             "Quest Giver" {
+                if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Borzig's part in the exposure is no longer deniable." `
+                        -BardText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Gariand can hear a terrified city trying to decide which version of the truth survives.")
+                }
+
                 if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
                     if ($isNight) {
                         return (Get-ClassAwareTownText -Hero $Game.Hero `
@@ -580,6 +608,12 @@ function Get-TownQuestSourceIntroText {
                     -BardText "The patron's clerk has stopped treating Gariand like charming decoration. Now the work is more careful, more valuable, and offered with the uneasy respect reserved for someone who can move between ledgers, guard posts, and whispered rooms.")
             }
             "Docks" {
+                if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The docks have become a rumor engine. Crews swear they saw Halewick's small dragon shape over the Civic Keep, and $docksContactName is already turning frightened sailor-talk into possible escape routes." `
+                        -BardText "The docks have become a rumor engine. Every crew has a different song for Halewick's small dragon shape over the Civic Keep, and $docksContactName is already listening for the verse that names his escape route.")
+                }
+
                 if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "$docksContactName has helped Borzig see the machine under the docks: false freight, debt hooks, blackmail books, and knives waiting behind paperwork." `
@@ -1621,6 +1655,10 @@ function Start-TownMenu {
         }
         else {
             Write-Scene "The city is awake around $($Game.Hero.Name) again, full of noise, work, and unfinished business."
+        }
+        $ambientText = Get-TownAmbientText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($ambientText)) {
+            Write-Scene $ambientText
         }
         Write-ColorLine ""
         if ($isNight) {
