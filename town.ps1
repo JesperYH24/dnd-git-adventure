@@ -25,6 +25,14 @@ function Get-TownAmbientText {
         return ""
     }
 
+    if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+        if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
+            return "Even after dark, dull hammer taps carry from the Civic Keep while watch bells answer from the outer wall. People speak lower now, trading rumors of hungry shapes testing the roads beyond the gates."
+        }
+
+        return "From the Civic Keep, hammers and block-and-tackle creak over the rooftops. Beneath the repair noise, gate guards trade uneasy reports of creatures growing bold beyond the city walls."
+    }
+
     if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
         return "Even after dark, dull hammer taps carry from the Civic Keep. Somewhere above the palace courts, repairs continue under guard and covered lanterns."
     }

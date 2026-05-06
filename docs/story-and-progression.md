@@ -184,6 +184,7 @@ This is the current Chapter Three climax dungeon:
 - after the hidden-court fight, Halewick is forced up into the Civic Keep's public court room before magistrates and other high officials
 - Halewick curses the hero, threatens Lady Veyra and the city, reveals a smaller draconic form that echoes the great dragon presence from the tutorial cave, then bursts through the court windows and escapes into the sky
 - mechanically, the quest still completes and grants its rewards; narratively, Halewick remains alive as an exposed draconic threat
+- after the next inn rest, city rumors shift from palace repair aftershock into reports of creatures growing bolder against the outer wall, establishing the future monster zone beyond the city
 
 The level 4 XP curve is meant to feel earned across the whole Docks arc:
 

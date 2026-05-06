@@ -103,6 +103,32 @@ function Test-BookedInnNightRestRestoresPreparedBardicInspiration {
     Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected (Get-HeroBardicInspirationMaxDice -Hero $game.Hero) -Message "A full inn rest should restore bardic inspiration to max even if some dice were unused."
 }
 
+function Test-BookedInnRestAfterHalewickStartsMonsterWallRumors {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 600
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $game.Town.ActiveInn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    $rested = Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $rested -Expected $true -Message "The booked inn rest should complete normally after Halewick escapes."
+    Assert-Equal -Actual $game.Town.StoryFlags["MonsterWallRumorsStarted"] -Expected $true -Message "The next inn rest after Halewick should start the wall-monster rumor state."
+    Assert-Equal -Actual $game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] -Expected $true -Message "The wall rumor should mark the outer monster zone premise as available for future content."
+}
+
+function Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 600
+    $game.Town.ActiveInn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP) | Out-Null
+
+    Assert-Equal -Actual $game.Town.StoryFlags["MonsterWallRumorsStarted"] -Expected $null -Message "Normal inn rests should not start wall-monster rumors before Halewick escapes."
+    Assert-Equal -Actual $game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] -Expected $null -Message "The monster-zone premise should stay locked before the draconic escape."
+}
+
 function Test-BookedInnNightRestTriggersLevelUp {
     $game = Initialize-Game
     $heroHP = 5
@@ -314,6 +340,8 @@ Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
 Test-BookedInnNightRestRestoresPreparedBardicInspiration
+Test-BookedInnRestAfterHalewickStartsMonsterWallRumors
+Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick
 Test-BookedInnNightRestTriggersLevelUp
 Test-LevelFourLongRestAppliesAbilityScoreIncrease
 Test-StashCanStoreAndRetrieveGear

@@ -168,6 +168,22 @@ function Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape {
     Assert-True -Condition ($nightText -like "*guard*" -or $nightText -like "*lanterns*") -Message "Night ambience should make the repairs feel watched and uneasy."
 }
 
+function Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+
+    $dayText = Get-TownAmbientText -Game $game
+
+    Assert-True -Condition ($dayText -like "*Civic Keep*" -and $dayText -like "*walls*") -Message "Post-rest ambience should keep palace repairs while adding outer-wall rumors."
+    Assert-True -Condition ($dayText -like "*creatures*" -or $dayText -like "*gate guards*") -Message "Post-rest ambience should foreshadow creatures beyond the city."
+
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $nightText = Get-TownAmbientText -Game $game
+
+    Assert-True -Condition ($nightText -like "*outer wall*" -and $nightText -like "*hungry shapes*") -Message "Night ambience should carry the wall-monster rumor after it starts."
+}
+
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
@@ -178,5 +194,6 @@ Test-DocksDistrictOpensFromTownAfterBlackContractChain
 Test-DocksOpenLeadsComeFromVeyraContact
 Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
+Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

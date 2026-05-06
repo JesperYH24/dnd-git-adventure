@@ -845,6 +845,7 @@ function Resolve-InnWorkOffRoom {
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
         Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
+        Resolve-PostHalewickInnRestRumor -Game $Game | Out-Null
 
         Write-Scene "$heroName drops into bed exhausted. The room is paid for, but the night leaves the body too worn out for the fighting ring tomorrow."
 
@@ -907,6 +908,33 @@ function Resolve-InnLongRestLevelUp {
     return $levelUpResult
 }
 
+function Resolve-PostHalewickInnRestRumor {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return $false
+    }
+
+    if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+        return $false
+    }
+
+    $Game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $Game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] = $true
+
+    Write-SectionTitle -Text "Morning Rumor" -Color "Yellow"
+    Write-Scene "By breakfast, the palace repairs are not the only sound moving through the city. Caravan hands, gate guards, and innkeepers all tell some version of the same new fear: things beyond the walls have started testing the stone more often since Halewick fled in draconic form."
+    Write-Scene "No one has a clean map yet, only worried reports from patrol roads and watch fires. Still, the idea settles fast: if the walls are being tested, someone will need to go outside them."
+    Write-EmphasisLine -Text "New future premise: rumors now point toward an outer monster zone beyond the city walls." -Color "Yellow"
+    Write-ColorLine ""
+
+    return $true
+}
+
 function Resolve-InnStay {
     param(
         $Game,
@@ -952,6 +980,7 @@ function Resolve-InnStay {
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
+    Resolve-PostHalewickInnRestRumor -Game $Game | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
         Write-Scene (Format-InnHeroText -Text $Inn.RestText -Hero $Game.Hero)
     }
@@ -1018,6 +1047,7 @@ function Resolve-BookedInnNightRest {
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
+    Resolve-PostHalewickInnRestRumor -Game $Game | Out-Null
     Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, clears the day from his head, and resets the city for morning."
     Write-ColorLine ""
 
@@ -1217,9 +1247,14 @@ function Get-InnkeeperLocalRumorTalk {
 
     $inn = $Game.Town.ActiveInn
     $flag = "InnkeeperLocalRumorTalk_$($inn.Id)"
+    $monsterWallRumors = [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]
 
     switch ($inn.Id) {
         "bent_nail" {
+            if ($monsterWallRumors) {
+                return "Marta keeps her voice low. 'Gate crews are drinking like men who heard claws on stone and got told to call it wind. If work opens outside the walls, it will pay ugly.'"
+            }
+
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
@@ -1237,6 +1272,10 @@ function Get-InnkeeperLocalRumorTalk {
             return "Marta grunts. 'Same river talk as before. Too many crates moving at bad hours and too many folk pretending not to notice.'"
         }
         "lantern_rest" {
+            if ($monsterWallRumors) {
+                return "Oren folds a towel without looking down. 'Road captains are comparing wall attacks now, not prices. Something beyond the gates is getting bolder, and the city will start buying answers soon.'"
+            }
+
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
@@ -1254,6 +1293,10 @@ function Get-InnkeeperLocalRumorTalk {
             return "Oren folds a towel over one arm. 'Travelers still talk like they expect the city to stabilize. None of them sound convinced.'"
         }
         "silver_kettle" {
+            if ($monsterWallRumors) {
+                return "Madam Seraphine's smile thins. 'The refined phrasing is border instability. The truthful phrasing is monsters at the wall and wealthy people preparing to hire deniable courage.'"
+            }
+
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true

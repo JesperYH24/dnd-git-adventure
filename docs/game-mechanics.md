@@ -48,6 +48,7 @@
 
 - explicit day/night state in town choice menus
 - compact town HUD showing hero name, HP, and coin
+- post-Civic-Vault inn rest can start the outer-wall monster rumor state after Halewick's draconic escape
 - town hub now split into submenus:
   - streets
   - shops & services

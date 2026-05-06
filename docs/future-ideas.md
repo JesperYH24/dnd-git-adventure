@@ -7,6 +7,7 @@
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - build the next post-Civic-Vault story chain around witnesses, dragon panic, civic cover-ups, and Halewick's escape route
+- turn the post-rest outer-wall monster rumors into the first playable monster zone beyond the city
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the post-Civic-Vault city state with more witness reactions, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
