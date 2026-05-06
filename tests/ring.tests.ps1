@@ -256,6 +256,32 @@ function Test-RingOpponentIntroReflectsRivalryRecord {
     Assert-True -Condition ($thirdIntro -like "*unfinished business*") -Message "An even rivalry should change the intro tone."
 }
 
+function Test-NamedRingRivalIntroAddsPersonalArcText {
+    $hero = Get-Hero
+    $opponent = [PSCustomObject]@{
+        Name = "Street Bruiser Nella"
+        Intro = "Base intro."
+    }
+
+    Update-HeroRingRivalryRecord -Hero $hero -Opponent $opponent -HeroWon $true | Out-Null
+    $intro = Get-RingOpponentIntro -Hero $hero -Opponent $opponent
+
+    Assert-True -Condition ($intro -like "*Nella keeps circling*") -Message "Named rivals should add opponent-specific rivalry intro text."
+    Assert-True -Condition ($intro -like "*already beaten 1 time(s)*") -Message "Named rival intro should keep the generic rivalry record context."
+}
+
+function Test-NamedRingRivalOutcomeAddsPersonalArcText {
+    $hero = Get-Hero
+    $opponent = [PSCustomObject]@{
+        Name = "Dockhand Vero"
+    }
+    $record = Update-HeroRingRivalryRecord -Hero $hero -Opponent $opponent -HeroWon $false
+    $outcome = Get-NamedRingRivalOutcomeText -Hero $hero -Opponent $opponent -Record $record -HeroWon $false
+
+    Assert-True -Condition ($outcome -like "*Everyone ends up down here*") -Message "Named rival outcomes should add opponent-specific post-fight text."
+    Assert-True -Condition ($outcome -like "*0-1*") -Message "Named rival outcomes should include the updated rivalry score."
+}
+
 function Test-RingOpponentIntroResolvesActiveHero {
     $hero = Get-Hero -Class "Bard"
     $opponent = [PSCustomObject]@{
@@ -459,6 +485,8 @@ Test-HeroRingPunchCriticalFailDealsMishapDamage
 Test-HeroRingGrappleCriticalFailDealsMishapDamage
 Test-GrappleHeavyOpponentCanChooseGrapple
 Test-RingOpponentIntroReflectsRivalryRecord
+Test-NamedRingRivalIntroAddsPersonalArcText
+Test-NamedRingRivalOutcomeAddsPersonalArcText
 Test-RingOpponentIntroResolvesActiveHero
 Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple

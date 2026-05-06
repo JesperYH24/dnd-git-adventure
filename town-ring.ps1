@@ -422,6 +422,97 @@ function Update-HeroRingRivalryRecord {
     return $record
 }
 
+function Get-NamedRingRivalIntroText {
+    param(
+        $Hero,
+        $Opponent,
+        $Record
+    )
+
+    if ($null -eq $Record -or ([int]$Record.HeroWins + [int]$Record.OpponentWins) -eq 0) {
+        return $null
+    }
+
+    $score = "$($Record.HeroWins)-$($Record.OpponentWins)"
+
+    switch ($Opponent.Name) {
+        "Dockhand Vero" {
+            if ($Record.HeroWins -gt $Record.OpponentWins) {
+                return "Vero has wrapped his wrists tighter than last time. The grudge is practical now: he keeps testing grips in the air, hunting the answer to the hold that failed him before."
+            }
+
+            if ($Record.OpponentWins -gt $Record.HeroWins) {
+                return "Vero smiles like a man who remembers exactly how the sand felt under $($Hero.Name). He does not need the crowd to believe in him. He already has proof."
+            }
+
+            return "Vero rolls his shoulders and nods at the score between them: $score. The crowd leans in because this one has stopped being random matchmaking."
+        }
+        "Street Bruiser Nella" {
+            if ($Record.HeroWins -gt $Record.OpponentWins) {
+                return "Nella keeps circling before the bell, eyes narrowed in study. Losing to $($Hero.Name) has made her quieter, quicker, and less interested in applause."
+            }
+
+            if ($Record.OpponentWins -gt $Record.HeroWins) {
+                return "Nella bounces lightly on her heels, wearing past wins like good footwork: easy, balanced, and annoying to everyone who came hoping to see her humbled."
+            }
+
+            return "Nella gives $($Hero.Name) a brief salute. Their record sits even at $score, and she looks pleased that the pit has noticed."
+        }
+        "Champion Breaker Ysold" {
+            if ($Record.HeroWins -gt $Record.OpponentWins) {
+                return "Ysold enters with no smile at all. Beating a breaker once makes a story; doing it again would make $($Hero.Name) a problem she has to solve in public."
+            }
+
+            if ($Record.OpponentWins -gt $Record.HeroWins) {
+                return "Ysold lets the crowd say her name for her. She has already cracked $($Hero.Name)'s rhythm once, and every bettor near the ropes remembers it."
+            }
+
+            return "Ysold studies $($Hero.Name) across the ropes, the score even at $score. The pit goes quieter for this kind of unfinished business."
+        }
+        default {
+            return $null
+        }
+    }
+}
+
+function Get-NamedRingRivalOutcomeText {
+    param(
+        $Hero,
+        $Opponent,
+        $Record,
+        [bool]$HeroWon
+    )
+
+    $score = "$($Record.HeroWins)-$($Record.OpponentWins)"
+
+    switch ($Opponent.Name) {
+        "Dockhand Vero" {
+            if ($HeroWon) {
+                return "Vero slaps the sand once before standing. 'Fine,' he mutters. 'Next time I take the legs first.' Their record is now $score."
+            }
+
+            return "Vero hauls himself up with a grin and points two fingers at the floor. 'Told you. Everyone ends up down here.' Their record is now $score."
+        }
+        "Street Bruiser Nella" {
+            if ($HeroWon) {
+                return "Nella exhales a laugh despite herself. 'Good read,' she says, already replaying the exchange in her head. Their record is now $score."
+            }
+
+            return "Nella steps away before the crowd can grab too much of the moment. 'Too slow on the turn,' she calls back. Their record is now $score."
+        }
+        "Champion Breaker Ysold" {
+            if ($HeroWon) {
+                return "Ysold gives $($Hero.Name) one hard nod. From her, it lands louder than praise. Their record is now $score."
+            }
+
+            return "Ysold leaves the ropes calm and unsentimental. 'Champion talk is cheap after the bell,' she says. Their record is now $score."
+        }
+        default {
+            return $null
+        }
+    }
+}
+
 function Get-RingOpponentIntro {
     param(
         $Hero,
@@ -433,6 +524,12 @@ function Get-RingOpponentIntro {
 
     if ($record.HeroWins -eq 0 -and $record.OpponentWins -eq 0) {
         return $intro
+    }
+
+    $namedRivalText = Get-NamedRingRivalIntroText -Hero $Hero -Opponent $Opponent -Record $record
+
+    if (-not [string]::IsNullOrWhiteSpace($namedRivalText)) {
+        $intro = "$intro `n$namedRivalText"
     }
 
     if ($record.HeroWins -gt 0 -and $record.OpponentWins -eq 0) {
@@ -1053,7 +1150,12 @@ function Start-BrawlLoop {
             Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
 
             if ($TrackRivalry) {
-                Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $true | Out-Null
+                $updatedRecord = Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $true
+                $rivalOutcome = Get-NamedRingRivalOutcomeText -Hero $Hero -Opponent $Opponent -Record $updatedRecord -HeroWon $true
+
+                if (-not [string]::IsNullOrWhiteSpace($rivalOutcome)) {
+                    Write-Scene $rivalOutcome
+                }
             }
 
             return $true
@@ -1063,7 +1165,12 @@ function Start-BrawlLoop {
             Write-Scene "$($Hero.Name) is forced down and the referee calls the bout."
 
             if ($TrackRivalry) {
-                Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $false | Out-Null
+                $updatedRecord = Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $false
+                $rivalOutcome = Get-NamedRingRivalOutcomeText -Hero $Hero -Opponent $Opponent -Record $updatedRecord -HeroWon $false
+
+                if (-not [string]::IsNullOrWhiteSpace($rivalOutcome)) {
+                    Write-Scene $rivalOutcome
+                }
             }
 
             return $false
