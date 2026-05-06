@@ -9,7 +9,9 @@ flowchart LR
     Setup --> Town["town.ps1\ntown hub + navigation"]
     Setup --> Tutorial["phases.ps1 + exploration.ps1\ntutorial flow"]
 
-    Tutorial --> Rooms["rooms.ps1\ncave room data"]
+    Tutorial --> ExploreCore["Start-RoomExploration\nshared room loop"]
+    ExploreCore --> Rooms["rooms.ps1\ncave room data"]
+    ExploreCore --> CommonActions["common exploration actions\ninventory, loot, status"]
     Tutorial --> Encounters["encounters.ps1\ncave events"]
     Tutorial --> Combat["combat.ps1\nturns, crits, class actions"]
 

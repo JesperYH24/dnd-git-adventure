@@ -14,8 +14,9 @@ flowchart TD
 
     MainLoop --> TutorialGate{"Tutorial complete?"}
     TutorialGate -- "No" --> Campfire["Campfire / tutorial staging"]
-    Campfire --> Cave["Tutorial cave exploration"]
-    Cave --> CaveCombat["Cave combat and encounters"]
+    Campfire --> Cave["Tutorial cave exploration\nStart-CaveExploration"]
+    Cave --> ExploreCore["Reusable room exploration loop\nStart-RoomExploration"]
+    ExploreCore --> CaveCombat["Cave combat and encounters"]
     CaveCombat --> TutorialDone{"Warning delivered?"}
     TutorialDone -- "No" --> Campfire
     TutorialDone -- "Yes" --> Town["Town hub"]
@@ -29,6 +30,23 @@ flowchart TD
     TownChoice --> Streets["NPCs and street scenes"]
     TownChoice --> Save["Save / load"]
     TownChoice --> Status["Hero / inventory / quest log"]
+```
+
+## Exploration Foundation
+
+```mermaid
+flowchart TD
+    Zone["Zone wrapper\nTutorial cave today, future monster zones later"] --> Core["Start-RoomExploration"]
+    Core --> Show["Show current room"]
+    Show --> Encounter["Resolve zone encounter"]
+    Encounter --> EncounterResult{"Encounter result"}
+    EncounterResult -- "Defeated / victory / zone exit" --> Wrapper["Wrapper-specific outcome"]
+    EncounterResult -- "Fled" --> Show
+    EncounterResult -- "Proceed" --> Actions["Room actions"]
+    Actions --> Move["Move through exits"]
+    Actions --> Common["Common actions\ninventory, loot, status, text speed"]
+    Actions --> Custom["Zone-specific actions\nleave cave now, future travel hooks later"]
+    Move --> Show
 ```
 
 ## Town Hub
