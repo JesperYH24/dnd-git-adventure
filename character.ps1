@@ -1547,6 +1547,7 @@ function Get-Hero {
                 UnarmedTrainingLevel = 0
                 RingWinsTotal      = 0
                 RingReputation     = 0
+                RingChampionNightWon = $false
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 8
@@ -1592,6 +1593,7 @@ function Get-Hero {
                 UnarmedTrainingLevel = 0
                 RingWinsTotal      = 0
                 RingReputation     = 0
+                RingChampionNightWon = $false
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 12

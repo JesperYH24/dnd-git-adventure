@@ -90,6 +90,7 @@ function Test-OlderSaveDataGetsNewDefaultsOnLoad {
     try {
         $hero = Get-Hero -Class "Barbarian"
         $hero.PSObject.Properties.Remove("RingReputation")
+        $hero.PSObject.Properties.Remove("RingChampionNightWon")
         $legacyGame = [PSCustomObject]@{
             Hero = $hero
             Quest = [PSCustomObject]@{
@@ -132,6 +133,7 @@ function Test-OlderSaveDataGetsNewDefaultsOnLoad {
         Assert-True -Condition $loadedGame.Town.ContainsKey("TimeOfDay") -Message "Older saves should gain a default town time-of-day field."
         Assert-True -Condition $loadedGame.Town["Ring"].ContainsKey("FoughtToday") -Message "Older saves should gain nested ring defaults."
         Assert-Equal -Actual $loadedGame.Hero.RingReputation -Expected 0 -Message "Older saves should gain a default ring reputation value."
+        Assert-Equal -Actual $loadedGame.Hero.RingChampionNightWon -Expected $false -Message "Older saves should gain a default champion night flag."
     }
     finally {
         $global:AdventureSaveDirectoryOverride = $null

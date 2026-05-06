@@ -180,6 +180,7 @@ function Ensure-LoadedAdventureShape {
         @{ Name = "UnarmedTrainingLevel"; Value = 0 },
         @{ Name = "RingWinsTotal"; Value = 0 },
         @{ Name = "RingReputation"; Value = 0 },
+        @{ Name = "RingChampionNightWon"; Value = $false },
         @{ Name = "RingVisits"; Value = 0 },
         @{ Name = "RingRivalries"; Value = @{} }
     )) {

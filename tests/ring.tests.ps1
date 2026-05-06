@@ -60,6 +60,20 @@ function Test-RingChampionUnlocksHarderCircuit {
     Assert-Equal -Actual $opponents.Count -Expected 4 -Message "Champion status should unlock a longer ring circuit."
 }
 
+function Test-RingChampionNightReadinessUsesTenWins {
+    $hero = Get-Hero
+    $hero.RingWinsTotal = 9
+
+    Assert-Equal -Actual (Test-HeroReadyForRingChampionNight -Hero $hero) -Expected $false -Message "Champion Night should stay locked before ten ring wins."
+
+    $hero.RingWinsTotal = 10
+    Assert-Equal -Actual (Test-HeroReadyForRingChampionNight -Hero $hero) -Expected $true -Message "Champion Night should unlock at ten ring wins."
+
+    Complete-RingChampionNight -Hero $hero | Out-Null
+    Assert-Equal -Actual (Test-HeroReadyForRingChampionNight -Hero $hero) -Expected $false -Message "Champion Night should not stay ready after the title has been won."
+    Assert-Equal -Actual $hero.RingChampionNightWon -Expected $true -Message "Champion Night completion should set the persistent title flag."
+}
+
 function Test-RingVeteranCircuitUnlocksAfterFifteenWins {
     $hero = Get-Hero
     $hero.RingWinsTotal = 15
@@ -472,10 +486,37 @@ function Test-FightingRingAwardsReputationForWins {
     Assert-Equal -Actual $game.Hero.RingReputation -Expected 9 -Message "Winning three fresh rounds should grant the three-win reputation reward."
 }
 
+function Test-FightingRingChampionNightAwardsTitleAndReputation {
+    $game = Initialize-Game
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $game.Hero.CurrencyCopper = 200
+    $game.Hero.RingWinsTotal = 10
+    $script:ChampionNightTitle = $null
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    function Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        $script:ChampionNightTitle = $Title
+        return $true
+    }
+
+    Start-FightingRing -Game $game
+
+    Assert-Equal -Actual $script:ChampionNightTitle -Expected "Champion Night: Title Bout" -Message "Champion Night should replace the normal tournament with a title bout."
+    Assert-Equal -Actual $game.Hero.RingChampionNightWon -Expected $true -Message "Winning Champion Night should persist the title flag."
+    Assert-Equal -Actual $game.Hero.RingReputation -Expected 14 -Message "Champion Night should grant its bonus plus the one-win reputation reward."
+    Assert-Equal -Actual $game.Hero.RingWinsTotal -Expected 11 -Message "Champion Night should still count the won bout as a ring win."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingReputationTracksSeparateProgress
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
+Test-RingChampionNightReadinessUsesTenWins
 Test-RingVeteranCircuitUnlocksAfterFifteenWins
 Test-RingMonsterChallengesUnlockAtLevelFour
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
@@ -494,6 +535,7 @@ Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
 Test-FightingRingOptionOneStartsTournament
 Test-FightingRingAwardsReputationForWins
+Test-FightingRingChampionNightAwardsTitleAndReputation
 
 Write-Host "Ring tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

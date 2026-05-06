@@ -98,6 +98,7 @@ Docks is intentionally more linear at first than the main town hub.
 - `RingReputation` as a public-name track separate from `RingWinsTotal`
 - ring reputation titles, currently ranging from `Unproven` to `Ring Legend`
 - named rival arcs for selected opponents, with personal pre-fight and post-fight beats layered on top of the rivalry record
+- `Champion Night` as a one-time title bout after 10 ring wins, currently built around Champion Breaker Ysold and a persistent `Pit Champion` title flag
 - champion-tier and veteran-tier opponent pools
 - long-term progress toward stronger unarmed fighting features
 - after level 4, Dorr can point the hero toward future monster-challenge contracts where unarmed monster bouts would build ring reputation once the outer monster zone exists

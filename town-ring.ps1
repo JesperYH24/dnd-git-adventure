@@ -297,6 +297,57 @@ function Add-HeroRingReputation {
     }
 }
 
+function Test-HeroWonRingChampionNight {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return $false
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RingChampionNightWon"]) {
+        $Hero | Add-Member -NotePropertyName RingChampionNightWon -NotePropertyValue $false
+    }
+
+    return [bool]$Hero.RingChampionNightWon
+}
+
+function Test-HeroReadyForRingChampionNight {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["RingWinsTotal"]) {
+        return $false
+    }
+
+    return ([int]$Hero.RingWinsTotal -ge 10 -and -not (Test-HeroWonRingChampionNight -Hero $Hero))
+}
+
+function Get-RingChampionNightOpponent {
+    $opponent = Get-RingOpponentPool | Where-Object { $_.Name -eq "Champion Breaker Ysold" } | Select-Object -First 1
+
+    return $opponent
+}
+
+function Complete-RingChampionNight {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return $null
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RingChampionNightWon"]) {
+        $Hero | Add-Member -NotePropertyName RingChampionNightWon -NotePropertyValue $false
+    }
+
+    $Hero.RingChampionNightWon = $true
+    $reputationResult = Add-HeroRingReputation -Hero $Hero -Amount 12
+
+    return [PSCustomObject]@{
+        Title = "Pit Champion"
+        ReputationAdded = $reputationResult.Added
+        ReputationTotal = $reputationResult.Total
+    }
+}
+
 function Get-RingReputationTitle {
     param($Hero)
 
@@ -1198,9 +1249,23 @@ function Start-FightingRing {
     Write-Scene "Weapons stay out. Pride stays in. Coin changes hands either way."
     Write-Scene "Each exchange happens fast: pick a style, commit to it, and see who controls the moment."
     Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
+
+    $championNightReady = Test-HeroReadyForRingChampionNight -Hero $Game.Hero
+
+    if ($championNightReady) {
+        Write-Scene "Tonight, Dorr has cleared the usual ladder. The boards are packed, the odds are ugly, and Champion Breaker Ysold is waiting for a title bout."
+    }
+
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
     Write-ColorLine "Ring Reputation: $(Get-HeroRingReputation -Hero $Game.Hero) ($(Get-RingReputationTitle -Hero $Game.Hero))" "DarkYellow"
+    if (Test-HeroWonRingChampionNight -Hero $Game.Hero) {
+        Write-ColorLine "Ring Title: Pit Champion" "DarkYellow"
+    }
+    elseif ($championNightReady) {
+        Write-ColorLine "Champion Night: Ready" "DarkYellow"
+    }
+
     if ($Game.Hero.RingWinsTotal -ge 10) {
         Write-ColorLine "Ring Standing: Champion" "DarkYellow"
     }
@@ -1286,9 +1351,16 @@ function Start-FightingRing {
     $Game.Town.Ring.FoughtToday = $true
 
     $wins = 0
+    $ringOpponents = if ($championNightReady) {
+        @(Get-RingChampionNightOpponent)
+    }
+    else {
+        @(Get-RingOpponents -Hero $Game.Hero)
+    }
 
-    foreach ($opponent in (Get-RingOpponents -Hero $Game.Hero)) {
-        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title "Ring Round $($wins + 1)" -TrackRivalry $true
+    foreach ($opponent in $ringOpponents) {
+        $roundTitle = if ($championNightReady) { "Champion Night: Title Bout" } else { "Ring Round $($wins + 1)" }
+        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title $roundTitle -TrackRivalry $true
 
         if (-not $wonBout) {
             break
@@ -1297,6 +1369,13 @@ function Start-FightingRing {
         $wins += 1
         Write-Scene "The crowd roars as $($Game.Hero.Name) survives another round."
         Write-ColorLine ""
+    }
+
+    if ($championNightReady -and $wins -gt 0) {
+        $championResult = Complete-RingChampionNight -Hero $Game.Hero
+        Write-SectionTitle -Text "Champion Night Won" -Color "Green"
+        Write-EmphasisLine -Text "$($Game.Hero.Name) leaves the ropes as $($championResult.Title). Dorr makes the crowd say it twice." -Color "Green"
+        Write-EmphasisLine -Text "Champion Night reputation bonus: +$($championResult.ReputationAdded)." -Color "Yellow"
     }
 
     $rewardCopper = Get-RingRewardCopper -Wins $wins

@@ -37,7 +37,7 @@
 - expand the new `RingReputation` track so champion bouts and later monster challenges build different amounts of public name value
 - use ring reputation to unlock stronger Dorr dialogue, better odds, special opponents, rumors, and future quest hooks
 - expand the first named rival arcs beyond Vero, Nella, and Ysold so later specialists also remember style, losses, grudges, and respect
-- make the first champion milestone feel like an event night with crowd buildup, Dorr presentation, a title bout, and a title or renown reward beyond coin
+- expand `Champion Night` after its first Ysold title-bout version with more crowd buildup, Dorr presentation, alternate title challengers, and later renown rewards beyond the initial `Pit Champion` flag
 - let the crowd react to fighting style:
   - quick knockouts build loud crowd reputation
   - block/focus-heavy wins build technical respect
