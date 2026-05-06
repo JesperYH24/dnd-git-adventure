@@ -67,6 +67,25 @@ function New-ArmorItem {
     }
 }
 
+function New-ShieldItem {
+    param(
+        [string]$Name,
+        [int]$Value,
+        [int]$ArmorBonus = 2,
+        [int]$SlotCost = 1,
+        [bool]$Equipped = $false
+    )
+
+    return [PSCustomObject]@{
+        Name       = $Name
+        Type       = "Shield"
+        Value      = $Value
+        ArmorBonus = $ArmorBonus
+        SlotCost   = $SlotCost
+        Equipped   = $Equipped
+    }
+}
+
 function New-ConsumableItem {
     param(
         [string]$Name,

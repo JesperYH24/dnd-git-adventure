@@ -650,6 +650,37 @@ function Resolve-HeroBonusAction {
         }
     }
 
+    if ($Hero.Class -eq "Fighter") {
+        Initialize-HeroFighterResources -Hero $Hero
+        Write-ColorLine "Bonus Action" "Cyan"
+        Write-ColorLine "S. Second Wind ($($Hero.CurrentSecondWind)/$($Hero.MaxSecondWind) left)   N. No bonus action" "White"
+        Write-ColorLine ""
+
+        while ($true) {
+            $choice = (Read-Host "Choose bonus action").ToUpper()
+
+            if ($choice -eq "N") {
+                Write-ColorLine ""
+                return $false
+            }
+
+            if ($choice -eq "S") {
+                $secondWind = Use-HeroSecondWind -Hero $Hero -HeroHP $HeroHP
+                Write-Scene $secondWind.Message
+
+                if ($secondWind.Success) {
+                    Write-Action "Second Wind: restores 1d10 + Fighter level HP as a bonus action." "Yellow"
+                }
+
+                Write-ColorLine ""
+                return $secondWind.Success
+            }
+
+            Write-ColorLine "Choose S or N." "DarkYellow"
+            Write-ColorLine ""
+        }
+    }
+
     if ($Hero.Class -ne "Bard") {
         return $false
     }
@@ -997,7 +1028,7 @@ function Resolve-HeroCombatTurn {
                 continue
             }
 
-            if ($Hero.Class -notin @("Bard", "Barbarian")) {
+            if ($Hero.Class -notin @("Bard", "Barbarian", "Fighter")) {
                 Write-ColorLine ""
                 Write-ColorLine "$($Hero.Name) passes the bonus action." "DarkGray"
                 Write-ColorLine ""

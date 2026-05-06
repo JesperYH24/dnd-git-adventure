@@ -475,6 +475,59 @@ function Test-BarbarianRageBonusActionAddsDamage {
     Assert-Equal -Actual $monsterHP -Expected 10 -Message "Rage should add +2 weapon damage to the barbarian's hit."
 }
 
+function Test-FighterSecondWindBonusActionHeals {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "S"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 10) { return 5 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $heroHP = 4
+
+    $usedBonusAction = Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $usedBonusAction -Expected $true -Message "Second Wind should spend the fighter's bonus action."
+    Assert-Equal -Actual $heroHP -Expected 10 -Message "Second Wind should heal 1d10 + Fighter level from the bonus action menu."
+    Assert-Equal -Actual $hero.CurrentSecondWind -Expected 0 -Message "Second Wind should spend one use."
+}
+
+function Test-FighterCanOpenBonusActionMenuAndStillAct {
+    Set-TestOutputStubs
+
+    $script:responses = @("2", "N", "1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "A fighter should still be able to act normally after checking the Second Wind menu."
+}
+
 function Test-BarbarianRageReducesIncomingDamage {
     Set-TestOutputStubs
 
@@ -633,6 +686,8 @@ Test-BardBonusActionCanResolveAfterMainAction
 Test-HeroCanPassActionAndBonusAction
 Test-BarbarianCanOpenBonusActionMenuAndStillAct
 Test-BarbarianRageBonusActionAddsDamage
+Test-FighterSecondWindBonusActionHeals
+Test-FighterCanOpenBonusActionMenuAndStillAct
 Test-BarbarianRageReducesIncomingDamage
 Test-BarbarianRecklessAttackGrantsAdvantageForExposure
 Test-BarbarianRecklessAdvantageCanTurnMissIntoHit

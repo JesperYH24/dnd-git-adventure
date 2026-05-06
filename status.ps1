@@ -54,6 +54,7 @@ function Get-HeroStatusSnapshot {
 
     $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
     $barbarianStatus = Get-HeroBarbarianResourceStatus -Hero $Hero
+    $fighterStatus = Get-HeroFighterResourceStatus -Hero $Hero
     $unarmoredDefenseStatus = Get-HeroUnarmoredDefenseStatus -Hero $Hero
     $currencyText = Get-HeroCurrencyText -Hero $Hero
     $storyQuestStatus = "Unknown"
@@ -87,6 +88,7 @@ function Get-HeroStatusSnapshot {
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
         BarbarianResources = $barbarianStatus
+        FighterResources = $fighterStatus
         UnarmoredDefense = $unarmoredDefenseStatus
         CurrencyText = $currencyText
         TimeStatus = if ($null -ne $Game) { Get-TownTimeStatusText -Game $Game } else { "" }
@@ -155,6 +157,11 @@ function Write-HeroStatusDetails {
                 Write-ColorLine "Unarmored Defense: Inactive (armor equipped)" "DarkGray"
             }
         }
+    }
+
+    if ($null -ne $Snapshot.FighterResources) {
+        $defenseText = if ($Snapshot.FighterResources.DefenseActive) { "Active" } else { "Inactive" }
+        Write-ColorLine "Fighting Style: $($Snapshot.FighterResources.FightingStyle) ($defenseText, +1 AC with armor) | Second Wind: $($Snapshot.FighterResources.CurrentSecondWind)/$($Snapshot.FighterResources.MaxSecondWind)" "DarkYellow"
     }
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {

@@ -345,13 +345,17 @@ function Get-ClassAwareTownText {
     param(
         $Hero,
         [string]$BarbarianText,
-        [string]$BardText
+        [string]$BardText,
+        [string]$FighterText = ""
     )
 
     $selectedText = $BarbarianText
 
     if ($null -ne $Hero -and $Hero.Class -eq "Bard" -and -not [string]::IsNullOrWhiteSpace($BardText)) {
         $selectedText = $BardText
+    }
+    elseif ($null -ne $Hero -and $Hero.Class -eq "Fighter" -and -not [string]::IsNullOrWhiteSpace($FighterText)) {
+        $selectedText = $FighterText
     }
 
     if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["Name"] -and -not [string]::IsNullOrWhiteSpace([string]$Hero.Name)) {
@@ -386,12 +390,14 @@ function Get-TownShopIntroText {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
                     -BarbarianText "The forge burns lower at night, but not cold. Steel still glows in the coals while the smith works the kind of late orders that never wait for morning." `
-                    -BardText "The forge runs on lower light now, all banked coals and sharp reflections. Even at night, the smith's eye still goes first to buckles, light armor, and gear that has to survive hard use without looking clumsy.")
+                    -BardText "The forge runs on lower light now, all banked coals and sharp reflections. Even at night, the smith's eye still goes first to buckles, light armor, and gear that has to survive hard use without looking clumsy." `
+                    -FighterText "The forge burns lower at night, but Lubert Stryer can still see the better longswords kept away from the common rack. The smith talks less like a trader and more like a man measuring a future knight.")
             }
 
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Heat and sparks pour from the forge while the smith sizes Borzig up like a problem that can be solved with steel. The look he gives Borzig's older weaponry suggests he has already judged it rough, serviceable, and overdue for replacement." `
-                -BardText "Heat and sparks pour from the forge while the smith judges Gariand with a craftsman's patience. Even here the eye goes first to buckles, light armor, and anything that might keep a quick-handed performer alive without ruining his poise.")
+                -BardText "Heat and sparks pour from the forge while the smith judges Gariand with a craftsman's patience. Even here the eye goes first to buckles, light armor, and anything that might keep a quick-handed performer alive without ruining his poise." `
+                -FighterText "Heat and sparks pour from the forge while the smith looks Lubert Stryer over like a man already picturing a better blade. Shortsword and round shield will do for a first road, but the longsword rack keeps catching the eye.")
         }
         "Apothecary" {
             if ($isNight) {
@@ -419,12 +425,14 @@ function Get-TownShopIntroText {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
                     -BarbarianText "The armorer keeps late hours for people expecting trouble before dawn. Leather, mail, and oiled straps hang heavy in the lamplight, all of it meant for work rather than display." `
-                    -BardText "At night the armorer feels more private, all lamplight on buckles, rivets, and fitted coats. The room has the calm patience of someone who knows last-minute protection sells best after dark.")
+                    -BardText "At night the armorer feels more private, all lamplight on buckles, rivets, and fitted coats. The room has the calm patience of someone who knows last-minute protection sells best after dark." `
+                    -FighterText "The armorer's hall is half-shadowed, but the mail and shields still catch the lamplight. Lubert Stryer can feel the room selling not just protection, but station.")
             }
 
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Leather, chain, buckles, and heavy stitched coats line the armorer's walls. The room smells of oil, wool, and old campaigns, and Borzig is judged like someone who might finally be worth fitting properly." `
-                -BardText "Leather, chain, buckles, and fitted coats line the armorer's walls. Even here the eye goes toward mobility, silhouette, and whether Gariand wants protection that still lets him move like a performer instead of a tower shield.")
+                -BardText "Leather, chain, buckles, and fitted coats line the armorer's walls. Even here the eye goes toward mobility, silhouette, and whether Gariand wants protection that still lets him move like a performer instead of a tower shield." `
+                -FighterText "Mail, shields, fitted straps, and heavier coats line the armorer's walls. Lubert Stryer's round shield earns a nod, but the squire mail is clearly what the room wants him to become.")
         }
     }
 
@@ -1342,7 +1350,8 @@ function Start-QuestHubMenu {
         Write-TownTimeTracker -Game $Game -Area "Seek Work" -HeroHP $HeroHP.Value
         Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
             -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
-            -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act.")
+            -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act." `
+            -FighterText "Lubert Stryer can ask for work from official hands, patrons, and anyone who understands that a shield can be a social promise as much as protection.")
         Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
         Write-EmphasisLine -Text ((Get-StoryTierProgressStatus -Game $Game).StatusText) -Color "Yellow"
         Write-ColorLine ""
@@ -1511,6 +1520,9 @@ function Start-TownWorkMenu {
         if ($Game.Hero.Class -eq "Bard") {
             Write-ColorLine $(if ($isNight) { "3. Find a room and perform for coin" } else { "3. Find an audience and perform for coin (best after dark)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") { "White" } else { "DarkGray" })
         }
+        elseif ($Game.Hero.Class -eq "Fighter") {
+            Write-ColorLine "3. Visit the tourney ground" "White"
+        }
 
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
@@ -1540,6 +1552,9 @@ function Start-TownWorkMenu {
                     else {
                         Start-BardPerformanceMenu -Game $Game
                     }
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    Start-JoustingArena -Game $Game
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"

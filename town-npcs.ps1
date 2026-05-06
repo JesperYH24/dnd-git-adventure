@@ -14,7 +14,7 @@ function Get-HeroTownPersona {
     $charisma = Get-HeroAbilityScore -Hero $Hero -Ability "CHA"
 
     $isBardLike = $className -match "Bard"
-    $isKnightLike = $className -match "Knight|Paladin"
+    $isKnightLike = $className -match "Fighter|Knight|Paladin"
     $isBarbarian = $className -eq "Barbarian"
     $isStrong = $strength -ge 15
     $isQuick = $dexterity -ge 14
@@ -316,6 +316,12 @@ function Resolve-HadrikChoice {
             return "Hadrik rubs soot into one palm and nods toward the forge. 'Rurik has a slim rapier in the back that never fit the caravan guards. For someone quick with timing, it'd do better than a butcher's blade. Tell him I sent you and he'll shave the price.' A 6 SP discount is now available on the Rapier at the smithy."
         }
 
+        if ($persona.IsKnightLike) {
+            $Game.Town.StreetFlags["HadrikKnightlyLongswordDiscountUnlocked"] = $true
+            Set-TownOfferDiscount -Game $Game -OfferId "smithy_knightly_longsword" -DiscountCopper 80
+            return "Hadrik glances at $(Get-HeroTownName -Hero $Game.Hero)'s shield arm and lowers his voice. 'Rurik keeps a cleaner longsword back for folk trying to be more than alley steel. Tell him you came from the tourney rails, and he'll shave the price before he starts judging your stance.' An 8 SP discount is now available on the Knightly Longsword at the smithy."
+        }
+
         $Game.Town.StreetFlags["SmithyDiscountUnlocked"] = $true
         Set-TownOfferDiscount -Game $Game -OfferId "smithy_greataxe" -DiscountCopper 60
         return "Hadrik lowers his voice. 'Tell Rurik I sent you. He'll shave the price on the Steel Great Axe.' A 6 SP discount is now available on the Steel Great Axe at the smithy."
@@ -344,6 +350,14 @@ function Resolve-BelorChoice {
             $Game.Town.StreetFlags["BelorSquarePermit"] = $true
             $Game.Town.Relationships["Belor"] = "Respectful"
             return "Belor glances over the market and grunts. 'If your tongue and hands can hold a crowd, do it where the watch can see you. Tell the square wardens I cleared you to work the market. They'll give you better space and leave the hat alone.' $(Get-HeroTownName -Hero $Game.Hero) gains a market performance permit from the watch."
+        }
+
+        if ($persona.IsKnightLike) {
+            $Game.Town.StreetFlags["BelorTourneyStanding"] = $true
+            $Game.Town.Relationships["Belor"] = "Formal Respect"
+            Set-TownOfferDiscount -Game $Game -OfferId "armorer_heater_shield" -DiscountCopper 40
+            Set-TownOfferDiscount -Game $Game -OfferId "armorer_squire_mail" -DiscountCopper 80
+            return "Belor studies $(Get-HeroTownName -Hero $Game.Hero)'s mail and shield, then nods toward the upper streets. 'If you mean to be seen as more than another blade, stand where proper people can watch you hold a line. The tourney ground needs disciplined arms, and the armorer owes the watch a favor.' $(Get-HeroTownName -Hero $Game.Hero) gains formal watch respect and a discount on knightly armor and shield work."
         }
 
         if ($persona.IsBarbarian -or $persona.IsStrong -or $persona.IsTough) {
@@ -608,7 +622,7 @@ function Start-HadrikConversation {
         Write-TownTimeTracker -Game $Game -Area "Hadrik"
         Write-ColorLine "1. Ask about the forge and its steel" "White"
         Write-ColorLine "2. Ask how business in the city has changed" "White"
-        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "3. Ask if the forge knows anyone outfitting duelists and performers" } else { "3. Ask if the forge has anything worth carrying into the wilds" }
+        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "3. Ask if the forge knows anyone outfitting duelists and performers" } elseif ($Game.Hero.Class -eq "Fighter") { "3. Ask if the forge outfits tourney hopefuls" } else { "3. Ask if the forge has anything worth carrying into the wilds" }
         Write-ColorLine $workQuestion "White"
         Write-ColorLine "4. Shrug him off and keep walking" "White"
         Write-ColorLine "0. Back to streets" "DarkGray"
@@ -655,7 +669,7 @@ function Start-BelorConversation {
             $showIntro = $false
         }
         Write-TownTimeTracker -Game $Game -Area "Belor"
-        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "1. Ask where someone with presence can find honest coin" } else { "1. Ask where a capable fighter can find decent work" }
+        $workQuestion = if ($Game.Hero.Class -eq "Bard") { "1. Ask where someone with presence can find honest coin" } elseif ($Game.Hero.Class -eq "Fighter") { "1. Ask where a disciplined shield arm can be noticed" } else { "1. Ask where a capable fighter can find decent work" }
         Write-ColorLine $workQuestion "White"
         Write-ColorLine "2. Ask what has the watch worried" "White"
         Write-ColorLine "3. Ask which part of the city feels wrong" "White"

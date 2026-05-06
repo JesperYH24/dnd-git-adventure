@@ -20,6 +20,7 @@
 - let Veyra react to Halewick's escape carefully: she has proof now, but proof against a dragon-politician may be more dangerous than suspicion
 - give `Barbarian` routes a hard-proof identity: protection, intimidation, seizures, broken doors, and surviving people who want records destroyed
 - give `Bard` routes a soft-power identity: salons, testimony, social pressure, forged confidence, overheard confessions, and performances used as cover
+- give `Fighter` routes an upper-city aspiration identity: tourney recognition, patron etiquette, shield discipline, formal duels, and proof that a practical fighter can become knightly
 - let future quests ask whether Veyra is simply helping the city or also choosing which version of the city survives in the ledgers
 
 ## Medium-term world and progression work
@@ -31,6 +32,7 @@
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
+- expand Fighter's tourney ground into true mounted jousting once horse ownership, splint-or-plate tourney armor, lances, and heraldic rewards exist
 - deeper inn events, shady city routes, and economic info payoffs
 
 ## Fighting ring direction

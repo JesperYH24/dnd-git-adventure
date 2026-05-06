@@ -59,6 +59,34 @@ function Test-TutorialSkipCompletesTutorialState {
     $global:RollDiceOverride = $null
 }
 
+function Test-FighterTutorialSkipCompletesTutorialState {
+    Set-TestOutputStubs
+    $global:RollDiceOverride = {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 15 }
+        return 1
+    }
+
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+
+    $result = Complete-TutorialAndEnterTown -Game $game -HeroHP ([ref]$heroHP) -DebugSkip $true
+
+    Assert-Equal -Actual $result -Expected "EnterTown" -Message "Fighter tutorial skip should send the hero to town."
+    Assert-Equal -Actual $game.Hero.Class -Expected "Fighter" -Message "Fighter tutorial skip should preserve the selected class."
+    Assert-Equal -Actual $game.Hero.Name -Expected "Lubert Stryer" -Message "Fighter tutorial skip should preserve the Fighter hero name."
+    Assert-Equal -Actual $game.Quest.SeenDragon -Expected $true -Message "Fighter tutorial skip should mark the dragon warning as seen."
+    Assert-Equal -Actual $game.Quest.Completed -Expected $true -Message "Fighter tutorial skip should complete the tutorial quest."
+    Assert-Equal -Actual $game.ShadowSanctumRewardTaken -Expected $true -Message "Fighter tutorial skip should lock in the sanctum reward."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 400 -Message "Fighter tutorial skip should use the same rolled sanctum gold reward table."
+    Assert-Equal -Actual $game.Hero.Level -Expected 2 -Message "Fighter tutorial skip should apply the tutorial level up."
+    Assert-True -Condition ($heroHP -eq $game.Hero.HP) -Message "Fighter tutorial skip should leave the hero fully rested."
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $game.Hero) -Expected 19 -Message "Fighter tutorial skip should preserve starter chain mail, shield, and Defense armor class."
+    $global:RollDiceOverride = $null
+}
+
 Test-TutorialSkipCompletesTutorialState
+Test-FighterTutorialSkipCompletesTutorialState
 
 Write-Host "Tutorial skip tests passed." -ForegroundColor Green

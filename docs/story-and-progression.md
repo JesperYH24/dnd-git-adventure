@@ -39,6 +39,7 @@ After the warning is delivered, the game opens into a full town hub where the he
 - visit the fighting ring
 - buy and sell gear
 - if playing `Bard`, perform for coin and build venue reputation
+- if playing `Fighter`, visit the tourney ground for squire sparring and a first step toward knightly status
 
 If the hero is defeated during a city quest, the quest fails and the player chooses between:
 
@@ -238,3 +239,11 @@ The barbarian remains stronger in:
 - intimidation
 - direct combat identity
 - physical trust and enforcement roles
+
+The fighter route is meant to grow toward upper-class legitimacy:
+
+- `Lubert Stryer` begins with practical squire-grade kit rather than polished knight gear
+- `Fighting Style: Defense` and `Second Wind` make him feel trained, armored, and hard to put down before he becomes a full knight
+- the smithy and armorer should tempt him toward longsword, better shield work, and heavier armor
+- the tourney ground gives him a city pastime that is about posture, recognition, and class aspiration as much as fighting
+- true mounted jousting waits for a future horse and lance progression layer, but the tourney requirement is already framed as horse plus splint or plate armor

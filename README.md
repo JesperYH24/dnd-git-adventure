@@ -8,7 +8,7 @@ The project currently includes:
 
 - a playable tutorial cave
 - a full town hub with day/night state
-- `Barbarian` and `Bard` as playable starting classes
+- `Barbarian`, `Bard`, and `Fighter` as playable starting classes
 - Chapter Two story content through `The Understreet Complex`
 - the Lady Veyra reveal and a linear Docks discovery chain
 - an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, `The Customs Stamp`, and the dungeon-style `Civic Vault` climax

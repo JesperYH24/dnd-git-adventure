@@ -10,6 +10,7 @@
 . "$PSScriptRoot\quests.ps1"
 . "$PSScriptRoot\city-quests.ps1"
 . "$PSScriptRoot\town.ps1"
+. "$PSScriptRoot\town-jousting.ps1"
 . "$PSScriptRoot\rooms.ps1"
 . "$PSScriptRoot\encounters.ps1"
 . "$PSScriptRoot\phases.ps1"
@@ -37,6 +38,11 @@ function New-DefaultTownState {
         Relationships = @{}
         InnFlags = @{}
         StoryFlags = @{}
+        Jousting = @{
+            Visits = 0
+            HasHorse = $false
+            SquireWins = 0
+        }
         Ring = @{
             Visits = 0
             FoughtToday = $false

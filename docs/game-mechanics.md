@@ -6,6 +6,7 @@
 - playable class selection at the start of the adventure:
   - `Barbarian` as `Borzig`
   - `Bard` as `Gariand`
+  - `Fighter` as `Lubert Stryer`
 - level-up readiness and long-rest leveling from level 1 to level 4
 - level 4 Ability Score Increase choices during long rest, including `+2` or split `+1/+1` choices capped at 20
 - derived-stat scaling from ability scores: STR/DEX attacks, DEX initiative and armor, CON HP and Unarmored Defense, CHA bard resources, and skill checks
@@ -44,6 +45,16 @@
 - prepared bardic inspiration recovers on short rest
 - visible `Spell Save DC`
 
+## Fighter mechanics
+
+- `Fighter` starts as `Lubert Stryer` with d10 HP scaling, `CON` as the default ASI focus, and `CON`/`STR` check proficiencies
+- starter kit is `Shortsword`, `Simple Round Shield`, and `Chain Mail`
+- shields use their own equip slot and stack with armor instead of replacing it
+- `Fighting Style: Defense` adds `+1 AC` while armor is equipped
+- `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
+- smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
+- `Tourney Ground` is the Fighter city pastime: foot sparring against squires is playable now, while mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it
+
 ## Town and day/night systems
 
 - explicit day/night state in town choice menus
@@ -57,6 +68,7 @@
   - hero / inventory / quest log
 - daytime supports shopping, street conversations, day jobs, and preparation
 - nighttime opens the ring, bard performance venues, inn common-room activity, and night-oriented quests
+- Fighter can visit the tourney ground from `Work & Trouble` to build early knight-facing arena standing
 - market, smithy, and armorer close at night
 - apothecary, instrument shop, inn, streets, quest log, and buyer flow remain available
 - manual `Wait for nightfall` transition

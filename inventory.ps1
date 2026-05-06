@@ -20,6 +20,10 @@ function Format-InventoryItemLine {
             }
         }
     }
+    elseif ($Item.Type -eq "Shield") {
+        $tags += "AC +$($Item.ArmorBonus)"
+        $tags += "shield"
+    }
     elseif ($Item.Type -eq "Consumable" -and $null -ne $Item.HealAmount) {
         $tags += "+$($Item.HealAmount) HP"
     }
@@ -41,7 +45,7 @@ function Format-InventoryItemLine {
 
     $tags += "$slotCost $slotLabel"
 
-    if ($Item.Equipped -and $Item.Type -in @("Weapon", "Armor")) {
+    if ($Item.Equipped -and $Item.Type -in @("Weapon", "Armor", "Shield")) {
         $tags += "equipped"
     }
 
@@ -483,7 +487,7 @@ function Open-InventoryMenu {
                 }
             }
             "E" {
-                if ($selectedItem.Type -in @("Weapon", "Armor")) {
+                if ($selectedItem.Type -in @("Weapon", "Armor", "Shield")) {
                     $equipResult = Set-EquippedItem -Hero $Hero -Item $selectedItem
 
                     if ($equipResult.Success) {

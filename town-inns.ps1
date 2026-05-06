@@ -842,6 +842,7 @@ function Resolve-InnWorkOffRoom {
         Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day" -WorkedForRoomToday $true -RingFoughtToday $true
         Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
         Restore-HeroRages -Hero $Game.Hero
+        Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
         Clear-HeroBuff -Hero $Game.Hero
         $HeroHP.Value = $Game.Hero.HP
         Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
@@ -979,6 +980,7 @@ function Resolve-InnStay {
     Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
+    Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     Resolve-PostHalewickInnRestRumor -Game $Game | Out-Null
     if (-not $Game.Town.ChapterOneComplete) {
@@ -1046,6 +1048,7 @@ function Resolve-BookedInnNightRest {
     Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
+    Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
     Resolve-PostHalewickInnRestRumor -Game $Game | Out-Null
     Write-Scene "A full night's rest restores $($Game.Hero.Name) to full health, clears the day from his head, and resets the city for morning."

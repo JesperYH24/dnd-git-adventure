@@ -137,6 +137,7 @@ Härifrån fördelas spelaren vidare till city-systemen:
 - `town-shops.ps1`
 - `town-inns.ps1`
 - `town-ring.ps1`
+- `town-jousting.ps1`
 - `town-npcs.ps1`
 - `quests.ps1`
 - `city-quests.ps1`
@@ -359,6 +360,14 @@ Ansvar:
 - brawls
 - ring progression
 - rivalries och prispengar
+
+### `town-jousting.ps1`
+
+Ansvar:
+
+- Fighter/tourney ground city activity
+- squire sparring on foot
+- future hook for mounted jousting that requires horse ownership plus splint or plate armor
 
 ### `town-npcs.ps1`
 

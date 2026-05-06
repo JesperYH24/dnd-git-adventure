@@ -384,6 +384,10 @@ function Get-HeroPrimaryAbilityForASI {
         return "CHA"
     }
 
+    if ($Hero.Class -eq "Fighter") {
+        return "CON"
+    }
+
     return "STR"
 }
 
@@ -675,6 +679,7 @@ function Resolve-HeroShortRest {
     if ($HeroHP.Value -ge $Hero.HP) {
         Clear-HeroBuff -Hero $Hero
         $restoredBardicInspiration = 0
+        $restoredSecondWind = 0
 
         if ($Hero.Class -eq "Bard") {
             $beforeDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
@@ -685,12 +690,19 @@ function Resolve-HeroShortRest {
             }
         }
 
+        if ($Hero.Class -eq "Fighter") {
+            $beforeSecondWind = if ($null -ne $Hero.PSObject.Properties["CurrentSecondWind"]) { [int]$Hero.CurrentSecondWind } else { 0 }
+            Restore-HeroSecondWind -Hero $Hero | Out-Null
+            $restoredSecondWind = [Math]::Max(0, [int]$Hero.CurrentSecondWind - $beforeSecondWind)
+        }
+
         return [PSCustomObject]@{
             Healed = 0
             Roll = $null
             Modifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
             ClearedBuff = $true
             RestoredBardicInspiration = $restoredBardicInspiration
+            RestoredSecondWind = $restoredSecondWind
         }
     }
 
@@ -701,6 +713,7 @@ function Resolve-HeroShortRest {
     $HeroHP.Value = [Math]::Min($Hero.HP, $HeroHP.Value + $healing)
     Clear-HeroBuff -Hero $Hero
     $restoredBardicInspiration = 0
+    $restoredSecondWind = 0
 
     if ($Hero.Class -eq "Bard") {
         $beforeDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
@@ -711,12 +724,19 @@ function Resolve-HeroShortRest {
         }
     }
 
+    if ($Hero.Class -eq "Fighter") {
+        $beforeSecondWind = if ($null -ne $Hero.PSObject.Properties["CurrentSecondWind"]) { [int]$Hero.CurrentSecondWind } else { 0 }
+        Restore-HeroSecondWind -Hero $Hero | Out-Null
+        $restoredSecondWind = [Math]::Max(0, [int]$Hero.CurrentSecondWind - $beforeSecondWind)
+    }
+
     return [PSCustomObject]@{
         Healed = ($HeroHP.Value - $oldHP)
         Roll = $roll
         Modifier = $constitutionModifier
         ClearedBuff = $true
         RestoredBardicInspiration = $restoredBardicInspiration
+        RestoredSecondWind = $restoredSecondWind
     }
 }
 
@@ -875,6 +895,13 @@ function Get-HeroArmorClass {
                 $armorBonus += $dexBonus
             }
         }
+        elseif ($item.Type -eq "Shield" -and $item.Equipped -and $null -ne $item.ArmorBonus) {
+            $armorBonus += [int]$item.ArmorBonus
+        }
+    }
+
+    if (Test-HeroFightingStyleDefenseActive -Hero $Hero -HasEquippedArmor $hasEquippedArmor) {
+        $armorBonus += 1
     }
 
     if ($Hero.Class -eq "Barbarian" -and -not $hasEquippedArmor) {
@@ -953,6 +980,7 @@ function Get-HeroCheckProficiencies {
     switch ($Hero.Class) {
         "Barbarian" { return @("STR", "CON") }
         "Bard" { return @("CHA", "Performance") }
+        "Fighter" { return @("CON", "STR") }
         default { return @() }
     }
 }
@@ -1202,6 +1230,137 @@ function Restore-HeroRages {
     $Hero.CurrentRages = [int]$Hero.MaxRages
     $Hero.RageActive = $false
     $Hero.RecklessAttackExposed = $false
+}
+
+function Initialize-HeroFighterResources {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["FightingStyle"]) {
+        $Hero | Add-Member -NotePropertyName FightingStyle -NotePropertyValue "Defense"
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["MaxSecondWind"]) {
+        $Hero | Add-Member -NotePropertyName MaxSecondWind -NotePropertyValue 1
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["CurrentSecondWind"]) {
+        $Hero | Add-Member -NotePropertyName CurrentSecondWind -NotePropertyValue ([int]$Hero.MaxSecondWind)
+    }
+}
+
+function Test-HeroFightingStyleDefenseActive {
+    param(
+        $Hero,
+        $HasEquippedArmor = $null
+    )
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return $false
+    }
+
+    Initialize-HeroFighterResources -Hero $Hero
+
+    if ([string]$Hero.FightingStyle -ne "Defense") {
+        return $false
+    }
+
+    if ($null -eq $HasEquippedArmor) {
+        $HasEquippedArmor = [bool]($Hero.Inventory | Where-Object { $_.Type -eq "Armor" -and $_.Equipped } | Select-Object -First 1)
+    }
+
+    return [bool]$HasEquippedArmor
+}
+
+function Get-HeroFighterResourceStatus {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return $null
+    }
+
+    Initialize-HeroFighterResources -Hero $Hero
+
+    return [PSCustomObject]@{
+        FightingStyle = [string]$Hero.FightingStyle
+        DefenseActive = Test-HeroFightingStyleDefenseActive -Hero $Hero
+        CurrentSecondWind = [int]$Hero.CurrentSecondWind
+        MaxSecondWind = [int]$Hero.MaxSecondWind
+    }
+}
+
+function Restore-HeroSecondWind {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return $null
+    }
+
+    Initialize-HeroFighterResources -Hero $Hero
+    $Hero.CurrentSecondWind = [int]$Hero.MaxSecondWind
+
+    return [PSCustomObject]@{
+        Success = $true
+        CurrentSecondWind = [int]$Hero.CurrentSecondWind
+        MaxSecondWind = [int]$Hero.MaxSecondWind
+    }
+}
+
+function Use-HeroSecondWind {
+    param(
+        $Hero,
+        [ref]$HeroHP
+    )
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Only a fighter can use Second Wind."
+            Roll = 0
+            Healing = 0
+            Healed = 0
+        }
+    }
+
+    Initialize-HeroFighterResources -Hero $Hero
+
+    if ([int]$Hero.CurrentSecondWind -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) has no Second Wind left before a rest."
+            Roll = 0
+            Healing = 0
+            Healed = 0
+        }
+    }
+
+    if ($HeroHP.Value -ge $Hero.HP) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) is already at full HP."
+            Roll = 0
+            Healing = 0
+            Healed = 0
+        }
+    }
+
+    $roll = Roll-Dice -Sides 10
+    $healing = [Math]::Max(1, $roll + [int]$Hero.Level)
+    $oldHP = $HeroHP.Value
+    $HeroHP.Value = [Math]::Min($Hero.HP, $HeroHP.Value + $healing)
+    $Hero.CurrentSecondWind = [Math]::Max(0, [int]$Hero.CurrentSecondWind - 1)
+    $healed = $HeroHP.Value - $oldHP
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) draws on Second Wind and recovers $healed HP. (d10 roll $roll + level $($Hero.Level))"
+        Roll = $roll
+        Healing = $healing
+        Healed = $healed
+    }
 }
 
 function Test-HeroRageActive {
@@ -1476,6 +1635,20 @@ function Set-EquippedItem {
         }
     }
 
+    if ($Item.Type -eq "Shield") {
+        foreach ($inventoryItem in $Hero.Inventory) {
+            if ($inventoryItem.Type -eq "Shield") {
+                $inventoryItem.Equipped = $false
+            }
+        }
+
+        $Item.Equipped = $true
+        return [PSCustomObject]@{
+            Success = $true
+            Message = ""
+        }
+    }
+
     return [PSCustomObject]@{
         Success = $false
         Message = "$($Item.Name) cannot be equipped."
@@ -1526,6 +1699,56 @@ function Get-Hero {
     )
 
     switch ($Class) {
+        "Fighter" {
+            $hero = [PSCustomObject]@{
+                Name               = "Lubert Stryer"
+                Class              = "Fighter"
+                Level              = 1
+                LevelCap           = 2
+                XP                 = 0
+                GoldPouchCapacityGP = 150
+                CurrencyCopper     = 0
+                ActiveBuff         = $null
+                CurrentBardicInspirationDice = 0
+                BardicInspirationDieSides = 6
+                MaxRages           = 0
+                CurrentRages       = 0
+                RageActive         = $false
+                RecklessAttackExposed = $false
+                FightingStyle      = "Defense"
+                MaxSecondWind      = 1
+                CurrentSecondWind  = 1
+                TutorialCampfireHintShown = $false
+                TutorialCombatHintShown = $false
+                UnarmedTrainingLevel = 0
+                RingWinsTotal      = 0
+                RingReputation     = 0
+                RingChampionNightWon = $false
+                RingStyleCounts    = @{ QuickFinish = 0; Technical = 0; Grappler = 0; Brawler = 0 }
+                RingVisits         = 0
+                RingRivalries      = @{}
+                HitDie             = 10
+                STR                = 14
+                DEX                = 12
+                CON                = 15
+                INT                = 10
+                WIS                = 10
+                CHA                = 11
+                CheckProficiencies = @("CON", "STR")
+                BaseArmorClass     = 10
+                BaseInventorySlots = 8
+                BackpackCapacitySlots = 4
+                BackpackInventory  = @()
+                StashedInventory   = @()
+                Inventory          = @(
+                    (New-WeaponItem -Name "Shortsword" -Value 0 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -RequiredSTR 10 -SlotCost 1 -Equipped $true)
+                    (New-ShieldItem -Name "Simple Round Shield" -Value 0 -ArmorBonus 2 -SlotCost 1 -Equipped $true)
+                    (New-ArmorItem -Name "Chain Mail" -Value 0 -ArmorBonus 6 -AddsDexModifier $false -SlotCost 4 -Equipped $true)
+                    (New-UtilityItem -Name "Backpack" -Value 0 -SlotBonus 0 -SlotCost 0 -Equipped $true)
+                    (New-ConsumableItem -Name "Healing Potion" -Value 0 -HealAmount 8 -SlotCost 1)
+                )
+            }
+        }
         "Bard" {
             $hero = [PSCustomObject]@{
                 Name               = "Gariand"

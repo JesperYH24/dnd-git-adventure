@@ -9,6 +9,7 @@ function Start-ClassSelection {
         Write-ColorLine ""
         Write-ColorLine "1. Barbarian" "White"
         Write-ColorLine "2. Bard" "White"
+        Write-ColorLine "3. Fighter" "White"
         Write-ColorLine ""
 
         $choice = Read-Host "Choose"
@@ -16,6 +17,7 @@ function Start-ClassSelection {
         switch ($choice) {
             "1" { return "Barbarian" }
             "2" { return "Bard" }
+            "3" { return "Fighter" }
             default {
                 Write-ColorLine "Invalid choice. Try again." "Red"
                 Write-ColorLine ""

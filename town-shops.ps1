@@ -153,6 +153,10 @@ function Get-SmithyOffers {
         (New-TownOffer -Id "smithy_greataxe" -Name "Steel Great Axe" -Category "Weapon" -Description "A heavier axe with a cleaner edge than Borzig's old camp weapon. Two-Handed. Requires STR 15." -PriceCopper 260)
     )
 
+    if ($null -ne $Game -and $Game.Hero.Class -eq "Fighter") {
+        $offers += (New-TownOffer -Id "smithy_knightly_longsword" -Name "Knightly Longsword" -Category "Weapon" -Description "A cleaner court-forged longsword with enough weight for the lists and enough polish for noble eyes. Requires STR 13." -PriceCopper 320)
+    }
+
     if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
         $offers += (New-TownOffer -Id "smithy_executioner_axe" -Name "Executioner Axe" -Category "Weapon" -Description "A broad-bladed two-handed axe forged for fighters with the strength to end a battle in one committed swing. Requires STR 16." -PriceCopper 420)
     }
@@ -166,7 +170,17 @@ function Get-ArmorerOffers {
     $offers = @(
         (New-TownOffer -Id "armorer_studded_leather" -Name "Studded Leather Coat" -Category "Armor" -Description "A reinforced leather coat that still lets quick fighters and performers move cleanly. AC +2 and adds DEX." -PriceCopper 260)
         (New-TownOffer -Id "armorer_chain_shirt" -Name "Chain Shirt" -Category "Armor" -Description "A practical shirt of linked steel for adventurers who want more protection without turning into a wall. AC +3 and adds DEX up to +2." -PriceCopper 380)
+        (New-TownOffer -Id "armorer_heater_shield" -Name "Heater Shield" -Category "Shield" -Description "A stronger shield with a proper heraldic face. AC +2, built for the road toward knightly work." -PriceCopper 240)
     )
+
+    if ($null -ne $Game -and $Game.Hero.Class -eq "Fighter") {
+        $offers += (New-TownOffer -Id "armorer_squire_mail" -Name "Squire Mail" -Category "Armor" -Description "Heavy-leaning training mail for a fighter chasing knightly protection. AC +5 with no DEX bonus." -PriceCopper 620)
+
+        if ($Game.Hero.Level -ge 4) {
+            $offers += (New-TownOffer -Id "armorer_splint_armor" -Name "Splint Armor" -Category "Armor" -Description "Rigid splinted steel over heavy padding. AC +7 with no DEX bonus, and acceptable for proper mounted tournament entry." -PriceCopper 1800)
+            $offers += (New-TownOffer -Id "armorer_plate_armor" -Name "Plate Armor" -Category "Armor" -Description "A fitted knightly harness. AC +8 with no DEX bonus, expensive enough to announce ambition before the visor closes." -PriceCopper 4500)
+        }
+    }
 
     if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
         $offers += (New-TownOffer -Id "armorer_brigandine" -Name "Brigandine Coat" -Category "Armor" -Description "Layered plates stitched into a hardened coat for veterans who expect ugly work. AC +4 and adds DEX up to +1." -PriceCopper 560)
@@ -204,12 +218,17 @@ function New-TownItemFromOfferId {
         "instrument_shop_salon_lute" { return (New-UtilityItem -Name "Salon Lute" -Value 340 -InspirationBonus 3 -SlotCost 1) }
         "instrument_shop_court_lute" { return (New-UtilityItem -Name "Court Lute" -Value 520 -InspirationBonus 4 -SlotCost 1) }
         "smithy_longsword" { return (New-WeaponItem -Name "Longsword" -Value 180 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 11 -SlotCost 2) }
+        "smithy_knightly_longsword" { return (New-WeaponItem -Name "Knightly Longsword" -Value 320 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_rapier" { return (New-WeaponItem -Name "Rapier" -Value 200 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredDEX 12 -SlotCost 1) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_greataxe" { return (New-WeaponItem -Name "Steel Great Axe" -Value 260 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 15 -SlotCost 2) }
         "smithy_executioner_axe" { return (New-WeaponItem -Name "Executioner Axe" -Value 420 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 16 -SlotCost 2) }
         "armorer_studded_leather" { return (New-ArmorItem -Name "Studded Leather Coat" -Value 260 -ArmorBonus 2 -AddsDexModifier $true -SlotCost 2) }
         "armorer_chain_shirt" { return (New-ArmorItem -Name "Chain Shirt" -Value 380 -ArmorBonus 3 -AddsDexModifier $true -DexBonusCap 2 -SlotCost 3) }
+        "armorer_heater_shield" { return (New-ShieldItem -Name "Heater Shield" -Value 240 -ArmorBonus 2 -SlotCost 2) }
+        "armorer_squire_mail" { return (New-ArmorItem -Name "Squire Mail" -Value 620 -ArmorBonus 5 -AddsDexModifier $false -SlotCost 4) }
+        "armorer_splint_armor" { return (New-ArmorItem -Name "Splint Armor" -Value 1800 -ArmorBonus 7 -AddsDexModifier $false -SlotCost 5) }
+        "armorer_plate_armor" { return (New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5) }
         "armorer_brigandine" { return (New-ArmorItem -Name "Brigandine Coat" -Value 560 -ArmorBonus 4 -AddsDexModifier $true -DexBonusCap 1 -SlotCost 3) }
         "apothecary_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
         "apothecary_greater_healing_potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }

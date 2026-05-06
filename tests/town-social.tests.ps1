@@ -156,6 +156,23 @@ function Test-StreetNpcIntrosRecognizeBardAsGariand {
     Assert-True -Condition ($belorIntro -like "*Gariand*" -and $belorIntro -like "*truth before steel*") -Message "Belor should recognize the bard as useful before a fight starts."
 }
 
+function Test-StreetNpcIntrosRecognizeFighterAsKnightLike {
+    $fighter = Get-Hero -Class "Fighter"
+    $silverKettle = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    $persona = Get-HeroTownPersona -Hero $fighter
+    $widowIntro = Get-WidowEliraIntro -Hero $fighter
+    $hadrikIntro = Get-HadrikIntro -Hero $fighter
+    $belorIntro = Get-BelorIntro -Hero $fighter
+    $innGreeting = Get-InnKeeperGreeting -Inn $silverKettle -Hero $fighter
+
+    Assert-Equal -Actual $persona.IsKnightLike -Expected $true -Message "Fighter should read as knight-like in town persona."
+    Assert-True -Condition ($widowIntro -like "*duty matters*") -Message "Widow Elira should read Fighter as duty-oriented."
+    Assert-True -Condition ($hadrikIntro -like "*disciplined arm*") -Message "Hadrik should recognize Fighter's disciplined knightly posture."
+    Assert-True -Condition ($belorIntro -like "*Lubert Stryer*" -and $belorIntro -like "*one day salute*") -Message "Belor should recognize Fighter as a formal martial prospect."
+    Assert-True -Condition ($innGreeting -like "*Bearing, restraint, and decent posture*") -Message "Silver Kettle should greet Fighter with upper-class knight-like respect."
+}
+
 function Test-InnkeeperSmallTalkChangesAfterFirstAsk {
     $game = Initialize-Game
     $game.Town.ActiveInn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
@@ -234,13 +251,16 @@ function Test-HadrikCommentsOnWornStartingAndCaveGear {
 function Test-HadrikRewardsDifferentClassesDifferently {
     $barbarianGame = Initialize-Game
     $bardGame = Initialize-Game -Class "Bard"
+    $fighterGame = Initialize-Game -Class "Fighter"
 
     $barbarianResult = Resolve-HadrikChoice -Game $barbarianGame -Choice "1"
     $bardResult = Resolve-HadrikChoice -Game $bardGame -Choice "1"
+    $fighterResult = Resolve-HadrikChoice -Game $fighterGame -Choice "1"
 
     $greataxeOffer = (Get-SmithyOffers -Game $barbarianGame) | Where-Object { $_.Id -eq "smithy_greataxe" } | Select-Object -First 1
     $rapierOffer = (Get-SmithyOffers -Game $bardGame) | Where-Object { $_.Id -eq "smithy_rapier" } | Select-Object -First 1
     $stageLuteOffer = (Get-InstrumentShopOffers -Game $bardGame) | Where-Object { $_.Id -eq "instrument_shop_stage_lute" } | Select-Object -First 1
+    $knightlyLongswordOffer = (Get-SmithyOffers -Game $fighterGame) | Where-Object { $_.Id -eq "smithy_knightly_longsword" } | Select-Object -First 1
 
     Assert-True -Condition ([bool]$barbarianGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Barbarians should still get Hadrik's smithy weapon discount."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $barbarianGame -Offer $greataxeOffer) -Expected 200 -Message "Hadrik's barbarian discount should lower the Steel Great Axe price."
@@ -251,6 +271,27 @@ function Test-HadrikRewardsDifferentClassesDifferently {
     Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 220 -Message "Hadrik should not interfere with the Lantern Rest instrument-shop discount path."
     Assert-True -Condition (-not [bool]$bardGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Bards should not spend their one-time Hadrik reward on an axe discount they are unlikely to use."
     Assert-True -Condition ($bardResult -like "*Rapier*") -Message "Hadrik should name the rapier lead clearly for a bard."
+
+    Assert-True -Condition ([bool]$fighterGame.Town.StreetFlags["HadrikKnightlyLongswordDiscountUnlocked"]) -Message "Fighters should get Hadrik's knightly longsword lead."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $fighterGame -Offer $knightlyLongswordOffer) -Expected 240 -Message "Hadrik's Fighter recommendation should lower the Knightly Longsword price."
+    Assert-True -Condition (-not [bool]$fighterGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Fighters should not spend their one-time Hadrik reward on the barbarian greataxe path."
+    Assert-True -Condition ($fighterResult -like "*Knightly Longsword*" -or $fighterResult -like "*cleaner longsword*") -Message "Hadrik should name a knightly blade clearly for a Fighter."
+}
+
+function Test-BelorCanHelpFighterBuildTourneyStanding {
+    $game = Initialize-Game -Class "Fighter"
+
+    $result = Resolve-BelorChoice -Game $game -Choice "1"
+
+    $heaterShieldOffer = (Get-ArmorerOffers -Game $game) | Where-Object { $_.Id -eq "armorer_heater_shield" } | Select-Object -First 1
+    $squireMailOffer = (Get-ArmorerOffers -Game $game) | Where-Object { $_.Id -eq "armorer_squire_mail" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.StreetFlags["BelorTourneyStanding"] -Expected $true -Message "Belor should give Fighters a formal tourney-standing lead."
+    Assert-Equal -Actual $game.Town.Relationships["Belor"] -Expected "Formal Respect" -Message "Belor should respect Fighter in a more formal way than the rough watch-favor route."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $heaterShieldOffer) -Expected 200 -Message "Belor's Fighter lead should discount the Heater Shield."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $squireMailOffer) -Expected 540 -Message "Belor's Fighter lead should discount Squire Mail."
+    Assert-True -Condition (-not [bool]$game.Town.StreetFlags["BelorWatchFavor"]) -Message "Fighters should not be routed into the barbarian/tough healing favor by default."
+    Assert-True -Condition ($result -like "*tourney ground*" -or $result -like "*disciplined arms*") -Message "Belor should explain the Fighter reward through tourney and formal discipline."
 }
 
 function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {
@@ -458,6 +499,7 @@ Test-TownTextUsesCurrentHeroName
 Test-BarbarianSpecialtyShopToneFitsBorzig
 Test-InnkeeperGreetingChangesWithHeroStyle
 Test-StreetNpcIntrosRecognizeBardAsGariand
+Test-StreetNpcIntrosRecognizeFighterAsKnightLike
 Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
 Test-StreetNpcExtraFlavorTalksExist
@@ -465,6 +507,7 @@ Test-RingMasterHasExtendedConversationHooks
 Test-LevelThreeNpcToneChangesAfterUnderstreet
 Test-HadrikCommentsOnWornStartingAndCaveGear
 Test-HadrikRewardsDifferentClassesDifferently
+Test-BelorCanHelpFighterBuildTourneyStanding
 Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch
 Test-BardCanEarnCoinByPerformingInMarketSquare
 Test-BardCannotPerformTwiceAtSameVenueInOneDay
