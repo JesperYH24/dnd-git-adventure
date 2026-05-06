@@ -181,6 +181,7 @@ function Ensure-LoadedAdventureShape {
         @{ Name = "RingWinsTotal"; Value = 0 },
         @{ Name = "RingReputation"; Value = 0 },
         @{ Name = "RingChampionNightWon"; Value = $false },
+        @{ Name = "RingStyleCounts"; Value = @{ QuickFinish = 0; Technical = 0; Grappler = 0; Brawler = 0 } },
         @{ Name = "RingVisits"; Value = 0 },
         @{ Name = "RingRivalries"; Value = @{} }
     )) {

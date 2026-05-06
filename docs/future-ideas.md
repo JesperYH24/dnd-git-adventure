@@ -38,10 +38,7 @@
 - use ring reputation to unlock stronger Dorr dialogue, better odds, special opponents, rumors, and future quest hooks
 - expand the first named rival arcs beyond Vero, Nella, and Ysold so later specialists also remember style, losses, grudges, and respect
 - expand `Champion Night` after its first Ysold title-bout version with more crowd buildup, Dorr presentation, alternate title challengers, and later renown rewards beyond the initial `Pit Champion` flag
-- let the crowd react to fighting style:
-  - quick knockouts build loud crowd reputation
-  - block/focus-heavy wins build technical respect
-  - grapple-heavy wins split the room between cheers and boos
+- expand the first crowd-taste pass so quick finishes, technical wins, grapple-heavy wins, and brawls can unlock distinct Dorr comments, rival reactions, and betting hooks
 - add a small wager/purse choice before tournaments, such as safe purse, double-or-nothing, or a crowd bet for surviving a set number of rounds
 - make the ring a rumor source after fights, especially for Docks tension, Halewick panic, shady patrons, and later monster-zone leads
 - expand ring standing titles beyond `New Blood`, `Known Contender`, and `Champion`, with later names such as `Pit-Fighter` and monster-challenge titles like `Beast-Hand`

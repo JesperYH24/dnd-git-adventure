@@ -1548,6 +1548,7 @@ function Get-Hero {
                 RingWinsTotal      = 0
                 RingReputation     = 0
                 RingChampionNightWon = $false
+                RingStyleCounts    = @{ QuickFinish = 0; Technical = 0; Grappler = 0; Brawler = 0 }
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 8
@@ -1594,6 +1595,7 @@ function Get-Hero {
                 RingWinsTotal      = 0
                 RingReputation     = 0
                 RingChampionNightWon = $false
+                RingStyleCounts    = @{ QuickFinish = 0; Technical = 0; Grappler = 0; Brawler = 0 }
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 12

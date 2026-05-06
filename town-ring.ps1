@@ -348,6 +348,130 @@ function Complete-RingChampionNight {
     }
 }
 
+function Get-DefaultRingStyleCounts {
+    return @{
+        QuickFinish = 0
+        Technical = 0
+        Grappler = 0
+        Brawler = 0
+    }
+}
+
+function Get-HeroRingStyleCounts {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return Get-DefaultRingStyleCounts
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RingStyleCounts"] -or $null -eq $Hero.RingStyleCounts) {
+        $Hero | Add-Member -NotePropertyName RingStyleCounts -NotePropertyValue (Get-DefaultRingStyleCounts)
+    }
+
+    foreach ($key in (Get-DefaultRingStyleCounts).Keys) {
+        if (-not $Hero.RingStyleCounts.ContainsKey($key)) {
+            $Hero.RingStyleCounts[$key] = 0
+        }
+    }
+
+    return $Hero.RingStyleCounts
+}
+
+function Get-RingFightStyleSummary {
+    param(
+        [hashtable]$ActionCounts,
+        [int]$Rounds,
+        [bool]$HeroWon
+    )
+
+    $punches = [int]$ActionCounts["P"]
+    $grapples = [int]$ActionCounts["G"]
+    $blocks = [int]$ActionCounts["B"]
+    $focuses = [int]$ActionCounts["F"]
+    $technicalActions = $blocks + $focuses
+    $directActions = $punches + $grapples
+
+    if (-not $HeroWon) {
+        return [PSCustomObject]@{
+            Key = "Brawler"
+            Label = "Hard Lesson"
+            ReputationBonus = 0
+            CrowdText = "The crowd gives the loss a rough kind of respect, but no one chants a style name for it yet."
+        }
+    }
+
+    if ($Rounds -le 2 -and $punches -gt 0 -and $punches -ge $grapples) {
+        return [PSCustomObject]@{
+            Key = "QuickFinish"
+            Label = "Quick Finish"
+            ReputationBonus = 2
+            CrowdText = "The crowd erupts for the quick finish. Fast violence sells itself."
+        }
+    }
+
+    if ($technicalActions -gt 0 -and $technicalActions -ge $directActions) {
+        return [PSCustomObject]@{
+            Key = "Technical"
+            Label = "Technical"
+            ReputationBonus = 1
+            CrowdText = "The louder bettors wanted blood, but the careful watchers saw the reads, guards, and timing."
+        }
+    }
+
+    if ($grapples -gt 0 -and $grapples -ge $punches) {
+        return [PSCustomObject]@{
+            Key = "Grappler"
+            Label = "Grappler"
+            ReputationBonus = 1
+            CrowdText = "Half the room cheers the control. The other half boos because clean takedowns ruin their favorite kind of chaos."
+        }
+    }
+
+    return [PSCustomObject]@{
+        Key = "Brawler"
+        Label = "Brawler"
+        ReputationBonus = 1
+        CrowdText = "The crowd accepts the honest brawl: enough grit, enough bruises, and enough reason to remember the name."
+    }
+}
+
+function Add-HeroRingStyleResult {
+    param(
+        $Hero,
+        $StyleSummary
+    )
+
+    $styleCounts = Get-HeroRingStyleCounts -Hero $Hero
+    $styleCounts[$StyleSummary.Key] = [int]$styleCounts[$StyleSummary.Key] + 1
+    $reputationResult = Add-HeroRingReputation -Hero $Hero -Amount $StyleSummary.ReputationBonus
+
+    return [PSCustomObject]@{
+        Style = $StyleSummary.Label
+        Count = [int]$styleCounts[$StyleSummary.Key]
+        ReputationAdded = $reputationResult.Added
+        ReputationTotal = $reputationResult.Total
+    }
+}
+
+function Get-HeroDominantRingStyle {
+    param($Hero)
+
+    $styleCounts = Get-HeroRingStyleCounts -Hero $Hero
+    $dominant = $styleCounts.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 1
+
+    if ($null -eq $dominant -or [int]$dominant.Value -le 0) {
+        return "None yet"
+    }
+
+    switch ($dominant.Key) {
+        "QuickFinish" { return "Quick Finish" }
+        "Technical" { return "Technical" }
+        "Grappler" { return "Grappler" }
+        "Brawler" { return "Brawler" }
+        default { return "None yet" }
+    }
+}
+
 function Get-RingReputationTitle {
     param($Hero)
 
@@ -1052,6 +1176,8 @@ function Start-BrawlLoop {
     $opponentFocusAttackBonus = 0
     $heroOffBalance = $false
     $opponentOffBalance = $false
+    $heroActionCounts = @{ P = 0; G = 0; B = 0; F = 0 }
+    $rounds = 0
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene (Get-RingOpponentIntro -Hero $Hero -Opponent $Opponent)
@@ -1106,6 +1232,8 @@ function Start-BrawlLoop {
 
         $heroOffBalance = $false
         $opponentOffBalance = $false
+        $heroActionCounts[$heroChoice] = [int]$heroActionCounts[$heroChoice] + 1
+        $rounds += 1
 
         switch ("$heroChoice/$opponentDisplayChoice") {
                 "P/P" {
@@ -1199,6 +1327,16 @@ function Start-BrawlLoop {
 
         if ($opponentHP -le 0) {
             Write-Scene "$($Opponent.Name) drops to one knee and yields the fight."
+            $styleSummary = Get-RingFightStyleSummary -ActionCounts $heroActionCounts -Rounds $rounds -HeroWon $true
+            $styleResult = Add-HeroRingStyleResult -Hero $Hero -StyleSummary $styleSummary
+            Write-Scene $styleSummary.CrowdText
+
+            if ($styleResult.ReputationAdded -gt 0) {
+                Write-EmphasisLine -Text "Crowd taste: $($styleResult.Style) (+$($styleResult.ReputationAdded) ring reputation)." -Color "Yellow"
+            }
+            else {
+                Write-ColorLine "Crowd taste: $($styleResult.Style)" "DarkYellow"
+            }
 
             if ($TrackRivalry) {
                 $updatedRecord = Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $true
@@ -1214,6 +1352,10 @@ function Start-BrawlLoop {
 
         if ($heroBrawlHP -le 0) {
             Write-Scene "$($Hero.Name) is forced down and the referee calls the bout."
+            $styleSummary = Get-RingFightStyleSummary -ActionCounts $heroActionCounts -Rounds $rounds -HeroWon $false
+            $styleResult = Add-HeroRingStyleResult -Hero $Hero -StyleSummary $styleSummary
+            Write-Scene $styleSummary.CrowdText
+            Write-ColorLine "Crowd taste: $($styleResult.Style)" "DarkYellow"
 
             if ($TrackRivalry) {
                 $updatedRecord = Update-HeroRingRivalryRecord -Hero $Hero -Opponent $Opponent -HeroWon $false
@@ -1259,6 +1401,7 @@ function Start-FightingRing {
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
     Write-ColorLine "Ring Reputation: $(Get-HeroRingReputation -Hero $Game.Hero) ($(Get-RingReputationTitle -Hero $Game.Hero))" "DarkYellow"
+    Write-ColorLine "Crowd Taste: $(Get-HeroDominantRingStyle -Hero $Game.Hero)" "DarkYellow"
     if (Test-HeroWonRingChampionNight -Hero $Game.Hero) {
         Write-ColorLine "Ring Title: Pit Champion" "DarkYellow"
     }

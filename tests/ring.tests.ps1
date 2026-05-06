@@ -34,6 +34,30 @@ function Test-RingReputationTracksSeparateProgress {
     Assert-Equal -Actual (Get-RingReputationTitle -Hero $hero) -Expected "Heard in the Pit" -Message "Reputation should resolve to a public ring title."
 }
 
+function Test-RingFightStyleSummaryRecognizesQuickFinish {
+    $summary = Get-RingFightStyleSummary -ActionCounts @{ P = 2; G = 0; B = 0; F = 0 } -Rounds 2 -HeroWon $true
+
+    Assert-Equal -Actual $summary.Key -Expected "QuickFinish" -Message "Fast punch-heavy wins should count as quick finishes."
+    Assert-Equal -Actual $summary.ReputationBonus -Expected 2 -Message "Quick finishes should be worth extra crowd reputation."
+}
+
+function Test-RingFightStyleSummaryRecognizesTechnicalWin {
+    $summary = Get-RingFightStyleSummary -ActionCounts @{ P = 0; G = 0; B = 2; F = 2 } -Rounds 4 -HeroWon $true
+
+    Assert-Equal -Actual $summary.Key -Expected "Technical" -Message "Block and focus-heavy wins should count as technical crowd taste."
+}
+
+function Test-HeroRingStyleResultTracksCrowdTaste {
+    $hero = Get-Hero
+    $summary = Get-RingFightStyleSummary -ActionCounts @{ P = 0; G = 3; B = 0; F = 0 } -Rounds 3 -HeroWon $true
+    $result = Add-HeroRingStyleResult -Hero $hero -StyleSummary $summary
+
+    Assert-Equal -Actual $result.Style -Expected "Grappler" -Message "Grapple-heavy wins should be recorded as grappler style."
+    Assert-Equal -Actual $hero.RingStyleCounts["Grappler"] -Expected 1 -Message "Hero ring style counts should persist the crowd taste."
+    Assert-Equal -Actual (Get-HeroDominantRingStyle -Hero $hero) -Expected "Grappler" -Message "Dominant style should read back from style counts."
+    Assert-Equal -Actual $hero.RingReputation -Expected 1 -Message "Style result should add its small crowd reputation bonus."
+}
+
 function Test-RingMasterRespectsPhysicalProwess {
     $barbarian = Get-Hero
     $rogueLikeHero = Get-Hero
@@ -514,6 +538,9 @@ function Test-FightingRingChampionNightAwardsTitleAndReputation {
 
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingReputationTracksSeparateProgress
+Test-RingFightStyleSummaryRecognizesQuickFinish
+Test-RingFightStyleSummaryRecognizesTechnicalWin
+Test-HeroRingStyleResultTracksCrowdTaste
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
 Test-RingChampionNightReadinessUsesTenWins
