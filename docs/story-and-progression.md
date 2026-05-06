@@ -169,6 +169,8 @@ After the level 4 long rest, Docks Tier 4 opens:
 - completing `2` strong Docks Tier 4 quests marks `HigherPatronSuspected`, confirming that the contract organization answers to higher city hands without naming the patron yet
 - if Docks Tier 4 results are weak, `3` total completed Tier 4 quests can still finish the current Docks chain
 
+At level 4, the fighting ring also starts foreshadowing a later outer-city monster challenge track: Dorr can talk about unarmed bouts against contracted monsters, but the actual fights wait until the monster zone exists.
+
 Once the higher-city trail is complete, Docks Tier 5 opens `The Civic Vault`.
 
 This is the current Chapter Three climax dungeon:

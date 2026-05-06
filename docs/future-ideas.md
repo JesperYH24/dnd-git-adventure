@@ -32,6 +32,24 @@
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
 - deeper inn events, shady city routes, and economic info payoffs
 
+## Fighting ring direction
+
+- add a separate `RingReputation` track alongside `RingWinsTotal`, where normal bouts, champion bouts, and later monster challenges build different amounts of public name value
+- use ring reputation to unlock stronger Dorr dialogue, better odds, special opponents, rumors, and future quest hooks
+- turn selected named opponents into rival arcs, so repeat fights against Vero, Nella, Ysold, or later specialists remember style, losses, grudges, and respect
+- make the first champion milestone feel like an event night with crowd buildup, Dorr presentation, a title bout, and a title or renown reward beyond coin
+- let the crowd react to fighting style:
+  - quick knockouts build loud crowd reputation
+  - block/focus-heavy wins build technical respect
+  - grapple-heavy wins split the room between cheers and boos
+- add a small wager/purse choice before tournaments, such as safe purse, double-or-nothing, or a crowd bet for surviving a set number of rounds
+- make the ring a rumor source after fights, especially for Docks tension, Halewick panic, shady patrons, and later monster-zone leads
+- expand ring standing titles beyond `New Blood`, `Known Contender`, and `Champion`, with later names such as `Pit-Fighter` and monster-challenge titles like `Beast-Hand`
+- when the outer monster zone exists, let Dorr offer unarmed monster contracts after level 4:
+  - monsters must be discovered or contracted through the monster zone first
+  - fights are unarmed-only and built for reputation rather than normal loot
+  - rewards can include bounty coin, ring reputation, crowd titles, and monster-specific rumors
+
 ## Larger system expansions
 
 - deepen `The Understreet Complex` further with more bespoke room mechanics, puzzles, and enemy-specific dungeon interactions

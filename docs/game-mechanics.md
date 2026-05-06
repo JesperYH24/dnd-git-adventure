@@ -97,6 +97,7 @@ Docks is intentionally more linear at first than the main town hub.
 - rivalries and record tracking against named opponents
 - champion-tier and veteran-tier opponent pools
 - long-term progress toward stronger unarmed fighting features
+- after level 4, Dorr can point the hero toward future monster-challenge contracts where unarmed monster bouts would build ring reputation once the outer monster zone exists
 
 ## Day jobs
 

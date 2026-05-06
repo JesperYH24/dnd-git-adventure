@@ -59,6 +59,23 @@ function Test-RingVeteranCircuitUnlocksAfterFifteenWins {
     Assert-Equal -Actual $opponents.Count -Expected 5 -Message "Fifteen total ring wins should unlock the extended veteran circuit."
 }
 
+function Test-RingMonsterChallengesUnlockAtLevelFour {
+    $hero = Get-Hero
+    $hero.Level = 3
+
+    $lockedTalk = Get-RingMonsterChallengeTalk -Hero $hero
+    $locked = Test-HeroReadyForRingMonsterChallenges -Hero $hero
+
+    $hero.Level = 4
+    $unlockedTalk = Get-RingMonsterChallengeTalk -Hero $hero
+    $unlocked = Test-HeroReadyForRingMonsterChallenges -Hero $hero
+
+    Assert-Equal -Actual $locked -Expected $false -Message "Monster challenges should stay locked before level 4."
+    Assert-True -Condition ($lockedTalk -like "*level four*") -Message "Locked monster challenge talk should explain the level 4 gate."
+    Assert-Equal -Actual $unlocked -Expected $true -Message "Monster challenges should unlock as a ring conversation at level 4."
+    Assert-True -Condition ($unlockedTalk -like "*outer contracts*") -Message "Unlocked monster challenge talk should point toward future outer contracts."
+}
+
 function Test-SecondRingTrainingTierUnlocksAtTwentyWins {
     $hero = Get-Hero
     $first = Grant-RingTraining -Hero $hero -Wins 10
@@ -400,6 +417,7 @@ Test-RingTrainingUnlocksUnarmedBonus
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
 Test-RingVeteranCircuitUnlocksAfterFifteenWins
+Test-RingMonsterChallengesUnlockAtLevelFour
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie

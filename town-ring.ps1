@@ -295,6 +295,30 @@ function Get-RingMasterOpponentTalk {
     return "Dorr squints toward the waiting fighters. 'Some swing wild. Some hide behind a tight guard. Some want the floor under you more than your jaw. Watch their first step.'"
 }
 
+function Test-HeroReadyForRingMonsterChallenges {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["Level"]) {
+        return $false
+    }
+
+    return ([int]$Hero.Level -ge 4)
+}
+
+function Get-RingMonsterChallengeTalk {
+    param($Hero)
+
+    if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Hero)) {
+        return "Dorr's grin fades into a measuring look. 'Monster bouts are not tavern dares. When you have survived enough real trouble to stand at level four, we can talk about contracts beyond the wall.'"
+    }
+
+    if ($Hero.RingWinsTotal -ge 10) {
+        return "Dorr lowers his voice. 'Champion hands against city bruisers is one thing. Champion hands against things dragged in from beyond the wall? That is how a name turns into a warning. Bring me a real monster trail when the outer contracts open, and I will make the pit listen.'"
+    }
+
+    return "Dorr taps the rail, eyes bright with ugly possibilities. 'Level four means you have lived through enough that I can say this plainly: once the outer contracts open, I can put your bare hands against things with claws, hides, and prices on their heads. Win those, and the city will not just pay you. It will talk about you.'"
+}
+
 function Get-HeroRingRivalryRecord {
     param(
         $Hero,
@@ -1025,6 +1049,7 @@ function Start-FightingRing {
     Write-ColorLine "1. Enter the ring" "White"
     Write-ColorLine "2. Ask Dorr about the pit" "White"
     Write-ColorLine "3. Ask Dorr what sort of challengers are waiting" "White"
+    Write-ColorLine "4. Ask about monster challenges" $(if (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero) { "White" } else { "DarkGray" })
     Write-ColorLine "0. Back to town" "DarkGray"
     Write-ColorLine ""
 
@@ -1056,6 +1081,10 @@ function Start-FightingRing {
             }
             "3" {
                 Write-Scene (Get-RingMasterOpponentTalk -Hero $Game.Hero)
+                Write-ColorLine ""
+            }
+            "4" {
+                Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero)
                 Write-ColorLine ""
             }
             "0" {
