@@ -34,6 +34,37 @@ function Test-RingReputationTracksSeparateProgress {
     Assert-Equal -Actual (Get-RingReputationTitle -Hero $hero) -Expected "Heard in the Pit" -Message "Reputation should resolve to a public ring title."
 }
 
+function Test-UnarmedRingTitleProgression {
+    $hero = Get-Hero
+
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Unproven Hands" -Message "Fresh heroes should start with an unproven unarmed title."
+
+    $hero.RingWinsTotal = 1
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Proven Hands" -Message "A first win should move the hero out of the unproven title."
+
+    $hero.RingWinsTotal = 5
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Crowd Fighter" -Message "Several ring wins should earn a crowd-facing unarmed title."
+
+    $hero.RingWinsTotal = 10
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Bare-Knuckle Regular" -Message "Champion-ready fighters should have a stronger unarmed title."
+
+    $hero.UnarmedTrainingLevel = 2
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Pit-Fighter" -Message "Second-tier unarmed training should award the Pit-Fighter title."
+}
+
+function Test-UnarmedRingTitleUsesChampionAndMonsterHooks {
+    $hero = Get-Hero
+    $hero.RingWinsTotal = 10
+
+    Complete-RingChampionNight -Hero $hero | Out-Null
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $hero) -Expected "Pit Champion" -Message "Champion Night should override lower unarmed titles."
+
+    $prospect = Get-Hero
+    $prospect.Level = 4
+    $prospect.RingReputation = 50
+    Assert-Equal -Actual (Get-HeroUnarmedRingTitle -Hero $prospect) -Expected "Beast-Hand Prospect" -Message "Level 4 high-reputation fighters should foreshadow monster-challenge titles."
+}
+
 function Test-RingFightStyleSummaryRecognizesQuickFinish {
     $summary = Get-RingFightStyleSummary -ActionCounts @{ P = 2; G = 0; B = 0; F = 0 } -Rounds 2 -HeroWon $true
 
@@ -631,6 +662,8 @@ function Test-FightingRingChampionNightAwardsTitleAndReputation {
 
 Test-RingTrainingUnlocksUnarmedBonus
 Test-RingReputationTracksSeparateProgress
+Test-UnarmedRingTitleProgression
+Test-UnarmedRingTitleUsesChampionAndMonsterHooks
 Test-RingFightStyleSummaryRecognizesQuickFinish
 Test-RingFightStyleSummaryRecognizesTechnicalWin
 Test-HeroRingStyleResultTracksCrowdTaste

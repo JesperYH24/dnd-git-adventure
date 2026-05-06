@@ -652,6 +652,57 @@ function Get-RingReputationTitle {
     return "Unproven"
 }
 
+function Get-HeroUnarmedRingTitle {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return "Unproven Hands"
+    }
+
+    $wins = 0
+    $trainingLevel = 0
+    $level = 1
+    $reputation = Get-HeroRingReputation -Hero $Hero
+
+    if ($null -ne $Hero.PSObject.Properties["RingWinsTotal"]) {
+        $wins = [int]$Hero.RingWinsTotal
+    }
+
+    if ($null -ne $Hero.PSObject.Properties["UnarmedTrainingLevel"]) {
+        $trainingLevel = [int]$Hero.UnarmedTrainingLevel
+    }
+
+    if ($null -ne $Hero.PSObject.Properties["Level"]) {
+        $level = [int]$Hero.Level
+    }
+
+    if (Test-HeroWonRingChampionNight -Hero $Hero) {
+        return "Pit Champion"
+    }
+
+    if ($level -ge 4 -and $reputation -ge 50) {
+        return "Beast-Hand Prospect"
+    }
+
+    if ($trainingLevel -ge 2) {
+        return "Pit-Fighter"
+    }
+
+    if ($trainingLevel -ge 1 -or $wins -ge 10) {
+        return "Bare-Knuckle Regular"
+    }
+
+    if ($wins -ge 5 -or $reputation -ge 15) {
+        return "Crowd Fighter"
+    }
+
+    if ($wins -gt 0 -or $reputation -gt 0) {
+        return "Proven Hands"
+    }
+
+    return "Unproven Hands"
+}
+
 function Get-RingMasterPitTalk {
     param($Hero)
 
@@ -1567,6 +1618,7 @@ function Start-FightingRing {
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
     Write-ColorLine "Ring Reputation: $(Get-HeroRingReputation -Hero $Game.Hero) ($(Get-RingReputationTitle -Hero $Game.Hero))" "DarkYellow"
+    Write-ColorLine "Unarmed Title: $(Get-HeroUnarmedRingTitle -Hero $Game.Hero)" "DarkYellow"
     Write-ColorLine "Crowd Taste: $(Get-HeroDominantRingStyle -Hero $Game.Hero)" "DarkYellow"
     if (Test-HeroWonRingChampionNight -Hero $Game.Hero) {
         Write-ColorLine "Ring Title: Pit Champion" "DarkYellow"

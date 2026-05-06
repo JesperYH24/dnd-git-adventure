@@ -97,6 +97,7 @@ Docks is intentionally more linear at first than the main town hub.
 - rivalries and record tracking against named opponents
 - `RingReputation` as a public-name track separate from `RingWinsTotal`
 - ring reputation titles, currently ranging from `Unproven` to `Ring Legend`
+- derived unarmed ring titles from wins, unarmed training, ring reputation, Champion Night, and the future monster-challenge hook
 - named rival arcs for selected opponents, with personal pre-fight and post-fight beats layered on top of the rivalry record
 - `Champion Night` as a one-time title bout after 10 ring wins, currently built around Champion Breaker Ysold and a persistent `Pit Champion` title flag
 - fight-style crowd taste for `Quick Finish`, `Technical`, `Grappler`, and `Brawler` wins, with small reputation bonuses and a saved dominant style

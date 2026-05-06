@@ -41,7 +41,7 @@
 - expand the first crowd-taste pass so quick finishes, technical wins, grapple-heavy wins, and brawls can unlock distinct Dorr comments, rival reactions, and betting hooks
 - expand the first wager system with Dorr comments, odds that react to reputation, and special side bets tied to rival names or crowd taste
 - expand the first post-fight ring rumor system with rumor memory, NPC-specific sources, and quest hooks that can mark leads instead of only surfacing flavor
-- expand ring standing titles beyond `New Blood`, `Known Contender`, and `Champion`, with later names such as `Pit-Fighter` and monster-challenge titles like `Beast-Hand`
+- expand the first unarmed-title ladder beyond `Pit Champion` and `Beast-Hand Prospect` with more named thresholds, Dorr reactions, and monster-specific titles
 - when the outer monster zone exists, let Dorr offer unarmed monster contracts after level 4:
   - monsters must be discovered or contracted through the monster zone first
   - fights are unarmed-only and built for reputation rather than normal loot
