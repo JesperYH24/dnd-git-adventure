@@ -247,6 +247,70 @@ function Get-RingRewardCopper {
     }
 }
 
+function Get-HeroRingReputation {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return 0
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["RingReputation"]) {
+        $Hero | Add-Member -NotePropertyName RingReputation -NotePropertyValue 0
+    }
+
+    return [int]$Hero.RingReputation
+}
+
+function Get-RingReputationReward {
+    param([int]$Wins)
+
+    switch ($Wins) {
+        1 { return 2 }
+        2 { return 5 }
+        3 { return 9 }
+        4 { return 14 }
+        5 { return 20 }
+        default { return 0 }
+    }
+}
+
+function Add-HeroRingReputation {
+    param(
+        $Hero,
+        [int]$Amount
+    )
+
+    $current = Get-HeroRingReputation -Hero $Hero
+
+    if ($Amount -le 0) {
+        return [PSCustomObject]@{
+            Added = 0
+            Total = $current
+        }
+    }
+
+    $Hero.RingReputation = $current + $Amount
+
+    return [PSCustomObject]@{
+        Added = $Amount
+        Total = [int]$Hero.RingReputation
+    }
+}
+
+function Get-RingReputationTitle {
+    param($Hero)
+
+    $reputation = Get-HeroRingReputation -Hero $Hero
+
+    if ($reputation -ge 80) { return "Ring Legend" }
+    if ($reputation -ge 50) { return "City Bruiser" }
+    if ($reputation -ge 30) { return "Pit Name" }
+    if ($reputation -ge 15) { return "Crowd Name" }
+    if ($reputation -ge 5) { return "Heard in the Pit" }
+
+    return "Unproven"
+}
+
 function Get-RingMasterPitTalk {
     param($Hero)
 
@@ -1029,6 +1093,7 @@ function Start-FightingRing {
     Write-Scene (Get-RingMasterGreeting -Hero $Game.Hero)
     Write-ColorLine "Entry Fee: $(Convert-CopperToCurrencyText -Copper $entryFee)" "DarkYellow"
     Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Game.Hero)" "DarkYellow"
+    Write-ColorLine "Ring Reputation: $(Get-HeroRingReputation -Hero $Game.Hero) ($(Get-RingReputationTitle -Hero $Game.Hero))" "DarkYellow"
     if ($Game.Hero.RingWinsTotal -ge 10) {
         Write-ColorLine "Ring Standing: Champion" "DarkYellow"
     }
@@ -1138,6 +1203,9 @@ function Start-FightingRing {
     }
 
     if ($wins -gt 0) {
+        $reputationResult = Add-HeroRingReputation -Hero $Game.Hero -Amount (Get-RingReputationReward -Wins $wins)
+        Write-EmphasisLine -Text "Ring reputation grows by $($reputationResult.Added). Dorr now calls $($Game.Hero.Name) '$((Get-RingReputationTitle -Hero $Game.Hero))' when the crowd is listening." -Color "Yellow"
+
         $trainingResult = Grant-RingTraining -Hero $Game.Hero -Wins $wins
 
         if ($trainingResult.Unlocked) {

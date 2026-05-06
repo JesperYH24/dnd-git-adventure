@@ -22,6 +22,18 @@ function Test-RingTrainingUnlocksUnarmedBonus {
     Assert-Equal -Actual $after.DamageBonus -Expected ($before.DamageBonus + 1) -Message "Unarmed training should raise bare-hand damage by 1."
 }
 
+function Test-RingReputationTracksSeparateProgress {
+    $hero = Get-Hero
+
+    $first = Add-HeroRingReputation -Hero $hero -Amount (Get-RingReputationReward -Wins 2)
+    $second = Add-HeroRingReputation -Hero $hero -Amount (Get-RingReputationReward -Wins 3)
+
+    Assert-Equal -Actual $first.Added -Expected 5 -Message "Two wins should add the two-win reputation reward."
+    Assert-Equal -Actual $second.Total -Expected 14 -Message "Ring reputation should accumulate separately from ring wins."
+    Assert-Equal -Actual $hero.RingWinsTotal -Expected 0 -Message "Reputation awards should not change total win count."
+    Assert-Equal -Actual (Get-RingReputationTitle -Hero $hero) -Expected "Heard in the Pit" -Message "Reputation should resolve to a public ring title."
+}
+
 function Test-RingMasterRespectsPhysicalProwess {
     $barbarian = Get-Hero
     $rogueLikeHero = Get-Hero
@@ -413,7 +425,29 @@ function Test-FightingRingOptionOneStartsTournament {
     Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $true -Message "Starting the ring should consume today's tournament attempt."
 }
 
+function Test-FightingRingAwardsReputationForWins {
+    $game = Initialize-Game
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $game.Hero.CurrencyCopper = 200
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    function Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        return $true
+    }
+
+    Start-FightingRing -Game $game
+
+    Assert-Equal -Actual $game.Hero.RingWinsTotal -Expected 3 -Message "A fresh ring tournament should still grant normal ring wins."
+    Assert-Equal -Actual $game.Hero.RingReputation -Expected 9 -Message "Winning three fresh rounds should grant the three-win reputation reward."
+}
+
 Test-RingTrainingUnlocksUnarmedBonus
+Test-RingReputationTracksSeparateProgress
 Test-RingMasterRespectsPhysicalProwess
 Test-RingChampionUnlocksHarderCircuit
 Test-RingVeteranCircuitUnlocksAfterFifteenWins
@@ -431,6 +465,7 @@ Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
 Test-FightingRingOptionOneStartsTournament
+Test-FightingRingAwardsReputationForWins
 
 Write-Host "Ring tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

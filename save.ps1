@@ -176,6 +176,23 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
+    foreach ($heroDefault in @(
+        @{ Name = "UnarmedTrainingLevel"; Value = 0 },
+        @{ Name = "RingWinsTotal"; Value = 0 },
+        @{ Name = "RingReputation"; Value = 0 },
+        @{ Name = "RingVisits"; Value = 0 },
+        @{ Name = "RingRivalries"; Value = @{} }
+    )) {
+        if (-not (Test-AdventureStateMember -Object $Game.Hero -Name $heroDefault.Name)) {
+            if ($Game.Hero -is [hashtable]) {
+                $Game.Hero[$heroDefault.Name] = $heroDefault.Value
+            }
+            else {
+                $Game.Hero | Add-Member -NotePropertyName $heroDefault.Name -NotePropertyValue $heroDefault.Value
+            }
+        }
+    }
+
     if (-not (Test-AdventureStateMember -Object $Game -Name "Town") -or $null -eq $Game.Town) {
         $Game.Town = New-DefaultTownState
     }

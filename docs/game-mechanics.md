@@ -95,6 +95,8 @@ Docks is intentionally more linear at first than the main town hub.
 - once-per-day tournament access
 - matchup-style brawl rounds with simultaneous choices
 - rivalries and record tracking against named opponents
+- `RingReputation` as a public-name track separate from `RingWinsTotal`
+- ring reputation titles, currently ranging from `Unproven` to `Ring Legend`
 - champion-tier and veteran-tier opponent pools
 - long-term progress toward stronger unarmed fighting features
 - after level 4, Dorr can point the hero toward future monster-challenge contracts where unarmed monster bouts would build ring reputation once the outer monster zone exists

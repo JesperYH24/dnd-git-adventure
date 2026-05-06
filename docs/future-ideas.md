@@ -34,7 +34,7 @@
 
 ## Fighting ring direction
 
-- add a separate `RingReputation` track alongside `RingWinsTotal`, where normal bouts, champion bouts, and later monster challenges build different amounts of public name value
+- expand the new `RingReputation` track so champion bouts and later monster challenges build different amounts of public name value
 - use ring reputation to unlock stronger Dorr dialogue, better odds, special opponents, rumors, and future quest hooks
 - turn selected named opponents into rival arcs, so repeat fights against Vero, Nella, Ysold, or later specialists remember style, losses, grudges, and respect
 - make the first champion milestone feel like an event night with crowd buildup, Dorr presentation, a title bout, and a title or renown reward beyond coin

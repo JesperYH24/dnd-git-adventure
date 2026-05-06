@@ -1546,6 +1546,7 @@ function Get-Hero {
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0
                 RingWinsTotal      = 0
+                RingReputation     = 0
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 8
@@ -1590,6 +1591,7 @@ function Get-Hero {
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0
                 RingWinsTotal      = 0
+                RingReputation     = 0
                 RingVisits         = 0
                 RingRivalries      = @{}
                 HitDie             = 12
