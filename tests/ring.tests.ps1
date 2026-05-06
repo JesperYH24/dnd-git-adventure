@@ -505,6 +505,33 @@ function Test-RingWagerPayoutHandlesDoubleOrNothingFailure {
     Assert-Equal -Actual $payout.LostBasePurse -Expected $true -Message "Double-or-nothing failure should report that the earned purse was lost."
 }
 
+function Test-RingRumorPrioritizesHalewickAftershock {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+
+    $rumor = Get-RingRumor -Game $game -Wins 1
+
+    Assert-True -Condition ($rumor -like "*Halewick*") -Message "Ring rumors should prioritize the Halewick aftershock when that story flag is set."
+}
+
+function Test-RingRumorPointsToMonsterContractsAtLevelFour {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+
+    $rumor = Get-RingRumor -Game $game -Wins 1
+
+    Assert-True -Condition ($rumor -like "*outer-road contracts*") -Message "Level 4 ring rumors should point toward future monster-zone contracts."
+}
+
+function Test-RingRumorRequiresAWin {
+    $game = Initialize-Game
+
+    $rumor = Get-RingRumor -Game $game -Wins 0
+
+    Assert-Equal -Actual $rumor -Expected $null -Message "Ring rumors should not fire when the hero wins no rounds."
+}
+
 function Test-FightingRingAwardsReputationForWins {
     $game = Initialize-Game
     Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
@@ -629,6 +656,9 @@ Test-OffBalanceFallsBackToSimpleActions
 Test-FightingRingOptionOneStartsTournament
 Test-RingWagerPayoutHandlesCrowdBet
 Test-RingWagerPayoutHandlesDoubleOrNothingFailure
+Test-RingRumorPrioritizesHalewickAftershock
+Test-RingRumorPointsToMonsterContractsAtLevelFour
+Test-RingRumorRequiresAWin
 Test-FightingRingAwardsReputationForWins
 Test-FightingRingCrowdBetPaysBonus
 Test-FightingRingDoubleOrNothingCanLosePurse

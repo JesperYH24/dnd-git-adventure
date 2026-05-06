@@ -378,6 +378,41 @@ function Resolve-RingWagerPayout {
     }
 }
 
+function Get-RingRumor {
+    param(
+        $Game,
+        [int]$Wins
+    )
+
+    if ($Wins -le 0 -or $null -eq $Game -or $null -eq $Game.Hero) {
+        return $null
+    }
+
+    $storyFlags = if ($null -ne $Game.Town -and $null -ne $Game.Town.StoryFlags) { $Game.Town.StoryFlags } else { @{} }
+
+    if ([bool]$storyFlags["LordHalewickEscaped"]) {
+        return "Ring rumor: a cut man near the back rail swears two dock crews saw Halewick's smaller dragon shape cross the Civic Keep bells before turning toward the river wind."
+    }
+
+    if ([bool]$storyFlags["HigherPatronSuspected"]) {
+        return "Ring rumor: a bookmaker mutters that shell-company coin has started avoiding obvious bets, as if someone above the docks is suddenly afraid of written names."
+    }
+
+    if ([bool]$storyFlags["DocksFirstChainComplete"] -or [bool]$storyFlags["DocksUnlocked"]) {
+        return "Ring rumor: one of the handlers says the docks are paying rough coin for quiet men, false cargo tallies, and anyone who can keep a witness from reaching Mira Kest."
+    }
+
+    if ([int]$Game.Hero.Level -ge 4) {
+        return "Ring rumor: Dorr has heard of outer-road contracts where bruisers get paid for bringing strange hides, teeth, and living proof back from beyond the walls."
+    }
+
+    if ((Get-HeroRingReputation -Hero $Game.Hero) -ge 15) {
+        return "Ring rumor: a patron in a clean coat asks too many questions about whether $($Game.Hero.Name)'s name can move a crowd without Dorr's permission."
+    }
+
+    return "Ring rumor: the rail says winning in the pit travels faster than honest notices. By morning, somebody who needs muscle will know $($Game.Hero.Name)'s name."
+}
+
 function Get-HeroRingReputation {
     param($Hero)
 
@@ -1680,6 +1715,12 @@ function Start-FightingRing {
     Write-Scene $wagerPayout.Text
 
     if ($wins -gt 0) {
+        $ringRumor = Get-RingRumor -Game $Game -Wins $wins
+
+        if (-not [string]::IsNullOrWhiteSpace($ringRumor)) {
+            Write-Scene $ringRumor
+        }
+
         $reputationResult = Add-HeroRingReputation -Hero $Game.Hero -Amount (Get-RingReputationReward -Wins $wins)
         Write-EmphasisLine -Text "Ring reputation grows by $($reputationResult.Added). Dorr now calls $($Game.Hero.Name) '$((Get-RingReputationTitle -Hero $Game.Hero))' when the crowd is listening." -Color "Yellow"
 
