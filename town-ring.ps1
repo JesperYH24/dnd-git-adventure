@@ -775,6 +775,69 @@ function Get-RingMonsterChallengeTalk {
     return "Dorr taps the rail, eyes bright with ugly possibilities. 'Level four means you have lived through enough that I can say this plainly: once the outer contracts open, I can put your bare hands against things with claws, hides, and prices on their heads. Win those, and the city will not just pay you. It will talk about you.'"
 }
 
+function Get-RingMonsterChallengePreview {
+    param($Hero)
+
+    if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Hero)) {
+        return @()
+    }
+
+    $title = Get-HeroUnarmedRingTitle -Hero $Hero
+    $reputation = Get-HeroRingReputation -Hero $Hero
+    $wonChampionNight = Test-HeroWonRingChampionNight -Hero $Hero
+
+    $contracts = @(
+        [PSCustomObject]@{
+            Name = "Wall-Scraper Trial"
+            Type = "Proof Bout"
+            Readiness = "Level 4"
+            Hook = "A clawed scavenger that learns city-wall patrol routes."
+            Rule = "Bare hands only; survive the first rush and bring back a marked claw."
+            RewardPreview = "+ring reputation, bounty coin, Beast-Hand notice"
+        },
+        [PSCustomObject]@{
+            Name = "Mire-Tusk Clinch"
+            Type = "Grapple Contract"
+            Readiness = if ($reputation -ge 25) { "Ready when monster zone opens" } else { "Needs stronger ring reputation" }
+            Hook = "A low marsh brute with a price on its tusks and a habit of breaking nets."
+            Rule = "Unarmed takedown; weapons spoil the ring story even if they save skin."
+            RewardPreview = "+larger reputation, tusk bounty, grappler crowd title"
+        },
+        [PSCustomObject]@{
+            Name = "Lantern-Eater Exhibition"
+            Type = "Named Monster"
+            Readiness = if ($wonChampionNight) { "Champion preview" } else { "Champion Night recommended" }
+            Hook = "Something pale that stalks road lanterns and leaves glass bitten clean."
+            Rule = "Contract must be discovered outside the city before Dorr will book it."
+            RewardPreview = "+major reputation, monster rumor, possible title beyond $title"
+        }
+    )
+
+    return $contracts
+}
+
+function Show-RingMonsterChallengePreview {
+    param($Hero)
+
+    $contracts = @(Get-RingMonsterChallengePreview -Hero $Hero)
+
+    if ($contracts.Count -eq 0) {
+        return
+    }
+
+    Write-SectionTitle -Text "Monster Challenge Preview" -Color "DarkYellow"
+    Write-Scene "Dorr has no signed outer contracts yet, but he lays three future cards on the rail so $($Hero.Name) can see the shape of what comes after city bruisers."
+
+    foreach ($contract in $contracts) {
+        Write-EmphasisLine -Text "$($contract.Name) - $($contract.Type)" -Color "Yellow"
+        Write-ColorLine "Readiness: $($contract.Readiness)" "DarkYellow"
+        Write-ColorLine "Hook: $($contract.Hook)" "Gray"
+        Write-ColorLine "Rule: $($contract.Rule)" "Gray"
+        Write-ColorLine "Reward preview: $($contract.RewardPreview)" "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
 function Get-HeroRingRivalryRecord {
     param(
         $Hero,
@@ -1683,6 +1746,7 @@ function Start-FightingRing {
             }
             "4" {
                 Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero)
+                Show-RingMonsterChallengePreview -Hero $Game.Hero
                 Write-ColorLine ""
             }
             "0" {

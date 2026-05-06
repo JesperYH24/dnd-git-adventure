@@ -103,6 +103,7 @@ Docks is intentionally more linear at first than the main town hub.
 - fight-style crowd taste for `Quick Finish`, `Technical`, `Grappler`, and `Brawler` wins, with small reputation bonuses and a saved dominant style
 - wager choices before entering the ring: safe purse, crowd bet, or double-or-nothing
 - post-fight ring rumors that react to Docks progress, Halewick aftershocks, level 4 monster-zone foreshadowing, and ring reputation
+- level 4 monster-challenge preview cards in the ring for future outer-zone unarmed contracts
 - champion-tier and veteran-tier opponent pools
 - long-term progress toward stronger unarmed fighting features
 - after level 4, Dorr can point the hero toward future monster-challenge contracts where unarmed monster bouts would build ring reputation once the outer monster zone exists

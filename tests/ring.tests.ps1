@@ -157,6 +157,37 @@ function Test-RingMonsterChallengesUnlockAtLevelFour {
     Assert-True -Condition ($unlockedTalk -like "*outer contracts*") -Message "Unlocked monster challenge talk should point toward future outer contracts."
 }
 
+function Test-RingMonsterChallengePreviewRequiresLevelFour {
+    $hero = Get-Hero
+    $hero.Level = 3
+
+    $lockedPreview = @(Get-RingMonsterChallengePreview -Hero $hero)
+
+    $hero.Level = 4
+    $unlockedPreview = @(Get-RingMonsterChallengePreview -Hero $hero)
+
+    Assert-Equal -Actual $lockedPreview.Count -Expected 0 -Message "Monster challenge preview should stay hidden before level 4."
+    Assert-Equal -Actual $unlockedPreview.Count -Expected 3 -Message "Level 4 should reveal the three preview monster contracts."
+    Assert-Equal -Actual $unlockedPreview[0].Name -Expected "Wall-Scraper Trial" -Message "The first preview contract should be the proof bout."
+}
+
+function Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle {
+    $hero = Get-Hero
+    $hero.Level = 4
+
+    $baselinePreview = @(Get-RingMonsterChallengePreview -Hero $hero)
+
+    $hero.RingReputation = 25
+    $hero.RingWinsTotal = 10
+    Complete-RingChampionNight -Hero $hero | Out-Null
+    $advancedPreview = @(Get-RingMonsterChallengePreview -Hero $hero)
+
+    Assert-Equal -Actual $baselinePreview[1].Readiness -Expected "Needs stronger ring reputation" -Message "The grapple contract should ask for stronger reputation at first."
+    Assert-Equal -Actual $advancedPreview[1].Readiness -Expected "Ready when monster zone opens" -Message "Stronger ring reputation should mark the grapple contract ready for the future zone."
+    Assert-Equal -Actual $advancedPreview[2].Readiness -Expected "Champion preview" -Message "Champion Night should improve the named monster preview readiness."
+    Assert-True -Condition ($advancedPreview[2].RewardPreview -like "*Pit Champion*") -Message "Named monster rewards should reference the hero's current unarmed title."
+}
+
 function Test-SecondRingTrainingTierUnlocksAtTwentyWins {
     $hero = Get-Hero
     $first = Grant-RingTraining -Hero $hero -Wins 10
@@ -672,6 +703,8 @@ Test-RingChampionUnlocksHarderCircuit
 Test-RingChampionNightReadinessUsesTenWins
 Test-RingVeteranCircuitUnlocksAfterFifteenWins
 Test-RingMonsterChallengesUnlockAtLevelFour
+Test-RingMonsterChallengePreviewRequiresLevelFour
+Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie
