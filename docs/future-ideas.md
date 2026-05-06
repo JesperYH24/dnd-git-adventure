@@ -39,7 +39,7 @@
 - expand the first named rival arcs beyond Vero, Nella, and Ysold so later specialists also remember style, losses, grudges, and respect
 - expand `Champion Night` after its first Ysold title-bout version with more crowd buildup, Dorr presentation, alternate title challengers, and later renown rewards beyond the initial `Pit Champion` flag
 - expand the first crowd-taste pass so quick finishes, technical wins, grapple-heavy wins, and brawls can unlock distinct Dorr comments, rival reactions, and betting hooks
-- add a small wager/purse choice before tournaments, such as safe purse, double-or-nothing, or a crowd bet for surviving a set number of rounds
+- expand the first wager system with Dorr comments, odds that react to reputation, and special side bets tied to rival names or crowd taste
 - make the ring a rumor source after fights, especially for Docks tension, Halewick panic, shady patrons, and later monster-zone leads
 - expand ring standing titles beyond `New Blood`, `Known Contender`, and `Champion`, with later names such as `Pit-Fighter` and monster-challenge titles like `Beast-Hand`
 - when the outer monster zone exists, let Dorr offer unarmed monster contracts after level 4:

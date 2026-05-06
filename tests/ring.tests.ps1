@@ -466,7 +466,7 @@ function Test-FightingRingOptionOneStartsTournament {
     $script:BrawlStarted = $false
     $script:RingChoices = [System.Collections.Generic.Queue[string]]::new()
     $script:RingChoices.Enqueue("1")
-    $script:RingChoices.Enqueue("0")
+    $script:RingChoices.Enqueue("1")
 
     function global:Read-Host {
         param([string]$Prompt)
@@ -489,6 +489,22 @@ function Test-FightingRingOptionOneStartsTournament {
     Assert-Equal -Actual $game.Town.Ring.FoughtToday -Expected $true -Message "Starting the ring should consume today's tournament attempt."
 }
 
+function Test-RingWagerPayoutHandlesCrowdBet {
+    $wager = Get-RingWagerOptions | Where-Object { $_.Id -eq "crowd" } | Select-Object -First 1
+    $payout = Resolve-RingWagerPayout -Wager $wager -Wins 2 -MaxRounds 3 -BaseRewardCopper 220
+
+    Assert-Equal -Actual $payout.PayoutCopper -Expected 370 -Message "Crowd bet should add its bonus when the hero wins enough rounds."
+    Assert-Equal -Actual $payout.BonusCopper -Expected 150 -Message "Crowd bet bonus should be tracked separately."
+}
+
+function Test-RingWagerPayoutHandlesDoubleOrNothingFailure {
+    $wager = Get-RingWagerOptions | Where-Object { $_.Id -eq "double" } | Select-Object -First 1
+    $payout = Resolve-RingWagerPayout -Wager $wager -Wins 1 -MaxRounds 3 -BaseRewardCopper 100
+
+    Assert-Equal -Actual $payout.PayoutCopper -Expected 0 -Message "Double-or-nothing should erase the purse when the hero falls short."
+    Assert-Equal -Actual $payout.LostBasePurse -Expected $true -Message "Double-or-nothing failure should report that the earned purse was lost."
+}
+
 function Test-FightingRingAwardsReputationForWins {
     $game = Initialize-Game
     Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
@@ -508,6 +524,56 @@ function Test-FightingRingAwardsReputationForWins {
 
     Assert-Equal -Actual $game.Hero.RingWinsTotal -Expected 3 -Message "A fresh ring tournament should still grant normal ring wins."
     Assert-Equal -Actual $game.Hero.RingReputation -Expected 9 -Message "Winning three fresh rounds should grant the three-win reputation reward."
+}
+
+function Test-FightingRingCrowdBetPaysBonus {
+    $game = Initialize-Game
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $game.Hero.CurrencyCopper = 200
+    $script:RingChoices = [System.Collections.Generic.Queue[string]]::new()
+    $script:RingChoices.Enqueue("1")
+    $script:RingChoices.Enqueue("2")
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return $script:RingChoices.Dequeue()
+    }
+
+    function Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        return $true
+    }
+
+    Start-FightingRing -Game $game
+
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 550 -Message "Crowd bet should charge its stake and add the bonus purse after enough wins."
+}
+
+function Test-FightingRingDoubleOrNothingCanLosePurse {
+    $game = Initialize-Game
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $game.Hero.CurrencyCopper = 300
+    $script:RingChoices = [System.Collections.Generic.Queue[string]]::new()
+    $script:RingChoices.Enqueue("1")
+    $script:RingChoices.Enqueue("3")
+    $script:BoutResults = [System.Collections.Generic.Queue[bool]]::new()
+    $script:BoutResults.Enqueue($true)
+    $script:BoutResults.Enqueue($false)
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return $script:RingChoices.Dequeue()
+    }
+
+    function Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        return $script:BoutResults.Dequeue()
+    }
+
+    Start-FightingRing -Game $game
+
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 100 -Message "Double-or-nothing should keep the entry and stake and erase the prize when the card is not cleared."
+    Assert-Equal -Actual $game.Hero.RingWinsTotal -Expected 1 -Message "A lost double-or-nothing purse should not erase the actual bout win."
 }
 
 function Test-FightingRingChampionNightAwardsTitleAndReputation {
@@ -561,7 +627,11 @@ Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
 Test-FightingRingOptionOneStartsTournament
+Test-RingWagerPayoutHandlesCrowdBet
+Test-RingWagerPayoutHandlesDoubleOrNothingFailure
 Test-FightingRingAwardsReputationForWins
+Test-FightingRingCrowdBetPaysBonus
+Test-FightingRingDoubleOrNothingCanLosePurse
 Test-FightingRingChampionNightAwardsTitleAndReputation
 
 Write-Host "Ring tests passed." -ForegroundColor Green

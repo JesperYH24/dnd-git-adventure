@@ -247,6 +247,137 @@ function Get-RingRewardCopper {
     }
 }
 
+function Get-RingWagerOptions {
+    return @(
+        [PSCustomObject]@{
+            Id = "standard"
+            MenuKey = "1"
+            Name = "Safe purse"
+            StakeCopper = 0
+            Description = "Standard entry. Keep whatever purse the rounds earn."
+        }
+        [PSCustomObject]@{
+            Id = "crowd"
+            MenuKey = "2"
+            Name = "Crowd bet"
+            StakeCopper = 50
+            Description = "Pay extra for a crowd mark. Win at least two rounds for a bonus purse."
+        }
+        [PSCustomObject]@{
+            Id = "double"
+            MenuKey = "3"
+            Name = "Double-or-nothing"
+            StakeCopper = 100
+            Description = "Risk a heavier stake. Clear the card to double the purse; fall short and the purse is gone."
+        }
+    )
+}
+
+function Show-RingWagerOptions {
+    param(
+        [int]$EntryFeeCopper,
+        [int]$MaxRounds
+    )
+
+    Write-ColorLine "Choose your purse:" "Cyan"
+
+    foreach ($option in Get-RingWagerOptions) {
+        $totalCost = $EntryFeeCopper + [int]$option.StakeCopper
+        Write-ColorLine "$($option.MenuKey). $($option.Name) - total cost $(Convert-CopperToCurrencyText -Copper $totalCost)" "White"
+        Write-ColorLine "   $($option.Description)" "DarkGray"
+    }
+
+    Write-ColorLine "0. Back to the rail" "DarkGray"
+    Write-ColorLine ""
+}
+
+function Select-RingWager {
+    param(
+        [int]$EntryFeeCopper,
+        [int]$MaxRounds
+    )
+
+    $options = @(Get-RingWagerOptions)
+
+    while ($true) {
+        Show-RingWagerOptions -EntryFeeCopper $EntryFeeCopper -MaxRounds $MaxRounds
+        $choice = Read-Host "Choose purse"
+
+        if ($choice -eq "0") {
+            return $null
+        }
+
+        $selected = $options | Where-Object { $_.MenuKey -eq $choice } | Select-Object -First 1
+
+        if ($null -ne $selected) {
+            return $selected
+        }
+
+        Write-ColorLine "Choose one of the listed purse options." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
+function Resolve-RingWagerPayout {
+    param(
+        $Wager,
+        [int]$Wins,
+        [int]$MaxRounds,
+        [int]$BaseRewardCopper
+    )
+
+    if ($null -eq $Wager -or $Wager.Id -eq "standard") {
+        return [PSCustomObject]@{
+            PayoutCopper = $BaseRewardCopper
+            BonusCopper = 0
+            LostBasePurse = $false
+            Text = "The safe purse pays exactly what the rounds earned."
+        }
+    }
+
+    if ($Wager.Id -eq "crowd") {
+        $bonus = if ($Wins -ge [Math]::Min(2, $MaxRounds)) { 150 } else { 0 }
+        $text = if ($bonus -gt 0) {
+            "The crowd bet lands. The rail pays an extra $(Convert-CopperToCurrencyText -Copper $bonus)."
+        }
+        else {
+            "The crowd bet misses. The extra stake stays with the rail."
+        }
+
+        return [PSCustomObject]@{
+            PayoutCopper = $BaseRewardCopper + $bonus
+            BonusCopper = $bonus
+            LostBasePurse = $false
+            Text = $text
+        }
+    }
+
+    if ($Wager.Id -eq "double") {
+        if ($Wins -ge $MaxRounds -and $BaseRewardCopper -gt 0) {
+            return [PSCustomObject]@{
+                PayoutCopper = $BaseRewardCopper * 2
+                BonusCopper = $BaseRewardCopper
+                LostBasePurse = $false
+                Text = "Double-or-nothing lands. The pit pays the purse twice over."
+            }
+        }
+
+        return [PSCustomObject]@{
+            PayoutCopper = 0
+            BonusCopper = 0
+            LostBasePurse = ($BaseRewardCopper -gt 0)
+            Text = "Double-or-nothing fails. The purse is swallowed by the rail."
+        }
+    }
+
+    return [PSCustomObject]@{
+        PayoutCopper = $BaseRewardCopper
+        BonusCopper = 0
+        LostBasePurse = $false
+        Text = "The purse pays out normally."
+    }
+}
+
 function Get-HeroRingReputation {
     param($Hero)
 
@@ -1481,13 +1612,26 @@ function Start-FightingRing {
         }
     }
 
-    $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $entryFee
+    $maxRounds = if ($championNightReady) { 1 } else {
+        $previewOpponents = @(Get-RingOpponents -Hero $Game.Hero)
+        $previewOpponents.Count
+    }
+    $selectedWager = Select-RingWager -EntryFeeCopper $entryFee -MaxRounds $maxRounds
+
+    if ($null -eq $selectedWager) {
+        return
+    }
+
+    $totalEntryCost = $entryFee + [int]$selectedWager.StakeCopper
+    $spendResult = Spend-HeroCurrency -Hero $Game.Hero -Copper $totalEntryCost
 
     if (-not $spendResult.Success) {
-        Write-Scene "$($Game.Hero.Name) does not have enough coin to register for the ring."
+        Write-Scene "$($Game.Hero.Name) does not have enough coin to register that purse."
         Write-ColorLine ""
         return
     }
+
+    Write-Scene "$($Game.Hero.Name) registers the $($selectedWager.Name) for $(Convert-CopperToCurrencyText -Copper $totalEntryCost)."
 
     $Game.Hero.RingVisits += 1
     $Game.Town.Ring.Visits += 1
@@ -1498,7 +1642,7 @@ function Start-FightingRing {
         @(Get-RingChampionNightOpponent)
     }
     else {
-        @(Get-RingOpponents -Hero $Game.Hero)
+        $previewOpponents
     }
 
     foreach ($opponent in $ringOpponents) {
@@ -1521,7 +1665,9 @@ function Start-FightingRing {
         Write-EmphasisLine -Text "Champion Night reputation bonus: +$($championResult.ReputationAdded)." -Color "Yellow"
     }
 
-    $rewardCopper = Get-RingRewardCopper -Wins $wins
+    $baseRewardCopper = Get-RingRewardCopper -Wins $wins
+    $wagerPayout = Resolve-RingWagerPayout -Wager $selectedWager -Wins $wins -MaxRounds $ringOpponents.Count -BaseRewardCopper $baseRewardCopper
+    $rewardCopper = [int]$wagerPayout.PayoutCopper
 
     if ($rewardCopper -gt 0) {
         Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null
@@ -1530,6 +1676,8 @@ function Start-FightingRing {
     else {
         Write-Scene "$($Game.Hero.Name) leaves the ring with bruises, noise in $($Game.Hero.GenderPronouns.Possessive) ears, and no prize money."
     }
+
+    Write-Scene $wagerPayout.Text
 
     if ($wins -gt 0) {
         $reputationResult = Add-HeroRingReputation -Hero $Game.Hero -Amount (Get-RingReputationReward -Wins $wins)
