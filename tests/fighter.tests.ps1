@@ -93,7 +93,35 @@ function Test-FighterJoustingArenaPreviewAndSquireSpar {
     Assert-True -Condition ($preview -like "*Mounted jousting waits*") -Message "Jousting preview should foreshadow horse-gated mounted play."
     Assert-True -Condition $result.Success -Message "A strong squire spar roll should succeed."
     Assert-Equal -Actual $game.Town.Jousting.SquireWins -Expected 1 -Message "Successful sparring should track squire wins."
+    Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 2 -Message "Successful sparring should build patron attention."
     Assert-Equal -Actual $game.Town.Relationships["TourneyGround"] -Expected "Noticed" -Message "Successful sparring should mark tourney ground recognition."
+}
+
+function Test-FighterTourneyPatronAttentionUnlocks {
+    $game = Initialize-Game -Class "Fighter"
+
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    $result = Resolve-JoustingArenaSquireSpar -Game $game -Roll 15
+    $status = Get-HeroJoustingStatus -Game $game
+    $patronText = Get-JoustingPatronAttentionText -Game $game
+
+    Assert-Equal -Actual $result.MilestoneUnlocked -Expected $true -Message "Third clean squire win should cross the first patron milestone."
+    Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 6 -Message "Three clean squire wins should reach patron attention threshold."
+    Assert-Equal -Actual $game.Town.Relationships["TourneyPatrons"] -Expected "Watching" -Message "Patrons should start watching after enough attention."
+    Assert-Equal -Actual $game.Town.StreetFlags["TourneyPatronAttentionUnlocked"] -Expected $true -Message "Patron attention milestone should set a story flag."
+    Assert-Equal -Actual $status.Title -Expected "Patron-Noticed Aspirant" -Message "Fighter standing should reflect patron notice."
+    Assert-True -Condition ($patronText -like "*writing {hero}'s name*") -Message "Patron text should reflect upper rail attention."
+}
+
+function Test-FighterTourneyLossStillTracksRecord {
+    $game = Initialize-Game -Class "Fighter"
+
+    $result = Resolve-JoustingArenaSquireSpar -Game $game -Roll 5
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "A poor sparring roll should fail."
+    Assert-Equal -Actual $game.Town.Jousting.SquireLosses -Expected 1 -Message "Failed sparring should track squire losses."
+    Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 0 -Message "A poor loss should not build patron attention."
 }
 
 function Test-MountedJoustingRequiresHorseAndTourneyArmor {
@@ -136,6 +164,8 @@ Test-FighterDefenseRequiresArmor
 Test-FighterSecondWindHealsAndRestores
 Test-FighterShopOffersPointTowardKnightProgression
 Test-FighterJoustingArenaPreviewAndSquireSpar
+Test-FighterTourneyPatronAttentionUnlocks
+Test-FighterTourneyLossStillTracksRecord
 Test-MountedJoustingRequiresHorseAndTourneyArmor
 Test-ClassSelectionCanChooseFighter
 

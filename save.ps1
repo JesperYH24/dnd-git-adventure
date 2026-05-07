@@ -226,6 +226,31 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
+    if ($null -eq $Game.Town["Jousting"]) {
+        $Game.Town["Jousting"] = @{
+            Visits = 0
+            HasHorse = $false
+            SquireWins = 0
+            SquireLosses = 0
+            PatronAttention = 0
+            LastPatronMilestone = 0
+        }
+    }
+    else {
+        foreach ($entry in @(
+            @{ Key = "Visits"; Value = 0 },
+            @{ Key = "HasHorse"; Value = $false },
+            @{ Key = "SquireWins"; Value = 0 },
+            @{ Key = "SquireLosses"; Value = 0 },
+            @{ Key = "PatronAttention"; Value = 0 },
+            @{ Key = "LastPatronMilestone"; Value = 0 }
+        )) {
+            if (-not $Game.Town["Jousting"].ContainsKey($entry.Key)) {
+                $Game.Town["Jousting"][$entry.Key] = $entry.Value
+            }
+        }
+    }
+
     if ($null -eq $Game.Town["Quests"]) {
         $Game.Town["Quests"] = Initialize-TownQuests
     }

@@ -246,4 +246,5 @@ The fighter route is meant to grow toward upper-class legitimacy:
 - `Fighting Style: Defense` and `Second Wind` make him feel trained, armored, and hard to put down before he becomes a full knight
 - the smithy and armorer should tempt him toward longsword, better shield work, and heavier armor
 - the tourney ground gives him a city pastime that is about posture, recognition, and class aspiration as much as fighting
+- repeated squire sparring builds patron attention until the upper rail starts treating him as a possible aspirant instead of another armed townsman
 - true mounted jousting waits for a future horse and lance progression layer, but the tourney requirement is already framed as horse plus splint or plate armor

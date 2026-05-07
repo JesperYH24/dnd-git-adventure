@@ -53,7 +53,9 @@
 - `Fighting Style: Defense` adds `+1 AC` while armor is equipped
 - `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
 - smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
-- `Tourney Ground` is the Fighter city pastime: foot sparring against squires is playable now, while mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it
+- `Tourney Ground` is the Fighter city pastime: foot sparring against squires tracks wins/losses and builds `PatronAttention`
+- at `6` patron attention, upper-city patrons start watching Lubert as a `Patron-Noticed Aspirant`
+- mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it
 
 ## Town and day/night systems
 

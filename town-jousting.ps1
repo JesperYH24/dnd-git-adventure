@@ -1,5 +1,81 @@
 # Fighter-facing arena scaffolding. Mounted jousting waits for horse, heavy tourney armor, and lance systems later.
 
+function Initialize-JoustingState {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return
+    }
+
+    if ($null -eq $Game.Town.Jousting) {
+        $Game.Town.Jousting = @{}
+    }
+
+    foreach ($entry in @(
+        @{ Key = "Visits"; Value = 0 },
+        @{ Key = "HasHorse"; Value = $false },
+        @{ Key = "SquireWins"; Value = 0 },
+        @{ Key = "SquireLosses"; Value = 0 },
+        @{ Key = "PatronAttention"; Value = 0 },
+        @{ Key = "LastPatronMilestone"; Value = 0 }
+    )) {
+        if (-not $Game.Town.Jousting.ContainsKey($entry.Key)) {
+            $Game.Town.Jousting[$entry.Key] = $entry.Value
+        }
+    }
+}
+
+function Get-JoustingStandingTitle {
+    param($Game)
+
+    Initialize-JoustingState -Game $Game
+    $mountedRequirements = Get-MountedJoustingRequirements -Game $Game
+
+    if ([bool]$mountedRequirements.CanEnter) {
+        return "Mounted Prospect"
+    }
+
+    if ([int]$Game.Town.Jousting.PatronAttention -ge 6) {
+        return "Patron-Noticed Aspirant"
+    }
+
+    if ([int]$Game.Town.Jousting.SquireWins -ge 3) {
+        return "Sponsored Squire"
+    }
+
+    if ([bool]$Game.Town.Jousting.HasHorse) {
+        return "Horse Ready"
+    }
+
+    if ([int]$Game.Town.Jousting.SquireWins -gt 0) {
+        return "Recognized Squire"
+    }
+
+    return "Unproven Squire"
+}
+
+function Get-JoustingPatronAttentionText {
+    param($Game)
+
+    Initialize-JoustingState -Game $Game
+    $attention = [int]$Game.Town.Jousting.PatronAttention
+    $wins = [int]$Game.Town.Jousting.SquireWins
+
+    if ($attention -ge 6) {
+        return "A clerk in a sober blue coat has started writing {hero}'s name without asking twice. No patron has stepped forward yet, but the rail has stopped treating {him} like hired muscle in borrowed manners."
+    }
+
+    if ($wins -ge 3) {
+        return "The squires know {hero}'s guard now, and that matters. The next step is not just winning; it is winning cleanly enough that a family with money decides the story is useful."
+    }
+
+    if ($attention -gt 0) {
+        return "A few people at the rail have noticed {hero}'s discipline. It is not sponsorship yet, but it is the first fragile kind of attention: the sort that can become an invitation if it is fed carefully."
+    }
+
+    return "For now the upper rail watches the arena the way it watches weather: interested only if something starts to matter."
+}
+
 function Get-HeroJoustingStatus {
     param($Game)
 
@@ -7,13 +83,7 @@ function Get-HeroJoustingStatus {
         return $null
     }
 
-    if ($null -eq $Game.Town.Jousting) {
-        $Game.Town.Jousting = @{
-            Visits = 0
-            HasHorse = $false
-            SquireWins = 0
-        }
-    }
+    Initialize-JoustingState -Game $Game
 
     $mountedRequirements = Get-MountedJoustingRequirements -Game $Game
 
@@ -23,12 +93,16 @@ function Get-HeroJoustingStatus {
         HasTourneyArmor = [bool]$mountedRequirements.HasTourneyArmor
         MountedReady = [bool]$mountedRequirements.CanEnter
         SquireWins = [int]$Game.Town.Jousting.SquireWins
-        Title = if ([bool]$mountedRequirements.CanEnter) { "Mounted Prospect" } elseif ([bool]$Game.Town.Jousting.HasHorse) { "Horse Ready" } elseif ([int]$Game.Town.Jousting.SquireWins -gt 0) { "Recognized Squire" } else { "Unproven Squire" }
+        SquireLosses = [int]$Game.Town.Jousting.SquireLosses
+        PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+        Title = Get-JoustingStandingTitle -Game $Game
     }
 }
 
 function Test-HeroHasMountedJoustingHorse {
     param($Game)
+
+    Initialize-JoustingState -Game $Game
 
     if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Jousting) {
         return $false
@@ -123,31 +197,50 @@ function Resolve-JoustingArenaSquireSpar {
         $Roll = Roll-Dice -Sides 20
     }
 
-    $status = Get-HeroJoustingStatus -Game $Game
+    Initialize-JoustingState -Game $Game
     $constitutionModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "CON"
     $strengthModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "STR"
     $total = $Roll + $constitutionModifier + $strengthModifier
     $success = $total -ge 15
 
     $Game.Town.Jousting.Visits = [int]$Game.Town.Jousting.Visits + 1
+    $patronAttentionBefore = [int]$Game.Town.Jousting.PatronAttention
 
     if ($success) {
         $Game.Town.Jousting.SquireWins = [int]$Game.Town.Jousting.SquireWins + 1
+        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 2
         $Game.Town.Relationships["TourneyGround"] = "Noticed"
+
+        $milestoneUnlocked = $patronAttentionBefore -lt 6 -and [int]$Game.Town.Jousting.PatronAttention -ge 6
+        if ($milestoneUnlocked) {
+            $Game.Town.Relationships["TourneyPatrons"] = "Watching"
+            $Game.Town.StreetFlags["TourneyPatronAttentionUnlocked"] = $true
+            $Game.Town.Jousting.LastPatronMilestone = 6
+        }
 
         return [PSCustomObject]@{
             Success = $true
-            Message = "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a watching knight stops pretending not to care."
-            Reputation = "Recognized Squire"
+            Message = if ($milestoneUnlocked) { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a clerk at the upper rail asks for {his} name. That is not knighthood. It is better than anonymity." } else { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a watching knight stops pretending not to care." }
+            Reputation = Get-JoustingStandingTitle -Game $Game
             RollTotal = $total
+            PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+            MilestoneUnlocked = $milestoneUnlocked
         }
+    }
+
+    $Game.Town.Jousting.SquireLosses = [int]$Game.Town.Jousting.SquireLosses + 1
+
+    if ($total -ge 12) {
+        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 1
     }
 
     return [PSCustomObject]@{
         Success = $false
         Message = "{hero} stays standing, which matters, but the exchange ends with sand on the knees and a squire's polite little bow that stings worse than mockery."
-        Reputation = $status.Title
+        Reputation = Get-JoustingStandingTitle -Game $Game
         RollTotal = $total
+        PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+        MilestoneUnlocked = $false
     }
 }
 
@@ -167,10 +260,11 @@ function Start-JoustingArena {
         $status = Get-HeroJoustingStatus -Game $Game
         $horseText = if ($status.HasHorse) { "Owned" } else { "Needed" }
         $armorText = if ($status.HasTourneyArmor) { "Ready" } else { "Needs splint/plate" }
-        Write-ColorLine "Arena Standing: $($status.Title) | Squire wins: $($status.SquireWins) | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
+        Write-ColorLine "Arena Standing: $($status.Title) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention)/6 | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "1. Spar against a squire on foot" "White"
-        Write-ColorLine "2. Ask about mounted jousting" "White"
+        Write-ColorLine "2. Ask what the patrons think" "White"
+        Write-ColorLine "3. Ask about mounted jousting" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
@@ -180,10 +274,14 @@ function Start-JoustingArena {
             "1" {
                 $result = Resolve-JoustingArenaSquireSpar -Game $Game
                 Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
-                Write-EmphasisLine -Text "Arena standing: $($result.Reputation)." -Color "Yellow"
+                Write-EmphasisLine -Text "Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)/6." -Color "Yellow"
                 Write-ColorLine ""
             }
             "2" {
+                Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingPatronAttentionText -Game $Game) -Hero $Game.Hero)
+                Write-ColorLine ""
+            }
+            "3" {
                 $requirements = Get-MountedJoustingRequirements -Game $Game
                 Write-Scene "The list-master taps a lance rack with two fingers. 'Horse first. Splint or plate after that. Then we find out whether your shield arm belongs in a tourney or only in an alley.'"
                 if ($requirements.CanEnter) {

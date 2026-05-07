@@ -42,6 +42,9 @@ function New-DefaultTownState {
             Visits = 0
             HasHorse = $false
             SquireWins = 0
+            SquireLosses = 0
+            PatronAttention = 0
+            LastPatronMilestone = 0
         }
         Ring = @{
             Visits = 0
