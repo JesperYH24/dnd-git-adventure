@@ -1577,6 +1577,9 @@ function Start-MissingHerbSatchelQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Hold the road and wait the fear out until someone finally talks (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Make the road feel watched, lawful, and safe enough for the truth (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -1659,6 +1662,22 @@ function Start-MissingHerbSatchelQuest {
                     }
                     else {
                         Write-Scene "They break and run in the end, leaving the satchel behind but only fragments about a marked man and a night road."
+                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) lowers his shield, gives the scavengers a clear lawful way out, and holds the road steady until panic has somewhere to go."
+
+                    if ($success) {
+                        Write-Scene "The scavengers stop seeing a trap and start seeing protection. They admit a marked courier dropped the satchel while fleeing back toward the city lanes."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The promise of order helps, but fear still scatters them before the whole story comes out."
                         $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
                     }
 
@@ -1762,6 +1781,9 @@ function Start-LedgerOfAshQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Break the dockside bluff until the hidden name finally slips (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Call for a formal account and let the room fear perjury (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -1836,6 +1858,20 @@ function Start-LedgerOfAshQuest {
                     }
                     else {
                         Write-Scene "The clerk holds the clean name back, but the panic in his answers still proves the payments were built to hide corruption."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) treats the questioning like a formal hearing, standing mailed and patient until the clerk realizes every lie is becoming testimony."
+                    if ($success) {
+                        Write-Scene "The clerk finally chooses the smaller disgrace. Serik's name lands in the room cleanly, carried less by fear than by the sense that the account is now official."
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The clerk withholds the clean name, but the disciplined questioning still proves the payments were built to hide corruption."
                         $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                     }
 
@@ -2012,6 +2048,9 @@ function Start-NightCourierInterceptQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Run the courier down and break the route open by sheer pursuit (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Use shield discipline to close the lane without spooking the handoff (CON)" "White"
+    }
     Write-ColorLine "" 
 
     $strongOutcome = $false
@@ -2098,6 +2137,23 @@ function Start-NightCourierInterceptQuest {
                     }
                     else {
                         Write-Scene "The runner slips away at the last turn, but not before dropping a signal strip that proves the marked route is real."
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) moves like a drilled gate guard, closing each exit one step at a time until the courier has speed but no clean lane."
+
+                    if ($success) {
+                        Write-Scene "The courier keeps running until the route itself disappears around him. The message case, handoff point, and signal marks all end up in watch hands."
+                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
+                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        $Game.Town.Relationships["Belor"] = "Trusting"
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The courier slips one gap before the lane closes, but drops a signal strip that proves the marked route is real."
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                     }
 
@@ -2196,6 +2252,9 @@ function Start-WarehouseLedgerRecoveryQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Tear the office apart until the real hiding place gives itself away (STR)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Secure the exits and make the clerk account for every moved page (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -2280,6 +2339,22 @@ function Start-WarehouseLedgerRecoveryQuest {
                     }
                     else {
                         Write-Scene "The office comes apart noisily, and {hero} saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
+                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) posts himself by the door, orders the room like a guard detail, and makes the clerk explain every disturbed shelf."
+
+                    if ($success) {
+                        Write-Scene "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact."
+                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        $strongOutcome = $true
+                    }
+                    else {
+                        Write-Scene "The room never fully yields, but the controlled search preserves fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
                         $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
                     }
 
@@ -2570,6 +2645,9 @@ function Start-DocksBlackContractQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Stare the whole pier down until the weakest nerve finally breaks (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Treat the wharf like a checkpoint and demand a clean account (CON)" "White"
+    }
     Write-ColorLine ""
 
     $cleanLead = $false
@@ -2635,6 +2713,18 @@ function Start-DocksBlackContractQuest {
                     }
                     else {
                         Write-Scene "No one breaks cleanly, but the whole pier gives away enough to prove the contract moved through dockside hands."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the wharf into an orderly checkpoint, letting each dockhand understand that false answers will be remembered."
+                    if ($success) {
+                        Write-Scene "The careful pressure works. A tally hand gives up Marris Vane's name because the lie suddenly feels like evidence against him."
+                        $cleanLead = $true
+                    }
+                    else {
+                        Write-Scene "No one risks a full name, but the forced accounting proves the contract moved through dockside hands."
                     }
 
                     break
@@ -2746,6 +2836,9 @@ function Start-DocksBrokersWakeQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Walk the old knife berth like a warning and make the cowards name the business (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Organize dock testimony until the business has nowhere to hide (CON)" "White"
+    }
     Write-ColorLine ""
 
     $cleanProfile = $false
@@ -2811,6 +2904,18 @@ function Start-DocksBrokersWakeQuest {
                     }
                     else {
                         Write-Scene "No one gives a full confession, but fear draws the map well enough. The berth served a larger machine."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) separates crews, fixes each story in order, and lets discipline do what shouting cannot."
+                    if ($success) {
+                        Write-Scene "The testimonies stop contradicting each other and start forming a machine: freight laundering, debt hooks, blackmail books, and paid violence."
+                        $cleanProfile = $true
+                    }
+                    else {
+                        Write-Scene "The accounts stay partial, but the gaps line up well enough to show a larger business wearing different masks."
                     }
 
                     break
@@ -2885,6 +2990,9 @@ function Start-DocksSalvageWitnessQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Hold the salvage room steady while Auntie circles the truth (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Make the room feel protected enough for Auntie to remember cleanly (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -2903,6 +3011,9 @@ function Start-DocksSalvageWitnessQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands like a wall between Auntie's shop and the dock noise until the old woman can think."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the doorway like a sworn guard, lets Auntie set the pace, and keeps every impatient dock voice outside."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -2970,6 +3081,9 @@ function Start-DocksDebtHooksQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Put yourself between the collectors and their next victim (STR)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Stand the row like a shield wall and force the collectors into the open (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -2988,6 +3102,9 @@ function Start-DocksDebtHooksQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) organizes the frightened workers behind him and makes the collectors state their business where everyone can hear it."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3055,6 +3172,9 @@ function Start-DocksTideLedgerMarksQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Hold the ledger desk until the nervous clerk reads it aloud (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Run the shack like a witness desk until the marks are read aloud (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -3073,6 +3193,9 @@ function Start-DocksTideLedgerMarksQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) waits beside the desk like bad weather until the clerk decides reading is safer than silence."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) sets the ledger between them like testimony and waits, mailed and formal, until the clerk reads the marks aloud."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3141,6 +3264,9 @@ function Start-DocksBlackmailBookQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Break the dry box open and keep the berth from taking it back (STR)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Secure the berth and turn the dry box into protected evidence (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -3159,6 +3285,9 @@ function Start-DocksBlackmailBookQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) secures the berth, keeps the exits honest, and handles the dry box like evidence no one gets to threaten back into hiding."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3246,6 +3375,9 @@ function Start-DocksCharterScribeQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Stand between the clerks and the door until paper courage fails (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Treat the counting room like a formal inquiry and hold every exit (CON)" "White"
+    }
     Write-ColorLine ""
 
     $cleanProof = $false
@@ -3311,6 +3443,18 @@ function Start-DocksCharterScribeQuest {
                     }
                     else {
                         Write-Scene "Nobody breaks cleanly, but the clerks expose the private seal by trying too hard not to look at it."
+                    }
+
+                    break
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) makes the inquiry feel official: one door, one table, one account, and no clerk leaving before the seal has a name."
+                    if ($success) {
+                        Write-Scene "The room chooses order over panic. A senior clerk gives up Odran Pell's name before the younger ones can make the mistake messier."
+                        $cleanProof = $true
+                    }
+                    else {
+                        Write-Scene "Nobody gives the name cleanly, but the formal pressure exposes the private seal by making every clerk avoid it at once."
                     }
 
                     break
@@ -3406,6 +3550,9 @@ function Start-DocksShellCharterQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Carry the false cargo manifest straight through their front door (STR)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Present the false manifest like a charge and demand a sworn answer (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -3424,6 +3571,9 @@ function Start-DocksShellCharterQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) lays the false manifest down like a formal charge and waits for the owner-of-record to decide whether he wants the lie sworn aloud."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3499,6 +3649,9 @@ function Start-DocksCountingHousePressureQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Lock the room down with presence before the ledgers walk away (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Hold the counting room in order until the clean transfers surface (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -3517,6 +3670,9 @@ function Start-DocksCountingHousePressureQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) plants himself by the only door and lets the ledgers become heavier than the clerks can carry."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) keeps the room seated, keeps the books on the table, and turns every attempted delay into another clean transfer found."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3592,6 +3748,9 @@ function Start-DocksCustomsStampQuest {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Put the stamped crate where every official has to look at it (STR)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Guard the stamped crate as evidence until the right desk claims it (CON)" "White"
+    }
     Write-ColorLine ""
 
     $strongOutcome = $false
@@ -3610,6 +3769,9 @@ function Start-DocksCustomsStampQuest {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) carries the stamped crate into the open and makes moving it quietly impossible."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) posts himself beside the stamped crate and treats it as seized evidence until the desk that owns the mark has to answer."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3931,6 +4093,9 @@ function Start-MissingDeliveryDayJob {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Shoulder the whole mess yourself and dare anyone to block the lane (CON)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Form a quick work line and make the delivery feel official (CON)" "White"
+    }
     Write-ColorLine ""
 
     while ($true) {
@@ -3947,6 +4112,9 @@ function Start-MissingDeliveryDayJob {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) heaves the crate up, takes the whole lane with him, and makes daring him to stop look like a poor plan."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the bystanders into a short work line, keeps his shield visible, and makes the crate's movement feel like city business."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -3967,6 +4135,9 @@ function Start-MissingDeliveryDayJob {
             }
             elseif ($choice -eq "4" -and $Game.Hero.Class -eq "Barbarian") {
                 Write-Scene "By the time the shouting catches up, the crate is already moving and nobody in the lane wants to be the one foolish enough to stand in front of it."
+            }
+            elseif ($choice -eq "4" -and $Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The lane sorts itself around the shield and the steady orders. The crate moves, the runner exhales, and even the merchants argue more quietly."
             }
             else {
                 Write-Scene "The runner gets the crate back in one piece and pays quickly before anyone changes their mind."
@@ -4033,6 +4204,9 @@ function Start-GateDutyOverflowDayJob {
     Write-ColorLine "1. Bark the line straight with sheer force of presence (STR)" "White"
     Write-ColorLine "2. Shoulder the worst wagon clear yourself (CON)" "White"
     Write-ColorLine "3. Calm the loudest driver before it spreads (CHA)" "White"
+    if ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Run the gate like a shield drill and clear one lane at a time (CON)" "White"
+    }
     Write-ColorLine ""
 
     while ($true) {
@@ -4043,6 +4217,16 @@ function Start-GateDutyOverflowDayJob {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "{hero} leans in against wood and iron until the worst wagon finally shudders free." }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} tries the harder route and talks the hottest temper back down before the guards have to draw batons." }
+            "4" {
+                if ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) breaks the jam into ranks, signals the guards like a drill line, and clears the gate without letting pride become a fight."
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                    continue
+                }
+            }
             default {
                 Write-ColorLine "Choose a listed option." "DarkYellow"
                 Write-ColorLine ""
@@ -4117,6 +4301,9 @@ function Start-DockWorkDayJob {
     elseif ($Game.Hero.Class -eq "Bard") {
         Write-ColorLine "4. Turn the work rhythm into a call-and-response chant (Performance)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Split the crews into stations and hold the line through the tide (CON)" "White"
+    }
     Write-ColorLine ""
 
     while ($true) {
@@ -4133,6 +4320,9 @@ function Start-DockWorkDayJob {
                 }
                 elseif ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the crew's rhythm into a chant that keeps hands moving and tempers low." -CheckTag "Performance"
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) divides the crews into stations, anchors the dangerous lift himself, and keeps the line steady until the tide stops winning."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
@@ -4214,6 +4404,9 @@ function Start-ScribeWorkDayJob {
     elseif ($Game.Hero.Class -eq "Barbarian") {
         Write-ColorLine "4. Catch the suspicious clause by treating it like a trap (WIS)" "White"
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-ColorLine "4. Read the contract like an oath and flag the duty that does not fit (WIS)" "White"
+    }
     Write-ColorLine ""
 
     while ($true) {
@@ -4230,6 +4423,9 @@ function Start-ScribeWorkDayJob {
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth."
+                }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the draft like a sworn duty, catches the obligation that would shame an honest signer, and marks it before the seal lands."
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"
