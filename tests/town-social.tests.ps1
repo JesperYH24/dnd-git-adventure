@@ -294,6 +294,27 @@ function Test-BelorCanHelpFighterBuildTourneyStanding {
     Assert-True -Condition ($result -like "*tourney ground*" -or $result -like "*disciplined arms*") -Message "Belor should explain the Fighter reward through tourney and formal discipline."
 }
 
+function Test-FighterTourneyAttentionChangesStreetNpcTone {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.Jousting.PatronAttention = 6
+    $game.Town.Relationships["TourneyPatrons"] = "Watching"
+    $game.Town.StreetFlags["TourneyPatronAttentionUnlocked"] = $true
+
+    $hadrikIntro = Get-HadrikIntro -Hero $game.Hero -Game $game
+    $belorIntro = Get-BelorIntro -Hero $game.Hero -Game $game
+    $hadrikForgeTalk = Get-HadrikForgeTalk -Game $game
+    $hadrikCityTalk = Get-HadrikCityTalk -Game $game
+    $belorWatchTalk = Get-BelorWatchTalk -Game $game
+    $belorRumorTalk = Get-BelorDistrictRumorTalk -Game $game
+
+    Assert-True -Condition ($hadrikIntro -like "*upper rail*" -or $hadrikIntro -like "*patrons*") -Message "Hadrik's intro should notice when a Fighter has caught tourney patron attention."
+    Assert-True -Condition ($belorIntro -like "*upper rail*" -or $belorIntro -like "*shield arm*") -Message "Belor's intro should notice when a Fighter is being watched by tourney patrons."
+    Assert-True -Condition ($hadrikForgeTalk -like "*Lubert*" -and $hadrikForgeTalk -like "*steel*") -Message "Hadrik's forge talk should connect Lubert's patron attention to better knightly gear."
+    Assert-True -Condition ($hadrikCityTalk -like "*patrons*" -or $hadrikCityTalk -like "*forge knows his measure*") -Message "Hadrik's city talk should reflect the Fighter's rising tourney reputation."
+    Assert-True -Condition ($belorWatchTalk -like "*Upper rail*" -or $belorWatchTalk -like "*discipline*") -Message "Belor's watch talk should frame tourney attention through discipline."
+    Assert-True -Condition ($belorRumorTalk -like "*walls*" -and $belorRumorTalk -like "*knightly*") -Message "Belor's rumor talk should tie tourney visibility toward future wall trouble."
+}
+
 function Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch {
     function global:Read-Host {
         param([string]$Prompt)
@@ -508,6 +529,7 @@ Test-LevelThreeNpcToneChangesAfterUnderstreet
 Test-HadrikCommentsOnWornStartingAndCaveGear
 Test-HadrikRewardsDifferentClassesDifferently
 Test-BelorCanHelpFighterBuildTourneyStanding
+Test-FighterTourneyAttentionChangesStreetNpcTone
 Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch
 Test-BardCanEarnCoinByPerformingInMarketSquare
 Test-BardCannotPerformTwiceAtSameVenueInOneDay

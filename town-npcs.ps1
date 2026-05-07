@@ -42,6 +42,34 @@ function Get-HeroTownName {
     return "Borzig"
 }
 
+function Test-FighterHasTourneyPatronNotice {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Hero -or [string]$Game.Hero.Class -ne "Fighter" -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    $hasPatronRelationship = $null -ne $Game.Town.Relationships -and $null -ne $Game.Town.Relationships["TourneyPatrons"]
+    $hasPatronFlag = $null -ne $Game.Town.StreetFlags -and [bool]$Game.Town.StreetFlags["TourneyPatronAttentionUnlocked"]
+    $patronAttention = 0
+
+    if ($null -ne $Game.Town.Jousting -and $Game.Town.Jousting.ContainsKey("PatronAttention")) {
+        $patronAttention = [int]$Game.Town.Jousting.PatronAttention
+    }
+
+    return $hasPatronRelationship -or $hasPatronFlag -or $patronAttention -ge 6
+}
+
+function Test-FighterHasWatchTourneyLead {
+    param($Game)
+
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        return $true
+    }
+
+    return $null -ne $Game -and $null -ne $Game.Hero -and [string]$Game.Hero.Class -eq "Fighter" -and $null -ne $Game.Town -and $null -ne $Game.Town.StreetFlags -and [bool]$Game.Town.StreetFlags["BelorTourneyStanding"]
+}
+
 function Get-InnKeeperGreeting {
     param(
         $Inn,
@@ -163,6 +191,10 @@ function Get-HadrikIntro {
     $heroName = Get-HeroTownName -Hero $Hero
     $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        return "Hadrik straightens when $heroName comes close. 'Rurik heard the upper rail has started watching your shield arm. Good. If patrons are looking, your steel had better look like station and survive like work.'"
+    }
+
     if ($isNight) {
         if ($Hero.Level -ge 3) {
             return "Hadrik's grin flashes in the forge-light. 'Night shift's the honest one. Day buys polish. Night buys what people are afraid to be without before dawn.'"
@@ -199,6 +231,10 @@ function Get-BelorIntro {
     $persona = Get-HeroTownPersona -Hero $Hero
     $heroName = Get-HeroTownName -Hero $Hero
     $isNight = $null -ne $Game -and (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        return "Watchman Belor gives $heroName a sharper nod than before. 'The upper rail has started asking whether your shield arm is real discipline or polished luck. Keep making the answer public.'"
+    }
 
     if ($isNight) {
         if ($Hero.Level -ge 3) {
@@ -419,6 +455,15 @@ function Get-WidowEliraDistrictTalk {
 function Get-HadrikForgeTalk {
     param($Game)
 
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        if (-not $Game.Town.StreetFlags["HadrikForgeTalk_TourneyNotice"]) {
+            $Game.Town.StreetFlags["HadrikForgeTalk_TourneyNotice"] = $true
+            return "Hadrik lowers his voice like the sparks might gossip. 'Rurik says if Lubert Stryer is going to be watched from the good rail, he needs steel that does not apologize for where it was bought. Cleaner edge, better balance, fewer dents for rivals to laugh at.'"
+        }
+
+        return "Hadrik taps two fingers against the counter. 'Patrons remember polish, but fighters remember weight. Rurik can help with both.'"
+    }
+
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["HadrikForgeTalk_Post"]) {
             $Game.Town.StreetFlags["HadrikForgeTalk_Post"] = $true
@@ -441,6 +486,15 @@ function Get-HadrikCityTalk {
 
     $persona = Get-HeroTownPersona -Hero $Game.Hero
     $heroName = Get-HeroTownName -Hero $Game.Hero
+
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        if (-not $Game.Town.StreetFlags["HadrikCityTalk_TourneyNotice"]) {
+            $Game.Town.StreetFlags["HadrikCityTalk_TourneyNotice"] = $true
+            return "Hadrik glances toward the better streets. 'Funny how quickly a city changes its face. Yesterday Lubert was another disciplined lad with a shield. Today patrons ask if the forge knows his measure.'"
+        }
+
+        return "Hadrik snorts. 'Once patrons start watching, every buckle and nick becomes conversation. Make sure the conversation helps you.'"
+    }
 
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["HadrikCityTalk_Post"]) {
@@ -480,6 +534,19 @@ function Get-BelorWatchTalk {
 
     $persona = Get-HeroTownPersona -Hero $Game.Hero
 
+    if (Test-FighterHasWatchTourneyLead -Game $Game) {
+        if (-not $Game.Town.StreetFlags["BelorWatchTalk_TourneyNotice"]) {
+            $Game.Town.StreetFlags["BelorWatchTalk_TourneyNotice"] = $true
+            if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+                return "Belor keeps his eyes on the gate, but his voice shifts formal. 'Upper rail is watching you now. Good. Let them see discipline that holds when the city is noisy, not just when a marshal calls the bout.'"
+            }
+
+            return "Belor keeps his eyes on the gate. 'I put your name near the tourney ground because disciplined arms should be visible. Do not make me regret trusting the shape of you.'"
+        }
+
+        return "Belor's mouth tightens. 'Tourney favor is useful, but the watch respects what holds after applause ends.'"
+    }
+
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["BelorWatchTalk_Post"]) {
             $Game.Town.StreetFlags["BelorWatchTalk_Post"] = $true
@@ -515,6 +582,15 @@ function Get-BelorWatchTalk {
 
 function Get-BelorDistrictRumorTalk {
     param($Game)
+
+    if (Test-FighterHasTourneyPatronNotice -Game $Game) {
+        if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk_TourneyNotice"]) {
+            $Game.Town.StreetFlags["BelorDistrictRumorTalk_TourneyNotice"] = $true
+            return "Belor's voice drops. 'Patrons like public discipline because it feels controllable. Remember that when rumors about the walls start moving. The city will want a knightly face on fear soon enough.'"
+        }
+
+        return "Belor exhales through his nose. 'Keep one ear on the rail and one on the wall. Both tell you what the city is afraid to say plainly.'"
+    }
 
     if ($Game.Hero.Level -ge 3) {
         if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk_Post"]) {
