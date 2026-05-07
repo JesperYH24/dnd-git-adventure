@@ -890,6 +890,42 @@ function Find-TownQuest {
     return ($Game.Town.Quests | Where-Object { $_.Id -eq $QuestId } | Select-Object -First 1)
 }
 
+function Get-TownQuestAcceptanceMessage {
+    param(
+        $Game,
+        $Quest
+    )
+
+    $heroName = Get-QuestHeroName -Game $Game
+
+    if ($null -eq $Quest) {
+        return "That quest is added to $heroName's quest log."
+    }
+
+    if ($null -ne $Game -and $null -ne $Game.Hero -and $Game.Hero.Class -eq "Fighter") {
+        switch ($Quest.Source) {
+            "Guard Station" {
+                return "$($Quest.Name) is added to $heroName's quest log. The watch clerk notes his shield discipline and files him under reliable arms, not tavern muscle."
+            }
+            "Quest Giver" {
+                return "$($Quest.Name) is added to $heroName's quest log. The patron's clerk writes his name carefully, as if a future knight's reputation is already becoming useful paperwork."
+            }
+            "Silver Kettle" {
+                return "$($Quest.Name) is added to $heroName's quest log. The upper room treats the work like a formal obligation, not a favor."
+            }
+            default {
+                if ($Quest.Id -like "docks_*") {
+                    return "$($Quest.Name) is added to $heroName's quest log. Dockside eyes still test him, but the clean mail and steady bearing make the questions more careful."
+                }
+
+                return "$($Quest.Name) is added to $heroName's quest log. He takes the notice like an obligation, not an errand."
+            }
+        }
+    }
+
+    return "$($Quest.Name) is added to $heroName's quest log."
+}
+
 function Accept-TownQuest {
     param(
         $Game,
@@ -930,7 +966,7 @@ function Accept-TownQuest {
 
     return [PSCustomObject]@{
         Success = $true
-        Message = "$($quest.Name) is added to $(Get-QuestHeroName -Game $Game)'s quest log."
+        Message = (Get-TownQuestAcceptanceMessage -Game $Game -Quest $quest)
         Quest = $quest
     }
 }

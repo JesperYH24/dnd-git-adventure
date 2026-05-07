@@ -17,7 +17,15 @@ function Resolve-InnEvent {
     switch ($Inn.Id) {
         "bent_nail" {
             if ($EventRoll -le 35) {
-                Write-Scene "A drunken carter mistakes $heroName's silence for mockery, and the common room suddenly wants a fight."
+                if ($Game.Hero.Class -eq "Fighter") {
+                    $Game.Town.InnFlags["BentNailTestedKnight"] = $true
+                    $Game.Town.Relationships["BentNailRoom"] = "Testing"
+                    Write-Scene "A drunken carter clocks $heroName's mail, shield, and careful manners, then spits the words 'pretty little knight' loudly enough for the whole common room to choose sides."
+                }
+                else {
+                    Write-Scene "A drunken carter mistakes $heroName's silence for mockery, and the common room suddenly wants a fight."
+                }
+
                 $wonBrawl = Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
                     Name = "Ropearm Jerek"
                     Definite = "Ropearm Jerek"
@@ -31,10 +39,20 @@ function Resolve-InnEvent {
 
                 if ($wonBrawl) {
                     Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 3 | Out-Null
-                    Write-Scene "Marta barks the room quiet and tosses $heroName 3 SP from the pile of side bets."
+                    if ($Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "Marta barks the room quiet and tosses $heroName 3 SP from the pile of side bets. 'There. The shiny shield can bleed like everybody else. Maybe he's worth watching.'"
+                    }
+                    else {
+                        Write-Scene "Marta barks the room quiet and tosses $heroName 3 SP from the pile of side bets."
+                    }
                 }
                 else {
-                    Write-Scene "Marta hauls the loser out by the collar and tells both fools to sleep it off."
+                    if ($Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "Marta hauls the loser out by the collar and tells the room that manners do not count as armor in the Bent Nail."
+                    }
+                    else {
+                        Write-Scene "Marta hauls the loser out by the collar and tells both fools to sleep it off."
+                    }
                 }
 
                 return
@@ -43,10 +61,21 @@ function Resolve-InnEvent {
             if ($EventRoll -le 65) {
                 if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
                     $Game.Town.InnFlags["BentNailShadyRumor"] = $true
-                    Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys. $heroName learns where the city's shadier business tends to gather."
+                    if ($Game.Hero.Class -eq "Fighter") {
+                        $Game.Town.InnFlags["BentNailDistrustsKnight"] = $true
+                        Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys, then stops when $heroName looks too clean to be trusted. The room gives him scraps, not welcome."
+                    }
+                    else {
+                        Write-Scene "A smuggler at the next table mutters about easy coin moving goods through back alleys. $heroName learns where the city's shadier business tends to gather."
+                    }
                 }
                 else {
-                    Write-Scene "The same hard-eyed smugglers are here again, still talking low and watching everyone."
+                    if ($Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "The same hard-eyed smugglers are here again, still talking low and watching $heroName's shield like it might report them."
+                    }
+                    else {
+                        Write-Scene "The same hard-eyed smugglers are here again, still talking low and watching everyone."
+                    }
                 }
 
                 return
@@ -83,6 +112,11 @@ function Resolve-InnEvent {
                         $Game.Town.Relationships["LanternAudience"] = "Warm"
                         Set-TownOfferDiscount -Game $Game -OfferId "instrument_shop_stage_lute" -DiscountCopper 20
                         Write-Scene "A caravan factor shares road gossip over supper, then decides $heroName belongs in better company than the back corner. By dessert, the instrument maker near the square has been told to shave the price on a Stage Lute."
+                    }
+                    elseif ($Game.Hero.Class -eq "Fighter") {
+                        $Game.Town.Relationships["LanternTourneyTalk"] = "Warm"
+                        Set-TownOfferDiscount -Game $Game -OfferId "armorer_heater_shield" -DiscountCopper 25
+                        Write-Scene "A caravan factor hears how the tourney ground is starting to say $heroName's name, then points him toward the armorer who keeps proper shields for men trying to look less like guards and more like future knights."
                     }
                     else {
                         Set-TownOfferDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
@@ -129,6 +163,14 @@ function Resolve-InnEvent {
                         $Game.Town.Relationships["MerchantPatron"] = "Favorable"
                         Write-Scene "Between candlelight and quiet music, a patron at the upper tables takes notice of $heroName and quietly decides the performer belongs in smaller, richer rooms. Before the night is done, a private salon invitation is left waiting with the bill."
                     }
+                    elseif ($Game.Hero.Class -eq "Fighter") {
+                        Initialize-JoustingState -Game $Game
+                        $Game.Town.InnFlags["SilverKettleTourneyIntroduction"] = $true
+                        $Game.Town.Relationships["TourneyPatrons"] = "Introduced"
+                        $Game.Town.Jousting.PatronAttention = [Math]::Max([int]$Game.Town.Jousting.PatronAttention, 2)
+                        Set-TownOfferDiscount -Game $Game -OfferId "armorer_squire_mail" -DiscountCopper 50
+                        Write-Scene "Between candlelight and quiet music, a magistrate's clerk studies $heroName's posture, shield hand, and refusal to boast. By the bill, a quiet introduction has been made to patrons who sponsor respectable tourney prospects."
+                    }
                     else {
                         $Game.Town.Relationships["MagistrateClerk"] = "Introduced"
                         Set-TownOfferDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 30
@@ -162,11 +204,23 @@ function Resolve-BentNailEveningChoice {
         if ($currentTier -lt 2) {
             if (-not $Game.Town.InnFlags["BentNailShadyRumor"]) {
                 $Game.Town.InnFlags["BentNailShadyRumor"] = $true
-                Write-Scene "$heroName catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back only gives the table one measuring look before it closes around its own secrets."
-                Write-EmphasisLine -Text "The Bent Nail lead is noted. Come back once Tier 2 city work opens and the room has reason to take $heroName seriously." -Color "Yellow"
+                if ($Game.Hero.Class -eq "Fighter") {
+                    $Game.Town.InnFlags["BentNailDistrustsKnight"] = $true
+                    Write-Scene "$heroName catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back looks at his clean posture and laughs once. 'This isn't a tourney rail, boy. Pretty shields get sold for scrap here.'"
+                    Write-EmphasisLine -Text "The Bent Nail lead is noted, but the room will not trust a would-be knight until Tier 2 city work gives $heroName dirt under the polish." -Color "Yellow"
+                }
+                else {
+                    Write-Scene "$heroName catches fragments about quiet cargo and sealed doors, but the scarred fixer in the back only gives the table one measuring look before it closes around its own secrets."
+                    Write-EmphasisLine -Text "The Bent Nail lead is noted. Come back once Tier 2 city work opens and the room has reason to take $heroName seriously." -Color "Yellow"
+                }
             }
             else {
-                Write-Scene "The same hard-eyed regulars are still here, but they are not ready to trust $heroName with more than dockside rumor yet."
+                if ($Game.Hero.Class -eq "Fighter") {
+                    Write-Scene "The same hard-eyed regulars are still here, and one of them raises a cup in mock salute before the table shuts its mouth again."
+                }
+                else {
+                    Write-Scene "The same hard-eyed regulars are still here, but they are not ready to trust $heroName with more than dockside rumor yet."
+                }
                 Write-EmphasisLine -Text "The deeper Bent Nail lead should open once Tier 2 story quests are available." -Color "Yellow"
             }
 
@@ -176,11 +230,23 @@ function Resolve-BentNailEveningChoice {
         if (-not $Game.Town.InnFlags["BentNailBrokerInfo"]) {
             $Game.Town.InnFlags["BentNailBrokerInfo"] = $true
             $Game.Town.Relationships["UnderstreetBroker"] = "Named"
-            Write-Scene "$heroName keeps low and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
-            Write-EmphasisLine -Text "$heroName leaves the table with a cleaner read on who in the Bent Nail still knows the understreet routes by name." -Color "Yellow"
+            if ($Game.Hero.Class -eq "Fighter") {
+                $Game.Town.Relationships["BentNailRoom"] = "Grudging"
+                Write-Scene "$heroName keeps low and lets the room have its jokes. The scarred fixer finally leans close enough to stink of cheap gin and old blood, then maps which alleys carry stolen cargo, hush money, and desperate errands."
+                Write-EmphasisLine -Text "$heroName leaves with a dirty lead and grudging Bent Nail recognition. The room still does not like his manners, but it no longer thinks they make him soft." -Color "Yellow"
+            }
+            else {
+                Write-Scene "$heroName keeps low and listens while a scarred fixer maps out which alleys carry stolen cargo, hush money, and desperate errands."
+                Write-EmphasisLine -Text "$heroName leaves the table with a cleaner read on who in the Bent Nail still knows the understreet routes by name." -Color "Yellow"
+            }
         }
         else {
-            Write-Scene "The same smugglers are still talking around $heroName, but tonight they offer nothing sharper than what was already learned."
+            if ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The same smugglers are still talking around $heroName, rougher than they need to be, but tonight they offer nothing sharper than what was already learned."
+            }
+            else {
+                Write-Scene "The same smugglers are still talking around $heroName, but tonight they offer nothing sharper than what was already learned."
+            }
         }
 
         return
@@ -192,7 +258,13 @@ function Resolve-BentNailEveningChoice {
         }
 
         if ($RiskRoll -le 60) {
-            Write-Scene "The dice game turns sour almost immediately, and one ugly joke later the table wants fists instead of coins."
+            if ($Game.Hero.Class -eq "Fighter") {
+                $Game.Town.InnFlags["BentNailTestedKnight"] = $true
+                Write-Scene "The dice game turns sour almost immediately. Someone calls $heroName a court dog with a rented bite, and the table wants fists instead of coins."
+            }
+            else {
+                Write-Scene "The dice game turns sour almost immediately, and one ugly joke later the table wants fists instead of coins."
+            }
             Start-BrawlLoop -Hero $Game.Hero -Opponent ([PSCustomObject]@{
                 Name = "Dockside Bruiser Kel"
                 Definite = "Dockside Bruiser Kel"
@@ -207,13 +279,24 @@ function Resolve-BentNailEveningChoice {
         }
         else {
             Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 2 | Out-Null
-            Write-Scene "For once the table laughs with $heroName instead of at the joke, and the winnings come away clean: 2 SP."
+            if ($Game.Hero.Class -eq "Fighter") {
+                $Game.Town.Relationships["BentNailRoom"] = "Amused"
+                Write-Scene "For once the table laughs with $heroName instead of at him. Someone still calls him 'sir shield' like an insult, but the winnings come away clean: 2 SP."
+            }
+            else {
+                Write-Scene "For once the table laughs with $heroName instead of at the joke, and the winnings come away clean: 2 SP."
+            }
         }
 
         return
     }
 
-    Write-Scene "$heroName keeps to the wall and lets the room talk around the silence."
+    if ($Game.Hero.Class -eq "Fighter") {
+        Write-Scene "$heroName keeps to the wall while the room talks around him in deliberate little cuts. The Bent Nail does not hate knights. It hates what knights pretend the city is."
+    }
+    else {
+        Write-Scene "$heroName keeps to the wall and lets the room talk around the silence."
+    }
 }
 
 function Resolve-LanternRestEveningChoice {
@@ -248,6 +331,12 @@ function Resolve-LanternRestEveningChoice {
                         Write-EmphasisLine -Text "$heroName earns practical market favor at the Lantern Rest. The Hand Axe is now cheaper at the market." -Color "Yellow"
                     }
                 }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    $Game.Town.Relationships["LanternTourneyTalk"] = "Warm"
+                    Set-TownOfferDiscount -Game $Game -OfferId "armorer_heater_shield" -DiscountCopper 25
+                    Write-Scene "Merchants and caravan guards trade road names with $heroName, but the useful talk comes from a former squire who knows which armorer sells shields accepted at the tourney rail."
+                    Write-EmphasisLine -Text "$heroName earns warm standing among the Lantern Rest's practical patrons. The Heater Shield is now cheaper at the armorer." -Color "Yellow"
+                }
                 else {
                     Set-TownOfferDiscount -Game $Game -OfferId "market_handaxe" -DiscountCopper 20
                     Write-Scene "Merchants compare ledgers over stew and quietly point $heroName toward which traders gouge and which ones fear a hard bargain."
@@ -257,6 +346,9 @@ function Resolve-LanternRestEveningChoice {
         else {
             if ($Game.Hero.Class -eq "Bard") {
                 Write-Scene "The merchant tables still make room for $($Game.Hero.Name), and more than one traveler asks whether he will be taking the room's song again tomorrow."
+            }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The merchant tables still make room for $heroName, especially when talk turns to tourney odds, road escorts, and which families sponsor disciplined steel."
             }
             else {
                 Write-Scene "The merchant tables are good company, but their useful advice has already been spent once."
@@ -274,6 +366,10 @@ function Resolve-LanternRestEveningChoice {
                 Write-Scene "Caravan guards and watch hands admit that a smooth tongue settles almost as many roadside problems as a drawn blade. Before the cups empty, they point $($Game.Hero.Name) toward captains who remember a face that can hold a room without starting a riot."
                 Write-EmphasisLine -Text "$($Game.Hero.Name) hears guard-station rumors that suit a bard's public touch as much as a fighter's nerve." -Color "Yellow"
             }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "Caravan guards and watch hands talk more formally once $heroName sits down. They name a captain who likes shield discipline, clean answers, and men who understand that drawing steel in town should feel like the last resort."
+                Write-EmphasisLine -Text "$heroName hears guard-station rumors that suit a knightly reputation better than back-alley muscle." -Color "Yellow"
+            }
             else {
                 Write-Scene "Caravan guards swap route warnings with watchmen and mention a captain who pays well for reliable steel on dirty night work."
                 Write-EmphasisLine -Text "$heroName hears new guard-station rumors that can feed later city jobs." -Color "Yellow"
@@ -282,6 +378,9 @@ function Resolve-LanternRestEveningChoice {
         else {
             if ($Game.Hero.Class -eq "Bard") {
                 Write-Scene "The guards greet $($Game.Hero.Name) like a man who might solve a bad scene before it becomes a report, but tonight they have no fresher rumor than that."
+            }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The guards greet $heroName with a little more formality now, but tonight they have no fresher official work to whisper about."
             }
             else {
                 Write-Scene "The guards nod to $heroName like a familiar face now, but tonight they have no fresh work to whisper about."
@@ -338,6 +437,12 @@ function Resolve-SilverKettleEveningChoice {
                     Write-Scene "$heroName listens while quiet money talks about hard work no clerk can be seen asking for. Before the glasses are empty, one patron has already named the apothecary who keeps stronger restoratives aside for fighters expected to finish ugly contracts."
                     Write-EmphasisLine -Text "$heroName gains upper-room contract insight. Future city payouts can improve, and stronger healing supplies are now easier to afford." -Color "Yellow"
                 }
+                elseif ($Game.Hero.Class -eq "Fighter") {
+                    Set-TownOfferDiscount -Game $Game -OfferId "smithy_knightly_longsword" -DiscountCopper 40
+                    Set-TownOfferDiscount -Game $Game -OfferId "armorer_squire_mail" -DiscountCopper 50
+                    Write-Scene "$heroName listens while minor nobles discuss escort contracts, tourney obligations, and which armed men can be trusted inside polite rooms. One patron quietly names the forge and armorer most willing to outfit an aspirant with manners."
+                    Write-EmphasisLine -Text "$heroName gains upper-room contract insight. Future city payouts can improve, and knightly gear is now easier to afford." -Color "Yellow"
+                }
                 else {
                     Write-Scene "$heroName listens while minor nobles and clerks talk contracts, tariffs, and which patrons always pay above the board for fast results."
                     Write-EmphasisLine -Text "$heroName gains economic insight. Future city quest payouts can be improved later." -Color "Yellow"
@@ -346,6 +451,9 @@ function Resolve-SilverKettleEveningChoice {
         else {
             if ($Game.Hero.Class -eq "Bard") {
                 Write-Scene "The contract talk has changed now that $($Game.Hero.Name) is known. The room speaks around him less like hired muscle and more like expensive company."
+            }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The contract talk has changed now that $heroName is known. The room speaks around him as a potential sworn arm, not merely a blade for hire."
             }
             else {
                 Write-Scene "The contract talk is still there if $heroName wants it, but the useful part has already been learned."
@@ -365,6 +473,14 @@ function Resolve-SilverKettleEveningChoice {
                 Write-Scene "A patron with taste, money, and too much free time decides $($Game.Hero.Name) belongs closer to the candlelight than the wall. By the end of the introduction, Madam Seraphine is holding 5 SP in room credit and a private card for a future salon."
                 Write-EmphasisLine -Text "$($Game.Hero.Name) earns upper-table favor and an early private invitation." -Color "Yellow"
             }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Initialize-JoustingState -Game $Game
+                Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
+                $Game.Town.Relationships["TourneyPatrons"] = "Introduced"
+                $Game.Town.Jousting.PatronAttention = [Math]::Max([int]$Game.Town.Jousting.PatronAttention, 3)
+                Write-Scene "A patron with old money and older expectations asks $heroName one question about duty, not victory. The answer earns a small room credit and a quiet promise that the tourney rail will know his name."
+                Write-EmphasisLine -Text "$heroName earns upper-table favor, 5 SP in room credit, and stronger patron attention at the tourney ground." -Color "Yellow"
+            }
             else {
                 Add-HeroCurrency -Hero $Game.Hero -Denomination "SP" -Amount 5 | Out-Null
                 Write-Scene "A wealthy patron takes to $heroName's plain honesty and leaves 5 SP with Madam Seraphine to cover the next meal and wine."
@@ -374,6 +490,9 @@ function Resolve-SilverKettleEveningChoice {
         else {
             if ($Game.Hero.Class -eq "Bard") {
                 Write-Scene "The upper room remembers $($Game.Hero.Name) well enough now that introductions come easier than requests. The Silver Kettle clearly expects to see him again."
+            }
+            elseif ($Game.Hero.Class -eq "Fighter") {
+                Write-Scene "The upper room remembers $heroName well enough now that the next nod feels less like charity and more like early sponsorship."
             }
             else {
                 Write-Scene "The upper room remembers $heroName well enough now, and that alone opens more doors than a second introduction would."
@@ -425,10 +544,20 @@ function Start-InnEveningMenu {
             "bent_nail" {
                 if ($showIntro) {
                     if ($isNight) {
-                        Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                        if ($Game.Hero.Class -eq "Fighter") {
+                            Write-Scene "The Bent Nail is all smoke, elbows, hard stares, and people who look at $($Game.Hero.Name)'s shield like it wandered into the wrong story. Trouble is never far away; neither is the city's dirt."
+                        }
+                        else {
+                            Write-Scene "The Bent Nail is all smoke, elbows, and hard stares. Trouble is never far away, but neither are the people who know where the city's dirt is buried."
+                        }
                     }
                     else {
-                        Write-Scene "By day the Bent Nail runs on thick stew, coarse bread, and the sort of tired dockside silence that only slowly turns back into rumor."
+                        if ($Game.Hero.Class -eq "Fighter") {
+                            Write-Scene "By day the Bent Nail runs on thick stew, coarse bread, and dockside silence sharp enough to nick $($Game.Hero.Name)'s better manners."
+                        }
+                        else {
+                            Write-Scene "By day the Bent Nail runs on thick stew, coarse bread, and the sort of tired dockside silence that only slowly turns back into rumor."
+                        }
                     }
 
                     if ($isNight -and (Get-CurrentStoryQuestTier -Game $Game) -lt 2) {
@@ -436,12 +565,12 @@ function Start-InnEveningMenu {
                     }
                 }
                 if ($isNight) {
-                    Write-ColorLine "1. Listen to the smugglers and dockside fixers over dark ale" "White"
-                    Write-ColorLine "2. Join a loud dice table" "White"
+                    Write-ColorLine $(if ($Game.Hero.Class -eq "Fighter") { "1. Take the insults and listen for smuggler truth" } else { "1. Listen to the smugglers and dockside fixers over dark ale" }) "White"
+                    Write-ColorLine $(if ($Game.Hero.Class -eq "Fighter") { "2. Join a dice table that wants the knight humbled" } else { "2. Join a loud dice table" }) "White"
                 }
                 else {
-                    Write-ColorLine "1. Share rough stew with the dockers and fixers" "White"
-                    Write-ColorLine "2. Sit with the room and nurse a bitter midday drink" "White"
+                    Write-ColorLine $(if ($Game.Hero.Class -eq "Fighter") { "1. Eat rough stew where the fixers can judge the shield" } else { "1. Share rough stew with the dockers and fixers" }) "White"
+                    Write-ColorLine $(if ($Game.Hero.Class -eq "Fighter") { "2. Nurse a bitter drink and let the room test your patience" } else { "2. Sit with the room and nurse a bitter midday drink" }) "White"
                 }
                 if ($isNight -and $Game.Hero.Class -eq "Bard") {
                     Write-ColorLine "4. Play a rough set for the room" "White"
@@ -458,11 +587,17 @@ function Start-InnEveningMenu {
                     if (-not $isNight -and $Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Lantern Rest opens into a bright, orderly dining room where hot breakfast and midday meals give merchants a reason to linger and listen."
                     }
+                    elseif (-not $isNight -and $Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "The Lantern Rest by day feels like useful middle ground for $($Game.Hero.Name): merchants counting coin, guards comparing routes, and enough practical respect for a disciplined shield arm to be noticed."
+                    }
                     elseif (-not $isNight) {
                         Write-Scene "The Lantern Rest feels steady by day: hot plates, clean tables, and practical people taking real meals before the next road or ledger starts making demands again."
                     }
                     elseif ($Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Lantern Rest feels built for a working bard: warm light, decent listeners, and enough merchants under one roof to turn a good evening into tomorrow's invitation."
+                    }
+                    elseif ($Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "The Lantern Rest feels useful to a tourney hopeful: caravan guards, road patrons, and the kind of merchants who know which shields pass inspection without looking borrowed."
                     }
                     else {
                         Write-Scene "The Lantern Rest sits in the middle ground: traders, caravan guards, and practical folk who know something useful if you earn their patience."
@@ -487,11 +622,17 @@ function Start-InnEveningMenu {
                     if (-not $isNight -and $Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Silver Kettle by day is all fine service and quiet luncheon talk, where contracts, taste, and opportunity are plated as carefully as the food."
                     }
+                    elseif (-not $isNight -and $Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "The Silver Kettle by day measures $($Game.Hero.Name) by posture, restraint, and whether his armor sounds like protection or ambition."
+                    }
                     elseif (-not $isNight) {
                         Write-Scene "The Silver Kettle by day hums with polished luncheon conversation, careful silverware, and the sort of expensive calm that expects to be obeyed."
                     }
                     elseif ($Game.Hero.Class -eq "Bard") {
                         Write-Scene "The Silver Kettle hums with polished manners, private money, and the dangerous possibility that the right performance could lift $($Game.Hero.Name) into rooms the rest of the city only serves."
+                    }
+                    elseif ($Game.Hero.Class -eq "Fighter") {
+                        Write-Scene "The Silver Kettle hums with polished manners, private money, and the dangerous possibility that $($Game.Hero.Name) could be treated as a future sworn arm instead of hired steel."
                     }
                     else {
                         Write-Scene "The Silver Kettle hums with careful laughter, polished manners, and the kind of money that changes lives without ever raising its voice."

@@ -76,6 +76,18 @@ function Test-NewSpecialtyShopsStockRealClassGear {
     Assert-Equal -Actual $chainShirt.DexBonusCap -Expected 2 -Message "The chain shirt should cap added dexterity as intended."
 }
 
+function Test-FighterPatronStandingUnlocksHeraldicSurcoat {
+    $game = Initialize-Game -Class "Fighter"
+    $lockedOffers = @(Get-ArmorerOffers -Game $game)
+    $game.Town.Relationships["TourneyPatrons"] = "Introduced"
+    $unlockedOffers = @(Get-ArmorerOffers -Game $game)
+    $surcoat = New-TownItemFromOfferId -OfferId "armorer_heraldic_surcoat"
+
+    Assert-True -Condition (-not ($lockedOffers.Id -contains "armorer_heraldic_surcoat")) -Message "The heraldic surcoat should wait until Fighter has patron standing."
+    Assert-True -Condition ($unlockedOffers.Id -contains "armorer_heraldic_surcoat") -Message "Patron standing should unlock a presentation-focused Fighter shop item."
+    Assert-Equal -Actual $surcoat.Name -Expected "Heraldic Surcoat" -Message "The heraldic surcoat offer should create the expected utility item."
+}
+
 function Test-TutorialLootHasUsefulButModestSaleValue {
     $skeletonLoot = Get-MonsterLoot -Monster @{ name = "skeleton" }
     $goblinLoot = Get-MonsterLoot -Monster @{ name = "goblin" }
@@ -176,6 +188,7 @@ Test-MarketStocksAnInstrumentUpgradeForBards
 Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
 Test-NewSpecialtyShopsStockRealClassGear
+Test-FighterPatronStandingUnlocksHeraldicSurcoat
 Test-TutorialLootHasUsefulButModestSaleValue
 Test-DocksideOdditiesPaysWellForJunk
 

@@ -124,6 +124,19 @@ function Test-FighterTourneyLossStillTracksRecord {
     Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 0 -Message "A poor loss should not build patron attention."
 }
 
+function Test-FighterQuestAcceptanceUsesKnightlyTone {
+    $guardGame = Initialize-Game -Class "Fighter"
+    $patronGame = Initialize-Game -Class "Fighter"
+
+    $guardResult = Accept-TownQuest -Game $guardGame -QuestId "guard_night_watch"
+    $patronResult = Accept-TownQuest -Game $patronGame -QuestId "patron_storehouse_rats"
+
+    Assert-Equal -Actual $guardResult.Success -Expected $true -Message "Fighter should be able to accept guard station work."
+    Assert-True -Condition ($guardResult.Message -like "*shield discipline*" -and $guardResult.Message -like "*reliable arms*") -Message "Guard Station acceptance should recognize Fighter's formal martial identity."
+    Assert-Equal -Actual $patronResult.Success -Expected $true -Message "Fighter should be able to accept quest giver work."
+    Assert-True -Condition ($patronResult.Message -like "*future knight*" -or $patronResult.Message -like "*reputation*") -Message "Quest Giver acceptance should frame Fighter through knightly reputation."
+}
+
 function Test-MountedJoustingRequiresHorseAndTourneyArmor {
     $game = Initialize-Game -Class "Fighter"
     $initialRequirements = Get-MountedJoustingRequirements -Game $game
@@ -166,6 +179,7 @@ Test-FighterShopOffersPointTowardKnightProgression
 Test-FighterJoustingArenaPreviewAndSquireSpar
 Test-FighterTourneyPatronAttentionUnlocks
 Test-FighterTourneyLossStillTracksRecord
+Test-FighterQuestAcceptanceUsesKnightlyTone
 Test-MountedJoustingRequiresHorseAndTourneyArmor
 Test-ClassSelectionCanChooseFighter
 

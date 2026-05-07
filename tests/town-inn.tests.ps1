@@ -256,6 +256,46 @@ function Test-CommonRoomStaysOpenUntilBackedOut {
     Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The common room should stay open until the player explicitly backs out."
 }
 
+function Test-BentNailTreatsFighterRougher {
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1
+    function Start-BrawlLoop {
+        param($Hero, $Opponent, [string]$Title, [bool]$TrackRivalry)
+        return $true
+    }
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 20 | Out-Null
+
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailTestedKnight"] -Expected $true -Message "Bent Nail should test Fighter's knightly bearing with a rougher brawl event."
+    Assert-Equal -Actual $game.Town.Relationships["BentNailRoom"] -Expected "Testing" -Message "Bent Nail should mark Fighter as being tested rather than welcomed."
+}
+
+function Test-BentNailDistrustsFighterMannersBeforeTierTwo {
+    $game = Initialize-Game -Class "Fighter"
+
+    Resolve-BentNailEveningChoice -Game $game -Choice "1"
+
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailShadyRumor"] -Expected $true -Message "Fighter should still pick up the early Bent Nail rumor."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailDistrustsKnight"] -Expected $true -Message "Bent Nail should explicitly distrust Fighter's cleaner knightly presentation."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $null -Message "Bent Nail should still hold deeper broker info until tier 2."
+}
+
+function Test-BentNailGivesFighterGrudgingRecognitionAtTierTwo {
+    $game = Initialize-Game -Class "Fighter"
+    $guardQuest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
+    $patronQuest = Find-TownQuest -Game $game -QuestId "patron_storehouse_rats"
+    $guardQuest.Completed = $true
+    $patronQuest.Completed = $true
+
+    Resolve-BentNailEveningChoice -Game $game -Choice "1"
+
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailBrokerInfo"] -Expected $true -Message "Tier 2 Bent Nail choice should unlock broker information."
+    Assert-Equal -Actual $game.Town.Relationships["BentNailRoom"] -Expected "Grudging" -Message "Bent Nail should move Fighter from mockery to grudging recognition."
+    Assert-Equal -Actual $game.Town.Relationships["UnderstreetBroker"] -Expected "Named" -Message "Broker relationship should still be named."
+}
+
 function Test-LanternRestFirstNightSupportsBardAudienceLoop {
     $game = Initialize-Game -Class "Bard"
     $heroHP = $game.Hero.HP
@@ -269,6 +309,19 @@ function Test-LanternRestFirstNightSupportsBardAudienceLoop {
     Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $stageLuteOffer) -Expected 200 -Message "A bard's first Lantern Rest event should support the Stage Lute path at the instrument shop instead of old potion discounts."
 }
 
+function Test-LanternRestFirstNightSupportsFighterTourneyGear {
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 500
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 40 | Out-Null
+    $heaterShieldOffer = (Get-ArmorerOffers -Game $game) | Where-Object { $_.Id -eq "armorer_heater_shield" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.Relationships["LanternTourneyTalk"] -Expected "Warm" -Message "A fighter's Lantern Rest event should build tourney-facing social standing."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $heaterShieldOffer) -Expected 215 -Message "A fighter's Lantern Rest event should support the Heater Shield path at the armorer."
+}
+
 function Test-SilverKettleFirstNightCanOpenPrivateBardVenue {
     $game = Initialize-Game -Class "Bard"
     $heroHP = $game.Hero.HP
@@ -280,6 +333,21 @@ function Test-SilverKettleFirstNightCanOpenPrivateBardVenue {
     Assert-Equal -Actual $game.Town.InnFlags["SilverKettleArtistWelcome"] -Expected $true -Message "A bard's first Silver Kettle event should mark him as artistically welcome."
     Assert-Equal -Actual $game.Town.InnFlags["SilverKettlePrivateInvite"] -Expected $true -Message "A bard's first Silver Kettle event should be able to unlock the private salon path."
     Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A bard's first Silver Kettle event should improve patron standing."
+}
+
+function Test-SilverKettleFirstNightIntroducesFighterPatrons {
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+    $game.Hero.CurrencyCopper = 1000
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    Resolve-InnStay -Game $game -HeroHP ([ref]$heroHP) -Inn $inn -EventRoll 40 | Out-Null
+    $squireMailOffer = (Get-ArmorerOffers -Game $game) | Where-Object { $_.Id -eq "armorer_squire_mail" } | Select-Object -First 1
+
+    Assert-Equal -Actual $game.Town.InnFlags["SilverKettleTourneyIntroduction"] -Expected $true -Message "A fighter's Silver Kettle event should mark a tourney introduction."
+    Assert-Equal -Actual $game.Town.Relationships["TourneyPatrons"] -Expected "Introduced" -Message "A fighter's Silver Kettle event should introduce tourney patrons."
+    Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 2 -Message "A fighter's Silver Kettle event should build patron attention."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $squireMailOffer) -Expected 570 -Message "A fighter's Silver Kettle event should support the Squire Mail path."
 }
 
 function Test-InnRoomReturnsToInnWithoutJumpingToTown {
@@ -350,8 +418,13 @@ Test-CannotCancelInnBookingWithStoredGear
 Test-CanCancelInnBookingWhenStorageIsEmpty
 Test-WorkOffRoomCoversNightAndBlocksRing
 Test-CommonRoomStaysOpenUntilBackedOut
+Test-BentNailTreatsFighterRougher
+Test-BentNailDistrustsFighterMannersBeforeTierTwo
+Test-BentNailGivesFighterGrudgingRecognitionAtTierTwo
 Test-LanternRestFirstNightSupportsBardAudienceLoop
+Test-LanternRestFirstNightSupportsFighterTourneyGear
 Test-SilverKettleFirstNightCanOpenPrivateBardVenue
+Test-SilverKettleFirstNightIntroducesFighterPatrons
 Test-InnRoomReturnsToInnWithoutJumpingToTown
 Test-FirstInnRoomBackOpensInnForEveryInn
 Test-BardCanPrepareInspirationInInnRoom

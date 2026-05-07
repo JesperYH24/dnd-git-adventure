@@ -245,6 +245,8 @@ The fighter route is meant to grow toward upper-class legitimacy:
 - `Lubert Stryer` begins with practical squire-grade kit rather than polished knight gear
 - `Fighting Style: Defense` and `Second Wind` make him feel trained, armored, and hard to put down before he becomes a full knight
 - the smithy and armorer should tempt him toward longsword, better shield work, and heavier armor
+- inns now support his social climb: the Lantern Rest provides practical tourney talk, while the Silver Kettle can introduce him to patrons who care about restraint and presentation
+- quest givers and guard contacts should increasingly read him as a disciplined aspirant with obligations, not a generic sellsword
 - the tourney ground gives him a city pastime that is about posture, recognition, and class aspiration as much as fighting
 - repeated squire sparring builds patron attention until the upper rail starts treating him as a possible aspirant instead of another armed townsman
 - true mounted jousting waits for a future horse and lance progression layer, but the tourney requirement is already framed as horse plus splint or plate armor

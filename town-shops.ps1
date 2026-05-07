@@ -176,6 +176,10 @@ function Get-ArmorerOffers {
     if ($null -ne $Game -and $Game.Hero.Class -eq "Fighter") {
         $offers += (New-TownOffer -Id "armorer_squire_mail" -Name "Squire Mail" -Category "Armor" -Description "Heavy-leaning training mail for a fighter chasing knightly protection. AC +5 with no DEX bonus." -PriceCopper 620)
 
+        if ($null -ne $Game.Town -and $null -ne $Game.Town.Relationships["TourneyPatrons"]) {
+            $offers += (New-TownOffer -Id "armorer_heraldic_surcoat" -Name "Heraldic Surcoat" -Category "Utility" -Description "A fitted surcoat cut to sit cleanly over mail. It offers no armor, but tells patrons Lubert Stryer understands presentation at the lists." -PriceCopper 160)
+        }
+
         if ($Game.Hero.Level -ge 4) {
             $offers += (New-TownOffer -Id "armorer_splint_armor" -Name "Splint Armor" -Category "Armor" -Description "Rigid splinted steel over heavy padding. AC +7 with no DEX bonus, and acceptable for proper mounted tournament entry." -PriceCopper 1800)
             $offers += (New-TownOffer -Id "armorer_plate_armor" -Name "Plate Armor" -Category "Armor" -Description "A fitted knightly harness. AC +8 with no DEX bonus, expensive enough to announce ambition before the visor closes." -PriceCopper 4500)
@@ -227,6 +231,7 @@ function New-TownItemFromOfferId {
         "armorer_chain_shirt" { return (New-ArmorItem -Name "Chain Shirt" -Value 380 -ArmorBonus 3 -AddsDexModifier $true -DexBonusCap 2 -SlotCost 3) }
         "armorer_heater_shield" { return (New-ShieldItem -Name "Heater Shield" -Value 240 -ArmorBonus 2 -SlotCost 2) }
         "armorer_squire_mail" { return (New-ArmorItem -Name "Squire Mail" -Value 620 -ArmorBonus 5 -AddsDexModifier $false -SlotCost 4) }
+        "armorer_heraldic_surcoat" { return (New-UtilityItem -Name "Heraldic Surcoat" -Value 160 -SlotCost 1) }
         "armorer_splint_armor" { return (New-ArmorItem -Name "Splint Armor" -Value 1800 -ArmorBonus 7 -AddsDexModifier $false -SlotCost 5) }
         "armorer_plate_armor" { return (New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5) }
         "armorer_brigandine" { return (New-ArmorItem -Name "Brigandine Coat" -Value 560 -ArmorBonus 4 -AddsDexModifier $true -DexBonusCap 1 -SlotCost 3) }
