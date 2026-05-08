@@ -56,7 +56,10 @@
 - `Lantern Rest` and `Silver Kettle` now recognize Fighter differently, feeding shield/mail discounts, tourney patron attention, and upper-table introductions
 - patron standing can unlock the `Heraldic Surcoat` at the armorer as a presentation-focused tourney item
 - guard and patron quest acceptance text now frames Fighter as disciplined, reliable, and knight-aspirant rather than generic hired muscle
-- `Tourney Ground` is the Fighter city pastime: foot sparring against squires tracks wins/losses and builds `PatronAttention`
+- `Tourney Ground` is the Fighter city pastime: foot sparring and armored aspirant duels track wins/losses and build `PatronAttention`
+- armored duels use Lubert's equipped weapon and armor against shield or two-handed knight aspirants; `Measured Guard`, `Committed Strike`, and unlockable `Shield Bash` give the foot lists their own tactics
+- named aspirants in the foot lists keep individual win/loss records against Lubert and change their intro/outcome text on rematches
+- `Shield Bash` unlocks after three armored duel wins while Lubert is fighting with a shield
 - at `6` patron attention, upper-city patrons start watching Lubert as a `Patron-Noticed Aspirant`
 - with patron notice plus a `Heraldic Surcoat`, Lubert can present colors to the patron rail, becoming a `Patron-Backed Aspirant` and unlocking future splint armor savings
 - mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it

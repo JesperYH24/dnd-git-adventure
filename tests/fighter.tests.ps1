@@ -114,6 +114,64 @@ function Test-FighterTourneyPatronAttentionUnlocks {
     Assert-True -Condition ($patronText -like "*writing {hero}'s name*") -Message "Patron text should reflect upper rail attention."
 }
 
+function Test-FighterArmoredDuelUsesWeaponAndArmor {
+    $game = Initialize-Game -Class "Fighter"
+
+    $result = Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
+    $status = Get-HeroJoustingStatus -Game $game
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A Fighter should be able to win an armored duel with weapon attacks and armor discipline."
+    Assert-Equal -Actual $result.Opponent -Expected "Sirren Vale" -Message "The requested duel opponent should be used."
+    Assert-Equal -Actual $result.Technique -Expected "Measured Guard" -Message "Measured Guard should be the default defensive duel technique."
+    Assert-Equal -Actual $game.Town.Jousting.DuelWins -Expected 1 -Message "Armored duel wins should track separately from light squire sparring."
+    Assert-Equal -Actual $status.DuelWins -Expected 1 -Message "Jousting status should expose armored duel wins."
+    Assert-True -Condition ($result.IntroText -like "*Sirren Vale*") -Message "Armored duel results should include a named opponent intro."
+    Assert-True -Condition ($result.RivalOutcomeText -like "*Sirren*") -Message "Armored duel results should include named rivalry outcome text."
+    Assert-True -Condition ($result.ExchangeLog[0] -like "*Shortsword*" -or $result.Message -like "*Shortsword*") -Message "Duel output should be grounded in the equipped weapon."
+}
+
+function Test-FighterArmoredDuelCanLoseOnPoints {
+    $game = Initialize-Game -Class "Fighter"
+
+    $result = Resolve-TourneyGroundDuel -Game $game -Technique "Committed" -OpponentId "maul_aspirant" -HeroRolls @(3, 3) -OpponentRolls @(18, 18)
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Armored duels should be losable on points."
+    Assert-Equal -Actual $game.Town.Jousting.DuelLosses -Expected 1 -Message "Armored duel losses should be tracked."
+    Assert-Equal -Actual $result.Technique -Expected "Committed Strike" -Message "Committed Strike should be a supported risky duel technique."
+    Assert-Equal -Actual $game.Hero.TourneyDuelRivalries["Maudren Pike"].OpponentWins -Expected 1 -Message "Named duel losses should update that rival's record."
+}
+
+function Test-FighterTourneyDuelRivalryChangesRematchText {
+    $game = Initialize-Game -Class "Fighter"
+
+    $first = Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "ledger_knight" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
+    $second = Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "ledger_knight" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
+    $record = Get-HeroTourneyDuelRivalryRecord -Hero $game.Hero -OpponentName "Elian Voss"
+
+    Assert-Equal -Actual $first.Success -Expected $true -Message "The first named rival duel should resolve normally."
+    Assert-Equal -Actual $record.HeroWins -Expected 2 -Message "Repeated wins should persist against the same named rival."
+    Assert-Equal -Actual $record.OpponentWins -Expected 0 -Message "Opponent losses should not increment opponent wins."
+    Assert-True -Condition ($second.IntroText -like "*Elian*" -and ($second.IntroText -like "*family shield*" -or $second.IntroText -like "*public loss*" -or $second.IntroText -like "*pattern*")) -Message "A rematch intro should react to the existing named rival record."
+    Assert-True -Condition ($second.RivalOutcomeText -like "*record is 2-0*" -or $second.RivalOutcomeText -like "*2-0*") -Message "Named rival outcome text should include the updated duel record."
+}
+
+function Test-FighterShieldBashUnlocksAfterArmoredDuelWins {
+    $game = Initialize-Game -Class "Fighter"
+
+    $blocked = Resolve-TourneyGroundDuel -Game $game -Technique "ShieldBash" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
+    Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8) | Out-Null
+    Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8) | Out-Null
+    $unlockingWin = Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
+    $bashWin = Resolve-TourneyGroundDuel -Game $game -Technique "ShieldBash" -OpponentId "shield_squire" -HeroRolls @(12, 12) -OpponentRolls @(8, 8)
+
+    Assert-Equal -Actual $blocked.Success -Expected $false -Message "Shield Bash should be locked before enough armored duel wins."
+    Assert-Equal -Actual $blocked.Blocked -Expected $true -Message "Locked Shield Bash should return a blocked result."
+    Assert-Equal -Actual $unlockingWin.ShieldBashUnlocked -Expected $true -Message "The third armored duel win with a shield should unlock Shield Bash."
+    Assert-Equal -Actual $game.Town.StreetFlags["ShieldBashUnlocked"] -Expected $true -Message "Shield Bash unlock should set a persistent story flag."
+    Assert-Equal -Actual $bashWin.Success -Expected $true -Message "Unlocked Shield Bash should be usable in later armored duels."
+    Assert-Equal -Actual $bashWin.Technique -Expected "Shield Bash" -Message "The result should report the Shield Bash technique."
+}
+
 function Test-FighterPatronPresentationRequiresNoticeAndSurcoat {
     $game = Initialize-Game -Class "Fighter"
 
@@ -215,6 +273,10 @@ Test-FighterSecondWindHealsAndRestores
 Test-FighterShopOffersPointTowardKnightProgression
 Test-FighterJoustingArenaPreviewAndSquireSpar
 Test-FighterTourneyPatronAttentionUnlocks
+Test-FighterArmoredDuelUsesWeaponAndArmor
+Test-FighterArmoredDuelCanLoseOnPoints
+Test-FighterTourneyDuelRivalryChangesRematchText
+Test-FighterShieldBashUnlocksAfterArmoredDuelWins
 Test-FighterPatronPresentationRequiresNoticeAndSurcoat
 Test-FighterHeraldicPresentationBuildsPatronBacking
 Test-FighterTourneyLossStillTracksRecord

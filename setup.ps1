@@ -43,9 +43,12 @@ function New-DefaultTownState {
             HasHorse = $false
             SquireWins = 0
             SquireLosses = 0
+            DuelWins = 0
+            DuelLosses = 0
             PatronAttention = 0
             LastPatronMilestone = 0
             PresentationMade = $false
+            ShieldBashUnlocked = $false
         }
         Ring = @{
             Visits = 0

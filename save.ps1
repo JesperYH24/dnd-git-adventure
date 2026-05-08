@@ -232,9 +232,12 @@ function Ensure-LoadedAdventureShape {
             HasHorse = $false
             SquireWins = 0
             SquireLosses = 0
+            DuelWins = 0
+            DuelLosses = 0
             PatronAttention = 0
             LastPatronMilestone = 0
             PresentationMade = $false
+            ShieldBashUnlocked = $false
         }
     }
     else {
@@ -243,9 +246,12 @@ function Ensure-LoadedAdventureShape {
             @{ Key = "HasHorse"; Value = $false },
             @{ Key = "SquireWins"; Value = 0 },
             @{ Key = "SquireLosses"; Value = 0 },
+            @{ Key = "DuelWins"; Value = 0 },
+            @{ Key = "DuelLosses"; Value = 0 },
             @{ Key = "PatronAttention"; Value = 0 },
             @{ Key = "LastPatronMilestone"; Value = 0 },
-            @{ Key = "PresentationMade"; Value = $false }
+            @{ Key = "PresentationMade"; Value = $false },
+            @{ Key = "ShieldBashUnlocked"; Value = $false }
         )) {
             if (-not $Game.Town["Jousting"].ContainsKey($entry.Key)) {
                 $Game.Town["Jousting"][$entry.Key] = $entry.Value
