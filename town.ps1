@@ -1104,6 +1104,204 @@ function Start-BardPerformanceCheck {
     return $total
 }
 
+function New-BardPerformanceVenueRecord {
+    return @{
+        Plays = 0
+        Poor = 0
+        Good = 0
+        Great = 0
+        EarningsCopper = 0
+        LastOutcome = ""
+        LastRewardCopper = 0
+    }
+}
+
+function Get-BardPerformanceVenueRecord {
+    param(
+        $Game,
+        [string]$VenueId
+    )
+
+    if ($null -eq $Game.Town.PerformanceHistory) {
+        $Game.Town.PerformanceHistory = @{}
+    }
+
+    if ($null -eq $Game.Town.PerformanceHistory[$VenueId]) {
+        $Game.Town.PerformanceHistory[$VenueId] = New-BardPerformanceVenueRecord
+    }
+
+    $record = $Game.Town.PerformanceHistory[$VenueId]
+
+    foreach ($entry in @(
+        @{ Key = "Plays"; Value = 0 },
+        @{ Key = "Poor"; Value = 0 },
+        @{ Key = "Good"; Value = 0 },
+        @{ Key = "Great"; Value = 0 },
+        @{ Key = "EarningsCopper"; Value = 0 },
+        @{ Key = "LastOutcome"; Value = "" },
+        @{ Key = "LastRewardCopper"; Value = 0 }
+    )) {
+        if ($record -is [hashtable]) {
+            if (-not $record.ContainsKey($entry.Key)) {
+                $record[$entry.Key] = $entry.Value
+            }
+        }
+        elseif ($null -eq $record.PSObject.Properties[$entry.Key]) {
+            $record | Add-Member -NotePropertyName $entry.Key -NotePropertyValue $entry.Value
+        }
+    }
+
+    return $record
+}
+
+function Get-BardPerformanceRecordValue {
+    param(
+        $Record,
+        [string]$Key
+    )
+
+    if ($null -eq $Record) {
+        return $null
+    }
+
+    if ($Record -is [hashtable]) {
+        return $Record[$Key]
+    }
+
+    if ($null -ne $Record.PSObject.Properties[$Key]) {
+        return $Record.$Key
+    }
+
+    return $null
+}
+
+function Set-BardPerformanceRecordValue {
+    param(
+        $Record,
+        [string]$Key,
+        $Value
+    )
+
+    if ($Record -is [hashtable]) {
+        $Record[$Key] = $Value
+        return
+    }
+
+    if ($null -eq $Record.PSObject.Properties[$Key]) {
+        $Record | Add-Member -NotePropertyName $Key -NotePropertyValue $Value
+        return
+    }
+
+    $Record.$Key = $Value
+}
+
+function Get-BardPerformanceAudienceFamiliarity {
+    param($Record)
+
+    $plays = [int](Get-BardPerformanceRecordValue -Record $Record -Key "Plays")
+    $poor = [int](Get-BardPerformanceRecordValue -Record $Record -Key "Poor")
+    $good = [int](Get-BardPerformanceRecordValue -Record $Record -Key "Good")
+    $great = [int](Get-BardPerformanceRecordValue -Record $Record -Key "Great")
+
+    if ($plays -le 0) {
+        return "Unknown"
+    }
+
+    if ($great -ge 2 -or ($plays -ge 5 -and ($good + $great) -ge 4)) {
+        return "Favorite"
+    }
+
+    if ($poor -ge 2 -and $great -le 0) {
+        return "Shaky"
+    }
+
+    if ($plays -ge 2 -or ($good + $great) -ge 1) {
+        return "Known"
+    }
+
+    return "Tried"
+}
+
+function Get-BardPerformanceOutcomeMemoryText {
+    param(
+        $Game,
+        $Venue,
+        $Record,
+        [string]$Outcome
+    )
+
+    $familiarity = Get-BardPerformanceAudienceFamiliarity -Record $Record
+    $lastOutcome = [string](Get-BardPerformanceRecordValue -Record $Record -Key "LastOutcome")
+
+    switch ($familiarity) {
+        "Unknown" {
+            if ($Outcome -eq "Great") {
+                return "$($Venue.Name) did not know what to expect from $($Game.Hero.Name). Now it does."
+            }
+
+            return ""
+        }
+        "Shaky" {
+            if ($Outcome -eq "Great") {
+                return "The room came in ready to doubt him after rougher sets, which makes the turnaround land harder. By the end, the old jokes sound badly out of date."
+            }
+
+            if ($Outcome -eq "Good") {
+                return "The audience gives $($Game.Hero.Name) cautious credit. They remember the weaker nights, but this one steadies his name."
+            }
+
+            return "A few listeners exchange the kind of look that says they have heard this miss before. The coin still comes, but the room keeps its distance."
+        }
+        "Known" {
+            if ($Outcome -eq "Great") {
+                return "People who already knew the songs start singing early, and the new listeners follow because the room has clearly decided he belongs here."
+            }
+
+            if ($Outcome -eq "Good") {
+                return "The familiar faces carry the set through its thinner moments. $($Game.Hero.Name) has enough goodwill here that a good night feels comfortably earned."
+            }
+
+            return "The regulars notice the stumble, but they do not turn on him. Familiarity softens the miss, even if the hat comes back lighter."
+        }
+        "Favorite" {
+            if ($Outcome -eq "Great") {
+                return "This is the reaction reserved for a favorite: applause arriving before the last note, voices calling for another song, and coin offered like thanks instead of payment."
+            }
+
+            if ($Outcome -eq "Good") {
+                return "Even a merely good set lands warmly here. The audience knows his better nights and treats this one as part of the same story."
+            }
+
+            return "The room hears the off night and forgives more than it should. A favorite can disappoint people without becoming a stranger."
+        }
+        default {
+            if ($lastOutcome -eq "Poor" -and $Outcome -ne "Poor") {
+                return "After the last shaky set, this one sounds like a recovery."
+            }
+
+            return ""
+        }
+    }
+}
+
+function Update-BardPerformanceVenueRecord {
+    param(
+        $Game,
+        [string]$VenueId,
+        [string]$Outcome,
+        [int]$RewardCopper
+    )
+
+    $record = Get-BardPerformanceVenueRecord -Game $Game -VenueId $VenueId
+    Set-BardPerformanceRecordValue -Record $record -Key "Plays" -Value ([int](Get-BardPerformanceRecordValue -Record $record -Key "Plays") + 1)
+    Set-BardPerformanceRecordValue -Record $record -Key $Outcome -Value ([int](Get-BardPerformanceRecordValue -Record $record -Key $Outcome) + 1)
+    Set-BardPerformanceRecordValue -Record $record -Key "EarningsCopper" -Value ([int](Get-BardPerformanceRecordValue -Record $record -Key "EarningsCopper") + $RewardCopper)
+    Set-BardPerformanceRecordValue -Record $record -Key "LastOutcome" -Value $Outcome
+    Set-BardPerformanceRecordValue -Record $record -Key "LastRewardCopper" -Value $RewardCopper
+
+    return $record
+}
+
 function Get-BardPerformanceRecognitionText {
     param(
         $Game,
@@ -1111,6 +1309,22 @@ function Get-BardPerformanceRecognitionText {
     )
 
     $performanceCountTotal = [int]$Game.Town.PerformanceCountTotal
+    $record = Get-BardPerformanceVenueRecord -Game $Game -VenueId $Venue.Id
+    $familiarity = Get-BardPerformanceAudienceFamiliarity -Record $record
+
+    if ($familiarity -eq "Favorite") {
+        switch ($Venue.Id) {
+            "market_square" { return "The market spots $($Game.Hero.Name) before he has finished setting up. A few children run for better places, and traders make room for the song because they already know it will hold a crowd." }
+            "lantern_rest_stage" { return "The Lantern Rest welcomes $($Game.Hero.Name) like a returning warmth. Travelers turn from their cups before the first chord because this room knows his music can change the shape of a night." }
+            "silver_kettle_stage" { return "Silver Kettle patrons pretend restraint, but their attention is already arranged around $($Game.Hero.Name). Here, being expected is almost as valuable as being applauded." }
+            "bent_nail_stage" { return "The Bent Nail greets $($Game.Hero.Name) with table-knocks and crooked grins. The regulars know the songs, and more importantly, they know he can survive the room." }
+            "private_patron_salons" { return "The private salon receives $($Game.Hero.Name) as a known pleasure now. Conversation lowers before he asks for silence." }
+        }
+    }
+
+    if ($familiarity -eq "Shaky") {
+        return "$($Venue.Name) remembers the rougher sets too. Curiosity gathers, but it is guarded, waiting to see which version of $($Game.Hero.Name) has walked in tonight."
+    }
 
     if ($performanceCountTotal -lt 3) {
         return ""
@@ -1224,6 +1438,7 @@ function Resolve-BardPerformance {
         Write-ColorLine ""
     }
 
+    $venueRecordBefore = Get-BardPerformanceVenueRecord -Game $Game -VenueId $VenueId
     $total = Start-BardPerformanceCheck -Game $Game -Venue $venue -CheckDC $effectiveCheckDC
     $rewardCopper = 0
     $outcome = "Poor"
@@ -1243,6 +1458,12 @@ function Resolve-BardPerformance {
         Write-Scene (Resolve-HeroNarrativeText -Text $venue.FailureText -Hero $Game.Hero)
     }
 
+    $memoryText = Get-BardPerformanceOutcomeMemoryText -Game $Game -Venue $venue -Record $venueRecordBefore -Outcome $outcome
+
+    if (-not [string]::IsNullOrWhiteSpace($memoryText)) {
+        Write-Scene $memoryText
+    }
+
     if ($permitRewardCopper -gt 0 -and $outcome -ne "Poor") {
         $rewardCopper += $permitRewardCopper
         Write-EmphasisLine -Text "Belor's market permit keeps the wardens off the set and the tip hat fuller." -Color "Yellow"
@@ -1252,6 +1473,7 @@ function Resolve-BardPerformance {
     $Game.Town.PerformanceCountToday = [int]$Game.Town.PerformanceCountToday + 1
     $Game.Town.PerformanceCountTotal = [int]$Game.Town.PerformanceCountTotal + 1
     $Game.Town.PerformanceVenuesToday[$VenueId] = $true
+    $updatedRecord = Update-BardPerformanceVenueRecord -Game $Game -VenueId $VenueId -Outcome $outcome -RewardCopper $rewardCopper
 
     if ($VenueId -eq "market_square" -and $outcome -ne "Poor") {
         $Game.Town.Relationships["SquareAudience"] = if ($outcome -eq "Great") { "Delighted" } else { "Warm" }
@@ -1274,6 +1496,7 @@ function Resolve-BardPerformance {
         Success = $true
         Outcome = $outcome
         RewardCopper = $rewardCopper
+        VenueRecord = $updatedRecord
     }
 }
 

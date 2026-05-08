@@ -156,3 +156,5 @@ Docks is intentionally more linear at first than the main town hub.
   - `Private Patron Salon`
 - performances do not consume the normal day-job slot
 - performance permit and venue recognition can improve bard income and standing
+- each venue keeps its own performance history: total plays, `Poor` / `Good` / `Great` outcomes, last outcome, and copper earned
+- audiences react differently once they know the bard: shaky rooms are guarded after repeated poor sets, known rooms carry good performances, and favorite rooms forgive weaker nights while rewarding great ones harder in flavor

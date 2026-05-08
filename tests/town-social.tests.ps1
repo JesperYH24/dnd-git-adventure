@@ -393,6 +393,64 @@ function Test-BardCanEarnCoinByPerformingInMarketSquare {
     Assert-Equal -Actual $game.Hero.XP -Expected $beforeXP -Message "Street performances should not grant XP."
 }
 
+function Test-BardPerformanceTracksVenueOutcomeHistory {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $script:rolls = @(4, 18)
+    $script:rollIndex = 0
+    $global:RollDiceOverride = {
+        param([int]$Sides)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+
+    $poorResult = Resolve-BardPerformance -Game $game -VenueId "market_square"
+    Advance-TownToNextDay -Game $game -StartingTimeOfDay "Night"
+    $greatResult = Resolve-BardPerformance -Game $game -VenueId "market_square"
+    $record = Get-BardPerformanceVenueRecord -Game $game -VenueId "market_square"
+
+    Assert-Equal -Actual $poorResult.Outcome -Expected "Poor" -Message "The first weak market performance should be recorded as poor."
+    Assert-Equal -Actual $greatResult.Outcome -Expected "Great" -Message "The second strong market performance should be recorded as great."
+    Assert-Equal -Actual (Get-BardPerformanceRecordValue -Record $record -Key "Plays") -Expected 2 -Message "Venue history should track total plays at the same audience."
+    Assert-Equal -Actual (Get-BardPerformanceRecordValue -Record $record -Key "Poor") -Expected 1 -Message "Venue history should track poor performances."
+    Assert-Equal -Actual (Get-BardPerformanceRecordValue -Record $record -Key "Great") -Expected 1 -Message "Venue history should track great performances."
+    Assert-Equal -Actual (Get-BardPerformanceRecordValue -Record $record -Key "LastOutcome") -Expected "Great" -Message "Venue history should remember the latest outcome."
+    Assert-Equal -Actual (Get-BardPerformanceRecordValue -Record $record -Key "EarningsCopper") -Expected ($poorResult.RewardCopper + $greatResult.RewardCopper) -Message "Venue history should track total copper earned from that audience."
+}
+
+function Test-BardPerformanceAudienceFamiliarityChangesReactionText {
+    $game = Initialize-Game -Class "Bard"
+    $venue = Get-BardPerformanceVenue -VenueId "bent_nail_stage"
+    $record = Get-BardPerformanceVenueRecord -Game $game -VenueId "bent_nail_stage"
+
+    Set-BardPerformanceRecordValue -Record $record -Key "Plays" -Value 2
+    Set-BardPerformanceRecordValue -Record $record -Key "Poor" -Value 2
+
+    $shakyText = Get-BardPerformanceRecognitionText -Game $game -Venue $venue
+    $poorMemory = Get-BardPerformanceOutcomeMemoryText -Game $game -Venue $venue -Record $record -Outcome "Poor"
+
+    Set-BardPerformanceRecordValue -Record $record -Key "Plays" -Value 5
+    Set-BardPerformanceRecordValue -Record $record -Key "Poor" -Value 0
+    Set-BardPerformanceRecordValue -Record $record -Key "Good" -Value 2
+    Set-BardPerformanceRecordValue -Record $record -Key "Great" -Value 3
+
+    $favoriteText = Get-BardPerformanceRecognitionText -Game $game -Venue $venue
+    $favoritePoorMemory = Get-BardPerformanceOutcomeMemoryText -Game $game -Venue $venue -Record $record -Outcome "Poor"
+
+    Assert-True -Condition ($shakyText -like "*rougher sets*") -Message "A venue with repeated poor sets should greet the bard with guarded skepticism."
+    Assert-True -Condition ($poorMemory -like "*heard this miss before*") -Message "A poor set should sting more when the audience already doubts the bard."
+    Assert-True -Condition ($favoriteText -like "*regulars know the songs*") -Message "A favorite venue should greet the bard as a known performer."
+    Assert-True -Condition ($favoritePoorMemory -like "*forgives*") -Message "A favorite audience should soften a poor night instead of treating the bard like a stranger."
+}
+
 function Test-BardCannotPerformTwiceAtSameVenueInOneDay {
     function global:Read-Host {
         param([string]$Prompt)
@@ -532,6 +590,8 @@ Test-BelorCanHelpFighterBuildTourneyStanding
 Test-FighterTourneyAttentionChangesStreetNpcTone
 Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch
 Test-BardCanEarnCoinByPerformingInMarketSquare
+Test-BardPerformanceTracksVenueOutcomeHistory
+Test-BardPerformanceAudienceFamiliarityChangesReactionText
 Test-BardCannotPerformTwiceAtSameVenueInOneDay
 Test-BardCanPerformAtDifferentVenuesOnSameDay
 Test-BardHasThreePerformanceSlotsPerDay

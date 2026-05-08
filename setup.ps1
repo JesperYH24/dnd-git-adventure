@@ -33,6 +33,7 @@ function New-DefaultTownState {
         PerformanceCountToday = 0
         PerformanceCountTotal = 0
         PerformanceVenuesToday = @{}
+        PerformanceHistory = @{}
         QuestPayoutBonusCopper = 0
         Quests = (Initialize-TownQuests)
         Relationships = @{}

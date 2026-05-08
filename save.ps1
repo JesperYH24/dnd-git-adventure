@@ -207,7 +207,7 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
-    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "Relationships", "InnFlags", "StoryFlags")) {
+    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags")) {
         if ($null -eq $Game.Town[$key]) {
             $Game.Town[$key] = @{}
         }
