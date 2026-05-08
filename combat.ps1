@@ -543,6 +543,20 @@ function Get-HeroFocusActionLabel {
     return "Focus"
 }
 
+function Get-HeroDefensiveActionArmorBonus {
+    param($Hero)
+
+    $baseBonus = 2
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Bard") {
+        $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+        $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
+        return [Math]::Max(0, $dexterityModifier) + $proficiencyBonus
+    }
+
+    return $baseBonus
+}
+
 function Resolve-HeroInspirationBoost {
     param(
         $Hero,
@@ -1200,6 +1214,8 @@ function Resolve-HeroCombatTurn {
             -HeroFocusAttackBonus $HeroFocusAttackBonus
 
         if ($choice -eq "B") {
+            $defensiveArmorBonus = Get-HeroDefensiveActionArmorBonus -Hero $Hero
+
             if ($Hero.Class -eq "Bard") {
                 Write-Scene "$($Hero.Name) slips into quick footwork, giving ground before the strike can settle."
             }
@@ -1209,8 +1225,18 @@ function Resolve-HeroCombatTurn {
             else {
                 Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
             }
-            $HeroBlockArmorBonus.Value += 2
-            Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
+
+            $HeroBlockArmorBonus.Value += $defensiveArmorBonus
+
+            if ($Hero.Class -eq "Bard") {
+                $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
+                $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
+                Write-Action "$($Hero.Name) gains +$defensiveArmorBonus AC against the next attack. (Footwork: +$dexterityModifier DEX, +$proficiencyBonus proficiency)" "Yellow"
+            }
+            else {
+                Write-Action "$($Hero.Name) gains +$defensiveArmorBonus AC against the next attack." "Yellow"
+            }
+
             Write-ColorLine ""
             $actionSpent = $true
             continue

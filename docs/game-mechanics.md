@@ -43,6 +43,7 @@
 - `Vicious Mockery` uses a `WIS` save
 - `Cutting Words` works as a reaction and spends bardic inspiration
 - prepared bardic inspiration recovers on short rest
+- `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack
 - visible `Spell Save DC`
 
 ## Fighter mechanics

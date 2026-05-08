@@ -113,6 +113,22 @@ function Test-ClassCombatActionLabelsAreDistinct {
     Assert-Equal -Actual (Get-HeroFocusActionLabel -Hero $fighter) -Expected "Study Guard" -Message "Fighter focus action should read as martial discipline."
 }
 
+function Test-BardFootworkScalesWithDexterityAndProficiency {
+    $barbarian = Get-Hero
+    $bard = Get-Hero -Class "Bard"
+    $fighter = Get-Hero -Class "Fighter"
+
+    Assert-Equal -Actual (Get-HeroDefensiveActionArmorBonus -Hero $barbarian) -Expected 2 -Message "Barbarian Block should keep the baseline defensive bonus."
+    Assert-Equal -Actual (Get-HeroDefensiveActionArmorBonus -Hero $fighter) -Expected 2 -Message "Fighter Shield Block should keep the baseline defensive bonus before riposte."
+    Assert-Equal -Actual (Get-HeroDefensiveActionArmorBonus -Hero $bard) -Expected 4 -Message "Bard Footwork should add the bard's DEX modifier and proficiency bonus."
+
+    $bard.DEX = 16
+    Assert-Equal -Actual (Get-HeroDefensiveActionArmorBonus -Hero $bard) -Expected 5 -Message "Bard Footwork should improve when DEX improves."
+
+    $bard.Level = 5
+    Assert-Equal -Actual (Get-HeroDefensiveActionArmorBonus -Hero $bard) -Expected 6 -Message "Bard Footwork should improve when proficiency improves."
+}
+
 function Test-FighterShieldBlockRiposteTriggersOncePerFight {
     Set-TestOutputStubs
 
@@ -728,6 +744,7 @@ function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
 Test-ClassCombatActionLabelsAreDistinct
+Test-BardFootworkScalesWithDexterityAndProficiency
 Test-FighterShieldBlockRiposteTriggersOncePerFight
 Test-HeroCriticalFailDealsMishapDamageAndEndsTurn
 Test-BarbarianCritKillGetsSavageFinisherText
