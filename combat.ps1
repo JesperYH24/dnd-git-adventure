@@ -404,7 +404,8 @@ function Invoke-MonsterAttack {
         [int]$BlockArmorBonus = 0,
         [int]$AttackPenaltyModifier = 0,
         [int]$AttackBonusModifier = 0,
-        [bool]$Advantage = $false
+        [bool]$Advantage = $false,
+        $AttackResult = $null
     )
 
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
@@ -430,7 +431,21 @@ function Invoke-MonsterAttack {
 
     Write-Action "$($Monster.definite) attacks: $rollText, total $attackTotal$penaltyText$bonusText vs AC $heroArmorClass$blockText" "DarkCyan"
 
+    $result = [PSCustomObject]@{
+        Hit = $false
+        Miss = $false
+        CriticalHit = $false
+        CriticalFail = $false
+        PreventedByCuttingWords = $false
+        AttackRoll = $attackRoll
+        AttackTotal = $attackTotal
+        TargetArmorClass = $heroArmorClass
+        BlockArmorBonus = $BlockArmorBonus
+    }
+
     if ($attackRoll -eq 20) {
+        $result.Hit = $true
+        $result.CriticalHit = $true
         Write-Action "CRITICAL HIT!" "Red"
         $criticalDamage = Get-MonsterCriticalDamage -Monster $Monster
         $rawDamage = $criticalDamage.Damage
@@ -446,6 +461,8 @@ function Invoke-MonsterAttack {
         }
     }
     elseif ($attackRoll -eq 1) {
+        $result.Miss = $true
+        $result.CriticalFail = $true
         Write-Action "CRITICAL FAIL!" "Magenta"
         Write-Action "$($Monster.definite) stumbles and loses its balance!" "DarkYellow"
         $MonsterOffBalance.Value = $true
@@ -458,12 +475,19 @@ function Invoke-MonsterAttack {
             -TargetArmorClass $heroArmorClass
 
         if ($cuttingWordsResult.PreventedHit) {
+            $result.Miss = $true
+            $result.PreventedByCuttingWords = $true
+            $result.AttackTotal = $attackTotal
             Write-Scene (Get-BardCuttingWordsPreventedHitFlavorText -Hero $Hero -Monster $Monster)
             Write-Action "$($Monster.definite) misses after the bard's cutting words throw off the strike!" "DarkGray"
             Write-ColorLine ""
+            if ($null -ne $AttackResult) {
+                $AttackResult.Value = $result
+            }
             return
         }
 
+        $result.Hit = $true
         $rawDamage = Roll-MonsterDamage -Monster $Monster
         $monsterDamage = Get-HeroRageReducedDamage -Hero $Hero -Damage $rawDamage
         $HeroHP.Value -= $monsterDamage
@@ -476,6 +500,7 @@ function Invoke-MonsterAttack {
         }
     }
     else {
+        $result.Miss = $true
         Write-Action "$($Monster.definite) misses!" "DarkGray"
     }
 
@@ -484,6 +509,38 @@ function Invoke-MonsterAttack {
     }
 
     Write-ColorLine ""
+
+    if ($null -ne $AttackResult) {
+        $AttackResult.Value = $result
+    }
+}
+
+function Get-HeroBlockActionLabel {
+    param($Hero)
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Bard") {
+        return "Footwork"
+    }
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Fighter") {
+        return "Shield Block"
+    }
+
+    return "Block"
+}
+
+function Get-HeroFocusActionLabel {
+    param($Hero)
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Bard") {
+        return "Set Tempo"
+    }
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Fighter") {
+        return "Study Guard"
+    }
+
+    return "Focus"
 }
 
 function Resolve-HeroInspirationBoost {
@@ -509,10 +566,10 @@ function Resolve-HeroInspirationBoost {
         $boostLabel = "boost this attack"
     }
     elseif ($PrimaryAction -eq "B") {
-        $boostLabel = "strengthen this block"
+        $boostLabel = "strengthen this $((Get-HeroBlockActionLabel -Hero $Hero).ToLower())"
     }
     elseif ($PrimaryAction -eq "F") {
-        $boostLabel = "sharpen this focus"
+        $boostLabel = "sharpen this $((Get-HeroFocusActionLabel -Hero $Hero).ToLower())"
     }
     else {
         return
@@ -547,8 +604,8 @@ function Resolve-HeroInspirationBoost {
             }
             elseif ($PrimaryAction -eq "B") {
                 $HeroBlockArmorBonus.Value += $inspiration.TotalBonus
-                Write-Scene "$($Hero.Name) lifts the rhythm at just the right instant and turns defense into a tighter guard."
-                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = +$($inspiration.TotalBonus) AC on this block." "Yellow"
+                Write-Scene "$($Hero.Name) lifts the rhythm at just the right instant and turns movement into a cleaner escape line."
+                Write-Action "Bardic inspiration: d$($bardicStatus.DieSides) roll $($inspiration.Roll) = +$($inspiration.TotalBonus) AC on this footwork." "Yellow"
             }
             else {
                 $HeroFocusAttackBonus.Value += $inspiration.TotalBonus
@@ -890,7 +947,7 @@ function Show-BardTutorialCombatHint {
         return
     }
 
-    Write-Scene "Prepared bardic inspiration can strengthen Attack, Block, or Focus after you choose the action. Each round opens with a combat menu where $($Hero.Name) can choose Action or Bonus Action, and Cutting Words can still interrupt a hit as a reaction."
+    Write-Scene "Prepared bardic inspiration can strengthen Attack, Footwork, or Set Tempo after you choose the action. Each round opens with a combat menu where $($Hero.Name) can choose Action or Bonus Action, and Cutting Words can still interrupt a hit as a reaction."
     Write-ColorLine ""
     $Hero.TutorialCombatHintShown = $true
 }
@@ -939,9 +996,38 @@ function Show-CombatTurnMenu {
 }
 
 function Show-CombatChoiceMenu {
-    Write-ColorLine "A. Attack   B. Block   F. Focus" "White"
+    param($Hero)
+
+    $blockLabel = Get-HeroBlockActionLabel -Hero $Hero
+    $focusLabel = Get-HeroFocusActionLabel -Hero $Hero
+
+    Write-ColorLine "A. Attack   B. $blockLabel   F. $focusLabel" "White"
     Write-ColorLine "I. Inventory   P. Pass Action   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
+}
+
+function Try-Resolve-FighterRiposte {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$MonsterHP,
+        [ref]$HeroHP,
+        $HeroRiposteAvailable = $null
+    )
+
+    if ($null -eq $HeroRiposteAvailable -or -not $HeroRiposteAvailable.Value) {
+        return $false
+    }
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter" -or $null -eq $MonsterHP -or $MonsterHP.Value -le 0) {
+        return $false
+    }
+
+    $HeroRiposteAvailable.Value = $false
+    Write-Scene "$($Hero.Name)'s shield catches the attack and turns it aside. The miss leaves just enough line for a riposte."
+    Write-Action "Riposte: one reaction strike, available once per fight after a successful Shield Block." "Yellow"
+    Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP
+    return $true
 }
 
 function Resolve-MonsterCombatTurn {
@@ -951,12 +1037,18 @@ function Resolve-MonsterCombatTurn {
         [ref]$HeroHP,
         [ref]$MonsterOffBalance,
         [ref]$HeroBlockArmorBonus,
-        [ref]$HeroRecklessExposure
+        [ref]$HeroRecklessExposure,
+        $MonsterHP = $null,
+        $HeroRiposteAvailable = $null
     )
 
     if (-not $MonsterOffBalance.Value) {
         $recklessAdvantage = ($null -ne $HeroRecklessExposure -and $HeroRecklessExposure.Value)
-        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value -Advantage $recklessAdvantage
+        $monsterAttackResult = $null
+        Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value -Advantage $recklessAdvantage -AttackResult ([ref]$monsterAttackResult)
+        if ($Hero.Class -eq "Fighter" -and $HeroBlockArmorBonus.Value -gt 0 -and $null -ne $MonsterHP -and $null -ne $monsterAttackResult -and $monsterAttackResult.Miss) {
+            Try-Resolve-FighterRiposte -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroRiposteAvailable $HeroRiposteAvailable | Out-Null
+        }
         $HeroBlockArmorBonus.Value = 0
 
         if ($null -ne $HeroRecklessExposure) {
@@ -1060,7 +1152,7 @@ function Resolve-HeroCombatTurn {
             continue
         }
 
-        Show-CombatChoiceMenu
+        Show-CombatChoiceMenu -Hero $Hero
         $choice = (Read-Host "Choose action").ToUpper()
 
         if ($choice -eq "T") {
@@ -1108,7 +1200,15 @@ function Resolve-HeroCombatTurn {
             -HeroFocusAttackBonus $HeroFocusAttackBonus
 
         if ($choice -eq "B") {
-            Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
+            if ($Hero.Class -eq "Bard") {
+                Write-Scene "$($Hero.Name) slips into quick footwork, giving ground before the strike can settle."
+            }
+            elseif ($Hero.Class -eq "Fighter") {
+                Write-Scene "$($Hero.Name) sets the shield line and waits for the attack to spend itself against steel."
+            }
+            else {
+                Write-Scene "$($Hero.Name) braces for impact and raises a tight defense."
+            }
             $HeroBlockArmorBonus.Value += 2
             Write-Action "$($Hero.Name) gains +2 AC against the next attack." "Yellow"
             Write-ColorLine ""
@@ -1117,7 +1217,15 @@ function Resolve-HeroCombatTurn {
         }
 
         if ($choice -eq "F") {
-            Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
+            if ($Hero.Class -eq "Bard") {
+                Write-Scene "$($Hero.Name) sets the tempo of the fight, waiting for the beat where the next strike lands clean."
+            }
+            elseif ($Hero.Class -eq "Fighter") {
+                Write-Scene "$($Hero.Name) studies the guard, shield angle, and foot placement before committing steel."
+            }
+            else {
+                Write-Scene "$($Hero.Name) slows the breath, studies the opening, and waits for the right strike."
+            }
             $HeroFocusAttackBonus.Value += 2
             Write-Action "$($Hero.Name) gains +2 to hit on the next attack." "Yellow"
             Write-ColorLine ""
@@ -1157,6 +1265,7 @@ function Start-CombatLoop {
     $heroBlockArmorBonus = 0
     $heroFocusAttackBonus = 0
     $heroRecklessExposure = $false
+    $heroRiposteAvailable = ($Hero.Class -eq "Fighter")
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
         Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
@@ -1170,10 +1279,10 @@ function Start-CombatLoop {
                 break
             }
 
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable)
         }
         else {
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable)
 
             if ($HeroHP.Value -le 0) {
                 break

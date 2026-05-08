@@ -100,6 +100,60 @@ function Test-BlockRaisesArmorClassAgainstNextAttack {
     Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "Block should cause the next monster attack to miss if the bonus pushes AC high enough."
 }
 
+function Test-ClassCombatActionLabelsAreDistinct {
+    $barbarian = Get-Hero
+    $bard = Get-Hero -Class "Bard"
+    $fighter = Get-Hero -Class "Fighter"
+
+    Assert-Equal -Actual (Get-HeroBlockActionLabel -Hero $barbarian) -Expected "Block" -Message "Barbarian defensive action should keep the baseline Block label."
+    Assert-Equal -Actual (Get-HeroFocusActionLabel -Hero $barbarian) -Expected "Focus" -Message "Barbarian focus action should keep the baseline Focus label."
+    Assert-Equal -Actual (Get-HeroBlockActionLabel -Hero $bard) -Expected "Footwork" -Message "Bard defensive action should read as evasion, not blocking."
+    Assert-Equal -Actual (Get-HeroFocusActionLabel -Hero $bard) -Expected "Set Tempo" -Message "Bard focus action should use performance-flavored wording."
+    Assert-Equal -Actual (Get-HeroBlockActionLabel -Hero $fighter) -Expected "Shield Block" -Message "Fighter defensive action should emphasize the shield."
+    Assert-Equal -Actual (Get-HeroFocusActionLabel -Hero $fighter) -Expected "Study Guard" -Message "Fighter focus action should read as martial discipline."
+}
+
+function Test-FighterShieldBlockRiposteTriggersOncePerFight {
+    Set-TestOutputStubs
+
+    $script:d20Rolls = [System.Collections.Generic.Queue[int]]::new()
+    @(10, 15, 10) | ForEach-Object { $script:d20Rolls.Enqueue($_) }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) {
+            return $script:d20Rolls.Dequeue()
+        }
+
+        if ($Sides -eq 6) {
+            return 4
+        }
+
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $monsterOffBalance = $false
+    $blockBonus = 2
+    $recklessExposure = $false
+    $riposteAvailable = $true
+
+    Resolve-MonsterCombatTurn -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance) -HeroBlockArmorBonus ([ref]$blockBonus) -HeroRecklessExposure ([ref]$recklessExposure) -MonsterHP ([ref]$monsterHP) -HeroRiposteAvailable ([ref]$riposteAvailable)
+
+    $monsterHPAfterFirstBlock = $monsterHP
+    Assert-True -Condition ($monsterHPAfterFirstBlock -lt $monster.hp) -Message "A Fighter should riposte once after a successful Shield Block."
+    Assert-Equal -Actual $riposteAvailable -Expected $false -Message "Riposte should be spent after the first successful Shield Block."
+
+    $blockBonus = 2
+    Resolve-MonsterCombatTurn -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance) -HeroBlockArmorBonus ([ref]$blockBonus) -HeroRecklessExposure ([ref]$recklessExposure) -MonsterHP ([ref]$monsterHP) -HeroRiposteAvailable ([ref]$riposteAvailable)
+
+    Assert-Equal -Actual $monsterHP -Expected $monsterHPAfterFirstBlock -Message "Fighter riposte should not trigger a second time in the same fight."
+}
+
 function Test-HeroCriticalFailDealsMishapDamageAndEndsTurn {
     Set-TestOutputStubs
 
@@ -673,6 +727,8 @@ function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
 
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
+Test-ClassCombatActionLabelsAreDistinct
+Test-FighterShieldBlockRiposteTriggersOncePerFight
 Test-HeroCriticalFailDealsMishapDamageAndEndsTurn
 Test-BarbarianCritKillGetsSavageFinisherText
 Test-ClassActionFlavorTextResolvesCombatTokens
