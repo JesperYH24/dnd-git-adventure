@@ -234,6 +234,7 @@ function Ensure-LoadedAdventureShape {
             SquireLosses = 0
             PatronAttention = 0
             LastPatronMilestone = 0
+            PresentationMade = $false
         }
     }
     else {
@@ -243,7 +244,8 @@ function Ensure-LoadedAdventureShape {
             @{ Key = "SquireWins"; Value = 0 },
             @{ Key = "SquireLosses"; Value = 0 },
             @{ Key = "PatronAttention"; Value = 0 },
-            @{ Key = "LastPatronMilestone"; Value = 0 }
+            @{ Key = "LastPatronMilestone"; Value = 0 },
+            @{ Key = "PresentationMade"; Value = $false }
         )) {
             if (-not $Game.Town["Jousting"].ContainsKey($entry.Key)) {
                 $Game.Town["Jousting"][$entry.Key] = $entry.Value

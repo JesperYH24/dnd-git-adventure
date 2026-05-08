@@ -58,6 +58,7 @@
 - guard and patron quest acceptance text now frames Fighter as disciplined, reliable, and knight-aspirant rather than generic hired muscle
 - `Tourney Ground` is the Fighter city pastime: foot sparring against squires tracks wins/losses and builds `PatronAttention`
 - at `6` patron attention, upper-city patrons start watching Lubert as a `Patron-Noticed Aspirant`
+- with patron notice plus a `Heraldic Surcoat`, Lubert can present colors to the patron rail, becoming a `Patron-Backed Aspirant` and unlocking future splint armor savings
 - mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it
 
 ## Town and day/night systems

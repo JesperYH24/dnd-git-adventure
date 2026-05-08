@@ -45,6 +45,7 @@ function New-DefaultTownState {
             SquireLosses = 0
             PatronAttention = 0
             LastPatronMilestone = 0
+            PresentationMade = $false
         }
         Ring = @{
             Visits = 0

@@ -114,6 +114,43 @@ function Test-FighterTourneyPatronAttentionUnlocks {
     Assert-True -Condition ($patronText -like "*writing {hero}'s name*") -Message "Patron text should reflect upper rail attention."
 }
 
+function Test-FighterPatronPresentationRequiresNoticeAndSurcoat {
+    $game = Initialize-Game -Class "Fighter"
+
+    $tooEarly = Resolve-JoustingPatronPresentation -Game $game
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    $withoutSurcoat = Resolve-JoustingPatronPresentation -Game $game
+
+    Assert-Equal -Actual $tooEarly.Success -Expected $false -Message "Presentation should wait until the rail has enough patron attention."
+    Assert-Equal -Actual $withoutSurcoat.Success -Expected $false -Message "Presentation should require heraldic colors after patron notice."
+    Assert-Equal -Actual $withoutSurcoat.MissingSurcoat -Expected $true -Message "A noticed Fighter without a surcoat should get a clear missing-surcoat result."
+    Assert-True -Condition ($withoutSurcoat.Message -like "*Heraldic Surcoat*") -Message "The blocked presentation should point to the Heraldic Surcoat."
+}
+
+function Test-FighterHeraldicPresentationBuildsPatronBacking {
+    $game = Initialize-Game -Class "Fighter"
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    Resolve-JoustingArenaSquireSpar -Game $game -Roll 15 | Out-Null
+    $game.Hero.Inventory += (New-TownItemFromOfferId -OfferId "armorer_heraldic_surcoat")
+
+    $result = Resolve-JoustingPatronPresentation -Game $game
+    $status = Get-HeroJoustingStatus -Game $game
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A noticed Fighter with heraldic colors should be able to present to the rail."
+    Assert-Equal -Actual $game.Town.Jousting.PresentationMade -Expected $true -Message "Presentation should persist on the jousting state."
+    Assert-Equal -Actual $game.Town.Relationships["TourneyPatrons"] -Expected "Backing" -Message "Presentation should upgrade patron relationship from watching to backing."
+    Assert-Equal -Actual $game.Town.StreetFlags["TourneyPresentationAccepted"] -Expected $true -Message "Presentation should set a story flag for later NPC/content hooks."
+    Assert-Equal -Actual $status.Title -Expected "Patron-Backed Aspirant" -Message "Presentation should improve Lubert's tourney standing title."
+    Assert-Equal -Actual $status.HasHeraldicSurcoat -Expected $true -Message "Jousting status should report whether Lubert has heraldic colors."
+
+    $game.Hero.Level = 4
+    $splintOffer = (Get-ArmorerOffers -Game $game) | Where-Object { $_.Id -eq "armorer_splint_armor" } | Select-Object -First 1
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $splintOffer) -Expected 1650 -Message "Patron backing should make future splint armor easier to afford."
+}
+
 function Test-FighterTourneyLossStillTracksRecord {
     $game = Initialize-Game -Class "Fighter"
 
@@ -178,6 +215,8 @@ Test-FighterSecondWindHealsAndRestores
 Test-FighterShopOffersPointTowardKnightProgression
 Test-FighterJoustingArenaPreviewAndSquireSpar
 Test-FighterTourneyPatronAttentionUnlocks
+Test-FighterPatronPresentationRequiresNoticeAndSurcoat
+Test-FighterHeraldicPresentationBuildsPatronBacking
 Test-FighterTourneyLossStillTracksRecord
 Test-FighterQuestAcceptanceUsesKnightlyTone
 Test-MountedJoustingRequiresHorseAndTourneyArmor

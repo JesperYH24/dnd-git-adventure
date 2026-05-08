@@ -17,7 +17,8 @@ function Initialize-JoustingState {
         @{ Key = "SquireWins"; Value = 0 },
         @{ Key = "SquireLosses"; Value = 0 },
         @{ Key = "PatronAttention"; Value = 0 },
-        @{ Key = "LastPatronMilestone"; Value = 0 }
+        @{ Key = "LastPatronMilestone"; Value = 0 },
+        @{ Key = "PresentationMade"; Value = $false }
     )) {
         if (-not $Game.Town.Jousting.ContainsKey($entry.Key)) {
             $Game.Town.Jousting[$entry.Key] = $entry.Value
@@ -33,6 +34,10 @@ function Get-JoustingStandingTitle {
 
     if ([bool]$mountedRequirements.CanEnter) {
         return "Mounted Prospect"
+    }
+
+    if ([bool]$Game.Town.Jousting.PresentationMade) {
+        return "Patron-Backed Aspirant"
     }
 
     if ([int]$Game.Town.Jousting.PatronAttention -ge 6) {
@@ -62,6 +67,10 @@ function Get-JoustingPatronAttentionText {
     $wins = [int]$Game.Town.Jousting.SquireWins
 
     if ($attention -ge 6) {
+        if ([bool]$Game.Town.Jousting.PresentationMade) {
+            return "The rail knows {hero}'s colors now. That is still not knighthood, but it is the first useful shape of sponsorship: people with money can imagine {him} standing where a future mounted prospect should stand."
+        }
+
         return "A clerk in a sober blue coat has started writing {hero}'s name without asking twice. No patron has stepped forward yet, but the rail has stopped treating {him} like hired muscle in borrowed manners."
     }
 
@@ -95,8 +104,30 @@ function Get-HeroJoustingStatus {
         SquireWins = [int]$Game.Town.Jousting.SquireWins
         SquireLosses = [int]$Game.Town.Jousting.SquireLosses
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+        PresentationMade = [bool]$Game.Town.Jousting.PresentationMade
+        HasHeraldicSurcoat = Test-HeroHasHeraldicSurcoat -Hero $Game.Hero
         Title = Get-JoustingStandingTitle -Game $Game
     }
+}
+
+function Test-HeroHasHeraldicSurcoat {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return $false
+    }
+
+    $items = @()
+
+    if ($null -ne $Hero.Inventory) {
+        $items += @($Hero.Inventory)
+    }
+
+    if ($null -ne $Hero.BackpackInventory) {
+        $items += @($Hero.BackpackInventory)
+    }
+
+    return [bool]($items | Where-Object { $_.Name -eq "Heraldic Surcoat" } | Select-Object -First 1)
 }
 
 function Test-HeroHasMountedJoustingHorse {
@@ -155,6 +186,83 @@ function Get-MountedJoustingRequirements {
         HasTourneyArmor = $hasTourneyArmor
         Missing = $missing
         MissingText = if ($missing.Count -gt 0) { ($missing -join ", ") } else { "" }
+    }
+}
+
+function Get-JoustingPresentationPreviewText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -ne "Fighter") {
+        return "The rail is not ready to hear a formal presentation from this hero yet."
+    }
+
+    Initialize-JoustingState -Game $Game
+
+    if ([bool]$Game.Town.Jousting.PresentationMade) {
+        return "Lubert's colors have already been shown to the rail. The next proof has to come from equipment, wins, and eventually the mounted lists."
+    }
+
+    if ([int]$Game.Town.Jousting.PatronAttention -lt 6) {
+        return "The rail has noticed Lubert, but not enough for a formal presentation. More clean squire wins will make the heraldry matter instead of looking hopeful."
+    }
+
+    if (-not (Test-HeroHasHeraldicSurcoat -Hero $Game.Hero)) {
+        return "A clerk explains the ugly rule politely: if Lubert wants patron attention to become backing, he needs colors worth recording. The armorer can sell a Heraldic Surcoat now that the rail knows his name."
+    }
+
+    return "Lubert has attention, a record, and colors clean enough for the rail. A formal presentation could turn curiosity into early backing."
+}
+
+function Resolve-JoustingPatronPresentation {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -ne "Fighter") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "The rail is not ready to hear a formal presentation from this hero yet."
+            Reputation = ""
+        }
+    }
+
+    Initialize-JoustingState -Game $Game
+
+    if ([bool]$Game.Town.Jousting.PresentationMade) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Lubert's colors have already been shown to the rail. The next proof has to come from equipment, wins, and eventually the mounted lists."
+            Reputation = Get-JoustingStandingTitle -Game $Game
+        }
+    }
+
+    if ([int]$Game.Town.Jousting.PatronAttention -lt 6) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "The upper rail is watching, but not enough for a formal presentation. More clean squire wins will make the heraldry matter."
+            Reputation = Get-JoustingStandingTitle -Game $Game
+        }
+    }
+
+    if (-not (Test-HeroHasHeraldicSurcoat -Hero $Game.Hero)) {
+        return [PSCustomObject]@{
+            Success = $false
+            MissingSurcoat = $true
+            Message = "The clerk shakes his head gently. 'Your name is known, Stryer, but colors make a prospect legible. Bring a Heraldic Surcoat and the rail can write more than rumors.'"
+            Reputation = Get-JoustingStandingTitle -Game $Game
+        }
+    }
+
+    $Game.Town.Jousting.PresentationMade = $true
+    $Game.Town.Jousting.PatronAttention = [Math]::Max([int]$Game.Town.Jousting.PatronAttention, 8)
+    $Game.Town.Relationships["TourneyPatrons"] = "Backing"
+    $Game.Town.StreetFlags["TourneyPresentationAccepted"] = $true
+    Set-TownOfferDiscount -Game $Game -OfferId "armorer_splint_armor" -DiscountCopper 150
+
+    return [PSCustomObject]@{
+        Success = $true
+        MissingSurcoat = $false
+        Message = "Lubert steps before the rail in clean heraldic cloth over honest mail. The clerk records the colors, the wins, and the family that agrees to be seen watching. It is not a title. It is backing, and backing has weight."
+        Reputation = Get-JoustingStandingTitle -Game $Game
+        PatronAttention = [int]$Game.Town.Jousting.PatronAttention
     }
 }
 
@@ -260,11 +368,12 @@ function Start-JoustingArena {
         $status = Get-HeroJoustingStatus -Game $Game
         $horseText = if ($status.HasHorse) { "Owned" } else { "Needed" }
         $armorText = if ($status.HasTourneyArmor) { "Ready" } else { "Needs splint/plate" }
-        Write-ColorLine "Arena Standing: $($status.Title) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention)/6 | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
+        Write-ColorLine "Arena Standing: $($status.Title) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention) | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "1. Spar against a squire on foot" "White"
         Write-ColorLine "2. Ask what the patrons think" "White"
         Write-ColorLine "3. Ask about mounted jousting" "White"
+        Write-ColorLine "4. Present colors to the patron rail" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
@@ -274,7 +383,7 @@ function Start-JoustingArena {
             "1" {
                 $result = Resolve-JoustingArenaSquireSpar -Game $Game
                 Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
-                Write-EmphasisLine -Text "Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)/6." -Color "Yellow"
+                Write-EmphasisLine -Text "Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)." -Color "Yellow"
                 Write-ColorLine ""
             }
             "2" {
@@ -289,6 +398,17 @@ function Start-JoustingArena {
                 }
                 else {
                     Write-EmphasisLine -Text "Future unlock requirements: $($requirements.MissingText)." -Color "Yellow"
+                }
+                Write-ColorLine ""
+            }
+            "4" {
+                $result = Resolve-JoustingPatronPresentation -Game $Game
+                Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
+                if ($result.Success) {
+                    Write-EmphasisLine -Text "Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention). Splint armor is easier to afford through patron backing." -Color "Yellow"
+                }
+                else {
+                    Write-EmphasisLine -Text (Resolve-HeroNarrativeText -Text (Get-JoustingPresentationPreviewText -Game $Game) -Hero $Game.Hero) -Color "Yellow"
                 }
                 Write-ColorLine ""
             }
