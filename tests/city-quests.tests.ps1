@@ -1448,7 +1448,7 @@ function Test-FighterHasClassSpecificCityQuestOptions {
     $fighterOptionCount = ([regex]::Matches($questScript, 'elseif \(\$Game\.Hero\.Class -eq "Fighter"\)')).Count
 
     Assert-True -Condition ($fighterOptionCount -ge 18) -Message "Fighter should have its own city quest option branches across day jobs and docks quests."
-    Assert-True -Condition ($questScript.Contains("Use shield discipline to close the lane without spooking the handoff")) -Message "Fighter should have a Night Courier special option."
+    Assert-True -Condition ($questScript.Contains("Read the handoff pattern and close the lane without spooking it")) -Message "Fighter should have a Night Courier special option."
     Assert-True -Condition ($questScript.Contains("Treat the counting room like a formal inquiry and hold every exit")) -Message "Fighter should have a Charter Scribe special option."
     Assert-True -Condition ($questScript.Contains("Run the gate like a shield drill and clear one lane at a time")) -Message "Fighter should have a gate duty special option."
 }

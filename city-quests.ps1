@@ -1409,6 +1409,11 @@ function Start-NightWatchReliefQuest {
         Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'And now merchants are whispering about missing stock on top of it. Walk the line, listen sharp, and come back with something better than rumors. If you can pull truth out of frightened people before steel has to, do it.'"
         Write-Scene "$($Game.Hero.Name) joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes."
     }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-Scene "Captain Halden meets $($Game.Hero.Name) under a guttering lantern and takes in the mail, shield, and careful posture before he speaks."
+        Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'I do not need a brawler tonight. I need someone who can hold a line, read a patrol scene, and know when a frightened street is lying by omission.'"
+        Write-Scene "$($Game.Hero.Name) joins Watchwoman Lysa on a short patrol through shuttered alleys and damp stone lanes, watching corners before voices."
+    }
     else {
         Write-Scene "Captain Halden meets {hero} under a guttering lantern and speaks without wasting a word."
         Write-Scene "'Outer district. Broken seal. Strange movement near the old drains,' he says. 'And now merchants are whispering about missing stock on top of it. Walk the line, see what scared my people, and come back with something better than rumors.'"
@@ -1489,6 +1494,11 @@ function Start-StorehouseTroubleQuest {
     if ($Game.Hero.Class -eq "Bard") {
         Write-Scene "The patron's clerk presses a cold iron key into $($Game.Hero.Name)'s hand and points him toward the river quarter."
         Write-Scene "'The watch keeps asking about tunnels and night movement,' the clerk mutters. 'You hear different things in better rooms than my factors do. I want to know where the goods are going, and who thinks they can hide it behind respectable paper.'"
+        Write-Scene "Inside the locked storehouse $($Game.Hero.Name) finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
+    }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Write-Scene "The patron's clerk presses a cold iron key into $($Game.Hero.Name)'s hand, then glances at his shield as if deciding whether this is theft work or guard work."
+        Write-Scene "'The watch keeps asking about tunnels and night movement,' the clerk mutters. 'I want the storehouse secured, the signs read properly, and the goods accounted for before someone makes the evidence disappear.'"
         Write-Scene "Inside the locked storehouse $($Game.Hero.Name) finds broken crate lids, muddy bootprints, and neat stacks of goods that have already been sorted for resale."
     }
     else {
@@ -1578,7 +1588,7 @@ function Start-MissingHerbSatchelQuest {
         Write-ColorLine "4. Hold the road and wait the fear out until someone finally talks (CON)" "White"
     }
     elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Make the road feel watched, lawful, and safe enough for the truth (CON)" "White"
+        Write-ColorLine "4. Read their fear and make the road feel safe enough for the truth (WIS)" "White"
     }
     Write-ColorLine ""
 
@@ -1668,7 +1678,7 @@ function Start-MissingHerbSatchelQuest {
                     break
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) lowers his shield, gives the scavengers a clear lawful way out, and holds the road steady until panic has somewhere to go."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) lowers his shield, reads which glance is fear and which is guilt, and gives the scavengers a lawful way out before panic takes over."
 
                     if ($success) {
                         Write-Scene "The scavengers stop seeing a trap and start seeing protection. They admit a marked courier dropped the satchel while fleeing back toward the city lanes."
@@ -1782,7 +1792,7 @@ function Start-LedgerOfAshQuest {
         Write-ColorLine "4. Break the dockside bluff until the hidden name finally slips (CON)" "White"
     }
     elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Call for a formal account and let the room fear perjury (CON)" "White"
+        Write-ColorLine "4. Read the account like sworn testimony until the false duty shows (WIS)" "White"
     }
     Write-ColorLine ""
 
@@ -1864,7 +1874,7 @@ function Start-LedgerOfAshQuest {
                     break
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) treats the questioning like a formal hearing, standing mailed and patient until the clerk realizes every lie is becoming testimony."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) treats the questioning like sworn testimony, watching which answers carry duty and which ones only imitate it."
                     if ($success) {
                         Write-Scene "The clerk finally chooses the smaller disgrace. Serik's name lands in the room cleanly, carried less by fear than by the sense that the account is now official."
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
@@ -2049,7 +2059,7 @@ function Start-NightCourierInterceptQuest {
         Write-ColorLine "4. Run the courier down and break the route open by sheer pursuit (CON)" "White"
     }
     elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Use shield discipline to close the lane without spooking the handoff (CON)" "White"
+        Write-ColorLine "4. Read the handoff pattern and close the lane without spooking it (WIS)" "White"
     }
     Write-ColorLine "" 
 
@@ -2143,7 +2153,7 @@ function Start-NightCourierInterceptQuest {
                     break
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) moves like a drilled gate guard, closing each exit one step at a time until the courier has speed but no clean lane."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the handoff pattern, waits for the courier to commit, and closes each exit only when the route has already betrayed itself."
 
                     if ($success) {
                         Write-Scene "The courier keeps running until the route itself disappears around him. The message case, handoff point, and signal marks all end up in watch hands."
@@ -2253,7 +2263,7 @@ function Start-WarehouseLedgerRecoveryQuest {
         Write-ColorLine "4. Tear the office apart until the real hiding place gives itself away (STR)" "White"
     }
     elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Secure the exits and make the clerk account for every moved page (CON)" "White"
+        Write-ColorLine "4. Read the disturbed office and make the clerk account for every moved page (WIS)" "White"
     }
     Write-ColorLine ""
 
@@ -2345,7 +2355,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                     break
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) posts himself by the door, orders the room like a guard detail, and makes the clerk explain every disturbed shelf."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the disturbed office like a patrol scene, then makes the clerk explain every shelf that moved for the wrong reason."
 
                     if ($success) {
                         Write-Scene "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact."

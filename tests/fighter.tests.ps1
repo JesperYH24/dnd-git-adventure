@@ -23,7 +23,8 @@ function Test-FighterUsesConAsPrimaryProgressionStat {
 
     Assert-Equal -Actual (Get-HeroPrimaryAbilityForASI -Hero $hero) -Expected "CON" -Message "Fighter should default ASI guidance toward CON."
     Assert-True -Condition ($hero.CheckProficiencies -contains "CON") -Message "Fighter should be proficient with CON checks."
-    Assert-True -Condition ($hero.CheckProficiencies -contains "STR") -Message "Fighter should be proficient with STR checks."
+    Assert-True -Condition ($hero.CheckProficiencies -contains "WIS") -Message "Fighter should be proficient with WIS checks."
+    Assert-True -Condition (-not ($hero.CheckProficiencies -contains "STR")) -Message "Fighter should leave STR as raw ability rather than a class check proficiency."
 }
 
 function Test-ShieldUsesSeparateEquipSlot {

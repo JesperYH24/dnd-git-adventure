@@ -244,6 +244,7 @@ The fighter route is meant to grow toward upper-class legitimacy:
 
 - `Lubert Stryer` begins with practical squire-grade kit rather than polished knight gear
 - `Fighting Style: Defense` and `Second Wind` make him feel trained, armored, and hard to put down before he becomes a full knight
+- `CON` and `WIS` define his non-combat identity: endurance, judgment, watchfulness, and lawful responsibility rather than raw barbarian strength
 - the smithy and armorer should tempt him toward longsword, better shield work, and heavier armor
 - inns now support his social climb: the Lantern Rest provides practical tourney talk, while the Silver Kettle can introduce him to patrons who care about restraint and presentation
 - quest givers and guard contacts should increasingly read him as a disciplined aspirant with obligations, not a generic sellsword

@@ -980,7 +980,7 @@ function Get-HeroCheckProficiencies {
     switch ($Hero.Class) {
         "Barbarian" { return @("STR", "CON") }
         "Bard" { return @("CHA", "Performance") }
-        "Fighter" { return @("CON", "STR") }
+        "Fighter" { return @("CON", "WIS") }
         default { return @() }
     }
 }
@@ -1734,7 +1734,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 11
-                CheckProficiencies = @("CON", "STR")
+                CheckProficiencies = @("CON", "WIS")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4

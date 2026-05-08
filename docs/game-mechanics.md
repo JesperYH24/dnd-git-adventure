@@ -48,7 +48,7 @@
 
 ## Fighter mechanics
 
-- `Fighter` starts as `Lubert Stryer` with d10 HP scaling, `CON` as the default ASI focus, and `CON`/`STR` check proficiencies
+- `Fighter` starts as `Lubert Stryer` with d10 HP scaling, `CON` as the default ASI focus, and `CON`/`WIS` check proficiencies
 - starter kit is `Shortsword`, `Simple Round Shield`, and `Chain Mail`
 - shields use their own equip slot and stack with armor instead of replacing it
 - `Fighting Style: Defense` adds `+1 AC` while armor is equipped
