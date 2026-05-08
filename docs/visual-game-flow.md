@@ -60,6 +60,7 @@ flowchart TD
     DayChoices --> Shops["Shops"]
     DayChoices --> Guard["Guard station"]
     DayChoices --> QuestLeads["Quest leads"]
+    DayChoices --> Tourney["Fighter tourney ground\nfoot duels before level 4"]
     DayChoices --> Streets["Walk streets"]
 
     Time -- "Night" --> NightChoices["Night choices"]
@@ -73,4 +74,6 @@ flowchart TD
     Districts --> DocksGate{"Docks unlocked?"}
     DocksGate -- "No" --> DocksLead["Linear Docks lead only"]
     DocksGate -- "Yes" --> Docks["Open Docks district"]
+    Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
+    KnightGate -- "Needs horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
 ```

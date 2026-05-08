@@ -63,7 +63,10 @@
 - `Shield Bash` unlocks after three armored duel wins while Lubert is fighting with a shield
 - at `6` patron attention, upper-city patrons start watching Lubert as a `Patron-Noticed Aspirant`
 - with patron notice plus a `Heraldic Surcoat`, Lubert can present colors to the patron rail, becoming a `Patron-Backed Aspirant` and unlocking future splint armor savings
-- mounted jousting requires a horse plus equipped splint or plate armor before the future lance system can open it
+- true mounted jousting is planned as a level 4 Fighter/knight unlock, not an early-town activity
+- before level 4, the tourney ground should stay focused on foot sparring, armored aspirant duels, patron notice, and shield technique
+- mounted jousting is still a future system: it should require level 4, horse ownership, equipped splint or plate armor, and lance support before it opens
+- no horse seller or stable ownership loop exists yet; that should arrive with the level 4 jousting build-out
 
 ## Town and day/night systems
 
@@ -83,6 +86,7 @@
 - apothecary, instrument shop, inn, streets, quest log, and buyer flow remain available
 - manual `Wait for nightfall` transition
 - long rests advance to the next day and reset daily limits
+- once the future level 4 jousting system exists, the town day loop should expose horse/stable preparation without making it available to level 1-3 Fighters
 
 ## Inns
 

@@ -14,6 +14,7 @@ The project currently includes:
 - an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, `The Customs Stamp`, and the dungeon-style `Civic Vault` climax
 - a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
+- Fighter tourney ground foot duels, with true mounted jousting documented as a future level 4 knight progression that still needs horse/stable and lance support
 - repeatable level-based day jobs
 - split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
 
@@ -92,6 +93,7 @@ Core scripts include:
 - `town-inns.ps1`
 - `town-shops.ps1`
 - `town-ring.ps1`
+- `town-jousting.ps1`
 - `town-npcs.ps1`
 - `ui.ps1`
 

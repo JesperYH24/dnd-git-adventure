@@ -19,6 +19,7 @@ flowchart TD
     DocksT2 --> CharterScribe["Docks Tier 3\nThe Charter Scribe"]
     CharterScribe --> Level4["Long rest to level 4\nAbility Score Increase"]
     Level4 --> DocksT4["Docks Tier 4\n2 strong or 3 total"]
+    Level4 --> FighterJoust["Fighter knight path\nfuture mounted jousting hook"]
     DocksT4 --> CivicVault["Docks Tier 5\nThe Civic Vault climax"]
     CivicVault --> HalewickEscape["Halewick exposed\nsmaller dragon form escapes Civic Keep"]
 ```
@@ -96,6 +97,7 @@ flowchart TD
     T2Gate --> T3["Tier 3: clean paper"]
     T3 --> CharterScribe["The Charter Scribe\nraises level cap to 4"]
     CharterScribe --> ASI["Level 4 long rest\nASI"]
+    ASI --> FighterJoust["Fighter tourney growth\nhorse + splint/plate + lance later"]
 
     ASI --> T4["Tier 4: higher city hands"]
     T4 --> ShellCharter["The Shell Charter"]

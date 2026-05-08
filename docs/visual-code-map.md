@@ -18,6 +18,7 @@ flowchart LR
     Town --> Inns["town-inns.ps1\nrooms, rests, tavern flavor"]
     Town --> Shops["town-shops.ps1\nbuy/sell/storage"]
     Town --> Ring["town-ring.ps1\nbrawls and rivals"]
+    Town --> Jousting["town-jousting.ps1\nFighter foot duels\nfuture level 4 jousting"]
     Town --> NPCs["town-npcs.ps1\nstreet scenes and hooks"]
     Town --> QuestDefs["quests.ps1\nquest definitions + unlocks"]
     QuestDefs --> CityQuests["city-quests.ps1\nplayable story quests"]

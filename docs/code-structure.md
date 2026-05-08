@@ -367,7 +367,9 @@ Ansvar:
 
 - Fighter/tourney ground city activity
 - squire sparring on foot
-- future hook for mounted jousting that requires horse ownership plus splint or plate armor
+- armored aspirant duels with named win/loss records
+- future level 4 hook for mounted jousting
+- mounted jousting should require future horse ownership or stable access, splint or plate armor, and lance support
 
 ### `town-npcs.ps1`
 
