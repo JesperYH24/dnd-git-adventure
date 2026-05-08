@@ -39,6 +39,13 @@ function New-DefaultTownState {
         Relationships = @{}
         InnFlags = @{}
         StoryFlags = @{}
+        ClassStoryApproach = @{
+            BarbarianHardProof = 0
+            BardSoftPower = 0
+            FighterCivicTrust = 0
+            QuestMarks = @{}
+            LastApproach = ""
+        }
         Jousting = @{
             Visits = 0
             HasHorse = $false

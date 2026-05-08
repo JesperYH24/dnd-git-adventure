@@ -207,9 +207,21 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
-    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags")) {
+    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags", "ClassStoryApproach")) {
         if ($null -eq $Game.Town[$key]) {
             $Game.Town[$key] = @{}
+        }
+    }
+
+    foreach ($classApproachDefault in @(
+        @{ Name = "BarbarianHardProof"; Value = 0 },
+        @{ Name = "BardSoftPower"; Value = 0 },
+        @{ Name = "FighterCivicTrust"; Value = 0 },
+        @{ Name = "QuestMarks"; Value = @{} },
+        @{ Name = "LastApproach"; Value = "" }
+    )) {
+        if (-not $Game.Town["ClassStoryApproach"].ContainsKey($classApproachDefault.Name) -or $null -eq $Game.Town["ClassStoryApproach"][$classApproachDefault.Name]) {
+            $Game.Town["ClassStoryApproach"][$classApproachDefault.Name] = $classApproachDefault.Value
         }
     }
 

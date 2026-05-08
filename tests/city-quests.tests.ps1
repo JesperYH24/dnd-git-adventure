@@ -1453,6 +1453,54 @@ function Test-FighterHasClassSpecificCityQuestOptions {
     Assert-True -Condition ($questScript.Contains("Run the gate like a shield drill and clear one lane at a time")) -Message "Fighter should have a gate duty special option."
 }
 
+function Test-ClassStoryApproachStateStartsEmpty {
+    $game = Initialize-Game
+
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["BarbarianHardProof"] -Expected 0 -Message "Barbarian hard-proof story track should start at zero."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["BardSoftPower"] -Expected 0 -Message "Bard soft-power story track should start at zero."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["FighterCivicTrust"] -Expected 0 -Message "Fighter civic-trust story track should start at zero."
+    Assert-True -Condition ($null -ne $game.Town.ClassStoryApproach["QuestMarks"]) -Message "Class story approach should keep per-quest marks."
+}
+
+function Test-ClassStoryApproachOnlyCountsAQuestOnce {
+    $game = Initialize-Game -Class "Fighter"
+
+    Register-ClassStoryApproach -Game $game -QuestId "guard_night_watch" -ApproachKey "CivicTrustPatrolDiscipline"
+    Register-ClassStoryApproach -Game $game -QuestId "guard_night_watch" -ApproachKey "CivicTrustPatrolDiscipline"
+
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["FighterCivicTrust"] -Expected 1 -Message "Repeating a class mark for the same quest should not inflate the Fighter story track."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"]["guard_night_watch"] -Expected "CivicTrustPatrolDiscipline" -Message "The per-quest class story mark should be saved."
+}
+
+function Test-FighterNightWatchBuildsCivicTrust {
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "guard_night_watch" | Out-Null
+    Use-StoryCombatWinStub
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_watch"
+
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["FighterCivicTrust"] -Expected 1 -Message "A Fighter who solves Night Watch Relief should build civic-trust story identity."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"]["guard_night_watch"] -Expected "CivicTrustPatrolDiscipline" -Message "Night Watch should remember the Fighter's patrol-discipline approach."
+}
+
+function Test-BardLedgerRouteBuildsSoftPower {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    Set-StoryTier -Game $game -Tier 2
+
+    Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
+    Use-ReadHostSequence -Values @("4")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "patron_ledger_of_ash"
+
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["BardSoftPower"] -Expected 1 -Message "A Bard who solves Ledger of Ash socially should build soft-power story identity."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"]["patron_ledger_of_ash"] -Expected "SoftPowerMerchantContradictions" -Message "Ledger of Ash should remember the Bard's social contradiction route."
+}
+
 Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
@@ -1522,6 +1570,10 @@ Test-QuestOutcomeTextDefaultsStrongForCompletedStoryQuest
 Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest
 Test-QuestOutcomeTextStaysBlankForDayJobs
 Test-FighterHasClassSpecificCityQuestOptions
+Test-ClassStoryApproachStateStartsEmpty
+Test-ClassStoryApproachOnlyCountsAQuestOnce
+Test-FighterNightWatchBuildsCivicTrust
+Test-BardLedgerRouteBuildsSoftPower
 Test-BardicInspirationCanBoostQuestChecks
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency

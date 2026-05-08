@@ -79,6 +79,12 @@ Chapter Two is written as a loose shared investigation:
 
 The hero becomes the bridge between those angles until the city has enough proof to strike below the streets.
 
+Story quests now also remember class-shaped solutions as a small persistent track:
+
+- Barbarian successes can add hard-proof marks when Borzig solves trouble through protection, pressure, endurance, or visible force.
+- Bard successes can add soft-power marks when Gariand solves trouble through performance, social reading, contradiction, or controlled rumor.
+- Fighter successes can add civic-trust marks when Lubert solves trouble through discipline, formal inquiry, patrol sense, or protection under authority.
+
 ## Understreet finale
 
 `The Understreet Complex` currently includes:

@@ -779,6 +779,59 @@ function Start-NonCombatQuestCheck {
     return ($total -ge $DC)
 }
 
+function Register-ClassStoryApproach {
+    param(
+        $Game,
+        [string]$QuestId,
+        [string]$ApproachKey = ""
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Hero) {
+        return
+    }
+
+    if ($null -eq $Game.Town.ClassStoryApproach) {
+        $Game.Town.ClassStoryApproach = @{
+            BarbarianHardProof = 0
+            BardSoftPower = 0
+            FighterCivicTrust = 0
+            QuestMarks = @{}
+            LastApproach = ""
+        }
+    }
+
+    if ($null -eq $Game.Town.ClassStoryApproach["QuestMarks"]) {
+        $Game.Town.ClassStoryApproach["QuestMarks"] = @{}
+    }
+
+    $class = [string]$Game.Hero.Class
+    $counterKey = switch ($class) {
+        "Barbarian" { "BarbarianHardProof" }
+        "Bard" { "BardSoftPower" }
+        "Fighter" { "FighterCivicTrust" }
+        default { "" }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($counterKey)) {
+        return
+    }
+
+    if (-not $Game.Town.ClassStoryApproach.ContainsKey($counterKey)) {
+        $Game.Town.ClassStoryApproach[$counterKey] = 0
+    }
+
+    if ([string]::IsNullOrWhiteSpace($ApproachKey)) {
+        $ApproachKey = $counterKey
+    }
+
+    if (-not $Game.Town.ClassStoryApproach["QuestMarks"].ContainsKey($QuestId)) {
+        $Game.Town.ClassStoryApproach[$counterKey] = [int]$Game.Town.ClassStoryApproach[$counterKey] + 1
+    }
+
+    $Game.Town.ClassStoryApproach["QuestMarks"][$QuestId] = $ApproachKey
+    $Game.Town.ClassStoryApproach["LastApproach"] = $ApproachKey
+}
+
 function Complete-StoryQuestAndReport {
     param(
         $Game,
@@ -1451,6 +1504,18 @@ function Start-NightWatchReliefQuest {
 
     $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $Game.Town.Relationships["NightCaptain"] = "Respectful"
+    if ($Game.Hero.Class -eq "Barbarian") {
+        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "HardProofWatchLine"
+        Write-Scene "The watch remembers how $($Game.Hero.Name) held the street after the runner fell. That kind of proof travels faster than paperwork."
+    }
+    elseif ($Game.Hero.Class -eq "Bard") {
+        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "SoftPowerWitnessRead"
+        Write-Scene "$($Game.Hero.Name) catches which frightened witness nearly spoke before the ambush. Halden notices that the report carries more than blade-work."
+    }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "CivicTrustPatrolDiscipline"
+        Write-Scene "Halden notices the clean patrol account: corners held, marks preserved, and panic kept from becoming noise."
+    }
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_watch" -CompletionText "'Good,' Halden says when $($Game.Hero.Name) reports back. 'Now we know this city's rot goes below the streets. If the merchants are seeing the same pattern in their missing stock, this just got bigger.'" -ProgressText "Story Progress: $($Game.Hero.Name) has confirmed a real tunnel route beneath the city."
 }
 
@@ -1535,6 +1600,18 @@ function Start-StorehouseTroubleQuest {
 
     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $Game.Town.Relationships["MerchantPatron"] = "Grateful"
+    if ($Game.Hero.Class -eq "Barbarian") {
+        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "HardProofSecuredScene"
+        Write-Scene "$($Game.Hero.Name) leaves the storehouse impossible to ignore: broken threat handled, goods counted, and the door held until the clerk's men arrive."
+    }
+    elseif ($Game.Hero.Class -eq "Bard") {
+        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "SoftPowerResalePattern"
+        Write-Scene "$($Game.Hero.Name) also hears the social shape of the resale chain: who sounds too polished, who repeats a borrowed lie, and who fears the wrong name."
+    }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "CivicTrustEvidenceSecured"
+        Write-Scene "$($Game.Hero.Name) secures the storehouse like a formal scene: marks preserved, exits checked, and evidence ready for people with seals."
+    }
     Complete-StoryQuestAndReport -Game $Game -QuestId "patron_storehouse_rats" -CompletionText "The clerk goes pale when $($Game.Hero.Name) returns the rerouting list. 'So that is where the missing stock went,' he mutters. 'If the watch is right about movement under the streets, then we're looking at the same beast from two sides.'" -ProgressText "Story Progress: $($Game.Hero.Name) has linked the city's thefts to a real smuggling operation."
 }
 
@@ -1652,6 +1729,7 @@ function Start-MissingHerbSatchelQuest {
                     if ($success) {
                         Write-Scene "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes."
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "SoftPowerCalmedWitnesses"
                         $strongOutcome = $true
                     }
                     else {
@@ -1668,6 +1746,7 @@ function Start-MissingHerbSatchelQuest {
                         Write-Scene "Unable to slip past the iron patience in front of them, the scavengers finally admit they saw a marked courier drop the satchel while running for the city."
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                         $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "HardProofHeldRoad"
                         $strongOutcome = $true
                     }
                     else {
@@ -1684,6 +1763,7 @@ function Start-MissingHerbSatchelQuest {
                         Write-Scene "The scavengers stop seeing a trap and start seeing protection. They admit a marked courier dropped the satchel while fleeing back toward the city lanes."
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                         $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "CivicTrustProtectedWitnesses"
                         $strongOutcome = $true
                     }
                     else {
@@ -1850,6 +1930,7 @@ function Start-LedgerOfAshQuest {
                     if ($success) {
                         Write-Scene "Three people contradict each other in exactly the right way. By the time the talk settles, the name Serik sits plainly behind the false payments."
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "SoftPowerMerchantContradictions"
                         $strongOutcome = $true
                     }
                     else {
@@ -1864,6 +1945,7 @@ function Start-LedgerOfAshQuest {
                     if ($success) {
                         Write-Scene "The bluff collapses in pieces. By the time the clerk stops backpedaling, Serik's name is out in the open and everyone in the room knows it."
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "HardProofBrokenBluff"
                         $strongOutcome = $true
                     }
                     else {
@@ -1878,6 +1960,7 @@ function Start-LedgerOfAshQuest {
                     if ($success) {
                         Write-Scene "The clerk finally chooses the smaller disgrace. Serik's name lands in the room cleanly, carried less by fear than by the sense that the account is now official."
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "CivicTrustSwornAccount"
                         $strongOutcome = $true
                     }
                     else {
@@ -2126,6 +2209,7 @@ function Start-NightCourierInterceptQuest {
                         $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                         $Game.Town.Relationships["Belor"] = "Trusting"
+                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "SoftPowerStreetRhythm"
                         $strongOutcome = $true
                     }
                     else {
@@ -2143,6 +2227,7 @@ function Start-NightCourierInterceptQuest {
                         $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                         $Game.Town.Relationships["Belor"] = "Trusting"
+                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "HardProofRunDownCourier"
                         $strongOutcome = $true
                     }
                     else {
@@ -2160,6 +2245,7 @@ function Start-NightCourierInterceptQuest {
                         $Game.Town.StoryFlags["FoundCourierRoute"] = $true
                         $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
                         $Game.Town.Relationships["Belor"] = "Trusting"
+                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "CivicTrustClosedLane"
                         $strongOutcome = $true
                     }
                     else {
@@ -2329,6 +2415,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                         Write-Scene "The clerk snaps at the lie, then realizes too late that he has pointed straight at the hidden compartment and the real ledger inside."
                         $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "SoftPowerCorrectedLie"
                         $strongOutcome = $true
                     }
                     else {
@@ -2345,6 +2432,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                         Write-Scene "A false backing cracks under the search. Behind it sits the real ledger, still hidden with the names that tie the warehouse route to Serik's chain."
                         $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "HardProofOpenedOffice"
                         $strongOutcome = $true
                     }
                     else {
@@ -2361,6 +2449,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                         Write-Scene "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact."
                         $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
                         $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "CivicTrustAccountedPages"
                         $strongOutcome = $true
                     }
                     else {
