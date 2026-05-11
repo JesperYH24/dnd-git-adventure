@@ -231,13 +231,42 @@ function Test-RingMonsterContractWinPaysAndLocksContract {
     Report-MonsterZoneDiscoveriesToDorr -Game $game | Out-Null
 
     $contract = Get-RingMonsterChallengeContracts | Where-Object { $_.Id -eq "wall_scraper_trial" } | Select-Object -First 1
+    $booking = Book-RingMonsterChallengeContract -Game $game -Contract $contract
+    $blockedEarly = Resolve-RingMonsterChallengeContract -Game $game -Contract $contract -ForceWin $true
+
+    $game.Town.DayNumber = $booking.ReadyDay
     $result = Resolve-RingMonsterChallengeContract -Game $game -Contract $contract -ForceWin $true
     $repeatReadiness = Get-RingMonsterContractReadiness -Game $game -Contract $contract
 
+    Assert-Equal -Actual $booking.ReadyDay -Expected 3 -Message "The Wall-Scraper capture crew should need two days from day one."
+    Assert-Equal -Actual $blockedEarly.Success -Expected $false -Message "Booked monster contracts should not be fightable until the capture crew returns."
     Assert-Equal -Actual $result.Won -Expected $true -Message "Forced test win should resolve the monster contract as won."
     Assert-Equal -Actual $result.ReputationAdded -Expected 8 -Message "The Wall-Scraper Trial should award monster-challenge ring reputation."
     Assert-Equal -Actual $game.Town.MonsterZone.CompletedRingMonsterContracts["wall_scraper_trial"] -Expected $true -Message "Completed monster contracts should be locked in monster-zone state."
+    Assert-Equal -Actual $game.Town.MonsterZone.PendingRingMonsterContracts.ContainsKey("wall_scraper_trial") -Expected $false -Message "Completed monster contracts should leave the pending capture board."
     Assert-True -Condition ($repeatReadiness.Readiness -like "*already completed*") -Message "Completed monster contracts should not be immediately repeatable."
+}
+
+function Test-RingMonsterContractBookingRemovesAvailableUntilReady {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    Report-MonsterZoneDiscoveriesToDorr -Game $game | Out-Null
+
+    $contract = Get-AvailableRingMonsterChallengeContracts -Game $game | Select-Object -First 1
+    $booking = Book-RingMonsterChallengeContract -Game $game -Contract $contract
+    $availableAfterBooking = @(Get-AvailableRingMonsterChallengeContracts -Game $game)
+    $readyBeforeReturn = @(Get-ReadyRingMonsterChallengeContracts -Game $game)
+
+    $game.Town.DayNumber = $booking.ReadyDay
+    $readyAfterReturn = @(Get-ReadyRingMonsterChallengeContracts -Game $game)
+
+    Assert-Equal -Actual $booking.Success -Expected $true -Message "Dorr should be able to book a reported matching monster contract."
+    Assert-Equal -Actual $availableAfterBooking.Count -Expected 0 -Message "Booked monster contracts should leave the new-contract list while the capture crew is out."
+    Assert-Equal -Actual $readyBeforeReturn.Count -Expected 0 -Message "Booked monster contracts should not be ready before their return day."
+    Assert-Equal -Actual $readyAfterReturn[0].Id -Expected "wall_scraper_trial" -Message "Booked contracts should become ready when the capture crew return day arrives."
 }
 
 function Test-SecondRingTrainingTierUnlocksAtTwentyWins {
@@ -760,6 +789,7 @@ Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
 Test-RingMonsterContractsRequireReportedZoneDefeat
 Test-RingMonsterContractsKeepExtraGates
 Test-RingMonsterContractWinPaysAndLocksContract
+Test-RingMonsterContractBookingRemovesAvailableUntilReady
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie

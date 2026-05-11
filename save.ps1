@@ -325,6 +325,7 @@ function Ensure-LoadedAdventureShape {
             Oddities = @()
             DefeatedCreatures = @{}
             ReportedCreaturesToDorr = @{}
+            PendingRingMonsterContracts = @{}
             CompletedRingMonsterContracts = @{}
             LastTravelText = ""
         }
@@ -339,6 +340,7 @@ function Ensure-LoadedAdventureShape {
             @{ Key = "Oddities"; Value = @() },
             @{ Key = "DefeatedCreatures"; Value = @{} },
             @{ Key = "ReportedCreaturesToDorr"; Value = @{} },
+            @{ Key = "PendingRingMonsterContracts"; Value = @{} },
             @{ Key = "CompletedRingMonsterContracts"; Value = @{} },
             @{ Key = "LastTravelText"; Value = "" }
         )) {

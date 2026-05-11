@@ -11,6 +11,7 @@ function Get-MonsterZoneDefaultState {
         Oddities = @()
         DefeatedCreatures = @{}
         ReportedCreaturesToDorr = @{}
+        PendingRingMonsterContracts = @{}
         CompletedRingMonsterContracts = @{}
         LastTravelText = ""
     }
@@ -36,6 +37,7 @@ function Initialize-MonsterZoneState {
         @{ Key = "Oddities"; Value = @() },
         @{ Key = "DefeatedCreatures"; Value = @{} },
         @{ Key = "ReportedCreaturesToDorr"; Value = @{} },
+        @{ Key = "PendingRingMonsterContracts"; Value = @{} },
         @{ Key = "CompletedRingMonsterContracts"; Value = @{} },
         @{ Key = "LastTravelText"; Value = "" }
     )) {

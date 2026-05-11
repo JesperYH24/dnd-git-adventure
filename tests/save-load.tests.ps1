@@ -140,6 +140,7 @@ function Test-OlderSaveDataGetsNewDefaultsOnLoad {
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("DiscoveredLandmarks") -Message "Older saves should gain monster zone discovery tracking."
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("DefeatedCreatures") -Message "Older saves should gain monster-zone defeated creature tracking."
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("ReportedCreaturesToDorr") -Message "Older saves should gain Dorr report tracking for monster contracts."
+        Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("PendingRingMonsterContracts") -Message "Older saves should gain pending captured monster contract tracking."
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("CompletedRingMonsterContracts") -Message "Older saves should gain completed monster contract tracking."
         Assert-True -Condition (@(Get-HeroCheckProficiencies -Hero $loadedGame.Hero) -contains "Perception") -Message "Older heroes should gain the new Perception proficiency tag."
         Assert-Equal -Actual $loadedGame.Hero.RingReputation -Expected 0 -Message "Older saves should gain a default ring reputation value."

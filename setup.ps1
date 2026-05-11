@@ -75,6 +75,7 @@ function New-DefaultTownState {
             Oddities = @()
             DefeatedCreatures = @{}
             ReportedCreaturesToDorr = @{}
+            PendingRingMonsterContracts = @{}
             CompletedRingMonsterContracts = @{}
             LastTravelText = ""
         }

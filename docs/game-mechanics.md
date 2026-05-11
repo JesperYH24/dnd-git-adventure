@@ -46,6 +46,7 @@
 - monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot
 - defeated monster-zone creature types are tracked as proof for future city systems
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
+- Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
 
 Current camp levels:
 
@@ -160,6 +161,7 @@ Docks is intentionally more linear at first than the main town hub.
 - wager choices before entering the ring: safe purse, crowd bet, or double-or-nothing
 - post-fight ring rumors that react to Docks progress, Halewick aftershocks, level 4 monster-zone foreshadowing, and ring reputation
 - level 4 monster-challenge cards in the ring become real contracts only after the hero defeats matching creatures in the monster zone and reports them to Dorr
+- taking a monster contract books Dorr's capture crew; the actual unarmed monster fight happens in the ring after the contract's return day
 - current Dorr monster contracts:
   - `Wall-Scraper Trial` from reported wall scouts or wall-prowling wolves
   - `Mire-Tusk Clinch` from reported razor-tusk boars, gated by stronger ring reputation

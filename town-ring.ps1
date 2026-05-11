@@ -801,6 +801,7 @@ function Get-RingMonsterChallengeContracts {
             SourceCreatureIds = @("kobold_wall_scout", "wall_wolf")
             RequiredReputation = 0
             RequiresChampionNight = $false
+            CaptureDays = 2
             Hook = "A clawed wall-scavenger or scout that learns city patrol routes."
             Rule = "Dorr only signs it after the hero has beaten a matching creature beyond the wall and reported the trail."
             RewardPreview = "+ring reputation, bounty coin, Beast-Hand notice"
@@ -828,6 +829,7 @@ function Get-RingMonsterChallengeContracts {
             SourceCreatureIds = @("razor_boar")
             RequiredReputation = 25
             RequiresChampionNight = $false
+            CaptureDays = 3
             Hook = "A low marsh brute with a price on its tusks and a habit of breaking nets."
             Rule = "Unarmed takedown; weapons spoil the ring story even if they save skin."
             RewardPreview = "+larger reputation, tusk bounty, grappler crowd title"
@@ -855,6 +857,7 @@ function Get-RingMonsterChallengeContracts {
             SourceCreatureIds = @("grave_hungry_thing", "scale_touched_mastiff")
             RequiredReputation = 0
             RequiresChampionNight = $true
+            CaptureDays = 4
             Hook = "Something pale or scale-touched that stalks road lanterns and leaves glass bitten clean."
             Rule = "Dorr needs both a champion name and a reported outer-wall monster trail before he books it."
             RewardPreview = "+major reputation, monster rumor, possible title beyond Pit Champion"
@@ -890,6 +893,44 @@ function Test-RingMonsterContractCompleted {
 
     Initialize-MonsterZoneState -Game $Game
     return [bool]$Game.Town.MonsterZone.CompletedRingMonsterContracts[[string]$Contract.Id]
+}
+
+function Get-RingMonsterContractPendingRecord {
+    param(
+        $Game,
+        $Contract
+    )
+
+    if ($null -eq $Game -or $null -eq $Contract) {
+        return $null
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+    return $Game.Town.MonsterZone.PendingRingMonsterContracts[[string]$Contract.Id]
+}
+
+function Test-RingMonsterContractPending {
+    param(
+        $Game,
+        $Contract
+    )
+
+    return ($null -ne (Get-RingMonsterContractPendingRecord -Game $Game -Contract $Contract))
+}
+
+function Test-RingMonsterContractCaptureReady {
+    param(
+        $Game,
+        $Contract
+    )
+
+    $pending = Get-RingMonsterContractPendingRecord -Game $Game -Contract $Contract
+
+    if ($null -eq $pending) {
+        return $false
+    }
+
+    return ((Get-TownDayNumber -Game $Game) -ge [int]$pending["ReadyDay"])
 }
 
 function Test-RingMonsterContractHasReportedCreature {
@@ -935,6 +976,8 @@ function Get-RingMonsterContractReadiness {
         $missing += "already completed"
     }
 
+    $pending = Get-RingMonsterContractPendingRecord -Game $Game -Contract $Contract
+
     if (-not (Test-RingMonsterContractHasReportedCreature -Game $Game -Contract $Contract)) {
         $missing += "reported matching monster"
     }
@@ -955,10 +998,26 @@ function Get-RingMonsterContractReadiness {
         }
     }
 
+    if ($null -ne $pending) {
+        if ((Get-TownDayNumber -Game $Game) -ge [int]$pending["ReadyDay"]) {
+            return [PSCustomObject]@{
+                CanTake = $true
+                Missing = @()
+                Readiness = "Captured and ready in the pit"
+            }
+        }
+
+        return [PSCustomObject]@{
+            CanTake = $false
+            Missing = @("capture crew")
+            Readiness = "Capture crew returns on day $($pending["ReadyDay"])"
+        }
+    }
+
     return [PSCustomObject]@{
         CanTake = $true
         Missing = @()
-        Readiness = "Ready"
+        Readiness = "Ready for Dorr to book"
     }
 }
 
@@ -996,12 +1055,63 @@ function Get-AvailableRingMonsterChallengeContracts {
     foreach ($contract in @(Get-RingMonsterChallengeContracts)) {
         $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $contract
 
-        if ($readiness.CanTake) {
+        if ($readiness.CanTake -and -not (Test-RingMonsterContractPending -Game $Game -Contract $contract)) {
             $available += $contract
         }
     }
 
     return $available
+}
+
+function Get-ReadyRingMonsterChallengeContracts {
+    param($Game)
+
+    $ready = @()
+
+    foreach ($contract in @(Get-RingMonsterChallengeContracts)) {
+        if (Test-RingMonsterContractCaptureReady -Game $Game -Contract $contract) {
+            $ready += $contract
+        }
+    }
+
+    return $ready
+}
+
+function Book-RingMonsterChallengeContract {
+    param(
+        $Game,
+        $Contract
+    )
+
+    $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $Contract
+
+    if (-not $readiness.CanTake -or (Test-RingMonsterContractPending -Game $Game -Contract $Contract)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Contract = $Contract
+            Reason = $readiness.Readiness
+        }
+    }
+
+    $today = Get-TownDayNumber -Game $Game
+    $captureDays = [Math]::Max(1, [int]$Contract.CaptureDays)
+    $readyDay = $today + $captureDays
+
+    $Game.Town.MonsterZone.PendingRingMonsterContracts[[string]$Contract.Id] = @{
+        ContractId = [string]$Contract.Id
+        Name = [string]$Contract.Name
+        BookedDay = $today
+        ReadyDay = $readyDay
+        CaptureDays = $captureDays
+    }
+
+    return [PSCustomObject]@{
+        Success = $true
+        Contract = $Contract
+        BookedDay = $today
+        ReadyDay = $readyDay
+        CaptureDays = $captureDays
+    }
 }
 
 function Get-RingMonsterChallengePreview {
@@ -1081,8 +1191,21 @@ function Resolve-RingMonsterChallengeContract {
         }
     }
 
+    if (-not (Test-RingMonsterContractCaptureReady -Game $Game -Contract $Contract)) {
+        $pending = Get-RingMonsterContractPendingRecord -Game $Game -Contract $Contract
+        $reason = if ($null -eq $pending) { "Dorr has not sent a capture crew for this one yet." } else { "The capture crew is due back on day $($pending["ReadyDay"])." }
+        Write-Scene "Dorr blocks the rope gate. '$reason'"
+
+        return [PSCustomObject]@{
+            Success = $false
+            Won = $false
+            Contract = $Contract
+            Reason = $reason
+        }
+    }
+
     Write-SectionTitle -Text $Contract.Name -Color "Red"
-    Write-Scene "Dorr signs the contract board in chalk. 'No blades. No grandstanding. You already proved this thing can bleed. Now prove the city can watch you make it yield.'"
+    Write-Scene "Dorr signs the contract board in chalk. 'My people got it here breathing. No blades. No grandstanding. You already proved this thing can bleed. Now prove the city can watch you make it yield.'"
 
     $Game.Hero.RingVisits += 1
     $Game.Town.Ring.Visits += 1
@@ -1102,6 +1225,7 @@ function Resolve-RingMonsterChallengeContract {
     }
 
     $Game.Town.MonsterZone.CompletedRingMonsterContracts[[string]$Contract.Id] = $true
+    $Game.Town.MonsterZone.PendingRingMonsterContracts.Remove([string]$Contract.Id)
     Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount ([int]$Contract.RewardCopper) | Out-Null
     $reputation = Add-HeroRingReputation -Hero $Game.Hero -Amount ([int]$Contract.ReputationReward)
 
@@ -1139,17 +1263,41 @@ function Start-RingMonsterChallengeMenu {
 
     Show-RingMonsterChallengePreview -Hero $Game.Hero -Game $Game
 
+    $readyContracts = @(Get-ReadyRingMonsterChallengeContracts -Game $Game)
+
+    if ($readyContracts.Count -gt 0) {
+        Write-ColorLine "Captured contracts ready in the pit:" "Yellow"
+        for ($i = 0; $i -lt $readyContracts.Count; $i++) {
+            Write-ColorLine "$($i + 1). $($readyContracts[$i].Name)" "White"
+        }
+        Write-ColorLine "0. Check new contracts instead" "DarkGray"
+        $readyChoice = Read-Host "Choose"
+
+        if ($readyChoice -ne "0") {
+            $selectedReadyIndex = 0
+
+            if ([int]::TryParse($readyChoice, [ref]$selectedReadyIndex) -and $selectedReadyIndex -ge 1 -and $selectedReadyIndex -le $readyContracts.Count) {
+                Resolve-RingMonsterChallengeContract -Game $Game -Contract $readyContracts[$selectedReadyIndex - 1] | Out-Null
+                return
+            }
+
+            Write-ColorLine "Choose a listed captured contract." "DarkYellow"
+            Write-ColorLine ""
+            return
+        }
+    }
+
     $available = @(Get-AvailableRingMonsterChallengeContracts -Game $Game)
 
     if ($available.Count -le 0) {
-        Write-Scene "No monster contract is ready to take tonight."
+        Write-Scene "No new monster contract is ready for Dorr to book tonight."
         Write-ColorLine ""
         return
     }
 
-    Write-ColorLine "Ready contracts:" "Yellow"
+    Write-ColorLine "Contracts Dorr can book with a capture crew:" "Yellow"
     for ($i = 0; $i -lt $available.Count; $i++) {
-        Write-ColorLine "$($i + 1). $($available[$i].Name)" "White"
+        Write-ColorLine "$($i + 1). $($available[$i].Name) (capture: $($available[$i].CaptureDays) days)" "White"
     }
     Write-ColorLine "0. Back to the pit" "DarkGray"
     $choice = Read-Host "Choose"
@@ -1161,7 +1309,15 @@ function Start-RingMonsterChallengeMenu {
     $selectedIndex = 0
 
     if ([int]::TryParse($choice, [ref]$selectedIndex) -and $selectedIndex -ge 1 -and $selectedIndex -le $available.Count) {
-        Resolve-RingMonsterChallengeContract -Game $Game -Contract $available[$selectedIndex - 1] | Out-Null
+        $booking = Book-RingMonsterChallengeContract -Game $Game -Contract $available[$selectedIndex - 1]
+
+        if ($booking.Success) {
+            Write-Scene "Dorr scratches $($booking.Contract.Name) onto a work slate. 'Give my people $($booking.CaptureDays) days. If they come back with all their fingers, the pit gets its monster on day $($booking.ReadyDay).'"
+        }
+        else {
+            Write-Scene "Dorr shakes his head. '$($booking.Reason).'"
+        }
+
         return
     }
 
