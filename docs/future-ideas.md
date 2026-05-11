@@ -96,6 +96,15 @@ Class flavor for these skills:
 - `Bard` can read odd sounds, behavior, and patterns, but should not automatically become the best wilderness scout
 - `Fighter` should benefit from `WIS` and discipline: patrol sense, formations, tracks near roads, and danger to city defenses
 - heavy armor can later create stealth penalties, while cloaks, boots, or careful travel choices can offset them
+- build class-specific pre-combat choices so the Bard is not just a weaker weapon fighter in monster-zone play:
+  - `Barbarian`: `Read the ground by instinct`, `Force it into the open`, `Endure the ambush`
+  - `Bard`: `Listen for unnatural rhythm`, `Recall monster folklore`, `Distract with sound`
+  - `Fighter`: `Read patrol disruption`, `Hold disciplined ground`, `Identify wall-defense threat`
+- creature types should pressure different class strengths without becoming hard counters:
+  - stealthy scouts like kobolds should reward perception, patience, and anti-ambush choices
+  - hard-charging beasts like boars should reward preparation, armor, endurance, or clever avoidance
+  - perceptive guard-beasts like scale-touched mastiffs should make sneaking harder and reward alternate approaches
+  - strange monsters like grave-hungry things should give Bard/Fighter knowledge-style reads and Barbarian instinct-style warnings
 
 Camp/rest loop:
 

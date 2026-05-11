@@ -47,6 +47,9 @@
 - defeated monster-zone creature types are tracked as proof for future city systems
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
+- current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, and `scale_touched_mastiff`
+- all three current classes have `Perception` proficiency, so the Bard is not automatically worse in the wilderness awareness phase; Fighter is currently slightly weaker at raw `Stealth` because of lower `DEX`, and armor stealth penalties are not implemented yet
+- creature flavor differs mechanically through HP, AC, attack, `PerceptionBonus`, and `StealthBonus`, but class-specific wilderness approach options are still future work
 
 Current camp levels:
 
