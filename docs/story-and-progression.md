@@ -38,6 +38,7 @@ After the warning is delivered, the game opens into a full town hub where the he
 - accept town quests
 - visit the fighting ring
 - buy and sell gear
+- buy pack animals or a riding horse at the stable yard
 - if playing `Bard`, perform for coin and build venue reputation
 - if playing `Fighter`, visit the tourney ground for squire sparring and a first step toward knightly status; mounted jousting waits until level 4 progression
 
@@ -178,7 +179,7 @@ After the level 4 long rest, Docks Tier 4 opens:
 
 At level 4, the fighting ring also starts foreshadowing a later outer-city monster challenge track: Dorr can talk about unarmed bouts against contracted monsters, but the actual fights wait until the monster zone exists.
 
-At level 4, the Fighter route should also be allowed to start looking past foot duels toward true knightly tournament play. Mounted jousting is the intended next unlock direction, but it still needs the future horse seller or stable system, lance support, and the splint-or-plate armor requirement before it becomes playable.
+At level 4, the Fighter route should also be allowed to start looking past foot duels toward true knightly tournament play. Mounted jousting is the intended next unlock direction. The stable yard now covers horse ownership, but the playable system still needs lance support, a level gate, and the splint-or-plate armor requirement before it opens.
 
 Once the higher-city trail is complete, Docks Tier 5 opens `The Civic Vault`.
 
@@ -259,4 +260,4 @@ The fighter route is meant to grow toward upper-class legitimacy:
 - the tourney ground gives him a city pastime that is about posture, recognition, and class aspiration as much as fighting
 - repeated squire sparring builds patron attention until the upper rail starts treating him as a possible aspirant instead of another armed townsman
 - true mounted jousting is a level 4 knight-path goal, not part of Lubert's early city routine
-- when built, mounted jousting should require horse ownership, a lance system, and splint or plate armor so the unlock feels like a real class ascent
+- when built, mounted jousting should require a stable-owned riding horse, a lance system, and splint or plate armor so the unlock feels like a real class ascent

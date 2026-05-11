@@ -58,6 +58,13 @@ function New-DefaultTownState {
             PresentationMade = $false
             ShieldBashUnlocked = $false
         }
+        Mounts = @{
+            Owned = @{}
+            ActivePackAnimal = ""
+            PackHaulCapacity = 0
+            MonsterOddityCapacity = 0
+            HasRidingHorse = $false
+        }
         Ring = @{
             Visits = 0
             FoughtToday = $false

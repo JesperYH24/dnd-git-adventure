@@ -1,4 +1,4 @@
-# Fighter-facing arena scaffolding. Mounted jousting waits for horse, heavy tourney armor, and lance systems later.
+# Fighter-facing arena scaffolding. Mounted jousting waits for heavy tourney armor and lance systems later.
 
 function Initialize-JoustingState {
     param($Game)
@@ -157,6 +157,11 @@ function Test-HeroHasMountedJoustingHorse {
 
     if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.Jousting) {
         return $false
+    }
+
+    if ($null -ne $Game.Town.Mounts -and [bool]$Game.Town.Mounts.HasRidingHorse) {
+        $Game.Town.Jousting.HasHorse = $true
+        return $true
     }
 
     return [bool]$Game.Town.Jousting.HasHorse

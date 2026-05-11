@@ -207,7 +207,7 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
-    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags", "ClassStoryApproach")) {
+    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags", "ClassStoryApproach", "Mounts")) {
         if ($null -eq $Game.Town[$key]) {
             $Game.Town[$key] = @{}
         }
@@ -269,6 +269,37 @@ function Ensure-LoadedAdventureShape {
                 $Game.Town["Jousting"][$entry.Key] = $entry.Value
             }
         }
+    }
+
+    if ($null -eq $Game.Town["Mounts"]) {
+        $Game.Town["Mounts"] = @{
+            Owned = @{}
+            ActivePackAnimal = ""
+            PackHaulCapacity = 0
+            MonsterOddityCapacity = 0
+            HasRidingHorse = $false
+        }
+    }
+    else {
+        foreach ($entry in @(
+            @{ Key = "Owned"; Value = @{} },
+            @{ Key = "ActivePackAnimal"; Value = "" },
+            @{ Key = "PackHaulCapacity"; Value = 0 },
+            @{ Key = "MonsterOddityCapacity"; Value = 0 },
+            @{ Key = "HasRidingHorse"; Value = $false }
+        )) {
+            if (-not $Game.Town["Mounts"].ContainsKey($entry.Key) -or $null -eq $Game.Town["Mounts"][$entry.Key]) {
+                $Game.Town["Mounts"][$entry.Key] = $entry.Value
+            }
+        }
+    }
+
+    if ([bool]$Game.Town["Jousting"]["HasHorse"]) {
+        $Game.Town["Mounts"]["HasRidingHorse"] = $true
+    }
+
+    if ([bool]$Game.Town["Mounts"]["HasRidingHorse"]) {
+        $Game.Town["Jousting"]["HasHorse"] = $true
     }
 
     if ($null -eq $Game.Town["Quests"]) {

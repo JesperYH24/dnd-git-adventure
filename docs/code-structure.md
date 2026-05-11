@@ -369,7 +369,7 @@ Ansvar:
 - squire sparring on foot
 - armored aspirant duels with named win/loss records
 - future level 4 hook for mounted jousting
-- mounted jousting should require future horse ownership or stable access, splint or plate armor, and lance support
+- mounted jousting now reads stable-owned riding horse state, but still needs splint or plate armor and future lance support
 
 ### `town-npcs.ps1`
 

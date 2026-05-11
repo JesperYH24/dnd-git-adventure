@@ -46,5 +46,5 @@ flowchart LR
     Derived --> WIS["WIS\nfuture Wisdom checks"]
     Derived --> CHA["CHA\nBard save DC, CHA skills, Bardic Inspiration"]
     Level4 --> FighterJoust["Fighter level 4 direction\nmounted jousting later"]
-    FighterJoust --> JoustReq["Requires future horse/stable\nsplint or plate armor\nlance support"]
+    FighterJoust --> JoustReq["Requires stable riding horse\nsplint or plate armor\nfuture lance support"]
 ```

@@ -75,5 +75,5 @@ flowchart TD
     DocksGate -- "No" --> DocksLead["Linear Docks lead only"]
     DocksGate -- "Yes" --> Docks["Open Docks district"]
     Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
-    KnightGate -- "Needs horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
+    KnightGate -- "Needs stable horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
 ```

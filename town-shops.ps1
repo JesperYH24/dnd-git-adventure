@@ -209,6 +209,237 @@ function Get-ApothecaryOffers {
     return $offers
 }
 
+function New-StableOffer {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [string]$Description,
+        [int]$PriceCopper,
+        [int]$PackHaulCapacity,
+        [int]$MonsterOddityCapacity,
+        [bool]$JoustingEligible = $false
+    )
+
+    return [PSCustomObject]@{
+        Id = $Id
+        Name = $Name
+        Category = "Mount"
+        Description = $Description
+        PriceCopper = $PriceCopper
+        PackHaulCapacity = $PackHaulCapacity
+        MonsterOddityCapacity = $MonsterOddityCapacity
+        JoustingEligible = $JoustingEligible
+    }
+}
+
+function Get-StableOffers {
+    param($Game = $null)
+
+    $offers = @(
+        (New-StableOffer -Id "stable_pack_goat" -Name "Pack Goat" -Description "A stubborn little carrier for heroes who expect odd trophies before they can afford a full pack animal. Monster haul: 1 oddity bundle." -PriceCopper 260 -PackHaulCapacity 1 -MonsterOddityCapacity 1)
+        (New-StableOffer -Id "stable_donkey" -Name "Donkey" -Description "Slow, careful, and cheap to feed. Useful for bringing back sacks, bones, hides, and things Auntie Brindle swears are not junk. Monster haul: 2 oddity bundles." -PriceCopper 520 -PackHaulCapacity 2 -MonsterOddityCapacity 2)
+        (New-StableOffer -Id "stable_mule" -Name "Mule" -Description "The practical monster-zone choice: less proud than a horse, harder to panic, and strong enough for serious salvage. Monster haul: 4 oddity bundles." -PriceCopper 900 -PackHaulCapacity 4 -MonsterOddityCapacity 4)
+        (New-StableOffer -Id "stable_riding_horse" -Name "Riding Horse" -Description "A proper riding horse with enough discipline for the road and enough status for the tourney ground. Counts as the horse requirement for future mounted jousting. Monster haul: 2 oddity bundles." -PriceCopper 1500 -PackHaulCapacity 2 -MonsterOddityCapacity 2 -JoustingEligible $true)
+    )
+
+    return $offers
+}
+
+function Initialize-TownMountState {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return
+    }
+
+    if ($null -eq $Game.Town.Mounts) {
+        $Game.Town.Mounts = @{}
+    }
+
+    foreach ($entry in @(
+        @{ Key = "Owned"; Value = @{} },
+        @{ Key = "ActivePackAnimal"; Value = "" },
+        @{ Key = "PackHaulCapacity"; Value = 0 },
+        @{ Key = "MonsterOddityCapacity"; Value = 0 },
+        @{ Key = "HasRidingHorse"; Value = $false }
+    )) {
+        if (-not $Game.Town.Mounts.ContainsKey($entry.Key) -or $null -eq $Game.Town.Mounts[$entry.Key]) {
+            $Game.Town.Mounts[$entry.Key] = $entry.Value
+        }
+    }
+
+    if ($null -ne $Game.Town.Jousting -and [bool]$Game.Town.Jousting.HasHorse) {
+        $Game.Town.Mounts.HasRidingHorse = $true
+    }
+
+    if ([bool]$Game.Town.Mounts.HasRidingHorse -and $null -ne $Game.Town.Jousting) {
+        $Game.Town.Jousting.HasHorse = $true
+    }
+}
+
+function Get-TownMountSummaryText {
+    param($Game)
+
+    Initialize-TownMountState -Game $Game
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $Game.Town.Mounts.Owned.Count -eq 0) {
+        return "No owned animals yet."
+    }
+
+    $ownedNames = @()
+
+    foreach ($entry in $Game.Town.Mounts.Owned.GetEnumerator()) {
+        if ($entry.Value -is [hashtable] -and $entry.Value.ContainsKey("Name")) {
+            $ownedNames += [string]$entry.Value["Name"]
+        }
+        elseif ($null -ne $entry.Value.PSObject.Properties["Name"]) {
+            $ownedNames += [string]$entry.Value.Name
+        }
+        else {
+            $ownedNames += [string]$entry.Key
+        }
+    }
+
+    $activeText = if ([string]::IsNullOrWhiteSpace([string]$Game.Town.Mounts.ActivePackAnimal)) { "none selected" } else { [string]$Game.Town.Mounts.ActivePackAnimal }
+    return "Owned: $($ownedNames -join ', ') | Active pack animal: $activeText | Monster haul: $([int]$Game.Town.Mounts.MonsterOddityCapacity) oddity bundles"
+}
+
+function Test-TownMountOwned {
+    param(
+        $Game,
+        [string]$OfferId
+    )
+
+    Initialize-TownMountState -Game $Game
+    return ($null -ne $Game -and $null -ne $Game.Town -and $Game.Town.Mounts.Owned.ContainsKey($OfferId))
+}
+
+function Try-BuyTownMountOffer {
+    param(
+        $Game,
+        $Hero,
+        $Offer
+    )
+
+    Initialize-TownMountState -Game $Game
+
+    if ($null -eq $Offer) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "That animal is not available."
+        }
+    }
+
+    if (Test-TownMountOwned -Game $Game -OfferId $Offer.Id) {
+        return [PSCustomObject]@{
+            Success = $false
+            AlreadyOwned = $true
+            Message = "$($Hero.Name) already owns $($Offer.Name)."
+        }
+    }
+
+    $finalPriceCopper = Get-TownOfferPrice -Game $Game -Offer $Offer
+    $spendResult = Spend-HeroCurrency -Hero $Hero -Copper $finalPriceCopper
+
+    if (-not $spendResult.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            AlreadyOwned = $false
+            Message = "$($Hero.Name) cannot afford $($Offer.Name)."
+        }
+    }
+
+    $Game.Town.Mounts.Owned[$Offer.Id] = @{
+        Name = $Offer.Name
+        PackHaulCapacity = [int]$Offer.PackHaulCapacity
+        MonsterOddityCapacity = [int]$Offer.MonsterOddityCapacity
+        JoustingEligible = [bool]$Offer.JoustingEligible
+    }
+
+    if ([int]$Offer.MonsterOddityCapacity -gt [int]$Game.Town.Mounts.MonsterOddityCapacity) {
+        $Game.Town.Mounts.ActivePackAnimal = $Offer.Name
+        $Game.Town.Mounts.PackHaulCapacity = [int]$Offer.PackHaulCapacity
+        $Game.Town.Mounts.MonsterOddityCapacity = [int]$Offer.MonsterOddityCapacity
+    }
+
+    if ([bool]$Offer.JoustingEligible) {
+        $Game.Town.Mounts.HasRidingHorse = $true
+        if ($null -ne $Game.Town.Jousting) {
+            $Game.Town.Jousting.HasHorse = $true
+        }
+    }
+
+    $priceText = Convert-CopperToCurrencyText -Copper $finalPriceCopper
+    $roleText = if ([bool]$Offer.JoustingEligible) { " It also satisfies the future jousting horse requirement." } else { "" }
+
+    return [PSCustomObject]@{
+        Success = $true
+        AlreadyOwned = $false
+        Offer = $Offer
+        Message = "$($Hero.Name) buys $($Offer.Name) for $priceText. Monster haul capacity is now $([int]$Game.Town.Mounts.MonsterOddityCapacity) oddity bundles.$roleText"
+    }
+}
+
+function Show-TownStable {
+    param(
+        [string]$IntroText,
+        $Game,
+        $Hero,
+        [object[]]$Offers
+    )
+
+    $showIntro = $true
+
+    while ($true) {
+        Write-SectionTitle -Text "Stable Yard" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Stable Yard"
+        if ($showIntro) {
+            Write-Scene $IntroText
+            $showIntro = $false
+        }
+
+        Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Hero)" "DarkYellow"
+        Write-ColorLine (Get-TownMountSummaryText -Game $Game) "DarkCyan"
+        Write-ColorLine ""
+
+        for ($i = 0; $i -lt $Offers.Count; $i++) {
+            $offer = $Offers[$i]
+            $priceText = Convert-CopperToCurrencyText -Copper (Get-TownOfferPrice -Game $Game -Offer $offer)
+            $ownedText = if (Test-TownMountOwned -Game $Game -OfferId $offer.Id) { " (owned)" } else { "" }
+            Write-ColorLine "$($i + 1). $($offer.Name) - $priceText$ownedText" "White"
+            Write-ColorLine "   $($offer.Description)" "DarkGray"
+        }
+
+        Write-ColorLine ""
+        Write-ColorLine "0. Back to shops" "DarkGray"
+        Write-ColorLine ""
+
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "0") {
+            return
+        }
+
+        if ($choice -notmatch '^\d+$') {
+            Write-ColorLine "Choose a listed number." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $index = [int]$choice - 1
+
+        if ($index -lt 0 -or $index -ge $Offers.Count) {
+            Write-ColorLine "That animal is not available." "DarkYellow"
+            Write-ColorLine ""
+            continue
+        }
+
+        $result = Try-BuyTownMountOffer -Game $Game -Hero $Hero -Offer $Offers[$index]
+        Write-Scene $result.Message
+        Write-ColorLine ""
+    }
+}
+
 function New-TownItemFromOfferId {
     param([string]$OfferId)
 

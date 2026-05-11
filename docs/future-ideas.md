@@ -32,7 +32,7 @@
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
-- expand Fighter's tourney ground into level 4 mounted jousting once horse seller or stable ownership, splint-or-plate tourney armor, lances, and heraldic rewards exist
+- expand Fighter's tourney ground into level 4 mounted jousting using the new stable-owned riding horse state, splint-or-plate tourney armor, lances, and heraldic rewards
 - deeper inn events, shady city routes, and economic info payoffs
 
 ## Fighting ring direction

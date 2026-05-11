@@ -97,7 +97,7 @@ flowchart TD
     T2Gate --> T3["Tier 3: clean paper"]
     T3 --> CharterScribe["The Charter Scribe\nraises level cap to 4"]
     CharterScribe --> ASI["Level 4 long rest\nASI"]
-    ASI --> FighterJoust["Fighter tourney growth\nhorse + splint/plate + lance later"]
+    ASI --> FighterJoust["Fighter tourney growth\nstable horse + splint/plate + lance later"]
 
     ASI --> T4["Tier 4: higher city hands"]
     T4 --> ShellCharter["The Shell Charter"]

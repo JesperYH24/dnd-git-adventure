@@ -60,10 +60,12 @@ function Get-HeroStatusSnapshot {
     $storyQuestStatus = "Unknown"
     $dayJobStatus = "Unknown"
     $performanceStatus = ""
+    $mountStatus = ""
 
     if ($null -ne $Game -and $null -ne $Game.Town) {
         $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
         $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
+        $mountStatus = Get-TownMountSummaryText -Game $Game
 
         if ($Hero.Class -eq "Bard") {
             $performanceStatus = "$([int]$Game.Town.PerformanceCountToday)/3 today"
@@ -95,6 +97,7 @@ function Get-HeroStatusSnapshot {
         StoryQuestStatus = $storyQuestStatus
         DayJobStatus = $dayJobStatus
         PerformanceStatus = $performanceStatus
+        MountStatus = $mountStatus
     }
 }
 
@@ -130,6 +133,9 @@ function Write-HeroStatusDetails {
     Write-ColorLine "Currency: $($Snapshot.CurrencyText) | Story Quest Today: $($Snapshot.StoryQuestStatus) | Day Job Today: $($Snapshot.DayJobStatus)" "White"
     if ($Snapshot.StoryClueCount -gt 0) {
         Write-ColorLine "Story Clues Logged: $($Snapshot.StoryClueCount)" "DarkYellow"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Snapshot.MountStatus) -and $Snapshot.MountStatus -ne "No owned animals yet.") {
+        Write-ColorLine "Stable: $($Snapshot.MountStatus)" "DarkCyan"
     }
     Write-ColorLine "STR $($Hero.STR) $(Format-AbilityModifier -Modifier $Snapshot.STRMod) | DEX $($Hero.DEX) $(Format-AbilityModifier -Modifier $Snapshot.DEXMod) | CON $($Hero.CON) $(Format-AbilityModifier -Modifier $Snapshot.CONMod)" "DarkGray"
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"

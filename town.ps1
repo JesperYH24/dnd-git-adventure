@@ -434,6 +434,19 @@ function Get-TownShopIntroText {
                 -BardText "Leather, chain, buckles, and fitted coats line the armorer's walls. Even here the eye goes toward mobility, silhouette, and whether Gariand wants protection that still lets him move like a performer instead of a tower shield." `
                 -FighterText "Mail, shields, fitted straps, and heavier coats line the armorer's walls. Lubert Stryer's round shield earns a nod, but the squire mail is clearly what the room wants him to become.")
         }
+        "Stable" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "The stable yard is mostly dark now. A few lanterns burn over straw, tack hooks, and sleepy animals, but no sensible dealer writes fresh bills of sale after midnight." `
+                    -BardText "The stable yard has gone quiet except for hooves shifting in straw and a groom humming under his breath. Daylight is better for judging animals, prices, and lies." `
+                    -FighterText "The stable yard is quiet enough that Lubert Stryer can hear leather creak from the tourney tack. No dealer wants to sell a future jousting horse under bad lantern light.")
+            }
+
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "The stable yard smells of hay, leather, warm animal breath, and road mud. Pack goats, donkeys, mules, and riding horses wait under the eye of a dealer who knows the monster roads will need carriers as much as courage." `
+                -BardText "The stable yard is all bridles, bargaining, and animals with more opinions than most tavern audiences. Pack animals promise a practical future: odd monster bits hauled home for the docks instead of left in the dirt." `
+                -FighterText "The stable yard has pack animals for hard roads, but Lubert Stryer's eye keeps finding the riding horses. A proper mount is not knighthood yet, but it is one of the doors.")
+        }
     }
 
     return ""
@@ -858,6 +871,7 @@ function Test-TownActionAvailableAtCurrentTime {
         "Market" { return -not $isNight }
         "Smithy" { return -not $isNight }
         "Armorer" { return -not $isNight }
+        "Stable" { return -not $isNight }
         "Ring" { return $isNight }
         "Performance" { return $isNight }
         default { return $true }
@@ -874,6 +888,7 @@ function Get-TownActionUnavailableText {
         "Market" { return "Most of the market has shuttered for the night. The real trade there will have to wait for morning." }
         "Smithy" { return "Rurik's main forge business is done for the night. Serious smithing waits for daylight." }
         "Armorer" { return "The armorer has closed up for the night, leaving only measured lamplight behind the shutters." }
+        "Stable" { return "The stable yard has settled for the night. Buying animals waits for daylight, when teeth, legs, tack, and temper can be judged properly." }
         "Ring" { return "The fighting ring does not truly wake until after dark, when the wagers start moving faster than the greetings." }
         "Performance" { return "$($Game.Hero.Name) can work a room for coin, but this city pays best for performances once the evening crowd has gathered." }
         default { return "That part of the city is not moving at this hour." }
@@ -1676,6 +1691,15 @@ function Open-TownShopAction {
 
             Show-TownShop -Title "Armorer" -IntroText (Get-TownShopIntroText -Shop "Armorer" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ArmorerOffers -Game $Game) -BuyerType "Armorer"
         }
+        "Stable" {
+            if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Stable")) {
+                Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Stable")
+                Write-ColorLine ""
+                return
+            }
+
+            Show-TownStable -IntroText (Get-TownShopIntroText -Shop "Stable" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-StableOffers -Game $Game)
+        }
         "Sell" {
             Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "GeneralBuyer" -ExitLabel "Back to shops"
         }
@@ -1700,7 +1724,8 @@ function Start-TownShopsMenu {
         Write-ColorLine $(if ($isNight) { "3. Visit the candlelit apothecary" } else { "3. Visit the apothecary" }) "White"
         Write-ColorLine $(if ($isNight) { "4. Visit the quiet instrument shop" } else { "4. Visit the instrument shop" }) "White"
         Write-ColorLine $(if ($isNight) { "5. Visit the armorer's hall (closed)" } else { "5. Visit the armorer" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer") { "White" } else { "DarkGray" })
-        Write-ColorLine $(if ($isNight) { "6. Find a late buyer" } else { "6. Find a buyer" }) "White"
+        Write-ColorLine $(if ($isNight) { "6. Visit the stable yard (closed)" } else { "6. Visit the stable yard" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Stable") { "White" } else { "DarkGray" })
+        Write-ColorLine $(if ($isNight) { "7. Find a late buyer" } else { "7. Find a buyer" }) "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
@@ -1713,7 +1738,8 @@ function Start-TownShopsMenu {
             "3" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Apothecary" }
             "4" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "InstrumentShop" }
             "5" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Armorer" }
-            "6" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Sell" }
+            "6" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Stable" }
+            "7" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Sell" }
             "S" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
             "0" { return }
             default {

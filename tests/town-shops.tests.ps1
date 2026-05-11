@@ -126,6 +126,53 @@ function Test-DocksideOdditiesPaysWellForJunk {
     Assert-True -Condition ((Get-SaleValueForBuyer -BuyerType "DocksideOddities" -Item $weapon) -le (Get-SaleValueForBuyer -BuyerType "GeneralBuyer" -Item $weapon)) -Message "The oddity shop should not outpay normal buyers for ordinary weapons."
 }
 
+function Test-StableStocksPackAnimalsAndRidingHorse {
+    $game = Initialize-Game
+    $offers = @(Get-StableOffers -Game $game)
+    $mule = $offers | Where-Object { $_.Id -eq "stable_mule" } | Select-Object -First 1
+    $horse = $offers | Where-Object { $_.Id -eq "stable_riding_horse" } | Select-Object -First 1
+
+    Assert-True -Condition ($offers.Id -contains "stable_pack_goat") -Message "The stable should stock a cheap starter pack animal."
+    Assert-True -Condition ($offers.Id -contains "stable_donkey") -Message "The stable should stock a donkey for monster-zone hauling."
+    Assert-True -Condition ($null -ne $mule) -Message "The stable should stock a stronger pack mule."
+    Assert-Equal -Actual $mule.MonsterOddityCapacity -Expected 4 -Message "The mule should be the best early pack-animal hauling option."
+    Assert-Equal -Actual $horse.JoustingEligible -Expected $true -Message "The riding horse should satisfy the future jousting horse requirement."
+}
+
+function Test-HeroCanBuyPackAnimalWithoutInventorySpace {
+    $game = Initialize-Game
+    $hero = $game.Hero
+    $hero.CurrencyCopper = 1000
+    $hero.Inventory += (New-WeaponItem -Name "Spare Pike" -Value 50 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "Two-Handed" -RequiredSTR 11 -SlotCost 4)
+    $hero.BackpackInventory += (New-ArmorItem -Name "Packed Plates" -Value 30 -ArmorBonus 1 -SlotCost 2)
+    $hero.BackpackInventory += (New-WeaponItem -Name "Packed Hammer" -Value 25 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -RequiredSTR 10 -SlotCost 2)
+    $offer = Get-StableOffers -Game $game | Where-Object { $_.Id -eq "stable_donkey" } | Select-Object -First 1
+
+    $result = Try-BuyTownMountOffer -Game $game -Hero $hero -Offer $offer
+
+    Assert-True -Condition $result.Success -Message "Pack-animal purchases should not be blocked by hero inventory space."
+    Assert-Equal -Actual $hero.CurrencyCopper -Expected 480 -Message "Buying a donkey should spend the listed price."
+    Assert-True -Condition ($game.Town.Mounts.Owned.ContainsKey("stable_donkey")) -Message "The bought donkey should persist in town mount ownership."
+    Assert-Equal -Actual $game.Town.Mounts.ActivePackAnimal -Expected "Donkey" -Message "The first useful pack animal should become the active hauler."
+    Assert-Equal -Actual $game.Town.Mounts.MonsterOddityCapacity -Expected 2 -Message "The donkey should set monster oddity haul capacity."
+}
+
+function Test-RidingHorseSetsJoustingHorseState {
+    $game = Initialize-Game -Class "Fighter"
+    $hero = $game.Hero
+    $hero.CurrencyCopper = 2000
+    $offer = Get-StableOffers -Game $game | Where-Object { $_.Id -eq "stable_riding_horse" } | Select-Object -First 1
+
+    $result = Try-BuyTownMountOffer -Game $game -Hero $hero -Offer $offer
+    $requirements = Get-MountedJoustingRequirements -Game $game
+
+    Assert-True -Condition $result.Success -Message "A Fighter should be able to buy a riding horse from the stable."
+    Assert-Equal -Actual $game.Town.Mounts.HasRidingHorse -Expected $true -Message "The riding horse should mark mount ownership."
+    Assert-Equal -Actual $game.Town.Jousting.HasHorse -Expected $true -Message "The riding horse should sync to the jousting horse requirement."
+    Assert-Equal -Actual $requirements.HasHorse -Expected $true -Message "Mounted jousting requirements should read the stable-owned horse."
+    Assert-True -Condition ($requirements.Missing -contains "splint or plate armor") -Message "A horse alone should still leave tourney armor as a missing requirement."
+}
+
 function Test-HeroCanBuyFromTownShop {
     $game = Initialize-Game
     $hero = $game.Hero
@@ -191,5 +238,8 @@ Test-NewSpecialtyShopsStockRealClassGear
 Test-FighterPatronStandingUnlocksHeraldicSurcoat
 Test-TutorialLootHasUsefulButModestSaleValue
 Test-DocksideOdditiesPaysWellForJunk
+Test-StableStocksPackAnimalsAndRidingHorse
+Test-HeroCanBuyPackAnimalWithoutInventorySpace
+Test-RidingHorseSetsJoustingHorseState
 
 Write-Host "Town shop tests passed." -ForegroundColor Green

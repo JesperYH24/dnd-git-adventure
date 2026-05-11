@@ -66,8 +66,8 @@
 - with patron notice plus a `Heraldic Surcoat`, Lubert can present colors to the patron rail, becoming a `Patron-Backed Aspirant` and unlocking future splint armor savings
 - true mounted jousting is planned as a level 4 Fighter/knight unlock, not an early-town activity
 - before level 4, the tourney ground should stay focused on foot sparring, armored aspirant duels, patron notice, and shield technique
-- mounted jousting is still a future system: it should require level 4, horse ownership, equipped splint or plate armor, and lance support before it opens
-- no horse seller or stable ownership loop exists yet; that should arrive with the level 4 jousting build-out
+- mounted jousting is still a future system: it should require level 4, stable-owned riding horse, equipped splint or plate armor, and lance support before it opens
+- the stable yard now sells pack animals for future monster-zone hauling and a riding horse that satisfies the future jousting horse requirement
 
 ## Town and day/night systems
 
@@ -85,9 +85,10 @@
 - Fighter can visit the tourney ground from `Work & Trouble` to build early knight-facing arena standing
 - market, smithy, and armorer close at night
 - apothecary, instrument shop, inn, streets, quest log, and buyer flow remain available
+- the daytime stable yard sells pack animals and riding horses; pack animals prepare the future monster-zone haul loop instead of using normal inventory slots
 - manual `Wait for nightfall` transition
 - long rests advance to the next day and reset daily limits
-- once the future level 4 jousting system exists, the town day loop should expose horse/stable preparation without making it available to level 1-3 Fighters
+- once the future level 4 jousting system exists, the town day loop can reuse existing stable ownership while keeping mounted jousting itself gated behind level, armor, and lance support
 
 ## Inns
 
