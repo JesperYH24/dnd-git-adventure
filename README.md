@@ -44,6 +44,7 @@ powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 ## Main docs
 
 - [Game Mechanics](docs/game-mechanics.md)
+- [Class Level 1-4 Progression](docs/class-level-1-4-progression.md)
 - [Story and Progression](docs/story-and-progression.md)
 - [Code Structure](docs/code-structure.md)
 - [Visualizations](docs/visualizations.md)

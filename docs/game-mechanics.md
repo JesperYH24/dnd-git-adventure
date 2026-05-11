@@ -15,6 +15,7 @@
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - quest log with accepted, completed, failed, and Chapter Two clue views
 - class story approach tracking for story quests: Barbarian builds hard-proof identity, Bard builds soft-power identity, and Fighter builds civic-trust identity only when the player chooses a class-specific solution and succeeds
+- class progression planning for level 1-4 is tracked in [Class Level 1-4 Progression](class-level-1-4-progression.md)
 
 ## Combat
 
