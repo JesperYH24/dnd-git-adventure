@@ -27,23 +27,25 @@
 - class-ready turn flow where `Action` and `Bonus Action` can be used in either order or passed
 - cleaner battle-status layout with stronger hero/enemy separation
 
-## Future monster-zone exploration
+## Monster-zone exploration
 
-- the first monster zone should use wilderness travel rather than room navigation or a detailed map
-- travel should be tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
-- planned new skills: `Perception` and `Stealth`
-- before wilderness combat begins, hero and monster awareness should be resolved with opposed discovery checks:
+- the first monster zone opens after post-Civic-Vault outer-wall rumors start
+- it uses wilderness travel rather than room navigation or a detailed map
+- travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
+- new wilderness skills: `Perception` and `Stealth`
+- before wilderness combat begins, hero and monster awareness is resolved with opposed discovery checks:
   - hero `Perception` against monster/beast `Stealth`
   - monster/beast `Perception` against hero `Stealth`
 - if the hero detects the threat first, the player can avoid, observe, track, or attempt a surprise approach
 - if the monster detects the hero first, it can stalk, ambush, flee, or block the path before normal initiative
 - if both sides notice each other, combat starts with normal initiative
 - if neither side has a clear read, the game should surface tracks, sounds, disturbed ground, or another approach choice
-- the zone should support soft boundaries near the edge of the city's patrol reach rather than a detailed hard map
-- camping should be a meaningful rest choice: open-sky sleep is fast but riskier, while building or improving camp lowers night attack risk
-- stable-yard pack animals should feed monster salvage capacity, especially for oddities requested by Docks buyers
+- the zone supports soft boundaries near the edge of the city's patrol reach rather than a detailed hard map
+- camping is a meaningful rest choice: open-sky sleep is fast but riskier, while building or improving camp lowers night attack risk
+- stable-yard pack animals feed monster salvage capacity, especially for oddities requested by Docks buyers
+- monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot
 
-Possible first camp levels:
+Current camp levels:
 
 - `Open Sky`
 - `Basic Camp`

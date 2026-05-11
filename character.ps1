@@ -1734,7 +1734,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 11
-                CheckProficiencies = @("CON", "WIS")
+                CheckProficiencies = @("CON", "WIS", "Perception")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4
@@ -1781,7 +1781,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 15
-                CheckProficiencies = @("CHA", "Performance")
+                CheckProficiencies = @("CHA", "Performance", "Perception")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4
@@ -1828,7 +1828,7 @@ function Get-Hero {
                 INT                = 8
                 WIS                = 10
                 CHA                = 8
-                CheckProficiencies = @("STR", "CON")
+                CheckProficiencies = @("STR", "CON", "Perception")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4

@@ -196,21 +196,21 @@ This is the current Chapter Three climax dungeon:
 - mechanically, the quest still completes and grants its rewards; narratively, Halewick remains alive as an exposed draconic threat
 - after the next inn rest, city rumors shift from palace repair aftershock into reports of creatures growing bolder against the outer wall, establishing the future monster zone beyond the city
 
-## Future monster zone
+## Monster zone
 
-The monster zone should become the first playable answer to the post-Civic-Vault wall rumors. It should sit outside the city as a dangerous wilderness layer rather than a dungeon.
+The monster zone is the first playable answer to the post-Civic-Vault wall rumors. It sits outside the city as a dangerous wilderness layer rather than a dungeon.
 
-Design direction:
+Current first-pass direction:
 
 - the hero leaves through the outer gate and travels through abstract wilderness positions
 - there is no visible room map, but landmarks are fixed and tracked so repeated direction choices can rediscover the same places
 - the zone should contain ruins, old road markers, shrines, burned sites, abandoned camps, and other curiosities that can become future story hooks
-- the zone edge should begin as a soft boundary where the hero is warned about leaving the patrol radius or pushing into danger beyond the current chapter
-- `Perception` and `Stealth` should decide who notices whom before initiative
-- monsters and beasts should have their own perception and stealth values
-- discovery results can allow avoidance, observation, tracking, surprise attacks, ambushes, or normal initiative
+- the zone edge is a soft boundary where the hero is warned about leaving the patrol radius or pushing into danger beyond the current chapter
+- `Perception` and `Stealth` decide who notices whom before initiative
+- monsters and beasts have their own perception and stealth values
+- discovery results can allow avoidance, surprise attacks, ambushes, or normal initiative
 - the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights
-- pack animals from the stable yard should let the hero haul more monster oddities back to town
+- pack animals from the stable yard let the hero haul more monster oddities back to town
 - Docks buyers, especially Auntie Brindle-style contacts, can request strange monster parts and turn the zone into an economy that does not inflate tutorial loot value
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
 

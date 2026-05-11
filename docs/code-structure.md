@@ -139,6 +139,7 @@ Härifrån fördelas spelaren vidare till city-systemen:
 - `town-ring.ps1`
 - `town-jousting.ps1`
 - `town-npcs.ps1`
+- `monster-zone.ps1`
 - `quests.ps1`
 - `city-quests.ps1`
 
@@ -370,6 +371,17 @@ Ansvar:
 - armored aspirant duels with named win/loss records
 - future level 4 hook for mounted jousting
 - mounted jousting now reads stable-owned riding horse state, but still needs splint or plate armor and future lance support
+
+### `monster-zone.ps1`
+
+Ansvar:
+
+- outer-wall monster zone after post-Civic-Vault wall rumors
+- hidden wilderness positions and persistent landmarks
+- soft zone edge near the city's patrol reach
+- `Perception`/`Stealth` awareness checks before wilderness combat
+- camp building and camp safety levels
+- monster oddity hauling tied to stable-yard pack animal capacity
 
 ### `town-npcs.ps1`
 

@@ -178,6 +178,7 @@ function Ensure-LoadedAdventureShape {
 
     foreach ($heroDefault in @(
         @{ Name = "UnarmedTrainingLevel"; Value = 0 },
+        @{ Name = "CheckProficiencies"; Value = @(Get-HeroCheckProficiencies -Hero $Game.Hero) },
         @{ Name = "RingWinsTotal"; Value = 0 },
         @{ Name = "RingReputation"; Value = 0 },
         @{ Name = "RingChampionNightWon"; Value = $false },
@@ -195,6 +196,18 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
+    $expectedSkillProficiencies = switch ($Game.Hero.Class) {
+        "Fighter" { @("CON", "WIS", "Perception") }
+        "Bard" { @("CHA", "Performance", "Perception") }
+        default { @("STR", "CON", "Perception") }
+    }
+
+    foreach ($skillProficiency in $expectedSkillProficiencies) {
+        if (-not (@(Get-HeroCheckProficiencies -Hero $Game.Hero) -contains $skillProficiency)) {
+            $Game.Hero.CheckProficiencies = @($Game.Hero.CheckProficiencies) + $skillProficiency
+        }
+    }
+
     if (-not (Test-AdventureStateMember -Object $Game -Name "Town") -or $null -eq $Game.Town) {
         $Game.Town = New-DefaultTownState
     }
@@ -207,7 +220,7 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
-    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags", "ClassStoryApproach", "Mounts")) {
+    foreach ($key in @("StreetFlags", "Discounts", "PerformanceVenuesToday", "PerformanceHistory", "Relationships", "InnFlags", "StoryFlags", "ClassStoryApproach", "Mounts", "MonsterZone")) {
         if ($null -eq $Game.Town[$key]) {
             $Game.Town[$key] = @{}
         }
@@ -300,6 +313,33 @@ function Ensure-LoadedAdventureShape {
 
     if ([bool]$Game.Town["Mounts"]["HasRidingHorse"]) {
         $Game.Town["Jousting"]["HasHorse"] = $true
+    }
+
+    if ($null -eq $Game.Town["MonsterZone"]) {
+        $Game.Town["MonsterZone"] = @{
+            CurrentX = 0
+            CurrentY = 0
+            Visits = 0
+            DiscoveredLandmarks = @{}
+            Camps = @{}
+            Oddities = @()
+            LastTravelText = ""
+        }
+    }
+    else {
+        foreach ($entry in @(
+            @{ Key = "CurrentX"; Value = 0 },
+            @{ Key = "CurrentY"; Value = 0 },
+            @{ Key = "Visits"; Value = 0 },
+            @{ Key = "DiscoveredLandmarks"; Value = @{} },
+            @{ Key = "Camps"; Value = @{} },
+            @{ Key = "Oddities"; Value = @() },
+            @{ Key = "LastTravelText"; Value = "" }
+        )) {
+            if (-not $Game.Town["MonsterZone"].ContainsKey($entry.Key) -or $null -eq $Game.Town["MonsterZone"][$entry.Key]) {
+                $Game.Town["MonsterZone"][$entry.Key] = $entry.Value
+            }
+        }
     }
 
     if ($null -eq $Game.Town["Quests"]) {

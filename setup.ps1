@@ -13,6 +13,7 @@
 . "$PSScriptRoot\town-jousting.ps1"
 . "$PSScriptRoot\rooms.ps1"
 . "$PSScriptRoot\encounters.ps1"
+. "$PSScriptRoot\monster-zone.ps1"
 . "$PSScriptRoot\phases.ps1"
 . "$PSScriptRoot\exploration.ps1"
 
@@ -64,6 +65,15 @@ function New-DefaultTownState {
             PackHaulCapacity = 0
             MonsterOddityCapacity = 0
             HasRidingHorse = $false
+        }
+        MonsterZone = @{
+            CurrentX = 0
+            CurrentY = 0
+            Visits = 0
+            DiscoveredLandmarks = @{}
+            Camps = @{}
+            Oddities = @()
+            LastTravelText = ""
         }
         Ring = @{
             Visits = 0

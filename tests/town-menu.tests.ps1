@@ -184,6 +184,20 @@ function Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest {
     Assert-True -Condition ($nightText -like "*outer wall*" -and $nightText -like "*hungry shapes*") -Message "Night ambience should carry the wall-monster rumor after it starts."
 }
 
+function Test-TownMenuCanEnterUnlockedMonsterZone {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.MustChooseFirstInn = $false
+    $game.Town.ChapterOneComplete = $true
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    Set-TestReadHostSequence -Values @("7", "0", "0")
+
+    $result = Start-TownMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $result -Expected "EndGame" -Message "The town menu should route into the unlocked monster zone and return cleanly."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 3 -Message "Monster zone entry should consume only the expected prompts when the player backs out."
+}
+
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
@@ -195,5 +209,6 @@ Test-DocksOpenLeadsComeFromVeyraContact
 Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest
+Test-TownMenuCanEnterUnlockedMonsterZone
 
 Write-Host "Town menu tests passed." -ForegroundColor Green

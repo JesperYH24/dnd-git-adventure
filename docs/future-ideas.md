@@ -7,7 +7,7 @@
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - build the next post-Civic-Vault story chain around witnesses, dragon panic, civic cover-ups, and Halewick's escape route
-- turn the post-rest outer-wall monster rumors into the first playable monster zone beyond the city
+- expand the first playable monster zone beyond the city with more landmarks, contracts, weather, return-to-town payouts, and dragon-pressure escalation
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the post-Civic-Vault city state with more witness reactions, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
@@ -37,9 +37,9 @@
 
 ## Monster zone design direction
 
-The first monster zone should feel like a wilderness layer beyond the city walls, not a dungeon with rooms. It should be explorable, trackable, and dangerous without needing a detailed map.
+The first monster zone now exists as a wilderness layer beyond the city walls, not a dungeon with rooms. It should keep becoming more explorable, trackable, and dangerous without needing a detailed map.
 
-Core loop:
+Core loop to deepen:
 
 - leave town through the outer gate with current gear, coin, and any owned pack animal
 - choose a travel activity such as `travel north/east/south/west`, `track signs`, `move carefully`, `search landmark`, `make camp`, or `return toward city`

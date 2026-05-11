@@ -1947,6 +1947,9 @@ function Start-TownMenu {
         if (Test-DocksDistrictOpenToTown -Game $Game) {
             Write-ColorLine "6. Visit the docks district" "White"
         }
+        if (Test-MonsterZoneUnlocked -Game $Game) {
+            Write-ColorLine "7. Venture beyond the outer wall" "White"
+        }
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "G. Save adventure" "White"
         if ((Get-TownTimeOfDay -Game $Game) -eq "Day") {
@@ -1981,6 +1984,21 @@ function Start-TownMenu {
             "6" {
                 if (Test-DocksDistrictOpenToTown -Game $Game) {
                     Start-DocksDistrictMenu -Game $Game -HeroHP $HeroHP -ReturnLabel "Back to town"
+                }
+                else {
+                    Write-ColorLine "Invalid choice. Try again." "Red"
+                    Write-ColorLine ""
+                }
+            }
+            "7" {
+                if (Test-MonsterZoneUnlocked -Game $Game) {
+                    $monsterZoneResult = Start-MonsterZoneMenu -Game $Game -HeroHP $HeroHP
+
+                    if ($monsterZoneResult -eq "Defeated") {
+                        Write-Scene "$($Game.Hero.Name) is dragged back to the city by a patrol that was almost too late."
+                        $HeroHP.Value = [Math]::Max(1, [Math]::Floor($Game.Hero.HP / 2))
+                        Set-TownTimeOfDay -Game $Game -TimeOfDay "Night"
+                    }
                 }
                 else {
                     Write-ColorLine "Invalid choice. Try again." "Red"

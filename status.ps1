@@ -61,11 +61,19 @@ function Get-HeroStatusSnapshot {
     $dayJobStatus = "Unknown"
     $performanceStatus = ""
     $mountStatus = ""
+    $monsterZoneStatus = ""
 
     if ($null -ne $Game -and $null -ne $Game.Town) {
         $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
         $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
         $mountStatus = Get-TownMountSummaryText -Game $Game
+
+        if (Get-Command Test-MonsterZoneUnlocked -ErrorAction SilentlyContinue) {
+            if (Test-MonsterZoneUnlocked -Game $Game) {
+                Initialize-MonsterZoneState -Game $Game
+                $monsterZoneStatus = "$(Get-MonsterZoneLocationText -Game $Game) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)"
+            }
+        }
 
         if ($Hero.Class -eq "Bard") {
             $performanceStatus = "$([int]$Game.Town.PerformanceCountToday)/3 today"
@@ -98,6 +106,7 @@ function Get-HeroStatusSnapshot {
         DayJobStatus = $dayJobStatus
         PerformanceStatus = $performanceStatus
         MountStatus = $mountStatus
+        MonsterZoneStatus = $monsterZoneStatus
     }
 }
 
@@ -136,6 +145,9 @@ function Write-HeroStatusDetails {
     }
     if (-not [string]::IsNullOrWhiteSpace($Snapshot.MountStatus) -and $Snapshot.MountStatus -ne "No owned animals yet.") {
         Write-ColorLine "Stable: $($Snapshot.MountStatus)" "DarkCyan"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Snapshot.MonsterZoneStatus)) {
+        Write-ColorLine "Monster Zone: $($Snapshot.MonsterZoneStatus)" "DarkCyan"
     }
     Write-ColorLine "STR $($Hero.STR) $(Format-AbilityModifier -Modifier $Snapshot.STRMod) | DEX $($Hero.DEX) $(Format-AbilityModifier -Modifier $Snapshot.DEXMod) | CON $($Hero.CON) $(Format-AbilityModifier -Modifier $Snapshot.CONMod)" "DarkGray"
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"
