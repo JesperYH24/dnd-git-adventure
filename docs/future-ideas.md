@@ -46,6 +46,14 @@ Core loop to deepen:
 - resolve wilderness pressure through discovery, weather, tracks, beast/monster encounters, salvage, and rest decisions
 - return to town with monster oddities, rumors, and signs of the draconic threat
 
+Next implementation priorities:
+
+- add clearer monster-zone objectives so the player knows why they are leaving town: track a creature, collect a requested oddity, find a landmark, report proof to Dorr, or return safely before the zone wears them down
+- expand pre-combat encounter choices so `Perception` and `Stealth` results lead to meaningful options such as `avoid`, `track`, `ambush`, `study`, or `stand ground` before initiative
+- connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
+- polish Dorr's monster-contract board so pending captures clearly show when the crew returns, which monster type was proven, and what the ring reward is
+- add class-flavored monster-zone text: Barbarian reads danger through instinct and physical signs, Bard notices folklore and strange sounds, and Fighter reads patrol logic, tracks, and wall-defense threats
+
 Use a hidden coordinate-style zone rather than a visible dungeon map:
 
 - city gate can be treated as the origin point
@@ -128,8 +136,9 @@ Pack animal economy:
 - expand the first wager system with Dorr comments, odds that react to reputation, and special side bets tied to rival names or crowd taste
 - expand the first post-fight ring rumor system with rumor memory, NPC-specific sources, and quest hooks that can mark leads instead of only surfacing flavor
 - expand the first unarmed-title ladder beyond `Pit Champion` and `Beast-Hand Prospect` with more named thresholds, Dorr reactions, and monster-specific titles
-- expand the first monster-challenge preview cards into real contracts when the outer monster zone exists:
-  - monsters must be discovered or contracted through the monster zone first
+- deepen the first monster-challenge contracts now that they connect to the outer monster zone:
+  - monsters must be defeated in the monster zone and reported to Dorr before the contract can be booked
+  - Dorr's capture crew should create a visible delay before the captured monster is ready in the ring
   - fights are unarmed-only and built for reputation rather than normal loot
   - rewards can include bounty coin, ring reputation, crowd titles, and monster-specific rumors
 
