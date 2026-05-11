@@ -15,7 +15,7 @@ The project currently includes:
 - a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - Fighter tourney ground foot duels, with a stable-yard horse requirement now in place for future mounted jousting; lance support is still future level 4 knight progression
-- first-pass monster zone beyond the outer wall with tracked landmarks, Perception/Stealth awareness checks, camp safety, and pack-animal monster oddity hauling
+- first-pass monster zone beyond the outer wall with tracked landmarks, Perception/Stealth awareness checks, camp safety, pack-animal monster oddity hauling, and defeated-creature reports that unlock Dorr's ring monster contracts
 - repeatable level-based day jobs
 - split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
 

@@ -762,10 +762,27 @@ function Test-HeroReadyForRingMonsterChallenges {
 }
 
 function Get-RingMonsterChallengeTalk {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
     if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Hero)) {
         return "Dorr's grin fades into a measuring look. 'Monster bouts are not tavern dares. When you have survived enough real trouble to stand at level four, we can talk about contracts beyond the wall.'"
+    }
+
+    if ($null -ne $Game) {
+        Initialize-MonsterZoneState -Game $Game
+        $defeatedCount = @($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count
+        $reportedCount = @($Game.Town.MonsterZone.ReportedCreaturesToDorr.Keys).Count
+
+        if ($defeatedCount -le 0) {
+            return "Dorr leans on the rail. 'I can sell a city crowd on bruisers, but not ghost stories. Walk beyond the wall, beat something that should have stayed outside, then come back and tell me exactly what it was.'"
+        }
+
+        if ($reportedCount -le 0) {
+            return "Dorr's attention sharpens when $($Hero.Name) mentions the outer grass. 'Good. Give me the shape of it. Claws, tusks, habits. I will know which contracts can survive the telling.'"
+        }
     }
 
     if ($Hero.RingWinsTotal -ge 10) {
@@ -775,8 +792,223 @@ function Get-RingMonsterChallengeTalk {
     return "Dorr taps the rail, eyes bright with ugly possibilities. 'Level four means you have lived through enough that I can say this plainly: once the outer contracts open, I can put your bare hands against things with claws, hides, and prices on their heads. Win those, and the city will not just pay you. It will talk about you.'"
 }
 
+function Get-RingMonsterChallengeContracts {
+    return @(
+        [PSCustomObject]@{
+            Id = "wall_scraper_trial"
+            Name = "Wall-Scraper Trial"
+            Type = "Proof Bout"
+            SourceCreatureIds = @("kobold_wall_scout", "wall_wolf")
+            RequiredReputation = 0
+            RequiresChampionNight = $false
+            Hook = "A clawed wall-scavenger or scout that learns city patrol routes."
+            Rule = "Dorr only signs it after the hero has beaten a matching creature beyond the wall and reported the trail."
+            RewardPreview = "+ring reputation, bounty coin, Beast-Hand notice"
+            RewardCopper = 180
+            ReputationReward = 8
+            Opponent = [PSCustomObject]@{
+                Name = "The Wall-Scraper"
+                Definite = "The Wall-Scraper"
+                ArmorClass = 13
+                HP = 14
+                AttackBonus = 3
+                DamageDiceSides = 4
+                DamageBonus = 2
+                GrappleBonus = 3
+                GrappleChance = 25
+                FocusChance = 10
+                BlockChance = 10
+                Intro = "A roped, clawed thing snaps at the sand while Dorr's handlers back away fast. The crowd goes quiet in a way city fighters never earn."
+            }
+        },
+        [PSCustomObject]@{
+            Id = "mire_tusk_clinch"
+            Name = "Mire-Tusk Clinch"
+            Type = "Grapple Contract"
+            SourceCreatureIds = @("razor_boar")
+            RequiredReputation = 25
+            RequiresChampionNight = $false
+            Hook = "A low marsh brute with a price on its tusks and a habit of breaking nets."
+            Rule = "Unarmed takedown; weapons spoil the ring story even if they save skin."
+            RewardPreview = "+larger reputation, tusk bounty, grappler crowd title"
+            RewardCopper = 260
+            ReputationReward = 12
+            Opponent = [PSCustomObject]@{
+                Name = "Mire-Tusk"
+                Definite = "Mire-Tusk"
+                ArmorClass = 12
+                HP = 18
+                AttackBonus = 3
+                DamageDiceSides = 6
+                DamageBonus = 2
+                GrappleBonus = 5
+                GrappleChance = 40
+                FocusChance = 5
+                BlockChance = 5
+                Intro = "Mire-Tusk hammers the boards with its hooves, too low and too heavy for any clean prize-fighter stance. This is not a bout. It is weather with teeth."
+            }
+        },
+        [PSCustomObject]@{
+            Id = "lantern_eater_exhibition"
+            Name = "Lantern-Eater Exhibition"
+            Type = "Named Monster"
+            SourceCreatureIds = @("grave_hungry_thing", "scale_touched_mastiff")
+            RequiredReputation = 0
+            RequiresChampionNight = $true
+            Hook = "Something pale or scale-touched that stalks road lanterns and leaves glass bitten clean."
+            Rule = "Dorr needs both a champion name and a reported outer-wall monster trail before he books it."
+            RewardPreview = "+major reputation, monster rumor, possible title beyond Pit Champion"
+            RewardCopper = 400
+            ReputationReward = 18
+            Opponent = [PSCustomObject]@{
+                Name = "The Lantern-Eater"
+                Definite = "The Lantern-Eater"
+                ArmorClass = 14
+                HP = 22
+                AttackBonus = 4
+                DamageDiceSides = 6
+                DamageBonus = 3
+                GrappleBonus = 4
+                GrappleChance = 25
+                FocusChance = 15
+                BlockChance = 15
+                Intro = "The lanterns around the pit burn low when the creature is led in. Even Dorr stops smiling until the ropes are checked twice."
+            }
+        }
+    )
+}
+
+function Test-RingMonsterContractCompleted {
+    param(
+        $Game,
+        $Contract
+    )
+
+    if ($null -eq $Game -or $null -eq $Contract) {
+        return $false
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+    return [bool]$Game.Town.MonsterZone.CompletedRingMonsterContracts[[string]$Contract.Id]
+}
+
+function Test-RingMonsterContractHasReportedCreature {
+    param(
+        $Game,
+        $Contract
+    )
+
+    if ($null -eq $Game -or $null -eq $Contract) {
+        return $false
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+
+    foreach ($creatureId in @($Contract.SourceCreatureIds)) {
+        if ([bool]$Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Get-RingMonsterContractReadiness {
+    param(
+        $Game,
+        $Contract
+    )
+
+    $missing = @()
+
+    if ($null -eq $Game -or $null -eq $Contract) {
+        return [PSCustomObject]@{ CanTake = $false; Missing = @("no game state"); Readiness = "Unavailable" }
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero)) {
+        $missing += "level 4"
+    }
+
+    if (Test-RingMonsterContractCompleted -Game $Game -Contract $Contract) {
+        $missing += "already completed"
+    }
+
+    if (-not (Test-RingMonsterContractHasReportedCreature -Game $Game -Contract $Contract)) {
+        $missing += "reported matching monster"
+    }
+
+    if ([int]$Contract.RequiredReputation -gt (Get-HeroRingReputation -Hero $Game.Hero)) {
+        $missing += "ring reputation $($Contract.RequiredReputation)"
+    }
+
+    if ([bool]$Contract.RequiresChampionNight -and -not (Test-HeroWonRingChampionNight -Hero $Game.Hero)) {
+        $missing += "Pit Champion title"
+    }
+
+    if ($missing.Count -gt 0) {
+        return [PSCustomObject]@{
+            CanTake = $false
+            Missing = $missing
+            Readiness = "Needs: $($missing -join ', ')"
+        }
+    }
+
+    return [PSCustomObject]@{
+        CanTake = $true
+        Missing = @()
+        Readiness = "Ready"
+    }
+}
+
+function Report-MonsterZoneDiscoveriesToDorr {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $newReports = @()
+
+    foreach ($creatureId in @($Game.Town.MonsterZone.DefeatedCreatures.Keys)) {
+        if (-not [bool]$Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]) {
+            $record = $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
+            $Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId] = @{
+                Id = [string]$creatureId
+                Name = [string]$record["Name"]
+                Count = [int]$record["Count"]
+                ReportedDay = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
+            }
+            $newReports += $Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]
+        }
+    }
+
+    return [PSCustomObject]@{
+        NewlyReported = $newReports
+        AvailableContracts = @(Get-AvailableRingMonsterChallengeContracts -Game $Game)
+    }
+}
+
+function Get-AvailableRingMonsterChallengeContracts {
+    param($Game)
+
+    $available = @()
+
+    foreach ($contract in @(Get-RingMonsterChallengeContracts)) {
+        $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $contract
+
+        if ($readiness.CanTake) {
+            $available += $contract
+        }
+    }
+
+    return $available
+}
+
 function Get-RingMonsterChallengePreview {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
     if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Hero)) {
         return @()
@@ -786,47 +1018,39 @@ function Get-RingMonsterChallengePreview {
     $reputation = Get-HeroRingReputation -Hero $Hero
     $wonChampionNight = Test-HeroWonRingChampionNight -Hero $Hero
 
-    $contracts = @(
-        [PSCustomObject]@{
-            Name = "Wall-Scraper Trial"
-            Type = "Proof Bout"
-            Readiness = "Level 4"
-            Hook = "A clawed scavenger that learns city-wall patrol routes."
-            Rule = "Bare hands only; survive the first rush and bring back a marked claw."
-            RewardPreview = "+ring reputation, bounty coin, Beast-Hand notice"
-        },
-        [PSCustomObject]@{
-            Name = "Mire-Tusk Clinch"
-            Type = "Grapple Contract"
-            Readiness = if ($reputation -ge 25) { "Ready when monster zone opens" } else { "Needs stronger ring reputation" }
-            Hook = "A low marsh brute with a price on its tusks and a habit of breaking nets."
-            Rule = "Unarmed takedown; weapons spoil the ring story even if they save skin."
-            RewardPreview = "+larger reputation, tusk bounty, grappler crowd title"
-        },
-        [PSCustomObject]@{
-            Name = "Lantern-Eater Exhibition"
-            Type = "Named Monster"
-            Readiness = if ($wonChampionNight) { "Champion preview" } else { "Champion Night recommended" }
-            Hook = "Something pale that stalks road lanterns and leaves glass bitten clean."
-            Rule = "Contract must be discovered outside the city before Dorr will book it."
-            RewardPreview = "+major reputation, monster rumor, possible title beyond $title"
-        }
-    )
+    $contracts = @(Get-RingMonsterChallengeContracts)
+
+    if ($null -eq $Game) {
+        $contracts[0] | Add-Member -NotePropertyName Readiness -NotePropertyValue "Level 4" -Force
+        $contracts[1] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($reputation -ge 25) { "Ready when monster zone opens" } else { "Needs stronger ring reputation" }) -Force
+        $contracts[2] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($wonChampionNight) { "Champion preview" } else { "Champion Night recommended" }) -Force
+        $contracts[2].RewardPreview = "+major reputation, monster rumor, possible title beyond $title"
+
+        return $contracts
+    }
+
+    foreach ($contract in $contracts) {
+        $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $contract
+        $contract | Add-Member -NotePropertyName Readiness -NotePropertyValue $readiness.Readiness -Force
+    }
 
     return $contracts
 }
 
 function Show-RingMonsterChallengePreview {
-    param($Hero)
+    param(
+        $Hero,
+        $Game = $null
+    )
 
-    $contracts = @(Get-RingMonsterChallengePreview -Hero $Hero)
+    $contracts = @(Get-RingMonsterChallengePreview -Hero $Hero -Game $Game)
 
     if ($contracts.Count -eq 0) {
         return
     }
 
     Write-SectionTitle -Text "Monster Challenge Preview" -Color "DarkYellow"
-    Write-Scene "Dorr has no signed outer contracts yet, but he lays three future cards on the rail so $($Hero.Name) can see the shape of what comes after city bruisers."
+    Write-Scene "Dorr lays the outer contracts on the rail. The names only become real when $($Hero.Name) has beaten the right thing beyond the wall and told Dorr how it fights."
 
     foreach ($contract in $contracts) {
         Write-EmphasisLine -Text "$($contract.Name) - $($contract.Type)" -Color "Yellow"
@@ -836,6 +1060,113 @@ function Show-RingMonsterChallengePreview {
         Write-ColorLine "Reward preview: $($contract.RewardPreview)" "DarkYellow"
         Write-ColorLine ""
     }
+}
+
+function Resolve-RingMonsterChallengeContract {
+    param(
+        $Game,
+        $Contract,
+        [Nullable[bool]]$ForceWin = $null
+    )
+
+    $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $Contract
+
+    if (-not $readiness.CanTake) {
+        Write-Scene "Dorr taps the contract and shakes his head. 'Not this one yet. $($readiness.Readiness).'"
+        return [PSCustomObject]@{
+            Success = $false
+            Won = $false
+            Contract = $Contract
+            Reason = $readiness.Readiness
+        }
+    }
+
+    Write-SectionTitle -Text $Contract.Name -Color "Red"
+    Write-Scene "Dorr signs the contract board in chalk. 'No blades. No grandstanding. You already proved this thing can bleed. Now prove the city can watch you make it yield.'"
+
+    $Game.Hero.RingVisits += 1
+    $Game.Town.Ring.Visits += 1
+    $Game.Town.Ring.FoughtToday = $true
+
+    $wonBout = if ($null -ne $ForceWin) { [bool]$ForceWin } else { Start-BrawlLoop -Hero $Game.Hero -Opponent $Contract.Opponent -Title $Contract.Name -TrackRivalry $false }
+
+    if (-not $wonBout) {
+        Write-Scene "Dorr pulls the contract slate down. 'Story is not dead. It is just uglier now. Heal first.'"
+        return [PSCustomObject]@{
+            Success = $true
+            Won = $false
+            Contract = $Contract
+            ReputationAdded = 0
+            RewardCopper = 0
+        }
+    }
+
+    $Game.Town.MonsterZone.CompletedRingMonsterContracts[[string]$Contract.Id] = $true
+    Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount ([int]$Contract.RewardCopper) | Out-Null
+    $reputation = Add-HeroRingReputation -Hero $Game.Hero -Amount ([int]$Contract.ReputationReward)
+
+    Write-EmphasisLine -Text "$($Game.Hero.Name) wins $($Contract.Name). Dorr pays $(Convert-CopperToCurrencyText -Copper ([int]$Contract.RewardCopper)) and lets the crowd chew on the story." -Color "Yellow"
+    Write-EmphasisLine -Text "Monster challenge reputation: +$($reputation.Added)." -Color "Yellow"
+
+    return [PSCustomObject]@{
+        Success = $true
+        Won = $true
+        Contract = $Contract
+        ReputationAdded = [int]$reputation.Added
+        RewardCopper = [int]$Contract.RewardCopper
+    }
+}
+
+function Start-RingMonsterChallengeMenu {
+    param($Game)
+
+    Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero -Game $Game)
+
+    if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero)) {
+        Write-ColorLine ""
+        return
+    }
+
+    $report = Report-MonsterZoneDiscoveriesToDorr -Game $Game
+
+    if (@($report.NewlyReported).Count -gt 0) {
+        $names = @($report.NewlyReported | ForEach-Object { $_["Name"] }) -join ", "
+        Write-Scene "Dorr listens to the report and marks the board: $names."
+    }
+    elseif (@($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count -gt 0) {
+        Write-Scene "Dorr has already written down every monster trail $($Game.Hero.Name) has brought him so far."
+    }
+
+    Show-RingMonsterChallengePreview -Hero $Game.Hero -Game $Game
+
+    $available = @(Get-AvailableRingMonsterChallengeContracts -Game $Game)
+
+    if ($available.Count -le 0) {
+        Write-Scene "No monster contract is ready to take tonight."
+        Write-ColorLine ""
+        return
+    }
+
+    Write-ColorLine "Ready contracts:" "Yellow"
+    for ($i = 0; $i -lt $available.Count; $i++) {
+        Write-ColorLine "$($i + 1). $($available[$i].Name)" "White"
+    }
+    Write-ColorLine "0. Back to the pit" "DarkGray"
+    $choice = Read-Host "Choose"
+
+    if ($choice -eq "0") {
+        return
+    }
+
+    $selectedIndex = 0
+
+    if ([int]::TryParse($choice, [ref]$selectedIndex) -and $selectedIndex -ge 1 -and $selectedIndex -le $available.Count) {
+        Resolve-RingMonsterChallengeContract -Game $Game -Contract $available[$selectedIndex - 1] | Out-Null
+        return
+    }
+
+    Write-ColorLine "Choose a listed contract." "DarkYellow"
+    Write-ColorLine ""
 }
 
 function Get-HeroRingRivalryRecord {
@@ -1745,9 +2076,12 @@ function Start-FightingRing {
                 Write-ColorLine ""
             }
             "4" {
-                Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero)
-                Show-RingMonsterChallengePreview -Hero $Game.Hero
+                Start-RingMonsterChallengeMenu -Game $Game
                 Write-ColorLine ""
+
+                if ($Game.Town.Ring.FoughtToday) {
+                    return
+                }
             }
             "0" {
                 return

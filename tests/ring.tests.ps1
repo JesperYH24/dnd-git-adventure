@@ -188,6 +188,58 @@ function Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle {
     Assert-True -Condition ($advancedPreview[2].RewardPreview -like "*Pit Champion*") -Message "Named monster rewards should reference the hero's current unarmed title."
 }
 
+function Test-RingMonsterContractsRequireReportedZoneDefeat {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    $availableBeforeReport = @(Get-AvailableRingMonsterChallengeContracts -Game $game)
+    $report = Report-MonsterZoneDiscoveriesToDorr -Game $game
+    $availableAfterReport = @(Get-AvailableRingMonsterChallengeContracts -Game $game)
+
+    Assert-Equal -Actual $availableBeforeReport.Count -Expected 0 -Message "Beating a monster should not unlock Dorr contracts until the hero reports it."
+    Assert-Equal -Actual @($report.NewlyReported).Count -Expected 1 -Message "Reporting to Dorr should record the newly defeated creature."
+    Assert-Equal -Actual $availableAfterReport[0].Id -Expected "wall_scraper_trial" -Message "A reported wall scout should unlock the Wall-Scraper Trial."
+}
+
+function Test-RingMonsterContractsKeepExtraGates {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "razor_boar" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    Report-MonsterZoneDiscoveriesToDorr -Game $game | Out-Null
+
+    $contract = Get-RingMonsterChallengeContracts | Where-Object { $_.Id -eq "mire_tusk_clinch" } | Select-Object -First 1
+    $blocked = Get-RingMonsterContractReadiness -Game $game -Contract $contract
+
+    $game.Hero.RingReputation = 25
+    $ready = Get-RingMonsterContractReadiness -Game $game -Contract $contract
+
+    Assert-Equal -Actual $blocked.CanTake -Expected $false -Message "Mire-Tusk should still require reputation after the matching creature is reported."
+    Assert-True -Condition ($blocked.Readiness -like "*ring reputation 25*") -Message "Blocked readiness should name the reputation gate."
+    Assert-Equal -Actual $ready.CanTake -Expected $true -Message "Mire-Tusk should unlock once the monster report and reputation gate are both satisfied."
+}
+
+function Test-RingMonsterContractWinPaysAndLocksContract {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    Report-MonsterZoneDiscoveriesToDorr -Game $game | Out-Null
+
+    $contract = Get-RingMonsterChallengeContracts | Where-Object { $_.Id -eq "wall_scraper_trial" } | Select-Object -First 1
+    $result = Resolve-RingMonsterChallengeContract -Game $game -Contract $contract -ForceWin $true
+    $repeatReadiness = Get-RingMonsterContractReadiness -Game $game -Contract $contract
+
+    Assert-Equal -Actual $result.Won -Expected $true -Message "Forced test win should resolve the monster contract as won."
+    Assert-Equal -Actual $result.ReputationAdded -Expected 8 -Message "The Wall-Scraper Trial should award monster-challenge ring reputation."
+    Assert-Equal -Actual $game.Town.MonsterZone.CompletedRingMonsterContracts["wall_scraper_trial"] -Expected $true -Message "Completed monster contracts should be locked in monster-zone state."
+    Assert-True -Condition ($repeatReadiness.Readiness -like "*already completed*") -Message "Completed monster contracts should not be immediately repeatable."
+}
+
 function Test-SecondRingTrainingTierUnlocksAtTwentyWins {
     $hero = Get-Hero
     $first = Grant-RingTraining -Hero $hero -Wins 10
@@ -705,6 +757,9 @@ Test-RingVeteranCircuitUnlocksAfterFifteenWins
 Test-RingMonsterChallengesUnlockAtLevelFour
 Test-RingMonsterChallengePreviewRequiresLevelFour
 Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
+Test-RingMonsterContractsRequireReportedZoneDefeat
+Test-RingMonsterContractsKeepExtraGates
+Test-RingMonsterContractWinPaysAndLocksContract
 Test-SecondRingTrainingTierUnlocksAtTwentyWins
 Test-UnarmedProfileIgnoresWeaponAttackBonus
 Test-OpponentCritUsesMaxDiePlusRolledDie

@@ -9,6 +9,9 @@ function Get-MonsterZoneDefaultState {
         DiscoveredLandmarks = @{}
         Camps = @{}
         Oddities = @()
+        DefeatedCreatures = @{}
+        ReportedCreaturesToDorr = @{}
+        CompletedRingMonsterContracts = @{}
         LastTravelText = ""
     }
 }
@@ -31,6 +34,9 @@ function Initialize-MonsterZoneState {
         @{ Key = "DiscoveredLandmarks"; Value = @{} },
         @{ Key = "Camps"; Value = @{} },
         @{ Key = "Oddities"; Value = @() },
+        @{ Key = "DefeatedCreatures"; Value = @{} },
+        @{ Key = "ReportedCreaturesToDorr"; Value = @{} },
+        @{ Key = "CompletedRingMonsterContracts"; Value = @{} },
         @{ Key = "LastTravelText"; Value = "" }
     )) {
         if (-not $Game.Town.MonsterZone.ContainsKey($entry.Key) -or $null -eq $Game.Town.MonsterZone[$entry.Key]) {
@@ -376,6 +382,41 @@ function Get-MonsterZoneOddityCapacity {
     return 1
 }
 
+function Add-MonsterZoneCreatureDefeat {
+    param(
+        $Game,
+        $Creature
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Creature) {
+        return $null
+    }
+
+    $creatureId = if (-not [string]::IsNullOrWhiteSpace([string]$Creature.id)) { [string]$Creature.id } else { [string]$Creature.name }
+
+    if ([string]::IsNullOrWhiteSpace($creatureId)) {
+        return $null
+    }
+
+    if (-not $Game.Town.MonsterZone.DefeatedCreatures.ContainsKey($creatureId) -or $null -eq $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]) {
+        $Game.Town.MonsterZone.DefeatedCreatures[$creatureId] = @{
+            Id = $creatureId
+            Name = [string]$Creature.name
+            Definite = [string]$Creature.definite
+            OddityName = [string]$Creature.oddityName
+            Count = 0
+        }
+    }
+
+    $record = $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
+    $record["Count"] = [int]$record["Count"] + 1
+    $record["LastDefeatedDay"] = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
+
+    return [PSCustomObject]$record
+}
+
 function Add-MonsterZoneOddity {
     param(
         $Game,
@@ -565,6 +606,7 @@ function Start-MonsterZoneEncounter {
         Write-Scene "$($creature.definite) falls, leaving the outer grass suddenly too quiet."
         Grant-HeroXP -Hero $Game.Hero -XP ([int]$creature.xp)
         Write-Scene "$($Game.Hero.Name) gains $($creature.xp) XP."
+        Add-MonsterZoneCreatureDefeat -Game $Game -Creature $creature | Out-Null
         $oddityResult = Add-MonsterZoneOddity -Game $Game -Creature $creature
         Write-Scene $oddityResult.Message
         return "Won"

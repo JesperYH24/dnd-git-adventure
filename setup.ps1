@@ -73,6 +73,9 @@ function New-DefaultTownState {
             DiscoveredLandmarks = @{}
             Camps = @{}
             Oddities = @()
+            DefeatedCreatures = @{}
+            ReportedCreaturesToDorr = @{}
+            CompletedRingMonsterContracts = @{}
             LastTravelText = ""
         }
         Ring = @{

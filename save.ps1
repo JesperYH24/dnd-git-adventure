@@ -323,6 +323,9 @@ function Ensure-LoadedAdventureShape {
             DiscoveredLandmarks = @{}
             Camps = @{}
             Oddities = @()
+            DefeatedCreatures = @{}
+            ReportedCreaturesToDorr = @{}
+            CompletedRingMonsterContracts = @{}
             LastTravelText = ""
         }
     }
@@ -334,6 +337,9 @@ function Ensure-LoadedAdventureShape {
             @{ Key = "DiscoveredLandmarks"; Value = @{} },
             @{ Key = "Camps"; Value = @{} },
             @{ Key = "Oddities"; Value = @() },
+            @{ Key = "DefeatedCreatures"; Value = @{} },
+            @{ Key = "ReportedCreaturesToDorr"; Value = @{} },
+            @{ Key = "CompletedRingMonsterContracts"; Value = @{} },
             @{ Key = "LastTravelText"; Value = "" }
         )) {
             if (-not $Game.Town["MonsterZone"].ContainsKey($entry.Key) -or $null -eq $Game.Town["MonsterZone"][$entry.Key]) {

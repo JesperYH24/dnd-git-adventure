@@ -74,6 +74,18 @@ function Test-PackAnimalControlsMonsterOddityCapacity {
     Assert-Equal -Actual @($gameWithMule.Town.MonsterZone.Oddities).Count -Expected 4 -Message "Mule capacity should allow four monster oddities."
 }
 
+function Test-MonsterZoneTracksDefeatedCreatureProof {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+
+    $first = Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature
+    $second = Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature
+
+    Assert-Equal -Actual $first.Id -Expected "wall_wolf" -Message "Monster-zone defeat tracking should keep the creature id."
+    Assert-Equal -Actual $second.Count -Expected 2 -Message "Repeated defeats should increment the creature proof counter."
+    Assert-Equal -Actual $game.Town.MonsterZone.DefeatedCreatures["wall_wolf"]["OddityName"] -Expected "Smoke-Tainted Pelt" -Message "Defeat proof should keep the linked oddity name for Dorr and buyers."
+}
+
 function Test-CampImprovementLowersNightRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -93,6 +105,7 @@ Test-MonsterZoneTravelFindsPersistentLandmark
 Test-MonsterZoneSoftEdgeBlocksOvertravel
 Test-WildernessAwarenessCanGiveHeroAdvantage
 Test-PackAnimalControlsMonsterOddityCapacity
+Test-MonsterZoneTracksDefeatedCreatureProof
 Test-CampImprovementLowersNightRisk
 
 Write-Host "Monster zone tests passed." -ForegroundColor Green
