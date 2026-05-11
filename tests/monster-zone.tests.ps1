@@ -53,6 +53,19 @@ function Test-WildernessAwarenessCanGiveHeroAdvantage {
     Assert-Equal -Actual $result.CreatureDetects -Expected $false -Message "Creature should not detect the hero in this controlled check."
 }
 
+function Test-BarbarianDangerSenseStartsAtLevelTwo {
+    $hero = Get-Hero -Class "Barbarian"
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    $levelOne = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+    $hero.Level = 2
+    $levelTwo = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+
+    Assert-Equal -Actual $levelOne.DangerSenseBonus -Expected 0 -Message "Danger Sense should not affect awareness at Barbarian level 1."
+    Assert-Equal -Actual $levelTwo.DangerSenseBonus -Expected 2 -Message "Danger Sense should add its monster-zone awareness bonus at Barbarian level 2."
+    Assert-Equal -Actual ($levelTwo.HeroPerceptionTotal - $levelOne.HeroPerceptionTotal) -Expected 2 -Message "Danger Sense should improve the hero's perception total by 2."
+}
+
 function Test-PackAnimalControlsMonsterOddityCapacity {
     $game = Initialize-Game
     $creature = Get-MonsterZoneCreatures | Select-Object -First 1
@@ -104,6 +117,7 @@ Test-MonsterZoneUnlocksFromWallRumors
 Test-MonsterZoneTravelFindsPersistentLandmark
 Test-MonsterZoneSoftEdgeBlocksOvertravel
 Test-WildernessAwarenessCanGiveHeroAdvantage
+Test-BarbarianDangerSenseStartsAtLevelTwo
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
 Test-CampImprovementLowersNightRisk

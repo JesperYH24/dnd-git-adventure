@@ -367,6 +367,7 @@ function Test-BardCuttingWordsCanTurnHitIntoMiss {
     }
 
     $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
     $monster = New-TestMonster
     $heroHP = $hero.HP
     $monsterOffBalance = $false
@@ -628,6 +629,7 @@ function Test-BarbarianRecklessAttackGrantsAdvantageForExposure {
     }
 
     $hero = Get-Hero
+    $hero.Level = 2
     $attackAdvantage = $false
     $recklessExposure = $false
 
@@ -658,6 +660,126 @@ function Test-BarbarianRecklessAdvantageCanTurnMissIntoHit {
     Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -Advantage $true
 
     Assert-Equal -Actual $monsterHP -Expected 12 -Message "Reckless advantage should use the higher d20 roll and hit when the lower roll would miss."
+}
+
+function Test-LevelOneBarbarianCannotUseRecklessAttack {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $attackAdvantage = $false
+    $recklessExposure = $false
+
+    Resolve-HeroRecklessAttackChoice -Hero $hero -HeroAttackAdvantage ([ref]$attackAdvantage) -HeroRecklessExposure ([ref]$recklessExposure)
+
+    Assert-Equal -Actual $attackAdvantage -Expected $false -Message "Reckless Attack should be locked until Barbarian level 2."
+    Assert-Equal -Actual $recklessExposure -Expected $false -Message "A locked Reckless Attack should not expose the barbarian."
+}
+
+function Test-LevelOneBardCannotUseCuttingWords {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 11 }
+        if ($Sides -eq 6) { return 4 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 1) -Message "A level 1 Bard should take the hit because Cutting Words unlocks at level 3."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "Locked Cutting Words should not spend inspiration."
+}
+
+function Test-FighterActionSurgeUnlocksAtLevelTwo {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "A", "4", "1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        return 2
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $hero.Level = 2
+    Restore-HeroSecondWind -Hero $hero | Out-Null
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $hero.CurrentActionSurges -Expected 0 -Message "Action Surge should spend its level 2 resource."
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "Action Surge should give the Fighter a second action in the same turn."
+}
+
+function Test-FighterImprovedCriticalAtLevelThree {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 19 }
+        if ($Sides -eq 6) { return 4 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $hero.Level = 3
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $monsterHP -Expected 8 -Message "Champion Improved Critical should crit on a natural 19 at level 3."
+}
+
+function Test-BarbarianFrenzyUnlocksAtLevelThree {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "F"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 12 }
+        return 6
+    }
+
+    $hero = Get-Hero
+    $hero.Level = 3
+    Start-HeroRage -Hero $hero | Out-Null
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    $usedBonusAction = Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $usedBonusAction -Expected $true -Message "Frenzy should spend the bonus action once rage is active at level 3."
+    Assert-Equal -Actual $hero.FrenzyUsedThisRage -Expected $true -Message "Frenzy should mark the rage's extra attack as used."
+    Assert-Equal -Actual $monsterHP -Expected 10 -Message "Frenzy should make one rage-boosted weapon attack."
 }
 
 function Test-RecklessExposureGivesMonsterAdvantage {
@@ -764,6 +886,11 @@ Test-FighterCanOpenBonusActionMenuAndStillAct
 Test-BarbarianRageReducesIncomingDamage
 Test-BarbarianRecklessAttackGrantsAdvantageForExposure
 Test-BarbarianRecklessAdvantageCanTurnMissIntoHit
+Test-LevelOneBarbarianCannotUseRecklessAttack
+Test-LevelOneBardCannotUseCuttingWords
+Test-FighterActionSurgeUnlocksAtLevelTwo
+Test-FighterImprovedCriticalAtLevelThree
+Test-BarbarianFrenzyUnlocksAtLevelThree
 Test-RecklessExposureGivesMonsterAdvantage
 Test-BarbarianLongRestRestoresRages
 Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop

@@ -77,6 +77,59 @@ function Get-HeroProficiencyBonus {
     return [Math]::Floor((($level - 1) / 4)) + 2
 }
 
+function Test-HeroFeatureUnlocked {
+    param(
+        $Hero,
+        [string]$Feature
+    )
+
+    if ($null -eq $Hero -or [string]::IsNullOrWhiteSpace($Feature)) {
+        return $false
+    }
+
+    $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
+
+    switch ($Hero.Class) {
+        "Barbarian" {
+            switch ($Feature) {
+                "Rage" { return $level -ge 1 }
+                "UnarmoredDefense" { return $level -ge 1 }
+                "RecklessAttack" { return $level -ge 2 }
+                "DangerSense" { return $level -ge 2 }
+                "Frenzy" { return $level -ge 3 }
+                "AbilityScoreIncrease" { return $level -ge 4 }
+                default { return $false }
+            }
+        }
+        "Fighter" {
+            switch ($Feature) {
+                "FightingStyleDefense" { return $level -ge 1 }
+                "SecondWind" { return $level -ge 1 }
+                "ActionSurge" { return $level -ge 2 }
+                "ImprovedCritical" { return $level -ge 3 }
+                "AbilityScoreIncrease" { return $level -ge 4 }
+                default { return $false }
+            }
+        }
+        "Bard" {
+            switch ($Feature) {
+                "BardicInspiration" { return $level -ge 1 }
+                "ViciousMockery" { return $level -ge 1 }
+                "JackOfAllTrades" { return $level -ge 2 }
+                "SongOfRest" { return $level -ge 2 }
+                "CuttingWords" { return $level -ge 3 }
+                "LoreBonusProficiencies" { return $level -ge 3 }
+                "Expertise" { return $level -ge 3 }
+                "AbilityScoreIncrease" { return $level -ge 4 }
+                default { return $false }
+            }
+        }
+        default {
+            return $false
+        }
+    }
+}
+
 function Get-XPThresholdForLevel {
     param([int]$Level)
 
@@ -659,6 +712,9 @@ function Resolve-HeroLongRestLevelUp {
 
     if ($availableLevelUps -gt 0) {
         $HeroHP.Value = $Hero.HP
+        Restore-HeroBardicInspiration -Hero $Hero | Out-Null
+        Restore-HeroRages -Hero $Hero
+        Restore-HeroSecondWind -Hero $Hero | Out-Null
     }
     else {
         $HeroHP.Value = [Math]::Min($HeroHP.Value, $Hero.HP)
@@ -680,6 +736,7 @@ function Resolve-HeroShortRest {
         Clear-HeroBuff -Hero $Hero
         $restoredBardicInspiration = 0
         $restoredSecondWind = 0
+        $songOfRestBonus = 0
 
         if ($Hero.Class -eq "Bard") {
             $beforeDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
@@ -703,12 +760,14 @@ function Resolve-HeroShortRest {
             ClearedBuff = $true
             RestoredBardicInspiration = $restoredBardicInspiration
             RestoredSecondWind = $restoredSecondWind
+            SongOfRestBonus = $songOfRestBonus
         }
     }
 
     $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
     $roll = Roll-Dice -Sides 8
-    $healing = [Math]::Max(1, $roll + $constitutionModifier)
+    $songOfRestBonus = Get-HeroSongOfRestBonus -Hero $Hero
+    $healing = [Math]::Max(1, $roll + $constitutionModifier + $songOfRestBonus)
     $oldHP = $HeroHP.Value
     $HeroHP.Value = [Math]::Min($Hero.HP, $HeroHP.Value + $healing)
     Clear-HeroBuff -Hero $Hero
@@ -737,6 +796,7 @@ function Resolve-HeroShortRest {
         ClearedBuff = $true
         RestoredBardicInspiration = $restoredBardicInspiration
         RestoredSecondWind = $restoredSecondWind
+        SongOfRestBonus = $songOfRestBonus
     }
 }
 
@@ -973,16 +1033,39 @@ function Get-HeroWeaponAbility {
 function Get-HeroCheckProficiencies {
     param($Hero)
 
+    $proficiencies = @()
+
     if ($null -ne $Hero.PSObject.Properties["CheckProficiencies"] -and $null -ne $Hero.CheckProficiencies) {
-        return @($Hero.CheckProficiencies)
+        $proficiencies = @($Hero.CheckProficiencies)
+    }
+    else {
+        switch ($Hero.Class) {
+            "Barbarian" { $proficiencies = @("STR", "CON") }
+            "Bard" { $proficiencies = @("CHA", "Performance") }
+            "Fighter" { $proficiencies = @("CON", "WIS") }
+            default { $proficiencies = @() }
+        }
     }
 
-    switch ($Hero.Class) {
-        "Barbarian" { return @("STR", "CON") }
-        "Bard" { return @("CHA", "Performance") }
-        "Fighter" { return @("CON", "WIS") }
-        default { return @() }
+    if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "LoreBonusProficiencies") {
+        $proficiencies += @("Lore", "Investigation", "Insight")
     }
+
+    return @($proficiencies | Select-Object -Unique)
+}
+
+function Get-HeroExpertiseTags {
+    param($Hero)
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "Expertise")) {
+        return @()
+    }
+
+    if ($Hero.Class -eq "Bard") {
+        return @("Performance", "Perception")
+    }
+
+    return @()
 }
 
 function Get-HeroAbilityCheckModifier {
@@ -998,6 +1081,7 @@ function Get-HeroAbilityCheckModifier {
     $normalizedAbility = $Ability.ToUpper()
     $normalizedTag = if ([string]::IsNullOrWhiteSpace($CheckTag)) { "" } else { $CheckTag.Trim() }
     $isProficient = $false
+    $isExpertise = $false
 
     foreach ($entry in $checkProficiencies) {
         if ([string]::Equals([string]$entry, $normalizedAbility, [System.StringComparison]::OrdinalIgnoreCase) -or
@@ -1007,7 +1091,24 @@ function Get-HeroAbilityCheckModifier {
         }
     }
 
-    $classBonus = if ($isProficient) { $proficiencyBonus } else { 0 }
+    foreach ($entry in (Get-HeroExpertiseTags -Hero $Hero)) {
+        if (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase)) {
+            $isExpertise = $isProficient
+            break
+        }
+    }
+
+    $classBonus = 0
+
+    if ($isExpertise) {
+        $classBonus = $proficiencyBonus * 2
+    }
+    elseif ($isProficient) {
+        $classBonus = $proficiencyBonus
+    }
+    elseif (Test-HeroFeatureUnlocked -Hero $Hero -Feature "JackOfAllTrades") {
+        $classBonus = [Math]::Floor($proficiencyBonus / 2)
+    }
 
     return [PSCustomObject]@{
         AbilityModifier = $modifier
@@ -1015,6 +1116,7 @@ function Get-HeroAbilityCheckModifier {
         TotalModifier = $modifier + $classBonus
         CheckTag = $normalizedTag
         IsProficient = $isProficient
+        IsExpertise = $isExpertise
     }
 }
 
@@ -1031,11 +1133,21 @@ function Get-HeroSpellSaveDC {
 function Get-HeroBardicInspirationMaxDice {
     param($Hero)
 
-    if ($Hero.Class -ne "Bard") {
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "BardicInspiration")) {
         return 0
     }
 
     return 1 + [Math]::Max(0, (Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"))
+}
+
+function Get-HeroSongOfRestBonus {
+    param($Hero)
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "SongOfRest")) {
+        return 0
+    }
+
+    return (Roll-Dice -Sides 6)
 }
 
 function Get-HeroInstrument {
@@ -1153,6 +1265,10 @@ function Initialize-HeroBarbarianResources {
     if ($null -eq $Hero.PSObject.Properties["RecklessAttackExposed"]) {
         $Hero | Add-Member -NotePropertyName RecklessAttackExposed -NotePropertyValue $false
     }
+
+    if ($null -eq $Hero.PSObject.Properties["FrenzyUsedThisRage"]) {
+        $Hero | Add-Member -NotePropertyName FrenzyUsedThisRage -NotePropertyValue $false
+    }
 }
 
 function Get-HeroBarbarianResourceStatus {
@@ -1169,6 +1285,8 @@ function Get-HeroBarbarianResourceStatus {
         MaxRages = [int]$Hero.MaxRages
         RageActive = [bool]$Hero.RageActive
         RecklessAttackExposed = [bool]$Hero.RecklessAttackExposed
+        FrenzyUnlocked = Test-HeroFeatureUnlocked -Hero $Hero -Feature "Frenzy"
+        FrenzyUsedThisRage = [bool]$Hero.FrenzyUsedThisRage
     }
 }
 
@@ -1200,6 +1318,7 @@ function Start-HeroRage {
 
     $Hero.CurrentRages = [Math]::Max(0, [int]$Hero.CurrentRages - 1)
     $Hero.RageActive = $true
+    $Hero.FrenzyUsedThisRage = $false
 
     return [PSCustomObject]@{
         Success = $true
@@ -1217,6 +1336,7 @@ function Stop-HeroRage {
     Initialize-HeroBarbarianResources -Hero $Hero
     $Hero.RageActive = $false
     $Hero.RecklessAttackExposed = $false
+    $Hero.FrenzyUsedThisRage = $false
 }
 
 function Restore-HeroRages {
@@ -1230,6 +1350,36 @@ function Restore-HeroRages {
     $Hero.CurrentRages = [int]$Hero.MaxRages
     $Hero.RageActive = $false
     $Hero.RecklessAttackExposed = $false
+    $Hero.FrenzyUsedThisRage = $false
+}
+
+function Test-HeroCanUseFrenzy {
+    param($Hero)
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "Frenzy")) {
+        return $false
+    }
+
+    Initialize-HeroBarbarianResources -Hero $Hero
+    return ([bool]$Hero.RageActive -and -not [bool]$Hero.FrenzyUsedThisRage)
+}
+
+function Use-HeroFrenzy {
+    param($Hero)
+
+    if (-not (Test-HeroCanUseFrenzy -Hero $Hero)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) needs an active rage and an unused frenzy opening."
+        }
+    }
+
+    $Hero.FrenzyUsedThisRage = $true
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name)'s rage turns sharp and hungry enough for one extra attack."
+    }
 }
 
 function Initialize-HeroFighterResources {
@@ -1249,6 +1399,15 @@ function Initialize-HeroFighterResources {
 
     if ($null -eq $Hero.PSObject.Properties["CurrentSecondWind"]) {
         $Hero | Add-Member -NotePropertyName CurrentSecondWind -NotePropertyValue ([int]$Hero.MaxSecondWind)
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["MaxActionSurges"]) {
+        $Hero | Add-Member -NotePropertyName MaxActionSurges -NotePropertyValue 1
+    }
+
+    if ($null -eq $Hero.PSObject.Properties["CurrentActionSurges"]) {
+        $currentActionSurges = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { [int]$Hero.MaxActionSurges } else { 0 }
+        $Hero | Add-Member -NotePropertyName CurrentActionSurges -NotePropertyValue $currentActionSurges
     }
 }
 
@@ -1283,12 +1442,16 @@ function Get-HeroFighterResourceStatus {
     }
 
     Initialize-HeroFighterResources -Hero $Hero
+    $maxActionSurges = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { [int]$Hero.MaxActionSurges } else { 0 }
 
     return [PSCustomObject]@{
         FightingStyle = [string]$Hero.FightingStyle
         DefenseActive = Test-HeroFightingStyleDefenseActive -Hero $Hero
         CurrentSecondWind = [int]$Hero.CurrentSecondWind
         MaxSecondWind = [int]$Hero.MaxSecondWind
+        CurrentActionSurges = [Math]::Min([int]$Hero.CurrentActionSurges, $maxActionSurges)
+        MaxActionSurges = $maxActionSurges
+        ImprovedCritical = Test-HeroFeatureUnlocked -Hero $Hero -Feature "ImprovedCritical"
     }
 }
 
@@ -1301,11 +1464,53 @@ function Restore-HeroSecondWind {
 
     Initialize-HeroFighterResources -Hero $Hero
     $Hero.CurrentSecondWind = [int]$Hero.MaxSecondWind
+    if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") {
+        $Hero.CurrentActionSurges = [int]$Hero.MaxActionSurges
+    }
+    else {
+        $Hero.CurrentActionSurges = 0
+    }
 
     return [PSCustomObject]@{
         Success = $true
         CurrentSecondWind = [int]$Hero.CurrentSecondWind
         MaxSecondWind = [int]$Hero.MaxSecondWind
+        CurrentActionSurges = [int]$Hero.CurrentActionSurges
+        MaxActionSurges = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { [int]$Hero.MaxActionSurges } else { 0 }
+    }
+}
+
+function Use-HeroActionSurge {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Fighter") {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Only a fighter can use Action Surge."
+        }
+    }
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge")) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Action Surge unlocks for Fighters at level 2."
+        }
+    }
+
+    Initialize-HeroFighterResources -Hero $Hero
+
+    if ([int]$Hero.CurrentActionSurges -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) has no Action Surge left before a rest."
+        }
+    }
+
+    $Hero.CurrentActionSurges = [Math]::Max(0, [int]$Hero.CurrentActionSurges - 1)
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) forces one more clean action out of the heartbeat."
     }
 }
 
@@ -1718,6 +1923,8 @@ function Get-Hero {
                 FightingStyle      = "Defense"
                 MaxSecondWind      = 1
                 CurrentSecondWind  = 1
+                MaxActionSurges    = 1
+                CurrentActionSurges = 0
                 TutorialCampfireHintShown = $false
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0
@@ -1812,6 +2019,7 @@ function Get-Hero {
                 CurrentRages       = 2
                 RageActive         = $false
                 RecklessAttackExposed = $false
+                FrenzyUsedThisRage = $false
                 TutorialCampfireHintShown = $false
                 TutorialCombatHintShown = $false
                 UnarmedTrainingLevel = 0

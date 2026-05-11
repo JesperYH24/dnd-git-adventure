@@ -165,7 +165,8 @@ function Write-HeroStatusDetails {
     if ($null -ne $Snapshot.BarbarianResources) {
         $rageText = if ($Snapshot.BarbarianResources.RageActive) { "Active" } else { "Ready" }
         $recklessText = if ($Snapshot.BarbarianResources.RecklessAttackExposed) { "Exposed" } else { "Guarded" }
-        Write-ColorLine "Rage: $($Snapshot.BarbarianResources.CurrentRages)/$($Snapshot.BarbarianResources.MaxRages) | State: $rageText | Reckless: $recklessText" "DarkYellow"
+        $frenzyText = if ($Snapshot.BarbarianResources.FrenzyUnlocked) { " | Frenzy: $(if ($Snapshot.BarbarianResources.FrenzyUsedThisRage) { "Used" } else { "Ready" })" } else { "" }
+        Write-ColorLine "Rage: $($Snapshot.BarbarianResources.CurrentRages)/$($Snapshot.BarbarianResources.MaxRages) | State: $rageText | Reckless: $recklessText$frenzyText" "DarkYellow"
 
         if ($null -ne $Snapshot.UnarmoredDefense) {
             if ($Snapshot.UnarmoredDefense.Active) {
@@ -179,7 +180,8 @@ function Write-HeroStatusDetails {
 
     if ($null -ne $Snapshot.FighterResources) {
         $defenseText = if ($Snapshot.FighterResources.DefenseActive) { "Active" } else { "Inactive" }
-        Write-ColorLine "Fighting Style: $($Snapshot.FighterResources.FightingStyle) ($defenseText, +1 AC with armor) | Second Wind: $($Snapshot.FighterResources.CurrentSecondWind)/$($Snapshot.FighterResources.MaxSecondWind)" "DarkYellow"
+        $criticalText = if ($Snapshot.FighterResources.ImprovedCritical) { " | Improved Critical: 19-20" } else { "" }
+        Write-ColorLine "Fighting Style: $($Snapshot.FighterResources.FightingStyle) ($defenseText, +1 AC with armor) | Second Wind: $($Snapshot.FighterResources.CurrentSecondWind)/$($Snapshot.FighterResources.MaxSecondWind) | Action Surge: $($Snapshot.FighterResources.CurrentActionSurges)/$($Snapshot.FighterResources.MaxActionSurges)$criticalText" "DarkYellow"
     }
 
     if ($Snapshot.UnarmedTrainingLevel -gt 0) {

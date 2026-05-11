@@ -340,7 +340,8 @@ function Resolve-WildernessAwareness {
     $heroStealth = Get-HeroWildernessSkillModifier -Hero $Hero -Skill "Stealth"
     $creaturePerceptionBonus = if ($null -ne $Creature.perceptionBonus) { [int]$Creature.perceptionBonus } else { 0 }
     $creatureStealthBonus = if ($null -ne $Creature.stealthBonus) { [int]$Creature.stealthBonus } else { 0 }
-    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier
+    $dangerSenseBonus = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "DangerSense") { 2 } else { 0 }
+    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus
     $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier
     $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus
     $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus
@@ -371,6 +372,7 @@ function Resolve-WildernessAwareness {
         HeroStealthRoll = $HeroStealthRoll
         CreaturePerceptionRoll = $CreaturePerceptionRoll
         CreatureStealthRoll = $CreatureStealthRoll
+        DangerSenseBonus = $dangerSenseBonus
     }
 }
 

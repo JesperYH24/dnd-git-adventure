@@ -261,6 +261,16 @@ function Get-HeroRageReducedDamage {
     return [Math]::Max(1, [Math]::Ceiling($Damage / 2))
 }
 
+function Get-HeroCriticalHitThreshold {
+    param($Hero)
+
+    if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ImprovedCritical") {
+        return 19
+    }
+
+    return 20
+}
+
 function Roll-D20Attack {
     param(
         [bool]$Advantage = $false
@@ -340,7 +350,7 @@ function Invoke-HeroAttack {
 
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): $rollText, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
 
-    if ($heroRoll -eq 20) {
+    if ($heroRoll -ge (Get-HeroCriticalHitThreshold -Hero $Hero)) {
         $extraDamageRoll = Roll-WeaponDamage -WeaponProfile $weapon
         $bonusDamageRoll = Roll-WeaponBonusDamage -WeaponProfile $weapon
         $rageDamageBonus = Get-HeroRageDamageBonus -Hero $Hero -Weapon $weapon
@@ -356,7 +366,8 @@ function Invoke-HeroAttack {
             $damageText = "$damageText + $rageDamageBonus rage"
         }
 
-        Write-Action "CRITICAL HIT!" "Red"
+        $criticalLabel = if ($heroRoll -eq 20) { "CRITICAL HIT!" } else { "IMPROVED CRITICAL!" }
+        Write-Action $criticalLabel "Red"
         Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($damageText)" "Yellow"
 
         if ($MonsterHP.Value -le 0 -and $Hero.Class -eq "Barbarian") {
@@ -643,7 +654,7 @@ function Resolve-HeroRecklessAttackChoice {
         [ref]$HeroRecklessExposure
     )
 
-    if ($Hero.Class -ne "Barbarian") {
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "RecklessAttack")) {
         return
     }
 
@@ -692,7 +703,8 @@ function Resolve-HeroBonusAction {
     if ($Hero.Class -eq "Barbarian") {
         Initialize-HeroBarbarianResources -Hero $Hero
         Write-ColorLine "Bonus Action" "Cyan"
-        Write-ColorLine "R. Rage ($($Hero.CurrentRages)/$($Hero.MaxRages) left)   N. No bonus action" "White"
+        $frenzyText = if (Test-HeroCanUseFrenzy -Hero $Hero) { "   F. Frenzy" } else { "" }
+        Write-ColorLine "R. Rage ($($Hero.CurrentRages)/$($Hero.MaxRages) left)$frenzyText   N. No bonus action" "White"
         Write-ColorLine ""
 
         while ($true) {
@@ -716,7 +728,20 @@ function Resolve-HeroBonusAction {
                 return $rage.Success
             }
 
-            Write-ColorLine "Choose R or N." "DarkYellow"
+            if ($choice -eq "F" -and (Test-HeroCanUseFrenzy -Hero $Hero)) {
+                $frenzy = Use-HeroFrenzy -Hero $Hero
+                Write-Scene $frenzy.Message
+
+                if ($frenzy.Success) {
+                    Write-Action "Frenzy: one extra weapon attack as a bonus action during this rage." "Yellow"
+                    Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded $HeroTurnEnded
+                }
+
+                Write-ColorLine ""
+                return $frenzy.Success
+            }
+
+            Write-ColorLine $(if (Test-HeroCanUseFrenzy -Hero $Hero) { "Choose R, F or N." } else { "Choose R or N." }) "DarkYellow"
             Write-ColorLine ""
         }
     }
@@ -815,7 +840,7 @@ function Try-Resolve-BardCuttingWords {
         PreventedHit = $false
     }
 
-    if ($Hero.Class -ne "Bard") {
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "CuttingWords")) {
         return $result
     }
 
@@ -961,7 +986,7 @@ function Show-BardTutorialCombatHint {
         return
     }
 
-    Write-Scene "Prepared bardic inspiration can strengthen Attack, Footwork, or Set Tempo after you choose the action. Each round opens with a combat menu where $($Hero.Name) can choose Action or Bonus Action, and Cutting Words can still interrupt a hit as a reaction."
+    Write-Scene "Prepared bardic inspiration can strengthen Attack, Footwork, or Set Tempo after you choose the action. Each round opens with a combat menu where $($Hero.Name) can choose Action or Bonus Action. Cutting Words unlocks later at Bard level 3."
     Write-ColorLine ""
     $Hero.TutorialCombatHintShown = $true
 }
@@ -982,7 +1007,7 @@ function Show-BarbarianTutorialCombatHint {
     }
 
     Initialize-HeroBarbarianResources -Hero $Hero
-    Write-Scene "Barbarian combat now has two hard choices: Rage uses the Bonus Action menu for more damage and resistance, while Reckless Attack gives $($Hero.Name) advantage on the attack but gives the next enemy attack against $($Hero.GenderPronouns.Objective) advantage too."
+    Write-Scene "Barbarian combat starts with Rage in the Bonus Action menu for more damage and resistance. Reckless Attack unlocks at Barbarian level 2, when $($Hero.Name) can trade safety for advantage."
     Write-ColorLine ""
     $Hero.TutorialCombatHintShown = $true
 }
@@ -996,6 +1021,7 @@ function Show-CombatTurnMenu {
 
     $actionText = "1. Action"
     $bonusText = "2. Bonus Action"
+    $actionSurgeText = ""
 
     if ($ActionSpent) {
         $actionText = "1. Action (used)"
@@ -1005,7 +1031,12 @@ function Show-CombatTurnMenu {
         $bonusText = "2. Bonus Action (used)"
     }
 
-    Write-ColorLine "$actionText   $bonusText   3. End Turn   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") {
+        Initialize-HeroFighterResources -Hero $Hero
+        $actionSurgeText = "   4. Action Surge ($($Hero.CurrentActionSurges)/$($Hero.MaxActionSurges))"
+    }
+
+    Write-ColorLine "$actionText   $bonusText   3. End Turn$actionSurgeText   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
 
@@ -1126,6 +1157,26 @@ function Resolve-HeroCombatTurn {
             return
         }
 
+        if ($turnMenuChoice -eq "4" -and (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge")) {
+            if (-not $actionSpent) {
+                Write-ColorLine ""
+                Write-ColorLine "Action Surge is saved for after the action is spent." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+
+            $actionSurge = Use-HeroActionSurge -Hero $Hero
+            Write-Scene $actionSurge.Message
+
+            if ($actionSurge.Success) {
+                Write-Action "Action Surge: regain one action this turn." "Yellow"
+                $actionSpent = $false
+            }
+
+            Write-ColorLine ""
+            continue
+        }
+
         if ($turnMenuChoice -eq "2") {
             if ($bonusActionSpent) {
                 Write-ColorLine ""
@@ -1154,7 +1205,8 @@ function Resolve-HeroCombatTurn {
 
         if ($turnMenuChoice -ne "1") {
             Write-ColorLine ""
-            Write-ColorLine "Choose 1, 2, 3 or T." "DarkYellow"
+            $promptText = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { "Choose 1, 2, 3, 4 or T." } else { "Choose 1, 2, 3 or T." }
+            Write-ColorLine $promptText "DarkYellow"
             Write-ColorLine ""
             continue
         }

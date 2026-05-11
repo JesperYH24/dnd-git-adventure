@@ -1426,6 +1426,27 @@ function Test-BardPerformanceChecksUsePerformanceProficiency {
     Assert-Equal -Actual $instrument.InspirationBonus -Expected 1 -Message "A bard's starting instrument should still add its own separate performance bonus."
 }
 
+function Test-BardJackOfAllTradesStartsAtLevelTwo {
+    $hero = Get-Hero -Class "Bard"
+
+    $levelOne = Get-HeroAbilityCheckModifier -Hero $hero -Ability "DEX" -CheckTag "Stealth"
+    $hero.Level = 2
+    $levelTwo = Get-HeroAbilityCheckModifier -Hero $hero -Ability "DEX" -CheckTag "Stealth"
+
+    Assert-Equal -Actual $levelOne.ClassBonus -Expected 0 -Message "Jack of All Trades should not apply at Bard level 1."
+    Assert-Equal -Actual $levelTwo.ClassBonus -Expected 1 -Message "Jack of All Trades should add half proficiency at Bard level 2."
+}
+
+function Test-BardExpertiseStartsAtLevelThree {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
+
+    $profile = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA" -CheckTag "Performance"
+
+    Assert-Equal -Actual $profile.IsExpertise -Expected $true -Message "Lore Bard expertise should start at level 3."
+    Assert-Equal -Actual $profile.ClassBonus -Expected 4 -Message "Expertise should double proficiency for the selected Bard skill."
+}
+
 function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
     $game = Initialize-Game
     $quest = Find-TownQuest -Game $game -QuestId "guard_night_courier"
@@ -1579,6 +1600,8 @@ Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
+Test-BardJackOfAllTradesStartsAtLevelTwo
+Test-BardExpertiseStartsAtLevelThree
 
 Write-Host "City quest tests passed." -ForegroundColor Green
 $global:StoryCombatOverride = $null
