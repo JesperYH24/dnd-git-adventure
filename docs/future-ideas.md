@@ -35,6 +35,89 @@
 - expand Fighter's tourney ground into level 4 mounted jousting using the new stable-owned riding horse state, splint-or-plate tourney armor, lances, and heraldic rewards
 - deeper inn events, shady city routes, and economic info payoffs
 
+## Monster zone design direction
+
+The first monster zone should feel like a wilderness layer beyond the city walls, not a dungeon with rooms. It should be explorable, trackable, and dangerous without needing a detailed map.
+
+Core loop:
+
+- leave town through the outer gate with current gear, coin, and any owned pack animal
+- choose a travel activity such as `travel north/east/south/west`, `track signs`, `move carefully`, `search landmark`, `make camp`, or `return toward city`
+- resolve wilderness pressure through discovery, weather, tracks, beast/monster encounters, salvage, and rest decisions
+- return to town with monster oddities, rumors, and signs of the draconic threat
+
+Use a hidden coordinate-style zone rather than a visible dungeon map:
+
+- city gate can be treated as the origin point
+- each direction moves the hero to a persistent abstract position
+- landmarks have fixed positions, so repeatedly traveling west from the same route can find the same landmark again
+- the player should see prose, landmarks, and directional choices rather than coordinates
+- landmarks should track first visit, repeat visit, discoveries, future hooks, and danger level
+
+Possible landmarks:
+
+- `Old Mile Shrine`
+- `Collapsed Watchtower`
+- `Burned Orchard`
+- `Dry Creek Bed`
+- `Hunter's Cairn`
+- `Blackened Scale Hollow`
+- `Abandoned Survey Camp`
+- `Ancient Boundary Stones`
+
+The zone edge should start as a soft edge:
+
+- if the hero travels too far, the text warns that they are leaving the city's patrol radius or entering terrain too dangerous for the current chapter
+- the game can steer the hero back rather than hard-blocking with a bare "cannot go there"
+- later versions can use escalating danger near the edge instead of a simple boundary
+
+Add `Perception` and `Stealth` as pre-initiative wilderness skills:
+
+- `Perception` detects monsters, beasts, tracks, ambushes, hidden landmarks, and strange signs
+- `Stealth` helps the hero move quietly, avoid unwanted encounters, or close in for a surprise attack
+- monsters and beasts should have their own `PerceptionBonus` and `StealthBonus`
+- before combat, compare hero perception against monster stealth and monster perception against hero stealth
+- if the hero detects the creature first, the hero can observe, avoid, track, or attempt a surprise approach
+- if the creature detects the hero first, it can stalk, ambush, flee, or block the route
+- if both sides detect each other, roll normal initiative
+- if neither side gets a clear read, surface tracks, sounds, disturbed ground, or a second approach choice
+
+Class flavor for these skills:
+
+- `Barbarian` should be less subtle, but strong at surviving bad starts and reading danger through instinct, endurance, and physical signs
+- `Bard` can read odd sounds, behavior, and patterns, but should not automatically become the best wilderness scout
+- `Fighter` should benefit from `WIS` and discipline: patrol sense, formations, tracks near roads, and danger to city defenses
+- heavy armor can later create stealth penalties, while cloaks, boots, or careful travel choices can offset them
+
+Camp/rest loop:
+
+- sleeping under open sky should be fast but risky
+- making a basic camp should cost time and lower night encounter risk
+- improving a camp should cost more time or materials and lower risk further
+- returning to an existing camp should be possible if the player reaches the same landmark or tracked position
+- both open-sky sleep and camp sleep can grant a long rest, but camp quality should affect safety, pack animal protection, and night interruption chance
+
+Possible camp levels:
+
+- `0` Open Sky
+- `1` Basic Camp
+- `2` Hidden Camp
+- `3` Fortified Camp
+
+Monster/beast direction:
+
+- early beasts can include wolves, boars, carrion birds, stray war dogs, marsh snakes, and other grounded threats
+- early monsters can include goblin scavengers, grave-hungry things, kobold scouts, blighted wolves, lesser drakes, and scale-touched beasts
+- the draconic threat should start subtle: black scale shards, burn marks, animals behaving wrong, creatures probing the walls, and tracks that imply something is organizing pressure around the city
+
+Pack animal economy:
+
+- the stable yard should matter because monster salvage should not simply be normal inventory loot
+- no pack animal means very limited monster oddity haul
+- `Pack Goat`, `Donkey`, `Mule`, and `Riding Horse` should set different monster haul capacities
+- Auntie Brindle or other Docks buyers can request monster oddities such as intact venom sacs, cracked horns, wyrm-bitten hide, glassy eyes, or black scale shards
+- this lets monster zone rewards matter without making tutorial cave loot valuable in town
+
 ## Fighting ring direction
 
 - expand the new `RingReputation` track so champion bouts and later monster challenges build different amounts of public name value
