@@ -14,7 +14,7 @@
 - inventory with ready-use slots, backpack storage, equipping, consumables, and persistent loot
 - currency system with `CP`, `SP`, `GP` and a gold pouch
 - quest log with accepted, completed, failed, and Chapter Two clue views
-- class story approach tracking for story quests: Barbarian builds hard-proof identity, Bard builds soft-power identity, and Fighter builds civic-trust identity when their class-shaped solutions land
+- class story approach tracking for story quests: Barbarian builds hard-proof identity, Bard builds soft-power identity, and Fighter builds civic-trust identity only when the player chooses a class-specific solution and succeeds
 
 ## Combat
 

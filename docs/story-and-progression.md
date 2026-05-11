@@ -79,7 +79,7 @@ Chapter Two is written as a loose shared investigation:
 
 The hero becomes the bridge between those angles until the city has enough proof to strike below the streets.
 
-Story quests now also remember class-shaped solutions as a small persistent track:
+Story quests now also remember successful class-specific solutions as a small persistent track. This is not awarded just for being the right class or completing a quest; the player needs to pick the class-shaped option and make it land.
 
 - Barbarian successes can add hard-proof marks when Borzig solves trouble through protection, pressure, endurance, or visible force.
 - Bard successes can add soft-power marks when Gariand solves trouble through performance, social reading, contradiction, or controlled rumor.

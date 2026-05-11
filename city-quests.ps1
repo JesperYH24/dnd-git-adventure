@@ -1504,18 +1504,6 @@ function Start-NightWatchReliefQuest {
 
     $Game.Town.StoryFlags["FoundTunnelAccess"] = $true
     $Game.Town.Relationships["NightCaptain"] = "Respectful"
-    if ($Game.Hero.Class -eq "Barbarian") {
-        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "HardProofWatchLine"
-        Write-Scene "The watch remembers how $($Game.Hero.Name) held the street after the runner fell. That kind of proof travels faster than paperwork."
-    }
-    elseif ($Game.Hero.Class -eq "Bard") {
-        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "SoftPowerWitnessRead"
-        Write-Scene "$($Game.Hero.Name) catches which frightened witness nearly spoke before the ambush. Halden notices that the report carries more than blade-work."
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_watch" -ApproachKey "CivicTrustPatrolDiscipline"
-        Write-Scene "Halden notices the clean patrol account: corners held, marks preserved, and panic kept from becoming noise."
-    }
     Complete-StoryQuestAndReport -Game $Game -QuestId "guard_night_watch" -CompletionText "'Good,' Halden says when $($Game.Hero.Name) reports back. 'Now we know this city's rot goes below the streets. If the merchants are seeing the same pattern in their missing stock, this just got bigger.'" -ProgressText "Story Progress: $($Game.Hero.Name) has confirmed a real tunnel route beneath the city."
 }
 
@@ -1600,18 +1588,6 @@ function Start-StorehouseTroubleQuest {
 
     $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
     $Game.Town.Relationships["MerchantPatron"] = "Grateful"
-    if ($Game.Hero.Class -eq "Barbarian") {
-        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "HardProofSecuredScene"
-        Write-Scene "$($Game.Hero.Name) leaves the storehouse impossible to ignore: broken threat handled, goods counted, and the door held until the clerk's men arrive."
-    }
-    elseif ($Game.Hero.Class -eq "Bard") {
-        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "SoftPowerResalePattern"
-        Write-Scene "$($Game.Hero.Name) also hears the social shape of the resale chain: who sounds too polished, who repeats a borrowed lie, and who fears the wrong name."
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Register-ClassStoryApproach -Game $Game -QuestId "patron_storehouse_rats" -ApproachKey "CivicTrustEvidenceSecured"
-        Write-Scene "$($Game.Hero.Name) secures the storehouse like a formal scene: marks preserved, exits checked, and evidence ready for people with seals."
-    }
     Complete-StoryQuestAndReport -Game $Game -QuestId "patron_storehouse_rats" -CompletionText "The clerk goes pale when $($Game.Hero.Name) returns the rerouting list. 'So that is where the missing stock went,' he mutters. 'If the watch is right about movement under the streets, then we're looking at the same beast from two sides.'" -ProgressText "Story Progress: $($Game.Hero.Name) has linked the city's thefts to a real smuggling operation."
 }
 

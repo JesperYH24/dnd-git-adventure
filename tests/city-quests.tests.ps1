@@ -1472,7 +1472,7 @@ function Test-ClassStoryApproachOnlyCountsAQuestOnce {
     Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"]["guard_night_watch"] -Expected "CivicTrustPatrolDiscipline" -Message "The per-quest class story mark should be saved."
 }
 
-function Test-FighterNightWatchBuildsCivicTrust {
+function Test-FighterNightWatchDoesNotBuildCivicTrustWithoutClassChoice {
     $game = Initialize-Game -Class "Fighter"
     $heroHP = $game.Hero.HP
 
@@ -1481,8 +1481,8 @@ function Test-FighterNightWatchBuildsCivicTrust {
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "guard_night_watch"
 
-    Assert-Equal -Actual $game.Town.ClassStoryApproach["FighterCivicTrust"] -Expected 1 -Message "A Fighter who solves Night Watch Relief should build civic-trust story identity."
-    Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"]["guard_night_watch"] -Expected "CivicTrustPatrolDiscipline" -Message "Night Watch should remember the Fighter's patrol-discipline approach."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["FighterCivicTrust"] -Expected 0 -Message "A Fighter should not gain civic-trust story identity just for completing combat without choosing a class-specific route."
+    Assert-Equal -Actual $game.Town.ClassStoryApproach["QuestMarks"].ContainsKey("guard_night_watch") -Expected $false -Message "Night Watch should not receive a class story mark without a class-specific player choice."
 }
 
 function Test-BardLedgerRouteBuildsSoftPower {
@@ -1572,7 +1572,7 @@ Test-QuestOutcomeTextStaysBlankForDayJobs
 Test-FighterHasClassSpecificCityQuestOptions
 Test-ClassStoryApproachStateStartsEmpty
 Test-ClassStoryApproachOnlyCountsAQuestOnce
-Test-FighterNightWatchBuildsCivicTrust
+Test-FighterNightWatchDoesNotBuildCivicTrustWithoutClassChoice
 Test-BardLedgerRouteBuildsSoftPower
 Test-BardicInspirationCanBoostQuestChecks
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
