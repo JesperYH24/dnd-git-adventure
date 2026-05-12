@@ -1120,6 +1120,29 @@ function Get-HeroAbilityCheckModifier {
         CheckTag = $normalizedTag
         IsProficient = $isProficient
         IsExpertise = $isExpertise
+        BonusSource = if ($isExpertise) { "Expertise" } elseif ($isProficient) { "Proficiency" } elseif ($classBonus -gt 0) { "JackOfAllTrades" } else { "" }
+    }
+}
+
+function Format-HeroAbilityCheckBonusText {
+    param($CheckProfile)
+
+    if ($null -eq $CheckProfile -or [int]$CheckProfile.ClassBonus -le 0) {
+        return ""
+    }
+
+    $source = if ($null -ne $CheckProfile.PSObject.Properties["BonusSource"]) { [string]$CheckProfile.BonusSource } else { "" }
+
+    switch ($source) {
+        "Expertise" { return " + $($CheckProfile.ClassBonus) Expertise" }
+        "JackOfAllTrades" { return " + $($CheckProfile.ClassBonus) Jack of All Trades" }
+        default {
+            if ($null -ne $CheckProfile.PSObject.Properties["IsExpertise"] -and [bool]$CheckProfile.IsExpertise) {
+                return " + $($CheckProfile.ClassBonus) Expertise"
+            }
+
+            return " + $($CheckProfile.ClassBonus) proficiency"
+        }
     }
 }
 

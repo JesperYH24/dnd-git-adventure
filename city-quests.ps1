@@ -731,11 +731,7 @@ function Start-NonCombatQuestCheck {
     $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Ability -CheckTag $CheckTag
     $roll = Roll-Dice -Sides 20
     $bardicBonus = 0
-    $bonusText = ""
-
-    if ($checkProfile.ClassBonus -gt 0) {
-        $bonusText = " + $($checkProfile.ClassBonus) proficiency"
-    }
+    $bonusText = Format-HeroAbilityCheckBonusText -CheckProfile $checkProfile
 
     if ($Hero.Class -eq "Bard") {
         $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero

@@ -1435,6 +1435,8 @@ function Test-BardJackOfAllTradesStartsAtLevelTwo {
 
     Assert-Equal -Actual $levelOne.ClassBonus -Expected 0 -Message "Jack of All Trades should not apply at Bard level 1."
     Assert-Equal -Actual $levelTwo.ClassBonus -Expected 1 -Message "Jack of All Trades should add half proficiency at Bard level 2."
+    Assert-Equal -Actual $levelTwo.BonusSource -Expected "JackOfAllTrades" -Message "Jack of All Trades checks should identify their bonus source."
+    Assert-Equal -Actual (Format-HeroAbilityCheckBonusText -CheckProfile $levelTwo) -Expected " + 1 Jack of All Trades" -Message "Check result text should name Jack of All Trades."
 }
 
 function Test-BardExpertiseStartsAtLevelThree {
@@ -1445,6 +1447,8 @@ function Test-BardExpertiseStartsAtLevelThree {
 
     Assert-Equal -Actual $profile.IsExpertise -Expected $true -Message "Lore Bard expertise should start at level 3."
     Assert-Equal -Actual $profile.ClassBonus -Expected 4 -Message "Expertise should double proficiency for the selected Bard skill."
+    Assert-Equal -Actual $profile.BonusSource -Expected "Expertise" -Message "Expertise checks should identify their bonus source."
+    Assert-Equal -Actual (Format-HeroAbilityCheckBonusText -CheckProfile $profile) -Expected " + 4 Expertise" -Message "Check result text should name Expertise."
 }
 
 function Test-QuestOutcomeTextReturnsWeakForWeakStoryQuest {
