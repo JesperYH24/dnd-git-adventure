@@ -473,6 +473,57 @@ function Test-BardBonusActionCanResolveBeforeMainAction {
     Assert-Equal -Actual $encounterFled -Expected $true -Message "The bard should still be able to take a normal action after the bonus action menu."
 }
 
+function Test-BardCanCastDissonantWhispersFromActionMenu {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "C", "D")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    $script:rolls = @(5, 4, 3, 2)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+    $heroBlockArmorBonus = 0
+    $heroFocusAttackBonus = 0
+    $heroRecklessExposure = $false
+
+    Resolve-HeroCombatTurn `
+        -Hero $hero `
+        -Monster $monster `
+        -HeroHP ([ref]$heroHP) `
+        -MonsterHP ([ref]$monsterHP) `
+        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+        -MonsterOffBalance ([ref]$monsterOffBalance) `
+        -EncounterFled ([ref]$encounterFled) `
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) `
+        -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) `
+        -HeroRecklessExposure ([ref]$heroRecklessExposure)
+
+    Assert-Equal -Actual $monsterHP -Expected 11 -Message "Casting Dissonant Whispers from the action menu should damage the monster."
+    Assert-Equal -Actual $monsterOffBalance -Expected $true -Message "Dissonant Whispers from the action menu should disrupt the monster on a failed save."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Casting Dissonant Whispers from the action menu should spend a level 1 slot."
+}
+
 function Test-BardBonusActionCanResolveAfterMainAction {
     Set-TestOutputStubs
 
@@ -938,6 +989,7 @@ Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack
 Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
+Test-BardCanCastDissonantWhispersFromActionMenu
 Test-BardBonusActionCanResolveAfterMainAction
 Test-HeroCanPassActionAndBonusAction
 Test-BarbarianCanOpenBonusActionMenuAndStillAct

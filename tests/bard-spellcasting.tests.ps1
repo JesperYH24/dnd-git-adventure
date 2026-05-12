@@ -23,6 +23,21 @@ function Assert-True {
     }
 }
 
+function New-TestSpellMonster {
+    return [PSCustomObject]@{
+        name = "training dummy"
+        definite = "The Training Dummy"
+        hp = 20
+        armorClass = 16
+        attackBonus = 2
+        damageDiceCount = 1
+        damageDiceSides = 4
+        damageBonus = 0
+        wisdomSaveBonus = 0
+        isBoss = $false
+    }
+}
+
 function Test-BardStartsWithSpellcastingState {
     $hero = Get-Hero -Class "Bard"
 
@@ -145,6 +160,80 @@ function Test-BardHealingWordFailsWithoutSlots {
     Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 0 -Message "Failed Healing Word should not change slot count."
 }
 
+function Test-BardDissonantWhispersFailsSaveDealsFullDamageAndDisrupts {
+    try {
+        $script:rolls = @(5, 4, 3, 2)
+        $script:rollIndex = 0
+        $global:RollDiceOverride = {
+            param([int]$Sides = 20)
+            $roll = $script:rolls[$script:rollIndex]
+            $script:rollIndex += 1
+            return $roll
+        }
+
+        $hero = Get-Hero -Class "Bard"
+        $monster = New-TestSpellMonster
+        $monsterHP = $monster.hp
+        $monsterOffBalance = $false
+
+        $result = Invoke-BardDissonantWhispers -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+        Assert-Equal -Actual $result.Success -Expected $true -Message "Dissonant Whispers should cast successfully when the bard has a level 1 slot."
+        Assert-Equal -Actual $result.SaveSucceeded -Expected $false -Message "A low Wisdom save should fail against the bard's spell save DC."
+        Assert-Equal -Actual $result.Damage -Expected 9 -Message "A failed Dissonant Whispers save should take full 3d6 psychic damage."
+        Assert-Equal -Actual $monsterHP -Expected 11 -Message "Dissonant Whispers should damage the target."
+        Assert-Equal -Actual $monsterOffBalance -Expected $true -Message "A failed Dissonant Whispers save should throw the target off balance."
+        Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Dissonant Whispers should spend one level 1 spell slot."
+    }
+    finally {
+        $global:RollDiceOverride = $null
+    }
+}
+
+function Test-BardDissonantWhispersSuccessfulSaveDealsHalfDamageOnly {
+    try {
+        $script:rolls = @(18, 5, 4, 3)
+        $script:rollIndex = 0
+        $global:RollDiceOverride = {
+            param([int]$Sides = 20)
+            $roll = $script:rolls[$script:rollIndex]
+            $script:rollIndex += 1
+            return $roll
+        }
+
+        $hero = Get-Hero -Class "Bard"
+        $monster = New-TestSpellMonster
+        $monsterHP = $monster.hp
+        $monsterOffBalance = $false
+
+        $result = Invoke-BardDissonantWhispers -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+        Assert-Equal -Actual $result.Success -Expected $true -Message "Dissonant Whispers should still resolve on a successful save."
+        Assert-Equal -Actual $result.SaveSucceeded -Expected $true -Message "A high Wisdom save should succeed."
+        Assert-Equal -Actual $result.Damage -Expected 6 -Message "A successful Dissonant Whispers save should take half psychic damage."
+        Assert-Equal -Actual $monsterHP -Expected 14 -Message "Successful save damage should still be applied."
+        Assert-Equal -Actual $monsterOffBalance -Expected $false -Message "A successful Dissonant Whispers save should not throw the target off balance."
+        Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Dissonant Whispers should spend one level 1 spell slot even on a successful save."
+    }
+    finally {
+        $global:RollDiceOverride = $null
+    }
+}
+
+function Test-BardDissonantWhispersFailsWithoutSlots {
+    $hero = Get-Hero -Class "Bard"
+    $hero.CurrentSpellSlots.Level1 = 0
+    $monster = New-TestSpellMonster
+    $monsterHP = $monster.hp
+    $monsterOffBalance = $false
+
+    $result = Invoke-BardDissonantWhispers -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -MonsterOffBalance ([ref]$monsterOffBalance)
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Dissonant Whispers should fail when no level 1 slots remain."
+    Assert-Equal -Actual $monsterHP -Expected $monster.hp -Message "Failed Dissonant Whispers should not damage the target."
+    Assert-Equal -Actual $monsterOffBalance -Expected $false -Message "Failed Dissonant Whispers should not disrupt the target."
+}
+
 function Test-NonBardDoesNotGetSpellcastingStatus {
     $hero = Get-Hero -Class "Fighter"
 
@@ -159,6 +248,9 @@ Test-BardSpellcastingStatusReportsSlots
 Test-BardLongRestRestoresSpellSlotsWithoutLevelUp
 Test-BardHealingWordSpendsSlotAndHeals
 Test-BardHealingWordFailsWithoutSlots
+Test-BardDissonantWhispersFailsSaveDealsFullDamageAndDisrupts
+Test-BardDissonantWhispersSuccessfulSaveDealsHalfDamageOnly
+Test-BardDissonantWhispersFailsWithoutSlots
 Test-NonBardDoesNotGetSpellcastingStatus
 
 Write-Host "Bard spellcasting tests passed." -ForegroundColor Green

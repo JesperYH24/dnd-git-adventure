@@ -182,6 +182,54 @@ function Get-BardHealingWordFlavorText {
     return (Resolve-CombatFlavorText -Text $line -Hero $Hero)
 }
 
+function Get-BardDissonantWhispersFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} drops {his} voice into a note too private and too wrong for {target}'s bones to ignore.",
+        "{Hero} speaks three soft words, and each one arrives behind {target}'s thoughts before the sound reaches the room.",
+        "{Hero} shapes a whisper that does not echo; it crawls straight into {target}'s fear and starts playing there.",
+        "A thin, impossible harmony leaves {hero}'s mouth and finds the part of {target} that still knows how to panic."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardDissonantWhispersHitFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target} recoils from a sound no one else can fully hear.",
+        "The whisper bites deep, and {target}'s attack rhythm breaks apart.",
+        "{target}'s focus tears loose for one ugly heartbeat.",
+        "The note hooks under {target}'s instincts and drags them the wrong way."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardDissonantWhispersSaveFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target} shudders through the whisper but keeps enough control to stay dangerous.",
+        "The dissonance hurts, but {target} clamps down before panic can take the body.",
+        "{target} hears the wrongness and refuses to follow it all the way.",
+        "The whisper scores a mark, but {target}'s will holds its footing."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
 function Get-BardCuttingWordsFlavorText {
     param(
         $Hero,
@@ -961,12 +1009,84 @@ function Invoke-BardHealingWord {
     }
 }
 
+function Invoke-BardDissonantWhispers {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$MonsterHP,
+        [ref]$MonsterOffBalance
+    )
+
+    $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Dissonant Whispers"
+
+    if (-not $castCheck.CanCast) {
+        return [PSCustomObject]@{
+            Success = $false
+            Damage = 0
+            Message = $castCheck.Message
+        }
+    }
+
+    if ($null -eq $MonsterHP -or $MonsterHP.Value -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Damage = 0
+            Message = "There is no living target for Dissonant Whispers."
+        }
+    }
+
+    $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$castCheck.Spell.SpellLevel)
+
+    if (-not $slotUse.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            Damage = 0
+            Message = $slotUse.Message
+        }
+    }
+
+    $spellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
+    $wisdomSaveBonus = 0
+
+    if ($null -ne $Monster.PSObject.Properties["wisdomSaveBonus"]) {
+        $wisdomSaveBonus = [int]$Monster.wisdomSaveBonus
+    }
+
+    $saveRoll = Roll-Dice -Sides 20
+    $saveTotal = $saveRoll + $wisdomSaveBonus
+    $damageRolls = @((Roll-Dice -Sides 6), (Roll-Dice -Sides 6), (Roll-Dice -Sides 6))
+    $fullDamage = [int]($damageRolls | Measure-Object -Sum).Sum
+    $saveSucceeded = $saveTotal -ge $spellSaveDC
+    $damage = if ($saveSucceeded) { [Math]::Max(1, [Math]::Floor($fullDamage / 2)) } else { $fullDamage }
+    $MonsterHP.Value = [Math]::Max(0, [int]$MonsterHP.Value - $damage)
+
+    if (-not $saveSucceeded -and $null -ne $MonsterOffBalance) {
+        $MonsterOffBalance.Value = $true
+    }
+
+    return [PSCustomObject]@{
+        Success = $true
+        Damage = $damage
+        FullDamage = $fullDamage
+        DamageRolls = $damageRolls
+        SaveRoll = $saveRoll
+        SaveTotal = $saveTotal
+        SpellSaveDC = $spellSaveDC
+        SaveSucceeded = $saveSucceeded
+        OffBalance = (-not $saveSucceeded)
+        SpellLevel = [int]$castCheck.Spell.SpellLevel
+        SlotsRemaining = $slotUse.SlotsRemaining
+        Message = "$($Hero.Name)'s dissonant whisper deals $damage psychic damage."
+    }
+}
+
 function Resolve-HeroCastSpellAction {
     param(
         $Hero,
         $Monster,
         [ref]$HeroHP,
-        [ref]$MonsterHP
+        [ref]$MonsterHP,
+        [ref]$MonsterOffBalance
     )
 
     if ($Hero.Class -ne "Bard") {
@@ -978,6 +1098,7 @@ function Resolve-HeroCastSpellAction {
     $spellcasting = Get-HeroSpellcastingStatus -Hero $Hero
     Write-ColorLine "Cast Spell" "Cyan"
     Write-ColorLine "H. Healing Word (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
+    Write-ColorLine "D. Dissonant Whispers (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
     Write-ColorLine "0. Back" "DarkGray"
     Write-ColorLine ""
 
@@ -1001,7 +1122,28 @@ function Resolve-HeroCastSpellAction {
             return $healing.Success
         }
 
-        Write-ColorLine "Choose H or 0." "DarkYellow"
+        if ($choice -eq "D") {
+            $dissonance = Invoke-BardDissonantWhispers -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance
+            Write-Scene $(if ($dissonance.Success) { Get-BardDissonantWhispersFlavorText -Hero $Hero -Monster $Monster } else { $dissonance.Message })
+
+            if ($dissonance.Success) {
+                Write-Action "$($Monster.definite) makes a Wisdom save: d20 roll $($dissonance.SaveRoll) = $($dissonance.SaveTotal) vs DC $($dissonance.SpellSaveDC)." "DarkCyan"
+
+                if ($dissonance.SaveSucceeded) {
+                    Write-Scene (Get-BardDissonantWhispersSaveFlavorText -Hero $Hero -Monster $Monster)
+                    Write-Action "Dissonant Whispers deals $($dissonance.Damage) psychic damage on a successful save. Level 1 slots left: $($dissonance.SlotsRemaining)." "Yellow"
+                }
+                else {
+                    Write-Scene (Get-BardDissonantWhispersHitFlavorText -Hero $Hero -Monster $Monster)
+                    Write-Action "Dissonant Whispers deals $($dissonance.Damage) psychic damage and throws $($Monster.definite) off balance. Level 1 slots left: $($dissonance.SlotsRemaining)." "Yellow"
+                }
+            }
+
+            Write-ColorLine ""
+            return $dissonance.Success
+        }
+
+        Write-ColorLine "Choose H, D or 0." "DarkYellow"
         Write-ColorLine ""
     }
 }
@@ -1440,7 +1582,7 @@ function Resolve-HeroCombatTurn {
         }
 
         if ($choice -eq "C") {
-            $castSpell = Resolve-HeroCastSpellAction -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP
+            $castSpell = Resolve-HeroCastSpellAction -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance
 
             if ($castSpell) {
                 $actionSpent = $true
