@@ -524,6 +524,76 @@ function Test-BardCanCastDissonantWhispersFromActionMenu {
     Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Casting Dissonant Whispers from the action menu should spend a level 1 slot."
 }
 
+function Test-BardCanCastFaerieFireFromActionMenu {
+    Set-TestOutputStubs
+
+    $script:responses = @("1", "C", "F")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+        return 5
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+    $heroBlockArmorBonus = 0
+    $heroFocusAttackBonus = 0
+    $heroRecklessExposure = $false
+
+    Resolve-HeroCombatTurn `
+        -Hero $hero `
+        -Monster $monster `
+        -HeroHP ([ref]$heroHP) `
+        -MonsterHP ([ref]$monsterHP) `
+        -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+        -MonsterOffBalance ([ref]$monsterOffBalance) `
+        -EncounterFled ([ref]$encounterFled) `
+        -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) `
+        -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) `
+        -HeroRecklessExposure ([ref]$heroRecklessExposure)
+
+    Assert-Equal -Actual $monster.FaerieFireAttackAdvantage -Expected $true -Message "Casting Faerie Fire from the action menu should mark the monster on a failed save."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Casting Faerie Fire from the action menu should spend a level 1 slot."
+}
+
+function Test-FaerieFireAdvantageAppliesToNextHeroAttack {
+    Set-TestOutputStubs
+
+    $script:rolls = @(2, 12, 6)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    Set-BardFaerieFireAdvantage -Monster $monster
+    $monsterHP = $monster.hp
+    $heroHP = $hero.HP
+
+    Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $monsterHP -Expected 12 -Message "Faerie Fire should let the bard use the higher d20 roll and hit."
+    Assert-Equal -Actual $monster.FaerieFireAttackAdvantage -Expected $false -Message "Faerie Fire advantage should be consumed after the next hero attack."
+}
+
 function Test-BardBonusActionCanResolveAfterMainAction {
     Set-TestOutputStubs
 
@@ -990,6 +1060,8 @@ Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
 Test-BardCanCastDissonantWhispersFromActionMenu
+Test-BardCanCastFaerieFireFromActionMenu
+Test-FaerieFireAdvantageAppliesToNextHeroAttack
 Test-BardBonusActionCanResolveAfterMainAction
 Test-HeroCanPassActionAndBonusAction
 Test-BarbarianCanOpenBonusActionMenuAndStillAct

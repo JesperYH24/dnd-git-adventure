@@ -234,6 +234,61 @@ function Test-BardDissonantWhispersFailsWithoutSlots {
     Assert-Equal -Actual $monsterOffBalance -Expected $false -Message "Failed Dissonant Whispers should not disrupt the target."
 }
 
+function Test-BardFaerieFireMarksTargetOnFailedSave {
+    try {
+        $global:RollDiceOverride = {
+            param([int]$Sides = 20)
+            return 5
+        }
+
+        $hero = Get-Hero -Class "Bard"
+        $monster = New-TestSpellMonster
+
+        $result = Invoke-BardFaerieFire -Hero $hero -Monster $monster
+
+        Assert-Equal -Actual $result.Success -Expected $true -Message "Faerie Fire should cast successfully when the bard has a level 1 slot."
+        Assert-Equal -Actual $result.Marked -Expected $true -Message "A failed Dexterity save should mark the target."
+        Assert-Equal -Actual $monster.FaerieFireAttackAdvantage -Expected $true -Message "A marked target should grant advantage on the next hero attack."
+        Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Faerie Fire should spend one level 1 spell slot."
+    }
+    finally {
+        $global:RollDiceOverride = $null
+    }
+}
+
+function Test-BardFaerieFireSuccessfulSaveDoesNotMarkTarget {
+    try {
+        $global:RollDiceOverride = {
+            param([int]$Sides = 20)
+            return 18
+        }
+
+        $hero = Get-Hero -Class "Bard"
+        $monster = New-TestSpellMonster
+
+        $result = Invoke-BardFaerieFire -Hero $hero -Monster $monster
+
+        Assert-Equal -Actual $result.Success -Expected $true -Message "Faerie Fire should still resolve on a successful save."
+        Assert-Equal -Actual $result.Marked -Expected $false -Message "A successful Dexterity save should avoid the mark."
+        Assert-True -Condition ($null -eq $monster.PSObject.Properties["FaerieFireAttackAdvantage"] -or -not [bool]$monster.FaerieFireAttackAdvantage) -Message "A successful Faerie Fire save should not grant attack advantage."
+        Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Faerie Fire should spend one level 1 spell slot even on a successful save."
+    }
+    finally {
+        $global:RollDiceOverride = $null
+    }
+}
+
+function Test-BardFaerieFireFailsWithoutSlots {
+    $hero = Get-Hero -Class "Bard"
+    $hero.CurrentSpellSlots.Level1 = 0
+    $monster = New-TestSpellMonster
+
+    $result = Invoke-BardFaerieFire -Hero $hero -Monster $monster
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Faerie Fire should fail when no level 1 slots remain."
+    Assert-True -Condition ($null -eq $monster.PSObject.Properties["FaerieFireAttackAdvantage"] -or -not [bool]$monster.FaerieFireAttackAdvantage) -Message "Failed Faerie Fire should not mark the target."
+}
+
 function Test-NonBardDoesNotGetSpellcastingStatus {
     $hero = Get-Hero -Class "Fighter"
 
@@ -251,6 +306,9 @@ Test-BardHealingWordFailsWithoutSlots
 Test-BardDissonantWhispersFailsSaveDealsFullDamageAndDisrupts
 Test-BardDissonantWhispersSuccessfulSaveDealsHalfDamageOnly
 Test-BardDissonantWhispersFailsWithoutSlots
+Test-BardFaerieFireMarksTargetOnFailedSave
+Test-BardFaerieFireSuccessfulSaveDoesNotMarkTarget
+Test-BardFaerieFireFailsWithoutSlots
 Test-NonBardDoesNotGetSpellcastingStatus
 
 Write-Host "Bard spellcasting tests passed." -ForegroundColor Green

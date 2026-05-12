@@ -169,6 +169,34 @@ function Consume-BardViciousMockeryDisadvantage {
     return $disadvantage
 }
 
+function Set-BardFaerieFireAdvantage {
+    param($Monster)
+
+    if ($null -eq $Monster) {
+        return
+    }
+
+    if ($null -eq $Monster.PSObject.Properties["FaerieFireAttackAdvantage"]) {
+        $Monster | Add-Member -NotePropertyName FaerieFireAttackAdvantage -NotePropertyValue $true
+    }
+    else {
+        $Monster.FaerieFireAttackAdvantage = $true
+    }
+}
+
+function Consume-BardFaerieFireAdvantage {
+    param($Monster)
+
+    if ($null -eq $Monster -or $null -eq $Monster.PSObject.Properties["FaerieFireAttackAdvantage"]) {
+        return $false
+    }
+
+    $advantage = [bool]$Monster.FaerieFireAttackAdvantage
+    $Monster.FaerieFireAttackAdvantage = $false
+
+    return $advantage
+}
+
 function Get-BardHealingWordFlavorText {
     param($Hero)
 
@@ -225,6 +253,54 @@ function Get-BardDissonantWhispersSaveFlavorText {
         "The dissonance hurts, but {target} clamps down before panic can take the body.",
         "{target} hears the wrongness and refuses to follow it all the way.",
         "The whisper scores a mark, but {target}'s will holds its footing."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardFaerieFireFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} flicks a quick phrase into the air, and cold bright motes hunt for {target}'s outline.",
+        "{Hero} draws a little circle with two fingers, setting pale fire loose around {target}'s shape.",
+        "{Hero}'s voice turns crisp and luminous, and a shimmer of false starlight reaches for {target}.",
+        "A sharp little melody leaves {hero}'s mouth, and violet sparks begin choosing where {target} ends."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardFaerieFireHitFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target} shines at the edges, every opening suddenly easier to read.",
+        "The motes cling, sketching {target}'s movement in bright, traitorous lines.",
+        "{target}'s guard is still there, but now it has a glowing outline and worse luck.",
+        "The light catches on {target}, turning concealment and feints into bad theatre."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
+function Get-BardFaerieFireSaveFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{target} twists clear before the motes can settle.",
+        "The light reaches for {target}, but the moment slips out from under it.",
+        "{target} shakes the shimmer loose before it can reveal anything useful.",
+        "The sparks scatter around {target} and find nothing solid enough to keep."
     )
 
     return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
@@ -449,7 +525,9 @@ function Invoke-HeroAttack {
 
     $weapon = Get-HeroWeaponProfile -Hero $Hero
     $targetArmorClass = [int]$Monster.armorClass
-    $rollResult = Roll-D20Attack -Advantage $Advantage
+    $faerieFireAdvantage = Consume-BardFaerieFireAdvantage -Monster $Monster
+    $totalAdvantage = ($Advantage -or $faerieFireAdvantage)
+    $rollResult = Roll-D20Attack -Advantage $totalAdvantage
     $heroRoll = $rollResult.Roll
     $attackTotal = $heroRoll + $weapon.TotalAttackBonus + $AttackBonusModifier
     $rollText = Format-D20AttackRollText -RollResult $rollResult
@@ -462,6 +540,10 @@ function Invoke-HeroAttack {
 
     if ($Advantage -and $Hero.Class -eq "Barbarian") {
         Write-Scene (Get-BarbarianRecklessSwingFlavorText -Hero $Hero -Monster $Monster)
+    }
+
+    if ($faerieFireAdvantage) {
+        Write-Action "Faerie Fire: the marked target grants advantage on this attack." "Yellow"
     }
 
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): $rollText, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
@@ -1080,6 +1162,68 @@ function Invoke-BardDissonantWhispers {
     }
 }
 
+function Invoke-BardFaerieFire {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Faerie Fire"
+
+    if (-not $castCheck.CanCast) {
+        return [PSCustomObject]@{
+            Success = $false
+            Marked = $false
+            Message = $castCheck.Message
+        }
+    }
+
+    if ($null -eq $Monster) {
+        return [PSCustomObject]@{
+            Success = $false
+            Marked = $false
+            Message = "There is no target for Faerie Fire."
+        }
+    }
+
+    $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$castCheck.Spell.SpellLevel)
+
+    if (-not $slotUse.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            Marked = $false
+            Message = $slotUse.Message
+        }
+    }
+
+    $spellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
+    $dexteritySaveBonus = 0
+
+    if ($null -ne $Monster.PSObject.Properties["dexteritySaveBonus"]) {
+        $dexteritySaveBonus = [int]$Monster.dexteritySaveBonus
+    }
+
+    $saveRoll = Roll-Dice -Sides 20
+    $saveTotal = $saveRoll + $dexteritySaveBonus
+    $saveSucceeded = $saveTotal -ge $spellSaveDC
+
+    if (-not $saveSucceeded) {
+        Set-BardFaerieFireAdvantage -Monster $Monster
+    }
+
+    return [PSCustomObject]@{
+        Success = $true
+        Marked = (-not $saveSucceeded)
+        SaveRoll = $saveRoll
+        SaveTotal = $saveTotal
+        SpellSaveDC = $spellSaveDC
+        SaveSucceeded = $saveSucceeded
+        SpellLevel = [int]$castCheck.Spell.SpellLevel
+        SlotsRemaining = $slotUse.SlotsRemaining
+        Message = if ($saveSucceeded) { "$($Monster.definite) avoids the faerie light." } else { "$($Monster.definite) is marked by faerie fire." }
+    }
+}
+
 function Resolve-HeroCastSpellAction {
     param(
         $Hero,
@@ -1099,6 +1243,7 @@ function Resolve-HeroCastSpellAction {
     Write-ColorLine "Cast Spell" "Cyan"
     Write-ColorLine "H. Healing Word (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
     Write-ColorLine "D. Dissonant Whispers (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
+    Write-ColorLine "F. Faerie Fire (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
     Write-ColorLine "0. Back" "DarkGray"
     Write-ColorLine ""
 
@@ -1143,7 +1288,28 @@ function Resolve-HeroCastSpellAction {
             return $dissonance.Success
         }
 
-        Write-ColorLine "Choose H, D or 0." "DarkYellow"
+        if ($choice -eq "F") {
+            $faerieFire = Invoke-BardFaerieFire -Hero $Hero -Monster $Monster
+            Write-Scene $(if ($faerieFire.Success) { Get-BardFaerieFireFlavorText -Hero $Hero -Monster $Monster } else { $faerieFire.Message })
+
+            if ($faerieFire.Success) {
+                Write-Action "$($Monster.definite) makes a Dexterity save: d20 roll $($faerieFire.SaveRoll) = $($faerieFire.SaveTotal) vs DC $($faerieFire.SpellSaveDC)." "DarkCyan"
+
+                if ($faerieFire.Marked) {
+                    Write-Scene (Get-BardFaerieFireHitFlavorText -Hero $Hero -Monster $Monster)
+                    Write-Action "Faerie Fire marks $($Monster.definite). The next hero attack against it has advantage. Level 1 slots left: $($faerieFire.SlotsRemaining)." "Yellow"
+                }
+                else {
+                    Write-Scene (Get-BardFaerieFireSaveFlavorText -Hero $Hero -Monster $Monster)
+                    Write-Action "$($Monster.definite) avoids the faerie light. Level 1 slots left: $($faerieFire.SlotsRemaining)." "DarkGray"
+                }
+            }
+
+            Write-ColorLine ""
+            return $faerieFire.Success
+        }
+
+        Write-ColorLine "Choose H, D, F or 0." "DarkYellow"
         Write-ColorLine ""
     }
 }

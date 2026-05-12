@@ -141,5 +141,7 @@ Completed next pass:
 Next pass:
 
 1. Tune level 3-4 enemy difficulty against the now-complete class kits.
-2. Add the next Bard spell layer: `Faerie Fire` for setup support and `Charm Person` for social quest use.
+2. Add the next Bard spell layer:
+   - `Faerie Fire` first as a level 1 combat setup spell: Dexterity save, spends a level 1 slot, and gives advantage on the next hero attack against the marked target.
+   - `Charm Person` after that as a social quest spell for testimony, tension, and soft-power routes.
 3. Decide whether fixed Lore expertise should become player-chosen later.
