@@ -208,6 +208,8 @@ function Ensure-LoadedAdventureShape {
         }
     }
 
+    Initialize-HeroSpellcasting -Hero $Game.Hero | Out-Null
+
     if (-not (Test-AdventureStateMember -Object $Game -Name "Town") -or $null -eq $Game.Town) {
         $Game.Town = New-DefaultTownState
     }

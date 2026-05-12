@@ -139,6 +139,19 @@ function Get-BardViciousMockerySaveFlavorText {
     return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
 }
 
+function Get-BardHealingWordFlavorText {
+    param($Hero)
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} catches {his} own rhythm before it breaks and sings one bright word through the pain.",
+        "{Hero} turns a ragged breath into a clean note, and the body remembers how to keep standing.",
+        "{Hero} presses two fingers to {his} chest and speaks a lyric too stubborn to let the wound win.",
+        "A short phrase leaves {hero}'s mouth, warm as lamplight and sharp enough to stitch the moment back together."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero)
+}
+
 function Get-BardCuttingWordsFlavorText {
     param(
         $Hero,
@@ -827,6 +840,111 @@ function Resolve-HeroBonusAction {
     }
 }
 
+function Invoke-BardHealingWord {
+    param(
+        $Hero,
+        [ref]$HeroHP
+    )
+
+    if ($null -eq $HeroHP) {
+        return [PSCustomObject]@{
+            Success = $false
+            Healed = 0
+            Message = "Healing Word needs a wounded hero to target."
+        }
+    }
+
+    $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Healing Word"
+
+    if (-not $castCheck.CanCast) {
+        return [PSCustomObject]@{
+            Success = $false
+            Healed = 0
+            Message = $castCheck.Message
+        }
+    }
+
+    if ($HeroHP.Value -ge [int]$Hero.HP) {
+        return [PSCustomObject]@{
+            Success = $false
+            Healed = 0
+            Message = "$($Hero.Name) is already steady enough to keep fighting."
+        }
+    }
+
+    $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$castCheck.Spell.SpellLevel)
+
+    if (-not $slotUse.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            Healed = 0
+            Message = $slotUse.Message
+        }
+    }
+
+    $roll = Roll-Dice -Sides 4
+    $charismaModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"
+    $healing = [Math]::Max(1, $roll + $charismaModifier)
+    $oldHP = [int]$HeroHP.Value
+    $HeroHP.Value = [Math]::Min([int]$Hero.HP, [int]$HeroHP.Value + $healing)
+    $healed = [int]$HeroHP.Value - $oldHP
+
+    return [PSCustomObject]@{
+        Success = $true
+        Healed = $healed
+        Roll = $roll
+        Modifier = $charismaModifier
+        SpellLevel = [int]$castCheck.Spell.SpellLevel
+        SlotsRemaining = $slotUse.SlotsRemaining
+        Message = "$($Hero.Name) regains $healed HP."
+    }
+}
+
+function Resolve-HeroCastSpellAction {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$HeroHP,
+        [ref]$MonsterHP
+    )
+
+    if ($Hero.Class -ne "Bard") {
+        Write-ColorLine "Only bards have a combat spell menu right now." "DarkYellow"
+        Write-ColorLine ""
+        return $false
+    }
+
+    $spellcasting = Get-HeroSpellcastingStatus -Hero $Hero
+    Write-ColorLine "Cast Spell" "Cyan"
+    Write-ColorLine "H. Healing Word (L1 slots $($spellcasting.CurrentSpellSlots.Level1)/$($spellcasting.MaxSpellSlots.Level1))" "White"
+    Write-ColorLine "0. Back" "DarkGray"
+    Write-ColorLine ""
+
+    while ($true) {
+        $choice = (Read-Host "Choose spell").ToUpper()
+
+        if ($choice -eq "0") {
+            Write-ColorLine ""
+            return $false
+        }
+
+        if ($choice -eq "H") {
+            $healing = Invoke-BardHealingWord -Hero $Hero -HeroHP $HeroHP
+            Write-Scene $(if ($healing.Success) { Get-BardHealingWordFlavorText -Hero $Hero } else { $healing.Message })
+
+            if ($healing.Success) {
+                Write-Action "Healing Word: 1d4 roll $($healing.Roll) + CHA $($healing.Modifier) restores $($healing.Healed) HP. Level 1 slots left: $($healing.SlotsRemaining)." "Yellow"
+            }
+
+            Write-ColorLine ""
+            return $healing.Success
+        }
+
+        Write-ColorLine "Choose H or 0." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
 function Try-Resolve-BardCuttingWords {
     param(
         $Hero,
@@ -1045,8 +1163,9 @@ function Show-CombatChoiceMenu {
 
     $blockLabel = Get-HeroBlockActionLabel -Hero $Hero
     $focusLabel = Get-HeroFocusActionLabel -Hero $Hero
+    $castText = if ($Hero.Class -eq "Bard") { "   C. Cast Spell" } else { "" }
 
-    Write-ColorLine "A. Attack   B. $blockLabel   F. $focusLabel" "White"
+    Write-ColorLine "A. Attack   B. $blockLabel   F. $focusLabel$castText" "White"
     Write-ColorLine "I. Inventory   P. Pass Action   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
@@ -1250,11 +1369,27 @@ function Resolve-HeroCombatTurn {
             return
         }
 
-        if ($choice -notin @("A", "B", "F")) {
+        if ($choice -notin @("A", "B", "F", "C") -or ($choice -eq "C" -and $Hero.Class -ne "Bard")) {
             Write-ColorLine ""
-            Write-ColorLine "Type A, B, F, I, P, R or T." "DarkYellow"
+            $choiceText = if ($Hero.Class -eq "Bard") { "Type A, B, F, C, I, P, R or T." } else { "Type A, B, F, I, P, R or T." }
+            Write-ColorLine $choiceText "DarkYellow"
             Write-ColorLine ""
             $choice = $null
+            continue
+        }
+
+        if ($choice -eq "C") {
+            $castSpell = Resolve-HeroCastSpellAction -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP
+
+            if ($castSpell) {
+                $actionSpent = $true
+                $bonusActionSpent = $true
+
+                if ($MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
+                    return
+                }
+            }
+
             continue
         }
 

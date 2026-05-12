@@ -53,6 +53,7 @@ function Get-HeroStatusSnapshot {
     }
 
     $bardicInspirationStatus = Get-HeroBardicInspirationStatus -Hero $Hero
+    $spellcastingStatus = Get-HeroSpellcastingStatus -Hero $Hero
     $barbarianStatus = Get-HeroBarbarianResourceStatus -Hero $Hero
     $fighterStatus = Get-HeroFighterResourceStatus -Hero $Hero
     $unarmoredDefenseStatus = Get-HeroUnarmoredDefenseStatus -Hero $Hero
@@ -97,6 +98,7 @@ function Get-HeroStatusSnapshot {
         UnarmedTrainingLevel = $unarmedTrainingLevel
         StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
+        Spellcasting = $spellcastingStatus
         BarbarianResources = $barbarianStatus
         FighterResources = $fighterStatus
         UnarmoredDefense = $unarmoredDefenseStatus
@@ -156,6 +158,10 @@ function Write-HeroStatusDetails {
     if ($null -ne $Snapshot.BardicInspiration) {
         $instrumentText = if ($null -ne $Snapshot.BardicInspiration.Instrument) { "$($Snapshot.BardicInspiration.Instrument.Name) (+$($Snapshot.BardicInspiration.InstrumentBonus))" } else { "No instrument" }
         Write-ColorLine "Bardic Inspiration: $($Snapshot.BardicInspiration.CurrentDice)/$($Snapshot.BardicInspiration.MaxDice) d$($Snapshot.BardicInspiration.DieSides) | Spell Save DC: $($Snapshot.SpellSaveDC) | Instrument: $instrumentText" "DarkYellow"
+
+        if ($null -ne $Snapshot.Spellcasting) {
+            Write-ColorLine "Spell Slots: L1 $($Snapshot.Spellcasting.CurrentSpellSlots.Level1)/$($Snapshot.Spellcasting.MaxSpellSlots.Level1) | L2 $($Snapshot.Spellcasting.CurrentSpellSlots.Level2)/$($Snapshot.Spellcasting.MaxSpellSlots.Level2) | Known: $($Snapshot.Spellcasting.CantripsKnown) cantrips, $($Snapshot.Spellcasting.SpellsKnown) spells" "DarkYellow"
+        }
 
         if (-not [string]::IsNullOrWhiteSpace($Snapshot.PerformanceStatus)) {
             Write-ColorLine "Performances: $($Snapshot.PerformanceStatus)" "DarkYellow"

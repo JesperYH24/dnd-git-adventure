@@ -982,6 +982,7 @@ function Resolve-InnWorkOffRoom {
         $Game.Town.MustChooseFirstInn = $false
         Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day" -WorkedForRoomToday $true -RingFoughtToday $true
         Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
+        Restore-HeroSpellSlots -Hero $Game.Hero | Out-Null
         Restore-HeroRages -Hero $Game.Hero
         Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
         Clear-HeroBuff -Hero $Game.Hero
@@ -1120,6 +1121,7 @@ function Resolve-InnStay {
     $HeroHP.Value = $Game.Hero.HP
     Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
+    Restore-HeroSpellSlots -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
     Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
@@ -1188,6 +1190,7 @@ function Resolve-BookedInnNightRest {
     $HeroHP.Value = $Game.Hero.HP
     Advance-TownToNextDay -Game $Game -StartingTimeOfDay "Day"
     Restore-HeroBardicInspiration -Hero $Game.Hero | Out-Null
+    Restore-HeroSpellSlots -Hero $Game.Hero | Out-Null
     Restore-HeroRages -Hero $Game.Hero
     Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
     Resolve-InnLongRestLevelUp -Game $Game -HeroHP $HeroHP | Out-Null
