@@ -14,6 +14,7 @@ The project currently includes:
 - an open Docks district with strong/weak multi-quest Docks tiers through `The Shell Charter`, `Counting House Pressure`, `The Customs Stamp`, and the dungeon-style `Civic Vault` climax
 - a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
+- Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` in combat
 - Fighter tourney ground foot duels, with a stable-yard horse requirement now in place for future mounted jousting; lance support is still future level 4 knight progression
 - first-pass monster zone beyond the outer wall with tracked landmarks, Perception/Stealth awareness checks, camp safety, pack-animal monster oddity hauling, and defeated-creature reports that let Dorr book delayed captured-monster ring contracts
 - repeatable level-based day jobs
@@ -49,6 +50,8 @@ powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 - [Code Structure](docs/code-structure.md)
 - [Visualizations](docs/visualizations.md)
 - [Future Ideas](docs/future-ideas.md)
+
+The class progression doc tracks the current level cap, including Bard spell slots, cantrips, level-gated level 2 spells, and the next planned Bard spell/social routes.
 
 ## Hidden test shortcut
 
