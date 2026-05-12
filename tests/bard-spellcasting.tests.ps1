@@ -73,6 +73,28 @@ function Test-BardSpellcastingProgressionScalesByLevel {
     Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 3 -Message "A level 4 bard should restore three level 2 slots."
 }
 
+function Test-BardLevelTwoSpellsStayLevelGated {
+    $hero = Get-Hero -Class "Bard"
+
+    foreach ($level in @(1, 2)) {
+        $hero.Level = $level
+        Initialize-HeroSpellcasting -Hero $hero | Out-Null
+
+        Assert-Equal -Actual (@($hero.KnownSpells | Where-Object { [int]$_.SpellLevel -eq 2 }).Count) -Expected 0 -Message "A level $level bard should not know level 2 spells."
+        Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Suggestion").CanCast -Expected $false -Message "Suggestion should not be castable at bard level $level."
+        Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $false -Message "Invisibility should not be castable at bard level $level."
+    }
+
+    $hero.Level = 3
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Suggestion").CanCast -Expected $true -Message "Suggestion should become castable at bard level 3."
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $false -Message "Invisibility should remain locked until bard level 4."
+
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $true -Message "Invisibility should become castable at bard level 4."
+}
+
 function Test-BardCantripsDoNotSpendSpellSlots {
     $hero = Get-Hero -Class "Bard"
     $beforeSlots = [int]$hero.CurrentSpellSlots.Level1
@@ -297,6 +319,7 @@ function Test-NonBardDoesNotGetSpellcastingStatus {
 
 Test-BardStartsWithSpellcastingState
 Test-BardSpellcastingProgressionScalesByLevel
+Test-BardLevelTwoSpellsStayLevelGated
 Test-BardCantripsDoNotSpendSpellSlots
 Test-BardSlottedSpellsSpendAndRestoreSlots
 Test-BardSpellcastingStatusReportsSlots
