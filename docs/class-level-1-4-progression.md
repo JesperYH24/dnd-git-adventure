@@ -69,6 +69,43 @@ Bard follow-ups:
 - decide how much spellcasting this game actually wants before level 4, beyond `Vicious Mockery`
 - make monster-zone class text lean into strange sounds, folklore, performance misdirection, and reading behavior instead of raw weapon dominance
 
+### Bard Spell Slots Implementation Plan
+
+The Bard should keep feeling like a control, tempo, and problem-solving class instead of becoming a weaker weapon fighter. Spell slots should be implemented as a clear resource layer, separate from cantrips.
+
+Target Bard spell progression through the current level cap:
+
+| Bard Level | Cantrips Known | Spells Known | Level 1 Slots | Level 2 Slots |
+|---:|---:|---:|---:|---:|
+| 1 | 2 | 4 | 2 | 0 |
+| 2 | 2 | 5 | 3 | 0 |
+| 3 | 2 | 6 | 4 | 2 |
+| 4 | 3 | 7 | 4 | 3 |
+
+Suggested first spell list:
+
+| Unlock | Spell | Role |
+|---|---|---|
+| Level 1 cantrip | `Vicious Mockery` | Combat control cantrip. Should deal small psychic damage and weaken the target's next attack on a failed save. |
+| Level 1 cantrip | `Minor Illusion` or `Friends` | Non-slot utility for social/exploration play. |
+| Level 1 spell | `Healing Word` | Emergency sustain. Bonus action healing, spends a level 1 slot. |
+| Level 1 spell | `Dissonant Whispers` | Offensive control. Psychic damage plus forced disruption/flee flavor, spends a level 1 slot. |
+| Level 1 spell | `Faerie Fire` | Accuracy/control support. Helps Bard solve fights through setup rather than raw damage. |
+| Level 1 spell | `Charm Person` | Social spell with quest and town use. |
+| Level 2 spell | `Suggestion` | Social/control spell for level 3+. |
+| Level 2 spell | `Invisibility` | Exploration and danger-avoidance spell for level 3+. |
+| Level 2 spell | `Enhance Ability` or `Hold Person` | Level 4 candidate depending on whether we want broader skill support or stronger combat lockdown. |
+
+Implementation order:
+
+1. Add Bard spellcasting state to `character.ps1`: `CantripsKnown`, `SpellsKnown`, `MaxSpellSlots`, and `CurrentSpellSlots`.
+2. Add helpers: `Get-HeroSpellcastingProgression`, `Initialize-HeroSpellcasting`, `Restore-HeroSpellSlots`, `Use-HeroSpellSlot`, `Test-HeroCanCastSpell`, and `Get-HeroKnownSpells`.
+3. Keep cantrips free. `Vicious Mockery` should never spend a slot.
+4. Long rest restores Bard spell slots. Short rest does not restore Bard slots; `Song of Rest` stays as healing support.
+5. Add a combat `Cast Spell` path for Bard instead of crowding every spell into the bonus-action menu.
+6. First playable pass should implement slots plus `Healing Word`, then improve `Vicious Mockery` into real combat control.
+7. Add tests for level-based slot counts, cantrips not spending slots, slotted spells spending slots, long-rest restoration, level 3 level-2 slot unlock, and failed casting when slots are empty.
+
 ## Cross-Class Level 4 Checklist
 
 Before treating level 4 as fully stable, these should be true:
@@ -96,6 +133,7 @@ Completed first pass:
 
 Next pass:
 
-1. Revisit Bard spellcasting scope before adding more spells.
-2. Add visible check-result explanations for passive class features.
-3. Tune level 3-4 enemy difficulty against the now-complete class kits.
+1. Implement Bard spell slots and known-spell progression.
+2. Improve `Vicious Mockery` into a true control cantrip.
+3. Add visible check-result explanations for passive class features.
+4. Tune level 3-4 enemy difficulty against the now-complete class kits.
