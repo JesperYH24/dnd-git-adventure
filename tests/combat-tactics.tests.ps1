@@ -324,6 +324,7 @@ function Test-BardViciousMockeryBonusActionDealsPsychicDamage {
     Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
 
     Assert-Equal -Actual $monsterHP -Expected 17 -Message "Vicious Mockery should deal a small amount of psychic damage as a bonus action."
+    Assert-Equal -Actual $monster.ViciousMockeryAttackDisadvantage -Expected $true -Message "Vicious Mockery should give disadvantage on the target's next attack when it lands."
 }
 
 function Test-BardViciousMockeryCanBeSavedAgainst {
@@ -349,6 +350,64 @@ function Test-BardViciousMockeryCanBeSavedAgainst {
     Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
 
     Assert-Equal -Actual $monsterHP -Expected 20 -Message "Vicious Mockery should deal no damage when the target passes its Wisdom save."
+    Assert-True -Condition ($null -eq $monster.PSObject.Properties["ViciousMockeryAttackDisadvantage"] -or -not [bool]$monster.ViciousMockeryAttackDisadvantage) -Message "A saved-against Vicious Mockery should not weaken the next attack."
+}
+
+function Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack {
+    Set-TestOutputStubs
+
+    $script:rolls = @(17, 8)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) {
+            $roll = $script:rolls[$script:rollIndex]
+            $script:rollIndex += 1
+            return $roll
+        }
+
+        return 4
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    Set-BardViciousMockeryDisadvantage -Monster $monster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+    $attackResult = $null
+
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance) -AttackResult ([ref]$attackResult)
+
+    Assert-Equal -Actual $attackResult.AttackRoll -Expected 8 -Message "The next monster attack should use the lower d20 roll from Vicious Mockery disadvantage."
+    Assert-Equal -Actual $attackResult.AttackTotal -Expected 10 -Message "The next monster attack should calculate from the disadvantage roll."
+    Assert-Equal -Actual $attackResult.ViciousMockeryDisadvantage -Expected $true -Message "Attack result should report the consumed Vicious Mockery disadvantage."
+    Assert-Equal -Actual $attackResult.AttackDisadvantage -Expected $true -Message "The attack roll should be marked as disadvantage."
+    Assert-Equal -Actual $heroHP -Expected $hero.HP -Message "The mockery disadvantage should be able to turn a stronger roll into a miss."
+    Assert-Equal -Actual $monster.ViciousMockeryAttackDisadvantage -Expected $false -Message "Vicious Mockery disadvantage should be consumed after the monster attacks."
+}
+
+function Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+        return 12
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    Set-BardViciousMockeryDisadvantage -Monster $monster
+    $heroHP = $hero.HP
+    $monsterOffBalance = $false
+    $attackResult = $null
+
+    Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance) -Advantage $true -AttackResult ([ref]$attackResult)
+
+    Assert-Equal -Actual $attackResult.AttackRoll -Expected 12 -Message "Advantage and disadvantage should cancel to a single d20 roll."
+    Assert-Equal -Actual $attackResult.AttackDisadvantage -Expected $false -Message "Cancelled disadvantage should not remain marked on the roll."
+    Assert-Equal -Actual $attackResult.AdvantageCancelled -Expected $true -Message "Attack result should report advantage/disadvantage cancellation."
+    Assert-Equal -Actual $monster.ViciousMockeryAttackDisadvantage -Expected $false -Message "Cancelled Vicious Mockery disadvantage should still be consumed."
 }
 
 function Test-BardCuttingWordsCanTurnHitIntoMiss {
@@ -875,6 +934,8 @@ Test-BardInspirationBoostsCurrentAttack
 Test-BardInspirationCanBoostBlock
 Test-BardViciousMockeryBonusActionDealsPsychicDamage
 Test-BardViciousMockeryCanBeSavedAgainst
+Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack
+Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
 Test-BardBonusActionCanResolveAfterMainAction

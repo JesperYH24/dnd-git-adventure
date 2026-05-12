@@ -139,6 +139,36 @@ function Get-BardViciousMockerySaveFlavorText {
     return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
 }
 
+function Set-BardViciousMockeryDisadvantage {
+    param(
+        $Monster
+    )
+
+    if ($null -eq $Monster) {
+        return
+    }
+
+    if ($null -eq $Monster.PSObject.Properties["ViciousMockeryAttackDisadvantage"]) {
+        $Monster | Add-Member -NotePropertyName ViciousMockeryAttackDisadvantage -NotePropertyValue $true
+    }
+    else {
+        $Monster.ViciousMockeryAttackDisadvantage = $true
+    }
+}
+
+function Consume-BardViciousMockeryDisadvantage {
+    param($Monster)
+
+    if ($null -eq $Monster -or $null -eq $Monster.PSObject.Properties["ViciousMockeryAttackDisadvantage"]) {
+        return $false
+    }
+
+    $disadvantage = [bool]$Monster.ViciousMockeryAttackDisadvantage
+    $Monster.ViciousMockeryAttackDisadvantage = $false
+
+    return $disadvantage
+}
+
 function Get-BardHealingWordFlavorText {
     param($Hero)
 
@@ -286,27 +316,44 @@ function Get-HeroCriticalHitThreshold {
 
 function Roll-D20Attack {
     param(
-        [bool]$Advantage = $false
+        [bool]$Advantage = $false,
+        [bool]$Disadvantage = $false
     )
 
     $firstRoll = Roll-Dice -Sides 20
 
-    if (-not $Advantage) {
+    if ($Advantage -and $Disadvantage) {
         return [PSCustomObject]@{
             Roll = $firstRoll
             FirstRoll = $firstRoll
             SecondRoll = $null
             Advantage = $false
+            Disadvantage = $false
+            AdvantageCancelled = $true
+        }
+    }
+
+    if (-not $Advantage -and -not $Disadvantage) {
+        return [PSCustomObject]@{
+            Roll = $firstRoll
+            FirstRoll = $firstRoll
+            SecondRoll = $null
+            Advantage = $false
+            Disadvantage = $false
+            AdvantageCancelled = $false
         }
     }
 
     $secondRoll = Roll-Dice -Sides 20
+    $usedRoll = if ($Advantage) { [Math]::Max($firstRoll, $secondRoll) } else { [Math]::Min($firstRoll, $secondRoll) }
 
     return [PSCustomObject]@{
-        Roll = [Math]::Max($firstRoll, $secondRoll)
+        Roll = $usedRoll
         FirstRoll = $firstRoll
         SecondRoll = $secondRoll
-        Advantage = $true
+        Advantage = $Advantage
+        Disadvantage = $Disadvantage
+        AdvantageCancelled = $false
     }
 }
 
@@ -315,6 +362,14 @@ function Format-D20AttackRollText {
 
     if ($null -ne $RollResult -and $RollResult.Advantage) {
         return "d20 advantage rolls $($RollResult.FirstRoll)/$($RollResult.SecondRoll), using $($RollResult.Roll)"
+    }
+
+    if ($null -ne $RollResult -and $RollResult.Disadvantage) {
+        return "d20 disadvantage rolls $($RollResult.FirstRoll)/$($RollResult.SecondRoll), using $($RollResult.Roll)"
+    }
+
+    if ($null -ne $RollResult -and $RollResult.AdvantageCancelled) {
+        return "d20 roll $($RollResult.Roll) (advantage and disadvantage cancel)"
     }
 
     return "d20 roll $($RollResult.Roll)"
@@ -432,8 +487,9 @@ function Invoke-MonsterAttack {
         $AttackResult = $null
     )
 
+    $mockeryDisadvantage = Consume-BardViciousMockeryDisadvantage -Monster $Monster
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
-    $rollResult = Roll-D20Attack -Advantage $Advantage
+    $rollResult = Roll-D20Attack -Advantage $Advantage -Disadvantage $mockeryDisadvantage
     $attackRoll = $rollResult.Roll
     $attackTotal = $attackRoll + [int]$Monster.attackBonus - $AttackPenaltyModifier + $AttackBonusModifier
     $rollText = Format-D20AttackRollText -RollResult $rollResult
@@ -465,6 +521,10 @@ function Invoke-MonsterAttack {
         AttackTotal = $attackTotal
         TargetArmorClass = $heroArmorClass
         BlockArmorBonus = $BlockArmorBonus
+        AttackPenaltyModifier = $AttackPenaltyModifier
+        ViciousMockeryDisadvantage = $mockeryDisadvantage
+        AttackDisadvantage = [bool]$rollResult.Disadvantage
+        AdvantageCancelled = [bool]$rollResult.AdvantageCancelled
     }
 
     if ($attackRoll -eq 20) {
@@ -823,8 +883,9 @@ function Resolve-HeroBonusAction {
             if ($saveTotal -lt $spellSaveDC) {
                 $damage = Roll-Dice -Sides 4
                 $MonsterHP.Value = [Math]::Max(0, $MonsterHP.Value - $damage)
+                Set-BardViciousMockeryDisadvantage -Monster $Monster
                 Write-Scene (Get-BardViciousMockeryHitFlavorText -Hero $Hero -Monster $Monster)
-                Write-Action "Vicious Mockery deals $damage psychic damage." "Yellow"
+                Write-Action "Vicious Mockery deals $damage psychic damage and gives disadvantage to $($Monster.definite)'s next attack." "Yellow"
             }
             else {
                 Write-Scene (Get-BardViciousMockerySaveFlavorText -Hero $Hero -Monster $Monster)
