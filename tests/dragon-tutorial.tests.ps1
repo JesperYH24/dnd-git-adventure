@@ -83,7 +83,7 @@ function Test-BardCanPrepareAtCampfireBeforeEnteringTutorialCave {
     $result = Start-CampfireMenu -Game $game -HeroHP ([ref]$heroHP)
 
     Assert-Equal -Actual $result -Expected "EnterCave" -Message "A bard should still be able to enter the cave directly from the campfire menu."
-    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected 3 -Message "Choosing to prepare before the tutorial cave should ready the bard's full inspiration pool."
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected 2 -Message "Choosing to prepare before the tutorial cave should ready the bard's full inspiration pool."
 }
 
 function Test-BardTutorialCombatExplainsBonusActionFlow {

@@ -142,14 +142,15 @@ function Test-ConstitutionAsiPreservesRolledMaxHP {
 
 function Test-CharismaAsiUpdatesBardSaveSkillsAndInspiration {
     $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
 
     Resolve-HeroAbilityScoreIncrease -Hero $hero -Level 4 -Mode "CHA+2" | Out-Null
     $check = Get-HeroAbilityCheckModifier -Hero $hero -Ability "CHA" -CheckTag "Performance"
 
     Assert-Equal -Actual $hero.CHA -Expected 17 -Message "A Charisma ASI should raise the bard's Charisma score."
     Assert-Equal -Actual (Get-HeroSpellSaveDC -Hero $hero) -Expected 13 -Message "Charisma ASI should improve bard spell save DC."
-    Assert-Equal -Actual $check.TotalModifier -Expected 5 -Message "Charisma ASI should improve Charisma skill checks."
-    Assert-Equal -Actual (Get-HeroBardicInspirationMaxDice -Hero $hero) -Expected 4 -Message "Charisma ASI should improve prepared Bardic Inspiration dice."
+    Assert-Equal -Actual $check.TotalModifier -Expected 7 -Message "Charisma ASI should improve Charisma skill checks."
+    Assert-Equal -Actual (Get-HeroBardicInspirationMaxDice -Hero $hero) -Expected 5 -Message "Charisma ASI should improve prepared Bardic Inspiration dice."
 }
 
 function Test-IntelligenceAsiUpdatesInvestigationChecks {
@@ -244,7 +245,7 @@ function Test-BardCanPrepareInspirationFromInstrument {
     $result = Prepare-HeroBardicInspiration -Hero $hero
 
     Assert-Equal -Actual $result.Success -Expected $true -Message "A bard with an instrument should be able to prepare bardic inspiration before danger."
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "Prepared bardic inspiration should equal 1 plus the bard's Charisma modifier."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Prepared bardic inspiration should equal half Bard level plus Charisma modifier."
 }
 
 function Test-ShortRestRestoresPreparedBardicInspiration {
@@ -262,7 +263,7 @@ function Test-ShortRestRestoresPreparedBardicInspiration {
 
     $restResult = Resolve-HeroShortRest -Hero $hero -HeroHP ([ref]$heroHP)
 
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "A short rest should restore the bard's prepared inspiration dice."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "A short rest should restore the bard's prepared inspiration dice."
     Assert-Equal -Actual $restResult.RestoredBardicInspiration -Expected 1 -Message "Short rest feedback should report how many inspiration dice came back."
     $global:RollDiceOverride = $null
 }

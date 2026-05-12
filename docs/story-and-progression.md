@@ -80,6 +80,8 @@ Chapter Two is written as a loose shared investigation:
 
 The hero becomes the bridge between those angles until the city has enough proof to strike below the streets.
 
+The level 3 XP curve is paced so the tutorial leaves the hero at 300 XP, clearing every Tier 1 and Tier 2 story quest still stays below the 900 XP level 3 threshold, and a normal strong route reaches level 3 readiness when the first Tier 3 access breakthrough lands.
+
 Story quests now also remember successful class-specific solutions as a small persistent track. This is not awarded just for being the right class or completing a quest; the player needs to pick the class-shaped option and make it land.
 
 - Barbarian successes can add hard-proof marks when Borzig solves trouble through protection, pressure, endurance, or visible force.

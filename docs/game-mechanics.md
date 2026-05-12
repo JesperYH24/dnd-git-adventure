@@ -70,7 +70,7 @@ Current camp levels:
 ## Bard mechanics
 
 - `Bardic Inspiration` prepared before danger with an instrument
-- inspiration dice equal to `1 + CHA modifier`
+- inspiration dice equal to half Bard level plus positive `CHA` modifier, minimum 1
 - inspiration dice used after `Attack`, `Block`, or `Focus`
 - dedicated `Bonus Action` menu inside combat rounds
 - `Vicious Mockery` uses a `WIS` save

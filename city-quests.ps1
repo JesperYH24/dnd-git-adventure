@@ -1779,7 +1779,7 @@ function Start-MissingHerbSatchelQuest {
         "The herbalist gets her satchel back, but {hero} returns with more sympathy than certainty about who dropped it there."
     }
 
-    $rewardXP = if ($strongOutcome) { $null } else { 80 }
+    $rewardXP = if ($strongOutcome) { $null } else { 30 }
     $rewardCopper = if ($strongOutcome) { $null } else { 80 }
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
 
@@ -1972,7 +1972,7 @@ function Start-LedgerOfAshQuest {
         "The clerk reads the rough notes and pales anyway. It is enough to prove corruption, even if the hand behind it stays blurred."
     }
 
-    $rewardXP = if ($strongOutcome) { $null } else { 110 }
+    $rewardXP = if ($strongOutcome) { $null } else { 60 }
     $rewardCopper = if ($strongOutcome) { $null } else { 100 }
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
 
@@ -2257,7 +2257,7 @@ function Start-NightCourierInterceptQuest {
         "Belor studies the partial signs and exhales through his nose. 'Not clean enough yet,' he says, 'but it's still more than we had.'"
     }
 
-    $rewardXP = if ($strongOutcome) { $null } else { 110 }
+    $rewardXP = if ($strongOutcome) { $null } else { 60 }
     $rewardCopper = if ($strongOutcome) { $null } else { 100 }
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
 
@@ -4105,7 +4105,7 @@ function Start-WhispersBeneathBentNailQuest {
         "Brin disappears back into the smoke with most of his certainty intact, leaving {hero} with a rumor worth respecting but not yet proving."
     }
 
-    $rewardXP = if ($strongOutcome) { $null } else { 100 }
+    $rewardXP = if ($strongOutcome) { $null } else { 60 }
     $rewardCopper = if ($strongOutcome) { $null } else { 90 }
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
 

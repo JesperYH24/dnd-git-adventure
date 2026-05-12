@@ -86,7 +86,7 @@ function Test-NightWatchReliefCompletesAndSetsStoryFlag {
 
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Night Watch Relief should complete after a successful patrol."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundTunnelAccess"] -Expected $true -Message "Night Watch Relief should confirm tunnel access for chapter two."
-    Assert-Equal -Actual $game.Hero.XP -Expected 200 -Message "Night Watch Relief should grant 200 XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 120 -Message "Night Watch Relief should grant paced Tier 1 XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 180 -Message "Night Watch Relief should pay its listed copper reward."
     Assert-Equal -Actual $game.Town.Relationships["NightCaptain"] -Expected "Respectful" -Message "Finishing the patrol should improve the guard relationship."
     Assert-Equal -Actual $game.Town.StoryQuestDoneToday -Expected $true -Message "A finished story quest should consume the daily story slot."
@@ -106,7 +106,7 @@ function Test-StorehouseTroubleCompletesAndGrantsItemReward {
 
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Storehouse Trouble should complete after a successful fight."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $true -Message "Storehouse Trouble should reveal the smuggling link."
-    Assert-Equal -Actual $game.Hero.XP -Expected 180 -Message "Storehouse Trouble should grant story XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 120 -Message "Storehouse Trouble should grant paced Tier 1 XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Storehouse Trouble should pay its listed reward."
     Assert-True -Condition ($healingPotions.Count -ge 1) -Message "Storehouse Trouble should add the listed healing potion reward."
 }
@@ -177,6 +177,41 @@ function Test-TierTwoRequiresBothOpeningInvestigationLeads {
     Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $bothGame) -Expected 2 -Message "Tier 2 should unlock only after both opening investigation leads are complete."
 }
 
+function Test-ChapterTwoXpDoesNotReachLevelThreeBeforeTierThree {
+    $game = Initialize-Game
+    $levelThreeThreshold = Get-XPThresholdForLevel -Level 3
+    $tutorialXP = 300
+
+    $allTierOneAndTwoIds = @(
+        "guard_night_watch"
+        "patron_storehouse_rats"
+        "quest_board_missing_herbs"
+        "patron_ledger_of_ash"
+        "guard_night_courier"
+        "bent_nail_whispers"
+    )
+    $standardUnderstreetPathIds = @(
+        "guard_night_watch"
+        "patron_storehouse_rats"
+        "patron_ledger_of_ash"
+        "guard_night_courier"
+        "guard_broken_seal"
+    )
+
+    $tierOneAndTwoXP = 0
+    foreach ($questId in $allTierOneAndTwoIds) {
+        $tierOneAndTwoXP += [int](Find-TownQuest -Game $game -QuestId $questId).RewardXP
+    }
+
+    $standardPathXP = 0
+    foreach ($questId in $standardUnderstreetPathIds) {
+        $standardPathXP += [int](Find-TownQuest -Game $game -QuestId $questId).RewardXP
+    }
+
+    Assert-True -Condition (($tutorialXP + $tierOneAndTwoXP) -lt $levelThreeThreshold) -Message "Even clearing every Tier 1 and Tier 2 story quest should not make the hero level 3-ready before Tier 3 opens."
+    Assert-Equal -Actual ($tutorialXP + $standardPathXP) -Expected $levelThreeThreshold -Message "A normal strong Chapter Two path should reach level 3 readiness at the first Tier 3 access breakthrough."
+}
+
 function Test-BrokenSealPatrolUnlocksAfterTwoStoryClues {
     $game = Initialize-Game
     $initialGuard = @(Get-TownQuestList -Game $game -Source "Guard Station")
@@ -223,7 +258,7 @@ function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Whispers Beneath the Bent Nail should complete after the broker scene resolves."
     Assert-Equal -Actual $game.Town.StoryFlags["BentNailBrokerConfirmed"] -Expected $true -Message "The Bent Nail broker quest should confirm the local broker lead."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $true -Message "The broker lead should reinforce the smuggling story flag."
-    Assert-Equal -Actual $game.Hero.XP -Expected 150 -Message "Whispers Beneath the Bent Nail should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.XP -Expected 90 -Message "Whispers Beneath the Bent Nail should grant its story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 130 -Message "Whispers Beneath the Bent Nail should pay its listed copper reward."
 }
 
@@ -245,7 +280,7 @@ function Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork {
     Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Weak" -Message "A failed Bent Nail check should mark the quest as weak progress."
     Assert-Equal -Actual $game.Town.StoryFlags["BentNailBrokerConfirmed"] -Expected $null -Message "A weak Bent Nail outcome should not confirm the broker as a major clue."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundSmugglingLink"] -Expected $null -Message "A weak Bent Nail outcome should not grant the strong smuggling clue."
-    Assert-Equal -Actual $game.Hero.XP -Expected 100 -Message "A weak Bent Nail outcome should pay reduced XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 60 -Message "A weak Bent Nail outcome should pay reduced XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 90 -Message "A weak Bent Nail outcome should pay reduced coin."
     Assert-Equal -Actual (Get-CurrentStoryQuestTier -Game $game) -Expected 2 -Message "One weak Tier 2 quest alone should not unlock Tier 3."
 }
@@ -279,7 +314,7 @@ function Test-NightCourierCompletesAndSetsCourierRoute {
 
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Night Courier Intercept should complete after the pursuit resolves."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $true -Message "Night Courier Intercept should reveal a courier route into the understreet network."
-    Assert-Equal -Actual $game.Hero.XP -Expected 160 -Message "Night Courier Intercept should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.XP -Expected 90 -Message "Night Courier Intercept should grant its story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 150 -Message "Night Courier Intercept should pay its listed copper reward."
 }
 
@@ -301,7 +336,7 @@ function Test-NightCourierWeakOutcomeOnlyFindsCourierMarks {
     Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Weak" -Message "A failed courier check should mark the quest as weak progress."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundCourierRoute"] -Expected $null -Message "A weak courier outcome should not reveal the full courier route."
     Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "A weak courier outcome should still preserve the lesser courier clue."
-    Assert-Equal -Actual $game.Hero.XP -Expected 110 -Message "A weak courier outcome should pay reduced XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected 60 -Message "A weak courier outcome should pay reduced XP."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 100 -Message "A weak courier outcome should pay reduced coin."
 }
 
@@ -525,7 +560,7 @@ function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Warehouse Ledger Recovery should complete after the search resolves."
     Assert-Equal -Actual $game.Town.StoryFlags["SecuredLedgerEvidence"] -Expected $true -Message "Warehouse Ledger Recovery should secure hard ledger evidence."
     Assert-Equal -Actual $game.Town.StoryFlags["NamedUnderstreetLeader"] -Expected $true -Message "Warehouse Ledger Recovery should be able to name the leader behind the route."
-    Assert-Equal -Actual $game.Hero.XP -Expected 170 -Message "Warehouse Ledger Recovery should grant its story XP reward."
+    Assert-Equal -Actual $game.Hero.XP -Expected 180 -Message "Warehouse Ledger Recovery should grant its story XP reward."
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 170 -Message "Warehouse Ledger Recovery should pay its listed copper reward."
 }
 
@@ -1386,7 +1421,7 @@ function Test-BardicInspirationCanBoostQuestChecks {
     $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 10 -ActionText "Borzig leans into a calm, practiced line."
 
     Assert-Equal -Actual $success -Expected $true -Message "A bard should be able to spend bardic inspiration to push a quest check over the DC."
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Spending bardic inspiration on a quest check should consume one prepared die."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 1 -Message "Spending bardic inspiration on a quest check should consume one prepared die."
 }
 
 function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
@@ -1533,6 +1568,7 @@ Test-DayJobPaysCoinButNoXP
 Test-DayJobVeteranRateImprovesPayAtLevelThree
 Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-TierTwoRequiresBothOpeningInvestigationLeads
+Test-ChapterTwoXpDoesNotReachLevelThreeBeforeTierThree
 Test-BrokenSealPatrolUnlocksAfterTwoStoryClues
 Test-BentNailWhispersUnlocksFromBentNailInfo
 Test-BentNailWhispersCompletesAndSetsBrokerFlag

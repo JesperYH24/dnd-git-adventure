@@ -1459,7 +1459,11 @@ function Get-HeroBardicInspirationMaxDice {
         return 0
     }
 
-    return 1 + [Math]::Max(0, (Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"))
+    $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
+    $levelBonus = [Math]::Floor($level / 2)
+    $charismaBonus = [Math]::Max(0, (Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"))
+
+    return [Math]::Max(1, $levelBonus + $charismaBonus)
 }
 
 function Get-HeroSongOfRestBonus {

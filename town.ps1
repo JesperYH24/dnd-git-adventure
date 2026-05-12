@@ -465,9 +465,15 @@ function Get-ChapterTwoAllianceStatusText {
     $hasGuardLead = [bool]$Game.Town.StoryFlags["FoundTunnelAccess"] -or [bool]$Game.Town.StoryFlags["ConfirmedUndergroundRoute"]
     $hasClerkLead = [bool]$Game.Town.StoryFlags["FoundEconomicIrregularity"] -or [bool]$Game.Town.StoryFlags["SecuredLedgerEvidence"] -or [bool]$Game.Town.StoryFlags["NamedUnderstreetLeader"]
     $hasBrokerLead = [bool]$Game.Town.StoryFlags["BentNailBrokerConfirmed"] -or [bool]$Game.Town.StoryFlags["FoundSmugglingLink"]
+    $tier = Get-CurrentStoryQuestTier -Game $Game
+    $openingLeadsComplete = Test-OpeningGuardAndPatronLeadsComplete -Game $Game
 
     switch ($Source) {
         "Guard Station" {
+            if ($tier -eq 1 -and -not $openingLeadsComplete -and -not $hasClerkLead -and -not $hasBrokerLead) {
+                return "The watch is chasing patrol breaks, sealed grates, and movement under the streets. Halden's people do not yet have the clerk's storehouse ledgers, so this still looks like a guard problem rather than half of a shared investigation."
+            }
+
             if ($hasClerkLead -and $hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Borzig keeps bringing in." `
@@ -487,6 +493,10 @@ function Get-ChapterTwoAllianceStatusText {
             }
         }
         "Quest Giver" {
+            if ($tier -eq 1 -and -not $openingLeadsComplete -and -not $hasGuardLead -and -not $hasBrokerLead) {
+                return "The patron's clerk is following missing stock, locked doors, and careful merchant paperwork. He has not seen enough of the watch's tunnel trouble yet, so the storehouse lead still reads like private merchant damage instead of the other half of the same case."
+            }
+
             if ($hasGuardLead -and $hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are all starting to describe the same hidden network." `
@@ -1058,7 +1068,6 @@ function Start-BardPerformanceCheck {
     $instrumentBonus = if ($null -ne $instrument -and $null -ne $instrument.PSObject.Properties["InspirationBonus"]) { [int]$instrument.InspirationBonus } else { 0 }
     $roll = Roll-Dice -Sides 20
     $bardicBonus = 0
-    $bardicInstrumentBonus = 0
 
     if ($Game.Hero.Class -eq "Bard") {
         $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
@@ -1077,10 +1086,6 @@ function Start-BardPerformanceCheck {
 
                     if ($inspiration.Success) {
                         $bardicBonus = $inspiration.Roll
-
-                        if ($instrumentBonus -gt 0) {
-                            $bardicInstrumentBonus = $instrumentBonus
-                        }
                     }
 
                     break
@@ -1096,7 +1101,7 @@ function Start-BardPerformanceCheck {
         }
     }
 
-    $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus + $bardicInstrumentBonus
+    $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus
 
     Write-Scene $Venue.IntroText
     $performanceBreakdown = "d20 roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier) + $($checkProfile.ClassBonus) proficiency"
@@ -1107,10 +1112,6 @@ function Start-BardPerformanceCheck {
 
     if ($bardicBonus -gt 0) {
         $performanceBreakdown += " + $bardicBonus inspiration"
-    }
-
-    if ($bardicInstrumentBonus -gt 0) {
-        $performanceBreakdown += " + $bardicInstrumentBonus instrument+"
     }
 
     Write-Action "$($Game.Hero.Name) performs: $performanceBreakdown = $total" "Cyan"
@@ -1511,6 +1512,7 @@ function Resolve-BardPerformance {
         Success = $true
         Outcome = $outcome
         RewardCopper = $rewardCopper
+        CheckTotal = $total
         VenueRecord = $updatedRecord
     }
 }

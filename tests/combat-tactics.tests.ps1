@@ -263,7 +263,7 @@ function Test-BardInspirationBoostsCurrentAttack {
         -HeroFocusAttackBonus ([ref]$focusBonus)
 
     Assert-Equal -Actual $attackBonus -Expected 4 -Message "A bard should be able to spend a prepared inspiration die on the current attack."
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration in combat should spend one prepared die."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 1 -Message "Using bardic inspiration in combat should spend one prepared die."
     Assert-Equal -Actual $blockBonus -Expected 0 -Message "Attack inspiration should not improve block."
     Assert-Equal -Actual $focusBonus -Expected 0 -Message "Current-round Inspire should not spill into future attacks."
 }
@@ -298,7 +298,7 @@ function Test-BardInspirationCanBoostBlock {
 
     Assert-Equal -Actual $attackBonus -Expected 0 -Message "Block inspiration should not boost attack."
     Assert-Equal -Actual $blockBonus -Expected 3 -Message "A bard should be able to spend a prepared inspiration die to strengthen a block."
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Using bardic inspiration to block should spend one prepared die."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 1 -Message "Using bardic inspiration to block should spend one prepared die."
 }
 
 function Test-BardViciousMockeryBonusActionDealsPsychicDamage {
@@ -875,7 +875,7 @@ function Test-LevelOneBardCannotUseCuttingWords {
     Invoke-MonsterAttack -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterOffBalance ([ref]$monsterOffBalance)
 
     Assert-Equal -Actual $heroHP -Expected ($hero.HP - 1) -Message "A level 1 Bard should take the hit because Cutting Words unlocks at level 3."
-    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 3 -Message "Locked Cutting Words should not spend inspiration."
+    Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 2 -Message "Locked Cutting Words should not spend inspiration."
 }
 
 function Test-FighterActionSurgeUnlocksAtLevelTwo {

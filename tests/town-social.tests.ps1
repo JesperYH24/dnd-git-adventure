@@ -81,6 +81,16 @@ function Test-BardQuestSourceTextReflectsSocialAllianceRole {
     Assert-True -Condition ($repeatClerkText -like "*polished performer*" -or $repeatClerkText -like "*Gariand*") -Message "Repeat clerk intros should stop reading like they only fit a heavy bruiser."
 }
 
+function Test-OpeningQuestSourcesClarifySeparateLeadsBeforeTierTwo {
+    $game = Initialize-Game
+
+    $guardText = Get-TownQuestSourceIntroText -Source "Guard Station" -DefaultIntroText "unused" -Game $game
+    $clerkText = Get-TownQuestSourceIntroText -Source "Quest Giver" -DefaultIntroText "unused" -Game $game
+
+    Assert-True -Condition ($guardText -like "*do not yet have the clerk's storehouse ledgers*") -Message "The guard station should explain that its Tier 1 patrol lead is not yet joined to the clerk's lead."
+    Assert-True -Condition ($clerkText -like "*has not seen enough of the watch's tunnel trouble*") -Message "The clerk source should explain that its Tier 1 storehouse lead is not yet joined to the watch lead."
+}
+
 function Test-BardTownShopsUseDifferentIntroTone {
     $game = Initialize-Game -Class "Bard"
 
@@ -393,6 +403,30 @@ function Test-BardCanEarnCoinByPerformingInMarketSquare {
     Assert-Equal -Actual $game.Hero.XP -Expected $beforeXP -Message "Street performances should not grant XP."
 }
 
+function Test-BardPerformanceAppliesInstrumentOnceWithInspiration {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "1"
+    }
+
+    $global:RollDiceOverride = {
+        param([int]$Sides)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 6) { return 4 }
+        return 1
+    }
+
+    $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    Prepare-HeroBardicInspiration -Hero $game.Hero | Out-Null
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "market_square"
+
+    Assert-Equal -Actual $result.CheckTotal -Expected 14 -Message "A performance should add d20, CHA check, instrument, and inspiration die without applying the instrument twice."
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected 1 -Message "Spending inspiration on a performance should consume one prepared die."
+}
+
 function Test-BardPerformanceTracksVenueOutcomeHistory {
     function global:Read-Host {
         param([string]$Prompt)
@@ -573,6 +607,7 @@ Test-SilverKettleEconomicInfoSetsFutureHook
 Test-LanternRestMerchantsFavorBardToolsForBards
 Test-SilverKettleUpperTablesAdvanceBardSocialStanding
 Test-BardQuestSourceTextReflectsSocialAllianceRole
+Test-OpeningQuestSourcesClarifySeparateLeadsBeforeTierTwo
 Test-BardTownShopsUseDifferentIntroTone
 Test-TownTextUsesCurrentHeroName
 Test-BarbarianSpecialtyShopToneFitsBorzig
@@ -590,6 +625,7 @@ Test-BelorCanHelpFighterBuildTourneyStanding
 Test-FighterTourneyAttentionChangesStreetNpcTone
 Test-BelorCanHelpBardPerformanceInsteadOfJustPointingToTheWatch
 Test-BardCanEarnCoinByPerformingInMarketSquare
+Test-BardPerformanceAppliesInstrumentOnceWithInspiration
 Test-BardPerformanceTracksVenueOutcomeHistory
 Test-BardPerformanceAudienceFamiliarityChangesReactionText
 Test-BardCannotPerformTwiceAtSameVenueInOneDay
