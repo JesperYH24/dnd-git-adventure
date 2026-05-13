@@ -280,7 +280,8 @@ function Test-HadrikRewardsDifferentClassesDifferently {
     Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $rapierOffer) -Expected 140 -Message "Hadrik's bard recommendation should lower the Rapier price."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $bardGame -Offer $stageLuteOffer) -Expected 220 -Message "Hadrik should not interfere with the Lantern Rest instrument-shop discount path."
     Assert-True -Condition (-not [bool]$bardGame.Town.StreetFlags["SmithyDiscountUnlocked"]) -Message "Bards should not spend their one-time Hadrik reward on an axe discount they are unlikely to use."
-    Assert-True -Condition ($bardResult -like "*Rapier*") -Message "Hadrik should name the rapier lead clearly for a bard."
+    Assert-Equal -Actual $rapierOffer.Name -Expected "Slim Forge Rapier" -Message "The smithy rapier should have a distinct name from the bard's starting rapier."
+    Assert-True -Condition ($bardResult -like "*Slim Forge Rapier*") -Message "Hadrik should name the rapier lead clearly for a bard."
 
     Assert-True -Condition ([bool]$fighterGame.Town.StreetFlags["HadrikKnightlyLongswordDiscountUnlocked"]) -Message "Fighters should get Hadrik's knightly longsword lead."
     Assert-Equal -Actual (Get-TownOfferPrice -Game $fighterGame -Offer $knightlyLongswordOffer) -Expected 240 -Message "Hadrik's Fighter recommendation should lower the Knightly Longsword price."

@@ -349,7 +349,7 @@ function Resolve-HadrikChoice {
         if ($persona.IsBardLike -or $persona.IsCharming) {
             $Game.Town.StreetFlags["HadrikRapierDiscountUnlocked"] = $true
             Set-TownOfferDiscount -Game $Game -OfferId "smithy_rapier" -DiscountCopper 60
-            return "Hadrik rubs soot into one palm and nods toward the forge. 'Rurik has a slim rapier in the back that never fit the caravan guards. For someone quick with timing, it'd do better than a butcher's blade. Tell him I sent you and he'll shave the price.' A 6 SP discount is now available on the Rapier at the smithy."
+            return "Hadrik rubs soot into one palm and nods toward the forge. 'Rurik has a slim forge rapier in the back that never fit the caravan guards. For someone quick with timing, it'd do better than a butcher's blade. Tell him I sent you and he'll shave the price.' A 6 SP discount is now available on the Slim Forge Rapier at the smithy."
         }
 
         if ($persona.IsKnightLike) {
