@@ -186,11 +186,12 @@ Ansvar:
 - section titles
 - typewriter-text
 - town time tracker
-- kompakt HUD för namn, HP och coin
+- town HUD för namn, klassnivå, HP, AC, XP/level-up, coin, daily availability och klassresurser
 
 Bra att läsa när:
 
 - du vill ändra hur spelet ser ut i terminalen
+- du vill ändra den kompakta status som syns i town och undermenyer
 
 ### `status.ps1`
 

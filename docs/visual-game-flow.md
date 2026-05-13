@@ -53,7 +53,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Town["Town menu\nHUD: hero, place, day/night, HP, coin"] --> Time{"Day or night?"}
+    Town["Town menu\nHUD: hero, place, day/night, HP, AC, XP, coin, class resources"] --> Time{"Day or night?"}
 
     Time -- "Day" --> DayChoices["Day choices"]
     DayChoices --> DayJobs["Day jobs"]

@@ -15,6 +15,7 @@ The project currently includes:
 - a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` in combat
+- expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
 - Fighter tourney ground foot duels, with a stable-yard horse requirement now in place for future mounted jousting; lance support is still future level 4 knight progression
 - first-pass monster zone beyond the outer wall with tracked landmarks, Perception/Stealth awareness checks, camp safety, pack-animal monster oddity hauling, and defeated-creature reports that let Dorr book delayed captured-monster ring contracts
 - repeatable level-based day jobs

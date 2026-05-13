@@ -53,7 +53,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 | Level | Target Feature | Current Status | Notes |
 |---:|---|---|---|
 | 1 | Bardic Inspiration | Implemented | Prepared with an instrument. Dice scale from CHA in this game and can support attack/defense/focus moments. |
-| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, and control-focused `Vicious Mockery` are implemented. Broader social/exploration spell use is still future work. |
+| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, and control-focused `Vicious Mockery` are implemented. Broader social/exploration spell use is still future work. |
 | 2 | Jack of All Trades | Implemented | Adds half proficiency to non-proficient ability checks. |
 | 2 | Song of Rest | Implemented | Adds `1d6` extra healing to Bard short rests. |
 | 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, `Investigation`, and `Insight` proficiencies at level 3. |
@@ -65,7 +65,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 Bard follow-ups:
 
 - decide whether Expertise should become player-chosen later instead of fixed to `Performance` and `Perception`
-- extend spellcasting beyond the first combat pass with `Faerie Fire`, `Charm Person`, and level 2 utility/control spells
+- extend spellcasting beyond the first combat pass with `Charm Person` and level 2 utility/control spells
 - make monster-zone class text lean into strange sounds, folklore, performance misdirection, and reading behavior instead of raw weapon dominance
 
 ### Bard Spell Slots Implementation Plan
@@ -104,7 +104,7 @@ Completed:
 3. Keep cantrips free. `Vicious Mockery` never spends a slot.
 4. Long rest restores Bard spell slots. Short rest does not restore Bard slots; `Song of Rest` stays as healing support.
 5. Add a combat `Cast Spell` path for Bard instead of crowding every spell into the bonus-action menu.
-6. First playable pass implements slots, `Healing Word`, `Dissonant Whispers`, and control-focused `Vicious Mockery`.
+6. First playable pass implements slots, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, and control-focused `Vicious Mockery`.
 7. Tests cover level-based slot counts, cantrips not spending slots, slotted spells spending slots, long-rest restoration, level 3 level-2 slot unlock, failed casting when slots are empty, and the first playable combat spells.
 
 ## Cross-Class Level 4 Checklist
@@ -137,11 +137,12 @@ Completed next pass:
 1. Implement Bard spell slots and known-spell progression.
 2. Improve `Vicious Mockery` into a true control cantrip.
 3. Add visible check-result explanations for passive class features.
+4. Add `Faerie Fire` as a level 1 combat setup spell with a Dexterity save, level 1 slot cost, and next-attack advantage on a failed save.
 
 Next pass:
 
 1. Tune level 3-4 enemy difficulty against the now-complete class kits.
 2. Add the next Bard spell layer:
-   - `Faerie Fire` first as a level 1 combat setup spell: Dexterity save, spends a level 1 slot, and gives advantage on the next hero attack against the marked target.
-   - `Charm Person` after that as a social quest spell for testimony, tension, and soft-power routes.
+   - `Charm Person` as a social quest spell for testimony, tension, and soft-power routes.
+   - level 2 utility/control spell use once the level 3+ routes need it.
 3. Decide whether fixed Lore expertise should become player-chosen later.
