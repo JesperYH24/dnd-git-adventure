@@ -613,7 +613,86 @@ function Get-TownHeroHudText {
     }
 
     $currencyText = Get-HeroCurrencyText -Hero $hero
-    return "$heroName the $heroClass | HP $currentHP/$($hero.HP) | Coin $currencyText"
+    $snapshot = Get-HeroStatusSnapshot -Hero $hero -HeroHP $currentHP -Game $Game
+    $levelUps = Get-HeroAvailableLevelUps -Hero $hero
+    $xpText = if ($levelUps -gt 0) { "Level up ready" } else { "XP $($snapshot.DisplayXP)/$($snapshot.NextLevelXP)" }
+
+    return "$heroName the $heroClass L$($hero.Level) | HP $currentHP/$($hero.HP) | AC $($snapshot.ArmorClass) | $xpText | Coin $currencyText"
+}
+
+function Get-TownHeroResourceHudText {
+    param(
+        $Game,
+        [Nullable[int]]$HeroHP = $null
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
+        return ""
+    }
+
+    $hero = $Game.Hero
+    $currentHP = $hero.HP
+
+    if ($null -ne $HeroHP) {
+        $currentHP = [int]$HeroHP
+    }
+    elseif ($null -ne $Game.PSObject.Properties["HeroHP"]) {
+        $currentHP = [int]$Game.HeroHP
+    }
+
+    $snapshot = Get-HeroStatusSnapshot -Hero $hero -HeroHP $currentHP -Game $Game
+    $parts = @()
+
+    if ($snapshot.ActiveBuff -ne "None") {
+        $parts += "Buff $($snapshot.ActiveBuff)"
+    }
+
+    if ($null -ne $Game.Town) {
+        $parts += "Story $($snapshot.StoryQuestStatus)"
+        $parts += "Work $($snapshot.DayJobStatus)"
+    }
+
+    if ($snapshot.StoryClueCount -gt 0) {
+        $parts += "Clues $($snapshot.StoryClueCount)"
+    }
+
+    if ($null -ne $snapshot.BardicInspiration) {
+        $parts += "BI $($snapshot.BardicInspiration.CurrentDice)/$($snapshot.BardicInspiration.MaxDice) d$($snapshot.BardicInspiration.DieSides)"
+        $parts += "DC $($snapshot.SpellSaveDC)"
+
+        if ($null -ne $snapshot.Spellcasting) {
+            if ([int]$snapshot.Spellcasting.MaxSpellSlots.Level1 -gt 0) {
+                $parts += "L1 $($snapshot.Spellcasting.CurrentSpellSlots.Level1)/$($snapshot.Spellcasting.MaxSpellSlots.Level1)"
+            }
+
+            if ([int]$snapshot.Spellcasting.MaxSpellSlots.Level2 -gt 0) {
+                $parts += "L2 $($snapshot.Spellcasting.CurrentSpellSlots.Level2)/$($snapshot.Spellcasting.MaxSpellSlots.Level2)"
+            }
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($snapshot.PerformanceStatus)) {
+            $parts += "Perform $($snapshot.PerformanceStatus)"
+        }
+    }
+
+    if ($null -ne $snapshot.BarbarianResources) {
+        $rageState = if ($snapshot.BarbarianResources.RageActive) { "active" } else { "ready" }
+        $parts += "Rage $($snapshot.BarbarianResources.CurrentRages)/$($snapshot.BarbarianResources.MaxRages) $rageState"
+
+        if ($snapshot.BarbarianResources.RecklessAttackExposed) {
+            $parts += "Reckless exposed"
+        }
+    }
+
+    if ($null -ne $snapshot.FighterResources) {
+        $parts += "Second Wind $($snapshot.FighterResources.CurrentSecondWind)/$($snapshot.FighterResources.MaxSecondWind)"
+
+        if ([int]$snapshot.FighterResources.MaxActionSurges -gt 0) {
+            $parts += "Action Surge $($snapshot.FighterResources.CurrentActionSurges)/$($snapshot.FighterResources.MaxActionSurges)"
+        }
+    }
+
+    return ($parts -join " | ")
 }
 
 function Write-TownTimeTracker {
@@ -631,13 +710,17 @@ function Write-TownTimeTracker {
     $banner = Get-TownTimeTrackerBanner -Game $Game -Area $Area
     $moodText = Get-TownTimeTrackerMoodText -Game $Game -Area $Area
     $heroHud = Get-TownHeroHudText -Game $Game -HeroHP $HeroHP
-    $borderLength = [Math]::Max([Math]::Max($banner.Length, $heroHud.Length), 38)
+    $resourceHud = Get-TownHeroResourceHudText -Game $Game -HeroHP $HeroHP
+    $borderLength = [Math]::Max([Math]::Max([Math]::Max($banner.Length, $heroHud.Length), $resourceHud.Length), 38)
     $border = ("-".PadLeft($borderLength, "-"))
 
     Write-ColorLine ("  " + $border) $color
     Write-ColorLine ("  " + $banner) $color
     if (-not [string]::IsNullOrWhiteSpace($heroHud)) {
         Write-ColorLine ("  " + $heroHud) "White"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($resourceHud)) {
+        Write-ColorLine ("  " + $resourceHud) "DarkYellow"
     }
     Write-ColorLine ("  " + $moodText) "DarkGray"
     Write-ColorLine ("  " + $border) $color

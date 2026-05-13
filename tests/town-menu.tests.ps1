@@ -41,8 +41,50 @@ function Test-TownHeroHudShowsNameHpAndCoin {
     $hud = Get-TownHeroHudText -Game $game -HeroHP 7
 
     Assert-True -Condition ($hud -like "*Gariand*") -Message "The compact town HUD should always show the current hero name."
+    Assert-True -Condition ($hud -like "*Bard L1*") -Message "The compact town HUD should show class and level without opening the status submenu."
     Assert-True -Condition ($hud -like "*HP 7/$($game.Hero.HP)*") -Message "The compact town HUD should show current and max HP when current HP is provided."
+    Assert-True -Condition ($hud -like "*AC*") -Message "The compact town HUD should show armor class without opening the status submenu."
+    Assert-True -Condition ($hud -like "*XP*") -Message "The compact town HUD should show XP progress without opening the status submenu."
     Assert-True -Condition ($hud -like "*Coin*2 GP*3 SP*4 CP*") -Message "The compact town HUD should show the hero's current coin."
+}
+
+function Test-TownHeroHudFlagsLevelUpReady {
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.XP = Get-XPThresholdForLevel -Level 2
+
+    $hud = Get-TownHeroHudText -Game $game -HeroHP $game.Hero.HP
+
+    Assert-True -Condition ($hud -like "*Level up ready*") -Message "The compact town HUD should flag when the hero can level up."
+}
+
+function Test-TownHeroResourceHudShowsBardResources {
+    $game = Initialize-Game -Class "Bard"
+    Prepare-HeroBardicInspiration -Hero $game.Hero | Out-Null
+    Use-HeroSpellSlot -Hero $game.Hero -SpellLevel 1 | Out-Null
+
+    $hud = Get-TownHeroResourceHudText -Game $game -HeroHP $game.Hero.HP
+
+    Assert-True -Condition ($hud -like "*Story Ready*") -Message "The resource HUD should show whether the daily story quest is available."
+    Assert-True -Condition ($hud -like "*Work Ready*") -Message "The resource HUD should show whether the day job is available."
+    Assert-True -Condition ($hud -like "*BI*/*d6*") -Message "The resource HUD should show Bardic Inspiration dice."
+    Assert-True -Condition ($hud -like "*DC*") -Message "The resource HUD should show spell save DC for a bard."
+    Assert-True -Condition ($hud -like "*L1 1/2*") -Message "The resource HUD should show remaining level 1 spell slots."
+    Assert-True -Condition ($hud -like "*Perform 0/3 today*") -Message "The resource HUD should show today's performance count for a bard."
+}
+
+function Test-TownHeroResourceHudShowsMartialResources {
+    $barbarianGame = Initialize-Game -Class "Barbarian"
+    Start-HeroRage -Hero $barbarianGame.Hero | Out-Null
+    $barbarianHud = Get-TownHeroResourceHudText -Game $barbarianGame -HeroHP $barbarianGame.Hero.HP
+
+    $fighterGame = Initialize-Game -Class "Fighter"
+    $fighterGame.Hero.Level = 2
+    Restore-HeroSecondWind -Hero $fighterGame.Hero | Out-Null
+    $fighterHud = Get-TownHeroResourceHudText -Game $fighterGame -HeroHP $fighterGame.Hero.HP
+
+    Assert-True -Condition ($barbarianHud -like "*Rage 1/2 active*") -Message "The resource HUD should show barbarian rage uses and active state."
+    Assert-True -Condition ($fighterHud -like "*Second Wind 1/1*") -Message "The resource HUD should show fighter Second Wind uses."
+    Assert-True -Condition ($fighterHud -like "*Action Surge 1/1*") -Message "The resource HUD should show fighter Action Surge once it is unlocked."
 }
 
 function Test-TownLocationIntroShortensAfterRepeatVisits {
@@ -236,6 +278,9 @@ function Test-TownMenuCanEnterUnlockedMonsterZone {
 
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
+Test-TownHeroHudFlagsLevelUpReady
+Test-TownHeroResourceHudShowsBardResources
+Test-TownHeroResourceHudShowsMartialResources
 Test-TownLocationIntroShortensAfterRepeatVisits
 Test-TownLocationIntroResetsAfterRest
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
