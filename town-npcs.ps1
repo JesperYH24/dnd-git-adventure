@@ -644,7 +644,11 @@ function Start-WidowEliraConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-WidowEliraIntro -Hero $Game.Hero -Game $Game)
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Npc" -Name "WidowElira") `
+                -FullText (Get-WidowEliraIntro -Hero $Game.Hero -Game $Game) `
+                -RepeatText (Get-TownNpcRepeatIntroText -NpcId "WidowElira" -Game $Game)
             $showIntro = $false
         }
         Write-TownTimeTracker -Game $Game -Area "Elira"
@@ -692,7 +696,11 @@ function Start-HadrikConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-HadrikIntro -Hero $Game.Hero -Game $Game)
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Npc" -Name "Hadrik") `
+                -FullText (Get-HadrikIntro -Hero $Game.Hero -Game $Game) `
+                -RepeatText (Get-TownNpcRepeatIntroText -NpcId "Hadrik" -Game $Game)
             $showIntro = $false
         }
         Write-TownTimeTracker -Game $Game -Area "Hadrik"
@@ -741,7 +749,11 @@ function Start-BelorConversation {
 
     while ($true) {
         if ($showIntro) {
-            Write-Scene (Get-BelorIntro -Hero $Game.Hero -Game $Game)
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Npc" -Name "Belor") `
+                -FullText (Get-BelorIntro -Hero $Game.Hero -Game $Game) `
+                -RepeatText (Get-TownNpcRepeatIntroText -NpcId "Belor" -Game $Game)
             $showIntro = $false
         }
         Write-TownTimeTracker -Game $Game -Area "Belor"

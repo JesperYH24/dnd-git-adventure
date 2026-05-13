@@ -45,6 +45,42 @@ function Test-TownHeroHudShowsNameHpAndCoin {
     Assert-True -Condition ($hud -like "*Coin*2 GP*3 SP*4 CP*") -Message "The compact town HUD should show the hero's current coin."
 }
 
+function Test-TownLocationIntroShortensAfterRepeatVisits {
+    $game = Initialize-Game
+    $key = Get-TownFlavorVisitKey -Prefix "Vendor" -Name "Market"
+
+    $first = Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro."
+    $second = Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro."
+    $third = Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro."
+
+    Assert-Equal -Actual $first -Expected "Long market intro." -Message "The first visit to a location should show full flavor."
+    Assert-Equal -Actual $second -Expected "Short market intro." -Message "The second visit should show a short reminder instead of the full scene."
+    Assert-Equal -Actual $third -Expected "" -Message "Frequent repeat visits should suppress the intro entirely."
+}
+
+function Test-TownLocationIntroResetsAfterRest {
+    $game = Initialize-Game
+    $key = Get-TownFlavorVisitKey -Prefix "Vendor" -Name "Market"
+
+    Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro." | Out-Null
+    Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro." | Out-Null
+    Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro." | Out-Null
+    $game.Town.InnFlags["InnkeeperIntroIndex_bent_nail"] = 2
+    $game.Town.InnFlags["InnAmbientIndex_bent_nail"] = 2
+    $game.Town.InnFlags["InnVisitSeen_bent_nail"] = $true
+    $game.Town.InnFlags["BentNailShadyRumor"] = $true
+
+    Advance-TownToNextDay -Game $game -StartingTimeOfDay "Day"
+
+    $afterRest = Get-TownLocationIntroText -Game $game -Key $key -FullText "Long market intro." -RepeatText "Short market intro."
+
+    Assert-Equal -Actual $afterRest -Expected "Long market intro." -Message "A rest should reset transient location flavor so full intro text can return."
+    Assert-Equal -Actual $game.Town.InnFlags.ContainsKey("InnkeeperIntroIndex_bent_nail") -Expected $false -Message "Innkeeper intro rotation should reset after rest."
+    Assert-Equal -Actual $game.Town.InnFlags.ContainsKey("InnAmbientIndex_bent_nail") -Expected $false -Message "Inn ambient rotation should reset after rest."
+    Assert-Equal -Actual $game.Town.InnFlags.ContainsKey("InnVisitSeen_bent_nail") -Expected $false -Message "Inn visit flavor should reset after rest."
+    Assert-Equal -Actual $game.Town.InnFlags["BentNailShadyRumor"] -Expected $true -Message "Resetting flavor should not erase real inn progress flags."
+}
+
 function Test-DocksDistrictUnlocksAfterLadyVeyraReveal {
     $game = Initialize-Game
 
@@ -200,6 +236,8 @@ function Test-TownMenuCanEnterUnlockedMonsterZone {
 
 Test-TownMainMenuUsesSubmenus
 Test-TownHeroHudShowsNameHpAndCoin
+Test-TownLocationIntroShortensAfterRepeatVisits
+Test-TownLocationIntroResetsAfterRest
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal
 Test-DocksDistrictFirstVisitDiscoversOddityShop
 Test-DocksDistrictRequiresOddityShopBeforeTallyShack

@@ -394,7 +394,11 @@ function Show-TownStable {
         Write-SectionTitle -Text "Stable Yard" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Stable Yard"
         if ($showIntro) {
-            Write-Scene $IntroText
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Vendor" -Name "StableYard") `
+                -FullText $IntroText `
+                -RepeatText (Get-TownVendorRepeatIntroText -Title "Stable Yard")
             $showIntro = $false
         }
 
@@ -723,7 +727,11 @@ function Show-TownShop {
         Write-SectionTitle -Text $Title -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area $Title
         if ($showIntro) {
-            Write-Scene $IntroText
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Vendor" -Name $BuyerType) `
+                -FullText $IntroText `
+                -RepeatText (Get-TownVendorRepeatIntroText -Title $Title)
             $showIntro = $false
         }
         Write-ColorLine "Gold Pouch: $(Get-HeroCurrencyText -Hero $Hero)" "DarkYellow"

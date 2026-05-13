@@ -10,6 +10,109 @@ function Get-TownSourceVisitKey {
     return ("QuestSourceVisited_" + ($Source -replace "[^A-Za-z0-9]", ""))
 }
 
+function Get-TownFlavorVisitKey {
+    param(
+        [string]$Prefix,
+        [string]$Name
+    )
+
+    return ("FlavorVisit_$Prefix" + "_" + ($Name -replace "[^A-Za-z0-9]", ""))
+}
+
+function Get-TownLocationIntroText {
+    param(
+        $Game,
+        [string]$Key,
+        [string]$FullText,
+        [string]$RepeatText = "",
+        [int]$RepeatLimit = 1
+    )
+
+    if ([string]::IsNullOrWhiteSpace($FullText)) {
+        return ""
+    }
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StreetFlags -or [string]::IsNullOrWhiteSpace($Key)) {
+        return $FullText
+    }
+
+    $currentVisits = if ($null -ne $Game.Town.StreetFlags[$Key]) { [int]$Game.Town.StreetFlags[$Key] } else { 0 }
+    $Game.Town.StreetFlags[$Key] = $currentVisits + 1
+
+    if ($currentVisits -eq 0) {
+        return $FullText
+    }
+
+    if ($currentVisits -le $RepeatLimit -and -not [string]::IsNullOrWhiteSpace($RepeatText)) {
+        return $RepeatText
+    }
+
+    return ""
+}
+
+function Write-TownLocationIntro {
+    param(
+        $Game,
+        [string]$Key,
+        [string]$FullText,
+        [string]$RepeatText = "",
+        [int]$RepeatLimit = 1
+    )
+
+    $introText = Get-TownLocationIntroText -Game $Game -Key $Key -FullText $FullText -RepeatText $RepeatText -RepeatLimit $RepeatLimit
+
+    if (-not [string]::IsNullOrWhiteSpace($introText)) {
+        Write-Scene $introText
+    }
+}
+
+function Get-TownVendorRepeatIntroText {
+    param([string]$Title)
+
+    switch ($Title) {
+        "Market" { return "The market trader is still at the counter, hands already near the goods instead of the greeting." }
+        "Smithy" { return "The smith glances up from the workbench, ready to talk steel without another speech." }
+        "Apothecary" { return "The apothecary looks up from the bottles and waits for the practical part." }
+        "Instrument Shop" { return "The instrument maker lets the room settle back into quiet wood, strings, and prices." }
+        "Armorer" { return "The armorer keeps the measuring cord close and waits to see what needs fitting." }
+        "Stable Yard" { return "The stable yard has already made its smells, prices, and animals plain enough." }
+        default { return "The counter is familiar now, and the business can start without ceremony." }
+    }
+}
+
+function Get-TownQuestSourceRepeatIntroText {
+    param(
+        [string]$Source,
+        $Game
+    )
+
+    $title = Get-TownQuestSourceDisplayTitle -Source $Source -Game $Game
+
+    switch ($Source) {
+        "Quest Board" { return "The board is still here: names, coin, and trouble waiting in shorter lines than the first look." }
+        "Guard Station" { return "The watch desk has already said its piece. The open assignments matter more than the room now." }
+        "Quest Giver" { return "$title is ready to get back to the work itself." }
+        "Docks" { return "The dock leads remain on the table, wet-edged and dangerous enough without repeating the whole quarter." }
+        default { return "The work source is familiar now; the listed jobs matter more than another introduction." }
+    }
+}
+
+function Get-TownNpcRepeatIntroText {
+    param(
+        [string]$NpcId,
+        $Game
+    )
+
+    $heroName = if ($null -ne $Game -and $null -ne $Game.Hero) { [string]$Game.Hero.Name } else { "the hero" }
+
+    switch ($NpcId) {
+        "WidowElira" { return "Elira recognizes $heroName's return and skips the careful doorstep pause." }
+        "Hadrik" { return "Hadrik is already near the forge rail, ready to talk without warming the coals twice." }
+        "Belor" { return "Belor gives $heroName a short nod, already past greetings and into watchman's attention." }
+        default { return "The familiar face gives $heroName room to get to the point." }
+    }
+}
+
 function Get-DocksContactName {
     return "Mira Kest"
 }
@@ -728,11 +831,20 @@ function Show-TownQuestSource {
         [ref]$HeroHP
     )
 
+    $showIntro = $true
+
     while ($true) {
         $quests = @(Get-TownQuestList -Game $Game -Source $Source)
         Write-SectionTitle -Text $Title -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area $Title -HeroHP $HeroHP.Value
-        Write-Scene (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game)
+        if ($showIntro) {
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "QuestSource" -Name $Source) `
+                -FullText (Get-TownQuestSourceIntroText -Source $Source -DefaultIntroText $IntroText -Game $Game) `
+                -RepeatText (Get-TownQuestSourceRepeatIntroText -Source $Source -Game $Game)
+            $showIntro = $false
+        }
         Write-ColorLine ""
 
         $tierStatus = if ($Source -eq "Docks") { Get-DocksTierProgressStatus -Game $Game } else { Get-StoryTierProgressStatus -Game $Game }
@@ -1585,14 +1697,28 @@ function Start-QuestHubMenu {
         [ref]$HeroHP
     )
 
+    $showIntro = $true
+
     while ($true) {
         Write-SectionTitle -Text "Seek Work" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Seek Work" -HeroHP $HeroHP.Value
-        Write-Scene (Get-ClassAwareTownText -Hero $Game.Hero `
-            -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
-            -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act." `
-            -FighterText "Lubert Stryer can ask for work from official hands, patrons, and anyone who understands that a shield can be a social promise as much as protection.")
-        Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
+        if ($showIntro) {
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Hub" -Name "SeekWork") `
+                -FullText (Get-ClassAwareTownText -Hero $Game.Hero `
+                    -BarbarianText "Borzig can ask for work from official hands, desperate citizens, or merchants with private problems." `
+                    -BardText "Gariand can ask for work from official hands, desperate citizens, or merchants with private problems. More and more often, each of them wants someone who can listen as well as act." `
+                    -FighterText "Lubert Stryer can ask for work from official hands, patrons, and anyone who understands that a shield can be a social promise as much as protection.") `
+                -RepeatText "The work sources are familiar now; the open leads and tier progress tell the useful part."
+
+            if (-not [bool]$Game.Town.StreetFlags["SeekWorkTroubleLineSeen"]) {
+                Write-Scene "More and more, it feels like the same trouble is being seen from different corners of the city."
+                $Game.Town.StreetFlags["SeekWorkTroubleLineSeen"] = $true
+            }
+
+            $showIntro = $false
+        }
         Write-EmphasisLine -Text ((Get-StoryTierProgressStatus -Game $Game).StatusText) -Color "Yellow"
         Write-ColorLine ""
         Write-ColorLine "1. Check the quest board" "White"
@@ -1714,12 +1840,21 @@ function Start-TownShopsMenu {
         [ref]$HeroHP
     )
 
+    $showIntro = $true
+
     while ($true) {
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
         Write-SectionTitle -Text "Shops & Services" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Shops" -HeroHP $HeroHP.Value
-        Write-Scene $(if ($isNight) { "After dark, the city sells only what it can keep lit, guarded, or discreet." } else { "The city's practical business gathers around counters, stalls, workshops, and people with enough stock to solve problems for coin." })
+        if ($showIntro) {
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Hub" -Name "Shops") `
+                -FullText $(if ($isNight) { "After dark, the city sells only what it can keep lit, guarded, or discreet." } else { "The city's practical business gathers around counters, stalls, workshops, and people with enough stock to solve problems for coin." }) `
+                -RepeatText "The shop streets are familiar now; the useful part is which counters are open."
+            $showIntro = $false
+        }
         Write-ColorLine ""
         Write-ColorLine $(if ($isNight) { "1. Browse the last open stalls (market closed)" } else { "1. Browse the market" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Market") { "White" } else { "DarkGray" })
         Write-ColorLine $(if ($isNight) { "2. Visit the forge doors (smithy closed)" } else { "2. Visit the smithy" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Smithy") { "White" } else { "DarkGray" })
@@ -1758,12 +1893,21 @@ function Start-TownWorkMenu {
         [ref]$HeroHP
     )
 
+    $showIntro = $true
+
     while ($true) {
         $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
 
         Write-SectionTitle -Text "Work & Trouble" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Work" -HeroHP $HeroHP.Value
-        Write-Scene $(if ($isNight) { "Night work has sharper edges: private jobs, ring wagers, and rooms that pay attention once lanterns are lit." } else { "Day work is easier to ask for openly: posted jobs, honest labor, and trouble that still pretends to be respectable." })
+        if ($showIntro) {
+            Write-TownLocationIntro `
+                -Game $Game `
+                -Key (Get-TownFlavorVisitKey -Prefix "Hub" -Name "Work") `
+                -FullText $(if ($isNight) { "Night work has sharper edges: private jobs, ring wagers, and rooms that pay attention once lanterns are lit." } else { "Day work is easier to ask for openly: posted jobs, honest labor, and trouble that still pretends to be respectable." }) `
+                -RepeatText "The work choices are familiar now; only the open doors and posted trouble need checking."
+            $showIntro = $false
+        }
         Write-ColorLine ""
         Write-ColorLine $(if ($isNight) { "1. Seek late work" } else { "1. Seek work" }) "White"
         Write-ColorLine $(if ($isNight) { "2. Head for the fighting ring" } else { "2. Visit the fighting ring (opens at night)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Ring") { "White" } else { "DarkGray" })

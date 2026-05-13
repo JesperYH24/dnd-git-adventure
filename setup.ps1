@@ -154,6 +154,30 @@ function Reset-TownDailyActivityState {
     $Game.Town.PerformanceVenuesToday = @{}
 }
 
+function Reset-TownTransientFlavorState {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return
+    }
+
+    if ($null -ne $Game.Town.StreetFlags) {
+        foreach ($key in @($Game.Town.StreetFlags.Keys)) {
+            if ($key -like "FlavorVisit_*" -or $key -eq "SeekWorkTroubleLineSeen") {
+                $Game.Town.StreetFlags.Remove($key)
+            }
+        }
+    }
+
+    if ($null -ne $Game.Town.InnFlags) {
+        foreach ($key in @($Game.Town.InnFlags.Keys)) {
+            if ($key -like "InnAmbientIndex_*" -or $key -like "InnkeeperIntroIndex_*" -or $key -like "InnVisitSeen_*") {
+                $Game.Town.InnFlags.Remove($key)
+            }
+        }
+    }
+}
+
 function Advance-TownToNextDay {
     param(
         $Game,
@@ -169,6 +193,7 @@ function Advance-TownToNextDay {
     $Game.Town.DayNumber = (Get-TownDayNumber -Game $Game) + 1
     Set-TownTimeOfDay -Game $Game -TimeOfDay $StartingTimeOfDay
     Reset-TownDailyActivityState -Game $Game -WorkedForRoomToday $WorkedForRoomToday -RingFoughtToday $RingFoughtToday
+    Reset-TownTransientFlavorState -Game $Game
 }
 
 function Initialize-Game {
