@@ -43,8 +43,22 @@ function Test-InnkeeperConversationServiceChangesBetweenDayAndNight {
     Assert-True -Condition ($nightText -like "*Wine*" -or $nightText -like "*dinner*" -or $nightText -like "*silver*") -Message "Night innkeeper talk should frame the conversation around evening service."
 }
 
+function Test-BentNailInnkeeperIntroRotatesBetweenVisits {
+    $game = Initialize-Game
+    $game.Town.ActiveInn = (Get-TownInns | Where-Object { $_.Id -eq "bent_nail" } | Select-Object -First 1)
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+
+    $first = Get-InnkeeperConversationIntro -Game $game -Inn $game.Town.ActiveInn -RepeatVisit $false
+    $second = Get-InnkeeperConversationIntro -Game $game -Inn $game.Town.ActiveInn -RepeatVisit $true
+    $third = Get-InnkeeperConversationIntro -Game $game -Inn $game.Town.ActiveInn -RepeatVisit $true
+
+    Assert-True -Condition ($first -like "*Marta*" -and $second -like "*Marta*" -and $third -like "*Bent Nail*") -Message "Bent Nail innkeeper intros should keep Marta and the room present."
+    Assert-True -Condition ($first -ne $second -and $second -ne $third -and $first -ne $third) -Message "Bent Nail innkeeper conversations should not open with the same line every visit."
+}
+
 Test-LanternRestAmbientTextShiftsBetweenDayAndNight
 Test-BentNailDiningRoomGetsDaytimeMealFlavor
 Test-InnkeeperConversationServiceChangesBetweenDayAndNight
+Test-BentNailInnkeeperIntroRotatesBetweenVisits
 
 Write-Host "Inn day/night text tests passed." -ForegroundColor Green

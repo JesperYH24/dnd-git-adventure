@@ -1352,6 +1352,81 @@ function Format-InnConversationText {
     return "$serviceText $Line"
 }
 
+function Get-InnkeeperConversationIntro {
+    param(
+        $Game,
+        $Inn,
+        [bool]$RepeatVisit = $false
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Inn) {
+        return ""
+    }
+
+    $flagKey = "InnkeeperIntroIndex_$($Inn.Id)"
+    $currentIndex = if ($null -ne $Game.Town.InnFlags[$flagKey]) { [int]$Game.Town.InnFlags[$flagKey] } else { 0 }
+    $heroName = $Game.Hero.Name
+    $isNight = (Get-TownTimeOfDay -Game $Game) -eq "Night"
+
+    $lines = switch ($Inn.Id) {
+        "bent_nail" {
+            if ($isNight) {
+                @(
+                    "Marta One-Eye catches $heroName between a shouted ale order and a thrown warning to the dice table, then makes space at the bar like it costs her money.",
+                    "Marta answers without fully turning from the room. Her good eye stays on the tables, but the tilt of her head says $heroName has her attention.",
+                    "The Bent Nail keeps trying to become a fight behind $heroName. Marta lets it breathe exactly long enough before slapping the bar once and making the room remember who owns the floor."
+                )
+            }
+            else {
+                @(
+                    "Marta scrapes a bowl across the counter, counts the lunch crowd by habit, and gives $heroName the narrow slice of patience she reserves for paying guests.",
+                    "Daylight makes the Bent Nail look smaller and meaner. Marta seems to prefer it that way, watching $heroName over a stew pot that smells stronger than the ale.",
+                    "Marta pauses with a rag in one hand and a ledger knife in the other, as if either tool might become useful depending on how the conversation goes."
+                )
+            }
+        }
+        "lantern_rest" {
+            if ($isNight) {
+                @(
+                    "Oren Vale finishes sending a supper plate toward the caravan tables before turning to $heroName with a host's practiced, steady attention.",
+                    "The Lantern Rest hums around Oren in clean layers: plates, ledgers, travel plans, and the kind of worry a good innkeeper knows how to soften.",
+                    "Oren checks the hearth, the door, and $heroName in the same calm sweep, as if hospitality is mostly the art of noticing trouble early."
+                )
+            }
+            else {
+                @(
+                    "Oren sets down a breakfast account, wipes his hands, and gives $heroName the composed look of a man who trusts order because he rebuilds it every morning.",
+                    "Day service moves neatly behind Oren: bread sliced, cups filled, routes discussed, and no voice allowed to spoil the room.",
+                    "Oren steps out from behind a stack of clean cups, already wearing the patient expression of someone prepared to make the city sound manageable."
+                )
+            }
+        }
+        "silver_kettle" {
+            if ($isNight) {
+                @(
+                    "Madam Seraphine lets a servant pass with wine before she turns to $heroName, every inch of the pause arranged to feel accidental.",
+                    "The Silver Kettle lowers its voice around Madam Seraphine. She notices $heroName noticing, and smiles as if that, too, was part of the service.",
+                    "Madam Seraphine adjusts one silver lamp-cap, judges the room's reflection in it, then grants $heroName the sort of attention usually priced by the hour."
+                )
+            }
+            else {
+                @(
+                    "Madam Seraphine leaves a luncheon table laughing softly behind her and meets $heroName with a look polished bright enough to count as tableware.",
+                    "Daylight has not made the Silver Kettle less theatrical. Madam Seraphine simply performs refinement at a lower volume.",
+                    "Madam Seraphine folds a note, dismisses a servant with two fingers, and turns to $heroName as if this conversation has just been placed on the proper tray."
+                )
+            }
+        }
+        default {
+            @("$($Inn.Keeper) pauses long enough to give $heroName the attention due a paying guest.")
+        }
+    }
+
+    $selectedLine = $lines[$currentIndex % $lines.Count]
+    $Game.Town.InnFlags[$flagKey] = $currentIndex + 1
+    return $selectedLine
+}
+
 function Get-InnkeeperClienteleTalk {
     param($Game)
 
@@ -1512,14 +1587,9 @@ function Start-InnkeeperMenu {
         Write-SectionTitle -Text "Innkeeper" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Innkeeper"
         if ($showIntro) {
-            if ((Get-TownTimeOfDay -Game $Game) -eq "Night") {
-                Write-Scene "$($inn.Keeper) keeps one eye on the room, the other on $($Game.Hero.Name), and the rest of their attention on the sort of evening service that can turn rowdy or profitable without warning."
-            }
-            else {
-                Write-Scene "$($inn.Keeper) moves through the day's service with practiced calm, pausing long enough to give $($Game.Hero.Name) the attention due a paying guest."
-            }
             $metInnkeeperKey = "InnkeeperMet_$($inn.Id)"
             $repeatVisit = [bool]$Game.Town.InnFlags[$metInnkeeperKey]
+            Write-Scene (Get-InnkeeperConversationIntro -Game $Game -Inn $inn -RepeatVisit $repeatVisit)
             Write-Scene (Get-InnKeeperGreeting -Inn $inn -Hero $Game.Hero -RepeatVisit $repeatVisit)
             $Game.Town.InnFlags[$metInnkeeperKey] = $true
             $showIntro = $false
