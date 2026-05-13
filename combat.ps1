@@ -896,7 +896,8 @@ function Resolve-HeroBonusAction {
         $Monster,
         [ref]$MonsterHP,
         $HeroHP = $null,
-        $HeroTurnEnded = $null
+        $HeroTurnEnded = $null,
+        $BonusActionCancelled = $null
     )
 
     if ($MonsterHP.Value -le 0) {
@@ -907,11 +908,20 @@ function Resolve-HeroBonusAction {
         Initialize-HeroBarbarianResources -Hero $Hero
         Write-ColorLine "Bonus Action" "Cyan"
         $frenzyText = if (Test-HeroCanUseFrenzy -Hero $Hero) { "   F. Frenzy" } else { "" }
-        Write-ColorLine "R. Rage ($($Hero.CurrentRages)/$($Hero.MaxRages) left)$frenzyText   N. No bonus action" "White"
+        Write-ColorLine "R. Rage ($($Hero.CurrentRages)/$($Hero.MaxRages) left)$frenzyText   N. No bonus action   B. Back" "White"
         Write-ColorLine ""
 
         while ($true) {
             $choice = (Read-Host "Choose bonus action").ToUpper()
+
+            if ($choice -eq "B") {
+                if ($null -ne $BonusActionCancelled) {
+                    $BonusActionCancelled.Value = $true
+                }
+
+                Write-ColorLine ""
+                return $false
+            }
 
             if ($choice -eq "N") {
                 Write-ColorLine ""
@@ -944,7 +954,7 @@ function Resolve-HeroBonusAction {
                 return $frenzy.Success
             }
 
-            Write-ColorLine $(if (Test-HeroCanUseFrenzy -Hero $Hero) { "Choose R, F or N." } else { "Choose R or N." }) "DarkYellow"
+            Write-ColorLine $(if (Test-HeroCanUseFrenzy -Hero $Hero) { "Choose R, F, N or B." } else { "Choose R, N or B." }) "DarkYellow"
             Write-ColorLine ""
         }
     }
@@ -952,11 +962,20 @@ function Resolve-HeroBonusAction {
     if ($Hero.Class -eq "Fighter") {
         Initialize-HeroFighterResources -Hero $Hero
         Write-ColorLine "Bonus Action" "Cyan"
-        Write-ColorLine "S. Second Wind ($($Hero.CurrentSecondWind)/$($Hero.MaxSecondWind) left)   N. No bonus action" "White"
+        Write-ColorLine "S. Second Wind ($($Hero.CurrentSecondWind)/$($Hero.MaxSecondWind) left)   N. No bonus action   B. Back" "White"
         Write-ColorLine ""
 
         while ($true) {
             $choice = (Read-Host "Choose bonus action").ToUpper()
+
+            if ($choice -eq "B") {
+                if ($null -ne $BonusActionCancelled) {
+                    $BonusActionCancelled.Value = $true
+                }
+
+                Write-ColorLine ""
+                return $false
+            }
 
             if ($choice -eq "N") {
                 Write-ColorLine ""
@@ -975,7 +994,7 @@ function Resolve-HeroBonusAction {
                 return $secondWind.Success
             }
 
-            Write-ColorLine "Choose S or N." "DarkYellow"
+            Write-ColorLine "Choose S, N or B." "DarkYellow"
             Write-ColorLine ""
         }
     }
@@ -985,11 +1004,20 @@ function Resolve-HeroBonusAction {
     }
 
     Write-ColorLine "Bonus Action" "Cyan"
-    Write-ColorLine "M. Vicious Mockery   N. No bonus action" "White"
+    Write-ColorLine "M. Vicious Mockery   N. No bonus action   B. Back" "White"
     Write-ColorLine ""
 
     while ($true) {
         $choice = (Read-Host "Choose bonus action").ToUpper()
+
+        if ($choice -eq "B") {
+            if ($null -ne $BonusActionCancelled) {
+                $BonusActionCancelled.Value = $true
+            }
+
+            Write-ColorLine ""
+            return $false
+        }
 
         if ($choice -eq "N") {
             Write-ColorLine ""
@@ -1026,7 +1054,7 @@ function Resolve-HeroBonusAction {
             return $true
         }
 
-        Write-ColorLine "Choose M or N." "DarkYellow"
+        Write-ColorLine "Choose M, N or B." "DarkYellow"
         Write-ColorLine ""
     }
 }
@@ -1681,8 +1709,12 @@ function Resolve-HeroCombatTurn {
                 continue
             }
 
-            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) | Out-Null
-            $bonusActionSpent = $true
+            $bonusActionCancelled = $false
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) -BonusActionCancelled ([ref]$bonusActionCancelled) | Out-Null
+
+            if (-not $bonusActionCancelled) {
+                $bonusActionSpent = $true
+            }
 
             if ($MonsterHP.Value -le 0 -or $HeroHP.Value -le 0 -or $turnHeroEnded) {
                 return

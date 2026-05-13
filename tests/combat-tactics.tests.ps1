@@ -473,6 +473,42 @@ function Test-BardBonusActionCanResolveBeforeMainAction {
     Assert-Equal -Actual $encounterFled -Expected $true -Message "The bard should still be able to take a normal action after the bonus action menu."
 }
 
+function Test-BardCanBackOutOfBonusActionMenuWithoutSpendingIt {
+    Set-TestOutputStubs
+
+    $script:responses = @("2", "B", "2", "M", "1", "R")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $heroHP = $hero.HP
+    $monsterHP = $monster.hp
+    $heroDroppedWeapon = $false
+    $monsterOffBalance = $false
+    $encounterFled = $false
+
+    Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
+
+    Assert-Equal -Actual $monsterHP -Expected 17 -Message "Backing out of the bonus action menu should leave the bonus action available."
+    Assert-Equal -Actual $encounterFled -Expected $true -Message "Backing out should return to the combat menu without ending the turn."
+    Assert-Equal -Actual $script:index -Expected 6 -Message "The turn should accept bonus action backout, later bonus action use, and then a normal action."
+}
+
 function Test-BardCanCastDissonantWhispersFromActionMenu {
     Set-TestOutputStubs
 
@@ -1059,6 +1095,7 @@ Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack
 Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage
 Test-BardCuttingWordsCanTurnHitIntoMiss
 Test-BardBonusActionCanResolveBeforeMainAction
+Test-BardCanBackOutOfBonusActionMenuWithoutSpendingIt
 Test-BardCanCastDissonantWhispersFromActionMenu
 Test-BardCanCastFaerieFireFromActionMenu
 Test-FaerieFireAdvantageAppliesToNextHeroAttack
