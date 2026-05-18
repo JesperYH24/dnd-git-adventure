@@ -66,6 +66,84 @@ function Test-BarbarianDangerSenseStartsAtLevelTwo {
     Assert-Equal -Actual ($levelTwo.HeroPerceptionTotal - $levelOne.HeroPerceptionTotal) -Expected 2 -Message "Danger Sense should improve the hero's perception total by 2."
 }
 
+function Test-InvisibilityImprovesMonsterZoneStealth {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "scale_touched_mastiff" } | Select-Object -First 1
+
+    $visible = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 20 -HeroStealthRoll 5 -CreaturePerceptionRoll 10 -CreatureStealthRoll 1
+    Invoke-HeroInvisibility -Hero $hero | Out-Null
+    $invisible = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 20 -HeroStealthRoll 5 -CreaturePerceptionRoll 10 -CreatureStealthRoll 1
+
+    Assert-Equal -Actual $visible.CreatureDetects -Expected $true -Message "The creature should detect the visible bard in the controlled check."
+    Assert-Equal -Actual $invisible.CreatureDetects -Expected $false -Message "Invisibility should help the bard avoid monster-zone detection."
+    Assert-Equal -Actual $invisible.Outcome -Expected "HeroAdvantage" -Message "Invisibility should help the bard sneak up after spotting a creature."
+}
+
+function Test-MonsterZoneKeenSensesHelpAgainstStealth {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Invoke-HeroInvisibility -Hero $hero | Out-Null
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "scale_touched_mastiff" } | Select-Object -First 1
+
+    $result = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 20 -HeroStealthRoll 5 -CreaturePerceptionRoll 10 -CreatureStealthRoll 1
+
+    Assert-Equal -Actual $result.CreatureSenseBonus -Expected 2 -Message "Keen-scent creatures should add their sense bonus to the perception side of the stealth contest."
+    Assert-Equal -Actual $result.CreaturePerceptionTotal -Expected 16 -Message "Creature perception total should include base perception and keen senses."
+    Assert-Equal -Actual $result.InvisibilityCountered -Expected $false -Message "Keen senses should help detection without fully countering Invisibility."
+}
+
+function Test-MonsterZoneBlindsightCountersInvisibilityBonus {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "grave_hungry_thing" } | Select-Object -First 1
+
+    $visible = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 20 -HeroStealthRoll 5 -CreaturePerceptionRoll 10 -CreatureStealthRoll 1
+    Invoke-HeroInvisibility -Hero $hero | Out-Null
+    $invisible = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 20 -HeroStealthRoll 5 -CreaturePerceptionRoll 10 -CreatureStealthRoll 1
+
+    Assert-Equal -Actual $invisible.CreatureSenseBonus -Expected 3 -Message "Blindsight should still add its sense bonus to perception."
+    Assert-Equal -Actual $invisible.InvisibilityCountered -Expected $true -Message "Blindsight should counter Invisibility's stealth bonus in monster-zone awareness."
+    Assert-Equal -Actual $invisible.HeroStealthTotal -Expected $visible.HeroStealthTotal -Message "Blindsight should remove the extra Invisibility stealth bonus from the contest."
+}
+
+function Test-BardCanCastInvisibilityFromMonsterZoneMenu {
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.Level = 4
+    Initialize-HeroSpellcasting -Hero $game.Hero | Out-Null
+    Restore-HeroSpellSlots -Hero $game.Hero | Out-Null
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $heroHP = $game.Hero.HP
+
+    $script:MonsterZoneInput = [System.Collections.Queue]::new()
+    foreach ($choice in @("V", "0")) {
+        $script:MonsterZoneInput.Enqueue($choice)
+    }
+
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:MonsterZoneInput.Count -eq 0) {
+            throw "No monster-zone test input remains for prompt '$Prompt'."
+        }
+
+        return $script:MonsterZoneInput.Dequeue()
+    }
+
+    try {
+        Start-MonsterZoneMenu -Game $game -HeroHP ([ref]$heroHP)
+    }
+    finally {
+        Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+    }
+
+    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "The monster-zone menu should let a level 4 bard cast Invisibility out of combat."
+    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Monster-zone Invisibility should spend one level 2 spell slot."
+}
+
 function Test-PackAnimalControlsMonsterOddityCapacity {
     $game = Initialize-Game
     $creature = Get-MonsterZoneCreatures | Select-Object -First 1
@@ -118,6 +196,10 @@ Test-MonsterZoneTravelFindsPersistentLandmark
 Test-MonsterZoneSoftEdgeBlocksOvertravel
 Test-WildernessAwarenessCanGiveHeroAdvantage
 Test-BarbarianDangerSenseStartsAtLevelTwo
+Test-InvisibilityImprovesMonsterZoneStealth
+Test-MonsterZoneKeenSensesHelpAgainstStealth
+Test-MonsterZoneBlindsightCountersInvisibilityBonus
+Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
 Test-CampImprovementLowersNightRisk

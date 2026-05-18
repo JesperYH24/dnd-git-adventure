@@ -87,6 +87,22 @@ function Test-TownHeroResourceHudShowsMartialResources {
     Assert-True -Condition ($fighterHud -like "*Action Surge 1/1*") -Message "The resource HUD should show fighter Action Surge once it is unlocked."
 }
 
+function Test-BardCanCastInvisibilityFromQuestPreparation {
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.Level = 4
+    $game.Hero.LevelCap = 4
+    Restore-HeroSpellSlots -Hero $game.Hero | Out-Null
+    $heroHP = $game.Hero.HP
+    $quest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
+    Set-TestReadHostSequence -Values @("6", "4")
+
+    Start-TownQuestPreparationMenu -Game $game -HeroHP ([ref]$heroHP) -Quest $quest
+
+    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "Quest preparation should let a level 4 bard cast Invisibility before danger."
+    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Preparing Invisibility should spend one level 2 spell slot."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The preparation menu should accept invisibility then back out."
+}
+
 function Test-TownLocationIntroShortensAfterRepeatVisits {
     $game = Initialize-Game
     $key = Get-TownFlavorVisitKey -Prefix "Vendor" -Name "Market"
@@ -281,6 +297,7 @@ Test-TownHeroHudShowsNameHpAndCoin
 Test-TownHeroHudFlagsLevelUpReady
 Test-TownHeroResourceHudShowsBardResources
 Test-TownHeroResourceHudShowsMartialResources
+Test-BardCanCastInvisibilityFromQuestPreparation
 Test-TownLocationIntroShortensAfterRepeatVisits
 Test-TownLocationIntroResetsAfterRest
 Test-DocksDistrictUnlocksAfterLadyVeyraReveal

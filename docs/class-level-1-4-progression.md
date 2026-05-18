@@ -53,7 +53,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 | Level | Target Feature | Current Status | Notes |
 |---:|---|---|---|
 | 1 | Bardic Inspiration | Implemented | Prepared with an instrument. Dice scale from CHA in this game and can support attack/defense/focus moments. |
-| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
+| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
 | 2 | Jack of All Trades | Implemented | Adds half proficiency to non-proficient ability checks. |
 | 2 | Song of Rest | Implemented | Adds `1d6` extra healing to Bard short rests. |
 | 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, `Investigation`, and `Insight` proficiencies at level 3. |
@@ -140,10 +140,11 @@ Completed next pass:
 4. Add `Faerie Fire` as a level 1 combat setup spell with a Dexterity save, level 1 slot cost, and next-attack advantage on a failed save.
 5. Add `Charm Person` as a tagged social quest spell: spends a level 1 slot, gives the target a Wisdom save with advantage, and grants advantage on the social CHA check only if the save fails.
 6. Add `Suggestion` as a first-pass level 2 social quest spell: spends a level 2 slot, gives the target a Wisdom save, and resolves tagged higher-pressure social openings on a failed save.
+7. Add `Invisibility` as a level 4 out-of-combat spell: spends a level 2 slot and grants a strong stealth bonus from quest prep, monster-zone exploration, and calm dungeon rooms.
 
 Next pass:
 
 1. Tune level 3-4 enemy difficulty against the now-complete class kits.
 2. Add the next Bard spell layer:
-   - broaden level 2 utility/control beyond the first `Suggestion` social hooks.
+   - broaden level 2 utility/control beyond the first `Suggestion` and `Invisibility` hooks.
 3. Decide whether fixed Lore expertise should become player-chosen later.

@@ -1041,8 +1041,14 @@ function Start-TownQuestPreparationMenu {
         if ($Game.Hero.Class -eq "Bard") {
             $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Game.Hero
             $instrumentName = if ($null -ne $bardicStatus.Instrument) { $bardicStatus.Instrument.Name } else { "your instrument" }
+            $invisibilityCheck = Test-HeroCanCastSpell -Hero $Game.Hero -SpellName "Invisibility"
             Write-ColorLine "5. Prepare bardic inspiration with $instrumentName" "White"
             Write-ColorLine "   Current: $($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides)" "DarkGray"
+            if ($invisibilityCheck.CanCast) {
+                $invisibilityStatus = if ((Get-HeroInvisibilityStealthBonus -Hero $Game.Hero) -gt 0) { "active" } else { "L2 slots $($Game.Hero.CurrentSpellSlots.Level2)/$($Game.Hero.MaxSpellSlots.Level2)" }
+                Write-ColorLine "6. Cast Invisibility before danger" "White"
+                Write-ColorLine "   Current: $invisibilityStatus" "DarkGray"
+            }
         }
         Write-TextSpeedOption
         Write-ColorLine ""
@@ -1067,6 +1073,20 @@ function Start-TownQuestPreparationMenu {
                 if ($Game.Hero.Class -eq "Bard") {
                     $preparation = Prepare-HeroBardicInspiration -Hero $Game.Hero
                     Write-Scene $preparation.Message
+                    Write-ColorLine ""
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+            "6" {
+                if ($Game.Hero.Class -eq "Bard") {
+                    $invisibility = Invoke-HeroInvisibility -Hero $Game.Hero
+                    Write-Scene $invisibility.Message
+                    if ($invisibility.Success) {
+                        Write-Action "Invisibility: +$(Get-HeroInvisibilityStealthBonus -Hero $Game.Hero) to Stealth checks. Level 2 slots left: $($invisibility.SlotsRemaining)." "Yellow"
+                    }
                     Write-ColorLine ""
                 }
                 else {

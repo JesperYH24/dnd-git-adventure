@@ -1110,6 +1110,10 @@ function Show-UnderstreetRoomActions {
         Write-ColorLine "R. Secure this room and take a short rest" "White"
     }
 
+    if (($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) -and (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Hero)) {
+        Write-ColorLine (Get-HeroInvisibilityOutOfCombatOptionText -Hero $Hero) "White"
+    }
+
     Write-ColorLine "I. Open inventory" "White"
     Write-ColorLine "L. Check room loot" "White"
     Write-ColorLine "S. View status" "White"
@@ -1413,6 +1417,15 @@ function Start-UnderstreetComplexExploration {
                 "R" {
                     Secure-UnderstreetRoomAndRest -Game $Game -Room $room -HeroHP $HeroHP
                 }
+                "V" {
+                    if (($room.EncounterResolved -or [string]::IsNullOrWhiteSpace($room.EncounterFactory)) -and (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero)) {
+                        Invoke-HeroOutOfCombatInvisibilityAction -Hero $Game.Hero | Out-Null
+                    }
+                    else {
+                        Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+                        Write-ColorLine ""
+                    }
+                }
                 "I" {
                     Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP -Room $room | Out-Null
                 }
@@ -1503,6 +1516,15 @@ function Start-CivicVaultExploration {
                 }
                 "R" {
                     Secure-UnderstreetRoomAndRest -Game $Game -Room $room -HeroHP $HeroHP
+                }
+                "V" {
+                    if (($room.EncounterResolved -or [string]::IsNullOrWhiteSpace($room.EncounterFactory)) -and (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero)) {
+                        Invoke-HeroOutOfCombatInvisibilityAction -Hero $Game.Hero | Out-Null
+                    }
+                    else {
+                        Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+                        Write-ColorLine ""
+                    }
                 }
                 "I" {
                     Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP -Room $room | Out-Null

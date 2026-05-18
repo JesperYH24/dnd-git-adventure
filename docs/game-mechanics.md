@@ -50,7 +50,7 @@
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
 - current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, and `scale_touched_mastiff`
 - all three current classes have `Perception` proficiency, so the Bard is not automatically worse in the wilderness awareness phase; Fighter is currently slightly weaker at raw `Stealth` because of lower `DEX`, and armor stealth penalties are not implemented yet
-- creature flavor differs mechanically through HP, AC, attack, `PerceptionBonus`, and `StealthBonus`, but class-specific wilderness approach options are still future work
+- creature flavor differs mechanically through HP, AC, attack, `PerceptionBonus`, `StealthBonus`, and senses; keen senses add extra Perception, while blindsight can counter the Invisibility stealth bonus
 
 Current camp levels:
 
@@ -76,6 +76,7 @@ Current camp levels:
 - `Vicious Mockery` uses a `WIS` save
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
 - `Suggestion` can spend a level 2 slot on tagged higher-pressure social quest checks; the target rolls a Wisdom save, and a failed save resolves the social opening without a further ability check
+- `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms at Bard level 4, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; creatures with blindsight can counter that invisibility bonus
 - `Cutting Words` works as a reaction and spends bardic inspiration
 - prepared bardic inspiration recovers on short rest
 - `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack

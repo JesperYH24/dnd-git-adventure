@@ -1268,6 +1268,40 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
     Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
 }
 
+function Test-BardCanCastInvisibilityInCalmUnderstreetRoom {
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.Level = 4
+    Initialize-HeroSpellcasting -Hero $game.Hero | Out-Null
+    Restore-HeroSpellSlots -Hero $game.Hero | Out-Null
+    $heroHP = $game.Hero.HP
+
+    $script:UnderstreetInput = [System.Collections.Queue]::new()
+    foreach ($choice in @("V", "Q")) {
+        $script:UnderstreetInput.Enqueue($choice)
+    }
+
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:UnderstreetInput.Count -eq 0) {
+            throw "No understreet test input remains for prompt '$Prompt'."
+        }
+
+        return $script:UnderstreetInput.Dequeue()
+    }
+
+    try {
+        $result = Start-UnderstreetComplexExploration -Game $game -HeroHP ([ref]$heroHP)
+    }
+    finally {
+        Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+    }
+
+    Assert-Equal -Actual $result -Expected "Withdrawn" -Message "The test should withdraw after casting Invisibility in the calm starting room."
+    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "A calm Understreet room should let a level 4 bard cast Invisibility out of combat."
+    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Dungeon-room Invisibility should spend one level 2 spell slot."
+}
+
 function Test-UnderstreetComplexIncludesExtendedMazeLayout {
     $rooms = Get-UnderstreetComplexRooms
 
@@ -1634,6 +1668,20 @@ function Test-BardJackOfAllTradesStartsAtLevelTwo {
     Assert-Equal -Actual (Format-HeroAbilityCheckBonusText -CheckProfile $levelTwo) -Expected " + 1 Jack of All Trades" -Message "Check result text should name Jack of All Trades."
 }
 
+function Test-InvisibilityBoostsBardStealthChecks {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Invoke-HeroInvisibility -Hero $hero | Out-Null
+
+    $profile = Get-HeroAbilityCheckModifier -Hero $hero -Ability "DEX" -CheckTag "Stealth"
+
+    Assert-Equal -Actual $profile.BuffBonus -Expected 10 -Message "Invisibility should add a strong stealth bonus."
+    Assert-Equal -Actual $profile.TotalModifier -Expected ($profile.AbilityModifier + $profile.ClassBonus + 10) -Message "Invisibility should be included in stealth totals."
+    Assert-Equal -Actual (Format-HeroAbilityCheckBonusText -CheckProfile $profile) -Expected " + 1 Jack of All Trades + 10 Invisibility" -Message "Stealth check text should include Jack of All Trades and Invisibility."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Casting Invisibility should spend one level 2 spell slot."
+}
+
 function Test-BardExpertiseStartsAtLevelThree {
     $hero = Get-Hero -Class "Bard"
     $hero.Level = 3
@@ -1777,6 +1825,7 @@ Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
 Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetShortRestHealsAndClearsBuff
+Test-BardCanCastInvisibilityInCalmUnderstreetRoom
 Test-UnderstreetComplexIncludesExtendedMazeLayout
 Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
 Test-BardUnderstreetFinaleUsesClassAwareText
@@ -1808,6 +1857,7 @@ Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
 Test-BardJackOfAllTradesStartsAtLevelTwo
+Test-InvisibilityBoostsBardStealthChecks
 Test-BardExpertiseStartsAtLevelThree
 
 Write-Host "City quest tests passed." -ForegroundColor Green

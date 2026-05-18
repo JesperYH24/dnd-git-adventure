@@ -278,7 +278,10 @@ function New-MonsterZoneCreature {
         [int]$StealthBonus,
         [string]$OddityName,
         [int]$OddityValue,
-        [string]$IntroText
+        [string]$IntroText,
+        [string[]]$SenseTraits = @(),
+        [int]$SenseBonus = 0,
+        [bool]$CountersInvisibility = $false
     )
 
     return @{
@@ -301,6 +304,9 @@ function New-MonsterZoneCreature {
         isBoss = $false
         perceptionBonus = $PerceptionBonus
         stealthBonus = $StealthBonus
+        senseTraits = @($SenseTraits)
+        senseBonus = $SenseBonus
+        countersInvisibility = $CountersInvisibility
         oddityName = $OddityName
         oddityValue = $OddityValue
         introText = $IntroText
@@ -309,16 +315,32 @@ function New-MonsterZoneCreature {
 
 function Get-MonsterZoneCreatures {
     return @(
-        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall.")
-        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves.")
-        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite.")
+        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall." -SenseTraits @("Keen Hearing and Smell") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves." -SenseTraits @("Keen Smell") -SenseBonus 1)
+        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true)
         (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token.")
-        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be.")
+        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -SenseTraits @("Keen Smell") -SenseBonus 2)
     )
 }
 
 function Get-RandomMonsterZoneCreature {
     return (Get-MonsterZoneCreatures | Get-Random)
+}
+
+function Get-MonsterZoneCreatureSenseBonus {
+    param($Creature)
+
+    if ($null -eq $Creature -or $null -eq $Creature.senseBonus) {
+        return 0
+    }
+
+    return [int]$Creature.senseBonus
+}
+
+function Test-MonsterZoneCreatureCountersInvisibility {
+    param($Creature)
+
+    return ($null -ne $Creature -and $null -ne $Creature.countersInvisibility -and [bool]$Creature.countersInvisibility)
 }
 
 function Resolve-WildernessAwareness {
@@ -340,10 +362,13 @@ function Resolve-WildernessAwareness {
     $heroStealth = Get-HeroWildernessSkillModifier -Hero $Hero -Skill "Stealth"
     $creaturePerceptionBonus = if ($null -ne $Creature.perceptionBonus) { [int]$Creature.perceptionBonus } else { 0 }
     $creatureStealthBonus = if ($null -ne $Creature.stealthBonus) { [int]$Creature.stealthBonus } else { 0 }
+    $creatureSenseBonus = Get-MonsterZoneCreatureSenseBonus -Creature $Creature
+    $invisibilityCountered = ((Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0 -and (Test-MonsterZoneCreatureCountersInvisibility -Creature $Creature))
+    $counteredInvisibilityBonus = if ($invisibilityCountered) { Get-HeroInvisibilityStealthBonus -Hero $Hero } else { 0 }
     $dangerSenseBonus = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "DangerSense") { 2 } else { 0 }
     $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus
-    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier
-    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus
+    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier - $counteredInvisibilityBonus
+    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus + $creatureSenseBonus
     $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus
     $heroDetects = $heroPerceptionTotal -ge $creatureStealthTotal
     $creatureDetects = $creaturePerceptionTotal -ge $heroStealthTotal
@@ -373,6 +398,8 @@ function Resolve-WildernessAwareness {
         CreaturePerceptionRoll = $CreaturePerceptionRoll
         CreatureStealthRoll = $CreatureStealthRoll
         DangerSenseBonus = $dangerSenseBonus
+        CreatureSenseBonus = $creatureSenseBonus
+        InvisibilityCountered = $invisibilityCountered
     }
 }
 
@@ -554,6 +581,13 @@ function Start-MonsterZoneEncounter {
     $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature
     Write-Scene "$($Game.Hero.Name)'s Perception total $($awareness.HeroPerceptionTotal) contests $($creature.definite)'s Stealth total $($awareness.CreatureStealthTotal)."
     Write-Scene "$($creature.definite)'s Perception total $($awareness.CreaturePerceptionTotal) contests $($Game.Hero.Name)'s Stealth total $($awareness.HeroStealthTotal)."
+    if ($awareness.CreatureSenseBonus -gt 0) {
+        $senseText = if ($null -ne $creature.senseTraits -and @($creature.senseTraits).Count -gt 0) { @($creature.senseTraits) -join ", " } else { "heightened senses" }
+        Write-Scene "$($creature.definite)'s $senseText helps it read the approach. (+$($awareness.CreatureSenseBonus) Perception)"
+    }
+    if ($awareness.InvisibilityCountered) {
+        Write-Scene "$($creature.definite)'s senses do not rely on sight alone; Invisibility cannot carry the whole approach here."
+    }
     Write-ColorLine ""
 
     switch ($awareness.Outcome) {
@@ -652,6 +686,9 @@ function Start-MonsterZoneMenu {
         Write-ColorLine "7. Sleep under the open sky" "White"
         Write-ColorLine "8. Return to the city gate" "White"
         Write-ColorLine "S. Status" "White"
+        if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero) {
+            Write-ColorLine (Get-HeroInvisibilityOutOfCombatOptionText -Hero $Game.Hero) "White"
+        }
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
@@ -718,6 +755,15 @@ function Start-MonsterZoneMenu {
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
+            }
+            "V" {
+                if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero) {
+                    Invoke-HeroOutOfCombatInvisibilityAction -Hero $Game.Hero | Out-Null
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                }
             }
             "0" {
                 return

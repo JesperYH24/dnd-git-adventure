@@ -333,6 +333,20 @@ function Get-HeroHasInitiativeAdvantage {
     return $Hero.ActiveBuff.Type -eq "Haste"
 }
 
+function Get-HeroInvisibilityStealthBonus {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["ActiveBuff"] -or $null -eq $Hero.ActiveBuff) {
+        return 0
+    }
+
+    if ($Hero.ActiveBuff.Type -ne "Invisibility") {
+        return 0
+    }
+
+    return 10
+}
+
 function Get-HeroAvailableLevelUps {
     param($Hero)
 
@@ -1113,10 +1127,17 @@ function Get-HeroAbilityCheckModifier {
         $classBonus = [Math]::Floor($proficiencyBonus / 2)
     }
 
+    $buffBonus = 0
+
+    if ([string]::Equals($normalizedTag, "Stealth", [System.StringComparison]::OrdinalIgnoreCase)) {
+        $buffBonus = Get-HeroInvisibilityStealthBonus -Hero $Hero
+    }
+
     return [PSCustomObject]@{
         AbilityModifier = $modifier
         ClassBonus = $classBonus
-        TotalModifier = $modifier + $classBonus
+        BuffBonus = $buffBonus
+        TotalModifier = $modifier + $classBonus + $buffBonus
         CheckTag = $normalizedTag
         IsProficient = $isProficient
         IsExpertise = $isExpertise
@@ -1127,23 +1148,37 @@ function Get-HeroAbilityCheckModifier {
 function Format-HeroAbilityCheckBonusText {
     param($CheckProfile)
 
-    if ($null -eq $CheckProfile -or [int]$CheckProfile.ClassBonus -le 0) {
+    if ($null -eq $CheckProfile) {
         return ""
     }
 
+    $parts = @()
     $source = if ($null -ne $CheckProfile.PSObject.Properties["BonusSource"]) { [string]$CheckProfile.BonusSource } else { "" }
 
-    switch ($source) {
-        "Expertise" { return " + $($CheckProfile.ClassBonus) Expertise" }
-        "JackOfAllTrades" { return " + $($CheckProfile.ClassBonus) Jack of All Trades" }
-        default {
-            if ($null -ne $CheckProfile.PSObject.Properties["IsExpertise"] -and [bool]$CheckProfile.IsExpertise) {
-                return " + $($CheckProfile.ClassBonus) Expertise"
+    if ([int]$CheckProfile.ClassBonus -gt 0) {
+        switch ($source) {
+            "Expertise" { $parts += "+ $($CheckProfile.ClassBonus) Expertise" }
+            "JackOfAllTrades" { $parts += "+ $($CheckProfile.ClassBonus) Jack of All Trades" }
+            default {
+                if ($null -ne $CheckProfile.PSObject.Properties["IsExpertise"] -and [bool]$CheckProfile.IsExpertise) {
+                    $parts += "+ $($CheckProfile.ClassBonus) Expertise"
+                }
+                else {
+                    $parts += "+ $($CheckProfile.ClassBonus) proficiency"
+                }
             }
-
-            return " + $($CheckProfile.ClassBonus) proficiency"
         }
     }
+
+    if ($null -ne $CheckProfile.PSObject.Properties["BuffBonus"] -and [int]$CheckProfile.BuffBonus -gt 0) {
+        $parts += "+ $($CheckProfile.BuffBonus) Invisibility"
+    }
+
+    if ($parts.Count -eq 0) {
+        return ""
+    }
+
+    return " $($parts -join ' ')"
 }
 
 function Get-HeroSpellSaveDC {
@@ -1449,6 +1484,46 @@ function Use-HeroSpellSlot {
         SpellLevel = $SpellLevel
         SlotsRemaining = [int]$Hero.CurrentSpellSlots[$slotKey]
         Message = "$($Hero.Name) spends one level $SpellLevel spell slot."
+    }
+}
+
+function Invoke-HeroInvisibility {
+    param($Hero)
+
+    $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Invisibility"
+
+    if (-not $castCheck.CanCast) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = $castCheck.Message
+            SlotsRemaining = if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["CurrentSpellSlots"] -and $null -ne $Hero.CurrentSpellSlots -and $Hero.CurrentSpellSlots.ContainsKey("Level2")) { [int]$Hero.CurrentSpellSlots.Level2 } else { 0 }
+        }
+    }
+
+    if ((Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) is already wrapped in invisibility."
+            SlotsRemaining = [int]$Hero.CurrentSpellSlots.Level2
+        }
+    }
+
+    $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$castCheck.Spell.SpellLevel)
+
+    if (-not $slotUse.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = $slotUse.Message
+            SlotsRemaining = [int]$slotUse.SlotsRemaining
+        }
+    }
+
+    Apply-HeroBuff -Hero $Hero -BuffType "Invisibility" -BuffName "Invisibility"
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) folds light around himself, ready to move unseen until danger breaks the moment."
+        SlotsRemaining = [int]$slotUse.SlotsRemaining
     }
 }
 

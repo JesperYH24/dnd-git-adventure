@@ -1,3 +1,50 @@
+function Test-HeroInvisibilityOutOfCombatOptionVisible {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Bard") {
+        return $false
+    }
+
+    if ((Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0) {
+        return $true
+    }
+
+    $spellCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Invisibility"
+    return ($null -ne $spellCheck.Spell)
+}
+
+function Get-HeroInvisibilityOutOfCombatOptionText {
+    param($Hero)
+
+    if ((Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0) {
+        return "V. Invisibility is active"
+    }
+
+    $spellCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Invisibility"
+
+    if ($null -eq $spellCheck.Spell) {
+        return ""
+    }
+
+    $slotsRemaining = if ($Hero.CurrentSpellSlots.ContainsKey("Level2")) { [int]$Hero.CurrentSpellSlots.Level2 } else { 0 }
+    $maxSlots = if ($Hero.MaxSpellSlots.ContainsKey("Level2")) { [int]$Hero.MaxSpellSlots.Level2 } else { 0 }
+    return "V. Cast Invisibility (L2 slots $slotsRemaining/$maxSlots)"
+}
+
+function Invoke-HeroOutOfCombatInvisibilityAction {
+    param($Hero)
+
+    $result = Invoke-HeroInvisibility -Hero $Hero
+    Write-Scene $result.Message
+
+    if ($result.Success) {
+        Write-Scene "Invisibility: +$(Get-HeroInvisibilityStealthBonus -Hero $Hero) to Stealth checks until the magic breaks or a rest clears it. Level 2 slots left: $($result.SlotsRemaining)."
+    }
+
+    Write-ColorLine ""
+    return "Handled"
+}
+
 function Invoke-ExplorationCommonAction {
     param(
         [string]$Choice,
@@ -23,6 +70,11 @@ function Invoke-ExplorationCommonAction {
             Write-HeroStatusDetails -Hero $Game.Hero -HeroHP $HeroHP.Value -Snapshot $statusSnapshot
             Write-ColorLine ""
             return "Handled"
+        }
+        "V" {
+            if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero) {
+                return Invoke-HeroOutOfCombatInvisibilityAction -Hero $Game.Hero
+            }
         }
         "T" {
             Toggle-TextSpeed | Out-Null

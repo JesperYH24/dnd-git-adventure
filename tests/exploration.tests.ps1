@@ -108,7 +108,26 @@ function Test-CaveExplorationStillAllowsLeavingEntrance {
     Assert-True -Condition (-not $game.GameWon) -Message "Leaving the cave should not mark the tutorial as won."
 }
 
+function Test-BardCanCastInvisibilityInCalmExplorationRoom {
+    Set-TestOutputStubs
+    Set-TestInputSequence -Choices @("V", "Q")
+
+    $game = Initialize-Game -Class "Bard"
+    $game.Hero.Level = 4
+    Initialize-HeroSpellcasting -Hero $game.Hero | Out-Null
+    Restore-HeroSpellSlots -Hero $game.Hero | Out-Null
+    $game.Rooms["entrance"].EncounterChance = 0
+    $heroHP = $game.Hero.HP
+    $heroDroppedWeapon = $false
+
+    Start-CaveExploration -Game $game -HeroHP ([ref]$heroHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon)
+
+    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "A level 4 bard should be able to cast Invisibility from a calm exploration room."
+    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Exploration-room Invisibility should spend one level 2 spell slot."
+}
+
 Test-RoomExplorationCanMoveBetweenGenericRooms
 Test-CaveExplorationStillAllowsLeavingEntrance
+Test-BardCanCastInvisibilityInCalmExplorationRoom
 
 Write-Host "Exploration tests passed." -ForegroundColor Green

@@ -72,6 +72,9 @@ function Show-RoomActions {
     Write-ColorLine "I. Open inventory" "White"
     Write-ColorLine "L. Check room loot" "White"
     Write-ColorLine "S. View status" "White"
+    if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Hero) {
+        Write-ColorLine (Get-HeroInvisibilityOutOfCombatOptionText -Hero $Hero) "White"
+    }
     Write-TextSpeedOption
     if ($Room.Id -eq "entrance") {
         Write-ColorLine "Q. Leave the cave" "White"
