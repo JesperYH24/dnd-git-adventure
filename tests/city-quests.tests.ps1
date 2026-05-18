@@ -364,7 +364,7 @@ function Test-BardCanCharmSeriksNameOutOfLedgerContacts {
     Set-StoryTier -Game $game -Tier 2
 
     Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("4", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -404,7 +404,7 @@ function Test-BardCanTalkWarehouseClerkIntoCorrectingALie {
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("4", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -1265,6 +1265,7 @@ function Test-UnderstreetShortRestHealsAndClearsBuff {
 
     Assert-True -Condition ($heroHP -gt 6) -Message "Securing a room in the Understreet Complex should heal Borzig during a short rest."
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Taking a short rest in a secured room should clear the current dungeon buff."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
 }
 
 function Test-UnderstreetComplexIncludesExtendedMazeLayout {
@@ -1424,6 +1425,95 @@ function Test-BardicInspirationCanBoostQuestChecks {
     Assert-Equal -Actual $hero.CurrentBardicInspirationDice -Expected 1 -Message "Spending bardic inspiration on a quest check should consume one prepared die."
 }
 
+function Test-BardCharmPersonCanBoostSocialQuestChecks {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    Use-ReadHostSequence -Values @("1")
+
+    $script:CharmPersonRolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:CharmPersonRolls.Enqueue(2)
+    $script:CharmPersonRolls.Enqueue(5)
+    $script:CharmPersonRolls.Enqueue(3)
+    $script:CharmPersonRolls.Enqueue(14)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        if ($Sides -eq 20) {
+            return $script:CharmPersonRolls.Dequeue()
+        }
+
+        return 1
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 16 -ActionText "Gariand softens the clerk's suspicion into curiosity." -CheckTag "Social"
+
+    Assert-Equal -Actual $success -Expected $true -Message "Charm Person should grant advantage to a tagged social CHA quest check when the target fails its Wisdom save."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Charm Person should spend one level 1 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-BardCharmPersonCanBeResisted {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    Use-ReadHostSequence -Values @("1")
+
+    $script:CharmPersonRolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:CharmPersonRolls.Enqueue(15)
+    $script:CharmPersonRolls.Enqueue(18)
+    $script:CharmPersonRolls.Enqueue(3)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        if ($Sides -eq 20) {
+            return $script:CharmPersonRolls.Dequeue()
+        }
+
+        return 1
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 16 -ActionText "Gariand tries to soften the clerk's suspicion." -CheckTag "Social"
+
+    Assert-Equal -Actual $success -Expected $false -Message "A successful target Wisdom save should deny Charm Person advantage."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "A resisted Charm Person should still spend one level 1 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-BardCharmPersonCanBeDeclined {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    Use-ReadHostSequence -Values @("2")
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 15
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 12 -ActionText "Gariand keeps the conversation mundane." -CheckTag "Social"
+
+    Assert-Equal -Actual $success -Expected $true -Message "Declining Charm Person should still allow the normal check to resolve."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 2 -Message "Declining Charm Person should not spend a spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-BardCharmPersonDoesNotTriggerOnPerformanceChecks {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    function global:Read-Host {
+        param([string]$Prompt)
+        throw "Charm Person should not prompt on a Performance check."
+    }
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 12
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 10 -ActionText "Gariand turns the room with a song." -CheckTag "Performance"
+
+    Assert-Equal -Actual $success -Expected $true -Message "Performance checks should continue to resolve without Charm Person prompts."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 2 -Message "Performance checks should not spend Charm Person slots."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
 function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
     $game = Initialize-Game -Class "Bard"
 
@@ -1551,7 +1641,7 @@ function Test-BardLedgerRouteBuildsSoftPower {
     Set-StoryTier -Game $game -Tier 2
 
     Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("4", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -1636,6 +1726,10 @@ Test-ClassStoryApproachOnlyCountsAQuestOnce
 Test-FighterNightWatchDoesNotBuildCivicTrustWithoutClassChoice
 Test-BardLedgerRouteBuildsSoftPower
 Test-BardicInspirationCanBoostQuestChecks
+Test-BardCharmPersonCanBoostSocialQuestChecks
+Test-BardCharmPersonCanBeResisted
+Test-BardCharmPersonCanBeDeclined
+Test-BardCharmPersonDoesNotTriggerOnPerformanceChecks
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency
