@@ -75,6 +75,7 @@ Current camp levels:
 - dedicated `Bonus Action` menu inside combat rounds
 - `Vicious Mockery` uses a `WIS` save
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
+- `Suggestion` can spend a level 2 slot on tagged higher-pressure social quest checks; the target rolls a Wisdom save, and a failed save resolves the social opening without a further ability check
 - `Cutting Words` works as a reaction and spends bardic inspiration
 - prepared bardic inspiration recovers on short rest
 - `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack

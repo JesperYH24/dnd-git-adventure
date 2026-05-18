@@ -732,10 +732,59 @@ function Start-NonCombatQuestCheck {
     $bardicBonus = 0
     $bonusText = Format-HeroAbilityCheckBonusText -CheckProfile $checkProfile
     $useCharmPerson = $false
+    $suggestionSuccess = $false
 
     if ($Hero.Class -eq "Bard") {
         $normalizedTag = if ([string]::IsNullOrWhiteSpace($CheckTag)) { "" } else { $CheckTag.Trim() }
         $charmableTags = @("Social", "Persuasion", "Deception", "Charm")
+        $suggestionTags = @("Suggestion", "Directive")
+
+        if ($Ability -eq "CHA" -and $suggestionTags -contains $normalizedTag) {
+            $suggestionCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Suggestion"
+
+            if ($suggestionCheck.CanCast) {
+                Write-ColorLine "Cast Suggestion to press this social opening?" "Cyan"
+                Write-ColorLine "1. Yes (spend one level $($suggestionCheck.Spell.SpellLevel) slot; target makes a Wisdom save)" "White"
+                Write-ColorLine "2. No" "White"
+                Write-ColorLine ""
+
+                while ($true) {
+                    $suggestionChoice = Read-Host "Choose"
+
+                    if ($suggestionChoice -eq "1") {
+                        $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$suggestionCheck.Spell.SpellLevel)
+
+                        if ($slotUse.Success) {
+                            $spellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
+                            $saveRoll = Roll-Dice -Sides 20
+
+                            Write-Scene "$($Hero.Name) threads a reasonable course of action through the words, giving the thought just enough magic to take root."
+                            Write-Action "Suggestion: target Wisdom save rolls $saveRoll vs DC $spellSaveDC." "DarkCyan"
+
+                            if ($saveRoll -lt $spellSaveDC) {
+                                $suggestionSuccess = $true
+                                Write-Scene "The suggestion settles into place before doubt can harden."
+                            }
+                            else {
+                                Write-Scene "The suggestion sounds plausible, but the target keeps enough suspicion to resist it."
+                            }
+                        }
+                        else {
+                            Write-ColorLine $slotUse.Message "DarkYellow"
+                        }
+
+                        break
+                    }
+
+                    if ($suggestionChoice -eq "2") {
+                        break
+                    }
+
+                    Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
 
         if ($Ability -eq "CHA" -and $charmableTags -contains $normalizedTag) {
             $charmCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Charm Person"
@@ -789,7 +838,7 @@ function Start-NonCombatQuestCheck {
 
         $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
 
-        if ($null -ne $bardicStatus -and $bardicStatus.CurrentDice -gt 0) {
+        if (-not $suggestionSuccess -and $null -ne $bardicStatus -and $bardicStatus.CurrentDice -gt 0) {
             Write-ColorLine "Spend bardic inspiration on this check?" "Cyan"
             Write-ColorLine "1. Yes ($($bardicStatus.CurrentDice)/$($bardicStatus.MaxDice) d$($bardicStatus.DieSides) ready)" "White"
             Write-ColorLine "2. No" "White"
@@ -817,6 +866,13 @@ function Start-NonCombatQuestCheck {
                 Write-ColorLine ""
             }
         }
+    }
+
+    if ($suggestionSuccess) {
+        Write-Scene $ActionText
+        Write-Action "$($Hero.Name)'s Suggestion carries the social exchange without a further ${Ability} check." "Cyan"
+        Write-ColorLine ""
+        return $true
     }
 
     $roll = Roll-Dice -Sides 20
@@ -3546,7 +3602,7 @@ function Start-DocksCharterScribeQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} turns fear, patience, and a little pressure into a question the clerks cannot keep dodging." -CheckTag "Social"
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} turns fear, patience, and a little pressure into a question the clerks cannot keep dodging." -CheckTag "Suggestion"
                 if ($success) {
                     Write-Scene "One clerk finally says the name behind the seal: Master Odran Pell, charter scribe to clean hands and dirty cargo alike."
                     $cleanProof = $true
@@ -3699,7 +3755,7 @@ function Start-DocksShellCharterQuest {
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} lines up filings, cargo weights, and missing crews until the shell charter starts to look hollow." }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." -CheckTag "Social" }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) lets the shell owner boast in rhythm until the lie trips over its own rhyme." -CheckTag "Performance"
@@ -3798,7 +3854,7 @@ function Start-DocksCountingHousePressureQuest {
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} turns neat fees into a map of dirty money moving through lawful desks." }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." -CheckTag "Social" }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) conducts the room like a nervous chorus until each clerk corrects the wrong lie." -CheckTag "Performance"
@@ -3897,7 +3953,7 @@ function Start-DocksCustomsStampQuest {
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares ink, pressure, and exemption clauses until the stamp reveals its desk." }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." -CheckTag "Social" }
+            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) starts a ridiculous paperwork quarrel and lets the guilty expert correct him too quickly." -CheckTag "Performance"

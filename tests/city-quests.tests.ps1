@@ -1514,6 +1514,76 @@ function Test-BardCharmPersonDoesNotTriggerOnPerformanceChecks {
     Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
 }
 
+function Test-BardSuggestionCanResolveTaggedSocialQuestChecks {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 5
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 25 -ActionText "Gariand offers the clerk one reasonable way out." -CheckTag "Suggestion"
+
+    Assert-Equal -Actual $success -Expected $true -Message "Suggestion should turn a tagged social check into success when the target fails its Wisdom save."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 1 -Message "Suggestion should spend one level 2 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-BardSuggestionCanBeResisted {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    $script:SuggestionRolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:SuggestionRolls.Enqueue(18)
+    $script:SuggestionRolls.Enqueue(3)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        if ($Sides -eq 20) {
+            return $script:SuggestionRolls.Dequeue()
+        }
+
+        return 1
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 16 -ActionText "Gariand offers the clerk one reasonable way out." -CheckTag "Suggestion"
+
+    Assert-Equal -Actual $success -Expected $false -Message "A successful target Wisdom save should make Suggestion fall back to the normal social check."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 1 -Message "A resisted Suggestion should still spend one level 2 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-LowLevelBardCannotUseSuggestionPrompt {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 2
+    Initialize-HeroSpellcasting -Hero $hero | Out-Null
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        throw "Suggestion should not prompt before the bard knows the spell and has level 2 slots."
+    }
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 15
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "CHA" -DC 12 -ActionText "Gariand keeps the request mundane." -CheckTag "Suggestion"
+
+    Assert-Equal -Actual $success -Expected $true -Message "A low-level bard should still resolve the normal check when Suggestion is unavailable."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 0 -Message "A low-level bard should not spend level 2 slots."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+}
+
 function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
     $game = Initialize-Game -Class "Bard"
 
@@ -1730,6 +1800,9 @@ Test-BardCharmPersonCanBoostSocialQuestChecks
 Test-BardCharmPersonCanBeResisted
 Test-BardCharmPersonCanBeDeclined
 Test-BardCharmPersonDoesNotTriggerOnPerformanceChecks
+Test-BardSuggestionCanResolveTaggedSocialQuestChecks
+Test-BardSuggestionCanBeResisted
+Test-LowLevelBardCannotUseSuggestionPrompt
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency
