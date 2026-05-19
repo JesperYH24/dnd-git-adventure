@@ -77,6 +77,7 @@ Current camp levels:
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
 - `Suggestion` can spend a level 2 slot on tagged higher-pressure social quest checks; the target rolls a Wisdom save, and a failed save resolves the social opening without a further ability check
 - `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms at Bard level 4, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; creatures with blindsight can counter that invisibility bonus
+- `Enhance Ability` can be cast at Bard level 4 before non-combat quest checks, spends a level 2 slot, focuses the check's ability, and grants advantage on matching ability checks while active
 - `Cutting Words` works as a reaction and spends bardic inspiration
 - prepared bardic inspiration recovers on short rest
 - `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack

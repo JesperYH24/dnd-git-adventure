@@ -1618,6 +1618,55 @@ function Test-LowLevelBardCannotUseSuggestionPrompt {
     Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
 }
 
+function Test-BardEnhanceAbilityGrantsQuestCheckAdvantage {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Use-ReadHostSequence -Values @("1")
+
+    $script:EnhanceAbilityRolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:EnhanceAbilityRolls.Enqueue(4)
+    $script:EnhanceAbilityRolls.Enqueue(15)
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+
+        if ($Sides -eq 20) {
+            return $script:EnhanceAbilityRolls.Dequeue()
+        }
+
+        return 1
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "INT" -DC 16 -ActionText "Gariand sharpens the pattern until the ledger stops looking random."
+
+    Assert-Equal -Actual $success -Expected $true -Message "Enhance Ability should grant advantage on the chosen ability check."
+    Assert-Equal -Actual (Get-HeroEnhancedAbility -Hero $hero) -Expected "INT" -Message "Enhance Ability should record the chosen ability on the active buff."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Enhance Ability should spend one level 2 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
+function Test-BardEnhanceAbilityCanBeDeclined {
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 4
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Use-ReadHostSequence -Values @("2")
+
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return 15
+    }
+
+    $success = Start-NonCombatQuestCheck -Hero $hero -Ability "WIS" -DC 16 -ActionText "Gariand reads the route by what fear has left behind."
+
+    Assert-Equal -Actual $success -Expected $true -Message "Declining Enhance Ability should still resolve the normal check."
+    Assert-Equal -Actual (Get-HeroEnhancedAbility -Hero $hero) -Expected "" -Message "Declining Enhance Ability should not set an active ability buff."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 3 -Message "Declining Enhance Ability should not spend a level 2 spell slot."
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
 function Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage {
     $game = Initialize-Game -Class "Bard"
 
@@ -1852,6 +1901,8 @@ Test-BardCharmPersonDoesNotTriggerOnPerformanceChecks
 Test-BardSuggestionCanResolveTaggedSocialQuestChecks
 Test-BardSuggestionCanBeResisted
 Test-LowLevelBardCannotUseSuggestionPrompt
+Test-BardEnhanceAbilityGrantsQuestCheckAdvantage
+Test-BardEnhanceAbilityCanBeDeclined
 Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency

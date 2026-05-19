@@ -836,6 +836,42 @@ function Start-NonCombatQuestCheck {
             }
         }
 
+        if (-not $suggestionSuccess -and -not $useCharmPerson -and -not (Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $Ability)) {
+            $enhanceCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Enhance Ability"
+
+            if ($enhanceCheck.CanCast) {
+                $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+                Write-ColorLine "Cast Enhance Ability for advantage on this ${Ability} check?" "Cyan"
+                Write-ColorLine "1. Yes (spend one level $($enhanceCheck.Spell.SpellLevel) slot; focus $normalizedAbility)" "White"
+                Write-ColorLine "2. No" "White"
+                Write-ColorLine ""
+
+                while ($true) {
+                    $enhanceChoice = Read-Host "Choose"
+
+                    if ($enhanceChoice -eq "1") {
+                        $enhance = Invoke-HeroEnhanceAbility -Hero $Hero -Ability $normalizedAbility
+
+                        if ($enhance.Success) {
+                            Write-Scene $enhance.Message
+                        }
+                        else {
+                            Write-ColorLine $enhance.Message "DarkYellow"
+                        }
+
+                        break
+                    }
+
+                    if ($enhanceChoice -eq "2") {
+                        break
+                    }
+
+                    Write-ColorLine "Choose 1 or 2." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+        }
+
         $bardicStatus = Get-HeroBardicInspirationStatus -Hero $Hero
 
         if (-not $suggestionSuccess -and $null -ne $bardicStatus -and $bardicStatus.CurrentDice -gt 0) {
@@ -877,13 +913,25 @@ function Start-NonCombatQuestCheck {
 
     $roll = Roll-Dice -Sides 20
     $rollText = "roll $roll"
+    $useEnhanceAbility = Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $Ability
+    $hasAdvantage = $useCharmPerson -or $useEnhanceAbility
 
-    if ($useCharmPerson) {
-        $charmRoll = Roll-Dice -Sides 20
-        $keptRoll = [Math]::Max($roll, $charmRoll)
-        $rollText = "roll $roll/$charmRoll, kept $keptRoll"
+    if ($hasAdvantage) {
+        $advantageRoll = Roll-Dice -Sides 20
+        $keptRoll = [Math]::Max($roll, $advantageRoll)
+        $rollText = "roll $roll/$advantageRoll, kept $keptRoll"
         $roll = $keptRoll
-        $bonusText = "$bonusText with Charm Person advantage"
+        $advantageSources = @()
+
+        if ($useCharmPerson) {
+            $advantageSources += "Charm Person"
+        }
+
+        if ($useEnhanceAbility) {
+            $advantageSources += "Enhance Ability"
+        }
+
+        $bonusText = "$bonusText with $(($advantageSources -join ' and ')) advantage"
     }
 
     $total = $roll + $checkProfile.TotalModifier + $bardicBonus

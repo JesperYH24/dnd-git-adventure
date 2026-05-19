@@ -53,7 +53,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 | Level | Target Feature | Current Status | Notes |
 |---:|---|---|---|
 | 1 | Bardic Inspiration | Implemented | Prepared with an instrument. Dice scale from CHA in this game and can support attack/defense/focus moments. |
-| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
+| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, `Enhance Ability`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
 | 2 | Jack of All Trades | Implemented | Adds half proficiency to non-proficient ability checks. |
 | 2 | Song of Rest | Implemented | Adds `1d6` extra healing to Bard short rests. |
 | 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, `Investigation`, and `Insight` proficiencies at level 3. |
@@ -65,7 +65,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 Bard follow-ups:
 
 - decide whether Expertise should become player-chosen later instead of fixed to `Performance` and `Perception`
-- extend spellcasting beyond the first social/combat pass with level 2 utility/control spells
+- extend spellcasting beyond the first social/combat pass with more level 2 utility/control spells
 - make monster-zone class text lean into strange sounds, folklore, performance misdirection, and reading behavior instead of raw weapon dominance
 
 ### Bard Spell Slots Implementation Plan
@@ -93,7 +93,7 @@ Suggested first spell list:
 | Level 1 spell | `Charm Person` | Social spell with quest and town use. |
 | Level 2 spell | `Suggestion` | Social/control spell for level 3+. |
 | Level 2 spell | `Invisibility` | Exploration and danger-avoidance spell for level 3+. |
-| Level 2 spell | `Enhance Ability` or `Hold Person` | Level 4 candidate depending on whether we want broader skill support or stronger combat lockdown. |
+| Level 2 spell | `Enhance Ability` | Level 4 broader skill support: spends a level 2 slot and gives advantage on the chosen ability checks while active. |
 
 Implementation order:
 
@@ -141,10 +141,11 @@ Completed next pass:
 5. Add `Charm Person` as a tagged social quest spell: spends a level 1 slot, gives the target a Wisdom save with advantage, and grants advantage on the social CHA check only if the save fails.
 6. Add `Suggestion` as a first-pass level 2 social quest spell: spends a level 2 slot, gives the target a Wisdom save, and resolves tagged higher-pressure social openings on a failed save.
 7. Add `Invisibility` as a level 4 out-of-combat spell: spends a level 2 slot and grants a strong stealth bonus from quest prep, monster-zone exploration, and calm dungeon rooms.
+8. Add `Enhance Ability` as a level 4 utility spell: spends a level 2 slot, focuses one ability, and grants advantage on matching non-combat quest checks.
 
 Next pass:
 
 1. Tune level 3-4 enemy difficulty against the now-complete class kits.
 2. Add the next Bard spell layer:
-   - broaden level 2 utility/control beyond the first `Suggestion` and `Invisibility` hooks.
+   - broaden level 2 utility/control beyond `Suggestion`, `Invisibility`, and `Enhance Ability`.
 3. Decide whether fixed Lore expertise should become player-chosen later.

@@ -83,16 +83,20 @@ function Test-BardLevelTwoSpellsStayLevelGated {
         Assert-Equal -Actual (@($hero.KnownSpells | Where-Object { [int]$_.SpellLevel -eq 2 }).Count) -Expected 0 -Message "A level $level bard should not know level 2 spells."
         Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Suggestion").CanCast -Expected $false -Message "Suggestion should not be castable at bard level $level."
         Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $false -Message "Invisibility should not be castable at bard level $level."
+        Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $false -Message "Enhance Ability should not be castable at bard level $level."
     }
 
     $hero.Level = 3
     Restore-HeroSpellSlots -Hero $hero | Out-Null
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Suggestion").CanCast -Expected $true -Message "Suggestion should become castable at bard level 3."
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $false -Message "Invisibility should remain locked until bard level 4."
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $false -Message "Enhance Ability should remain locked until bard level 4."
 
     $hero.Level = 4
     Restore-HeroSpellSlots -Hero $hero | Out-Null
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $true -Message "Invisibility should become castable at bard level 4."
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $true -Message "Enhance Ability should become castable at bard level 4."
+    Assert-Equal -Actual (@($hero.KnownSpells | Where-Object { [int]$_.SpellLevel -eq 2 }).Count) -Expected 3 -Message "A level 4 bard should know three level 2 utility/control spells in this pass."
 }
 
 function Test-BardCantripsDoNotSpendSpellSlots {

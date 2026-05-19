@@ -347,6 +347,36 @@ function Get-HeroInvisibilityStealthBonus {
     return 10
 }
 
+function Get-HeroEnhancedAbility {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["ActiveBuff"] -or $null -eq $Hero.ActiveBuff) {
+        return ""
+    }
+
+    if ($Hero.ActiveBuff.Type -ne "EnhanceAbility") {
+        return ""
+    }
+
+    if ($null -eq $Hero.ActiveBuff.PSObject.Properties["Ability"]) {
+        return ""
+    }
+
+    return (Normalize-HeroAbilityName -Ability ([string]$Hero.ActiveBuff.Ability))
+}
+
+function Test-HeroEnhanceAbilityApplies {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    $enhancedAbility = Get-HeroEnhancedAbility -Hero $Hero
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+
+    return (-not [string]::IsNullOrWhiteSpace($enhancedAbility) -and $enhancedAbility -eq $normalizedAbility)
+}
+
 function Get-HeroAvailableLevelUps {
     param($Hero)
 
@@ -1256,7 +1286,7 @@ function Get-HeroKnownSpells {
 
     $progression = Get-HeroSpellcastingProgression -Hero $Hero
     $cantripCount = [int]$progression.CantripsKnown
-    $spellCount = [int]$progression.SpellsKnown
+    $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
 
     $cantrips = @(
         [PSCustomObject]@{ Name = "Vicious Mockery"; Kind = "Cantrip"; SpellLevel = 0 },
@@ -1268,13 +1298,23 @@ function Get-HeroKnownSpells {
         [PSCustomObject]@{ Name = "Healing Word"; Kind = "Spell"; SpellLevel = 1 },
         [PSCustomObject]@{ Name = "Dissonant Whispers"; Kind = "Spell"; SpellLevel = 1 },
         [PSCustomObject]@{ Name = "Faerie Fire"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Charm Person"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Heroism"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Suggestion"; Kind = "Spell"; SpellLevel = 2 },
-        [PSCustomObject]@{ Name = "Invisibility"; Kind = "Spell"; SpellLevel = 2 }
+        [PSCustomObject]@{ Name = "Charm Person"; Kind = "Spell"; SpellLevel = 1 }
     )
 
-    return @($cantrips | Select-Object -First $cantripCount) + @($spells | Select-Object -First $spellCount)
+    if ($level -ge 2 -and $level -lt 4) {
+        $spells += [PSCustomObject]@{ Name = "Heroism"; Kind = "Spell"; SpellLevel = 1 }
+    }
+
+    if ($level -ge 3) {
+        $spells += [PSCustomObject]@{ Name = "Suggestion"; Kind = "Spell"; SpellLevel = 2 }
+    }
+
+    if ($level -ge 4) {
+        $spells += [PSCustomObject]@{ Name = "Invisibility"; Kind = "Spell"; SpellLevel = 2 }
+        $spells += [PSCustomObject]@{ Name = "Enhance Ability"; Kind = "Spell"; SpellLevel = 2 }
+    }
+
+    return @($cantrips | Select-Object -First $cantripCount) + @($spells | Select-Object -First ([int]$progression.SpellsKnown))
 }
 
 function Initialize-HeroSpellcasting {
@@ -1523,6 +1563,61 @@ function Invoke-HeroInvisibility {
     return [PSCustomObject]@{
         Success = $true
         Message = "$($Hero.Name) folds light around himself, ready to move unseen until danger breaks the moment."
+        SlotsRemaining = [int]$slotUse.SlotsRemaining
+    }
+}
+
+function Invoke-HeroEnhanceAbility {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+
+    if ([string]::IsNullOrWhiteSpace($normalizedAbility)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Choose STR, DEX, CON, INT, WIS, or CHA for Enhance Ability."
+            SlotsRemaining = if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["CurrentSpellSlots"] -and $null -ne $Hero.CurrentSpellSlots -and $Hero.CurrentSpellSlots.ContainsKey("Level2")) { [int]$Hero.CurrentSpellSlots.Level2 } else { 0 }
+        }
+    }
+
+    $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Enhance Ability"
+
+    if (-not $castCheck.CanCast) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = $castCheck.Message
+            SlotsRemaining = if ($null -ne $Hero -and $null -ne $Hero.PSObject.Properties["CurrentSpellSlots"] -and $null -ne $Hero.CurrentSpellSlots -and $Hero.CurrentSpellSlots.ContainsKey("Level2")) { [int]$Hero.CurrentSpellSlots.Level2 } else { 0 }
+        }
+    }
+
+    if ((Get-HeroEnhancedAbility -Hero $Hero) -eq $normalizedAbility) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Hero.Name) already has Enhance Ability focused on $normalizedAbility."
+            SlotsRemaining = [int]$Hero.CurrentSpellSlots.Level2
+        }
+    }
+
+    $slotUse = Use-HeroSpellSlot -Hero $Hero -SpellLevel ([int]$castCheck.Spell.SpellLevel)
+
+    if (-not $slotUse.Success) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = $slotUse.Message
+            SlotsRemaining = [int]$slotUse.SlotsRemaining
+        }
+    }
+
+    Apply-HeroBuff -Hero $Hero -BuffType "EnhanceAbility" -BuffName "Enhance Ability"
+    $Hero.ActiveBuff | Add-Member -NotePropertyName Ability -NotePropertyValue $normalizedAbility
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Hero.Name) sharpens $normalizedAbility with a second-level spell, carrying advantage into matching ability checks."
+        Ability = $normalizedAbility
         SlotsRemaining = [int]$slotUse.SlotsRemaining
     }
 }
