@@ -380,6 +380,7 @@ Ansvar:
 
 - outer-wall monster zone after post-Civic-Vault wall rumors
 - hidden wilderness positions and persistent landmarks
+- landmark memory in `LandmarkMemory`, where different-day visits increase route familiarity and unlock direct travel from the gate
 - inferred objective state for why the hero is currently beyond the wall
 - soft zone edge near the city's patrol reach
 - `Perception`/`Stealth` awareness checks before wilderness combat
@@ -388,7 +389,8 @@ Ansvar:
 - class-flavored wilderness reads for search and 60 ft observation
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
-- next implementation focus is deeper objective follow-ups, Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
+- Guard Station/Watchman Belor wall-watch reactions to monster-zone landmarks, creature proof, and Dorr-reported trails
+- next implementation focus is deeper objective follow-ups, Wall Watch/Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

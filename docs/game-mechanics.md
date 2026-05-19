@@ -34,6 +34,7 @@
 - it uses wilderness travel rather than room navigation or a detailed map
 - the menu shows a current objective inferred from state: find a landmark, track a wall creature, return full oddity haul, or report defeated-creature proof to Dorr
 - travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
+- landmarks now track route familiarity by different visit days; repeat visits on later days make the place easier to find, and at `3` familiarity the hero can travel there directly from the outer gate
 - search and long-range observation include first-pass class wilderness reads: Barbarian reads body/ground/instinct, Bard reads rhythm/folklore/silence, and Fighter reads patrol logic/sightlines/attack lanes
 - new wilderness skills: `Perception` and `Stealth`
 - before wilderness combat begins, hero and monster awareness is resolved with opposed discovery checks:
@@ -51,6 +52,7 @@
 - stable-yard pack animals feed monster salvage capacity, especially for oddities requested by Docks buyers
 - monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot
 - defeated monster-zone creature types are tracked as proof for future city systems
+- the Guard Station and Watchman Belor now connect post-Halewick wall attacks to monster-zone work: wall-watch reports react to discovered landmarks, unreported creature proof, and trails already reported through Dorr
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
 - current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, and `scale_touched_mastiff`

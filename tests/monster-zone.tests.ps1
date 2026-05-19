@@ -30,6 +30,41 @@ function Test-MonsterZoneTravelFindsPersistentLandmark {
     Assert-Equal -Actual $secondDiscovery.Discovered -Expected $false -Message "The second visit should use repeat discovery state."
 }
 
+function Test-MonsterZoneLandmarkFamiliarityGrowsAcrossDays {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "burned_orchard" } | Select-Object -First 1
+
+    $dayOne = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    $sameDay = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    Advance-TownToNextDay -Game $game | Out-Null
+    $dayTwo = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+
+    Assert-Equal -Actual $dayOne.Familiarity -Expected 1 -Message "First landmark visit should start route familiarity."
+    Assert-Equal -Actual $sameDay.Familiarity -Expected 1 -Message "Repeating a landmark on the same day should not farm route familiarity."
+    Assert-Equal -Actual $dayTwo.Familiarity -Expected 2 -Message "Returning on a different day should improve route familiarity."
+    Assert-True -Condition ($dayTwo.Text -like "*easier to find*") -Message "A later-day repeat visit should tell the player the route is becoming easier to find."
+}
+
+function Test-MonsterZoneLandmarkDirectTravelUnlocksAfterRepeatDays {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "collapsed_watchtower" } | Select-Object -First 1
+
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    $thirdVisit = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    $directLandmarks = @(Get-MonsterZoneDirectTravelLandmarks -Game $game)
+    $directTravel = Move-MonsterZoneToLandmark -Game $game -Landmark $landmark
+
+    Assert-Equal -Actual $thirdVisit.DirectTravelJustUnlocked -Expected $true -Message "A third different-day landmark visit should unlock direct travel."
+    Assert-True -Condition ($thirdVisit.Text -like "*directly from the outer gate*") -Message "Unlock text should explain direct travel from the gate."
+    Assert-Equal -Actual $directLandmarks[0].Id -Expected "collapsed_watchtower" -Message "Unlocked landmarks should appear in the direct-travel list."
+    Assert-Equal -Actual $directTravel.Success -Expected $true -Message "Known landmark routes should support direct travel."
+    Assert-Equal -Actual $game.Town.MonsterZone.CurrentX -Expected 1 -Message "Direct travel should move to the landmark X coordinate."
+    Assert-Equal -Actual $game.Town.MonsterZone.CurrentY -Expected 1 -Message "Direct travel should move to the landmark Y coordinate."
+}
+
 function Test-MonsterZoneSoftEdgeBlocksOvertravel {
     $game = Initialize-Game
     Move-MonsterZonePosition -Game $game -Direction "west" | Out-Null
@@ -262,6 +297,8 @@ function Test-CampImprovementLowersNightRisk {
 
 Test-MonsterZoneUnlocksFromWallRumors
 Test-MonsterZoneTravelFindsPersistentLandmark
+Test-MonsterZoneLandmarkFamiliarityGrowsAcrossDays
+Test-MonsterZoneLandmarkDirectTravelUnlocksAfterRepeatDays
 Test-MonsterZoneSoftEdgeBlocksOvertravel
 Test-WildernessAwarenessCanGiveHeroAdvantage
 Test-BarbarianDangerSenseStartsAtLevelTwo

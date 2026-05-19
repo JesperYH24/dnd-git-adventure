@@ -323,6 +323,7 @@ function Ensure-LoadedAdventureShape {
             CurrentY = 0
             Visits = 0
             DiscoveredLandmarks = @{}
+            LandmarkMemory = @{}
             Camps = @{}
             Oddities = @()
             DefeatedCreatures = @{}
@@ -338,6 +339,7 @@ function Ensure-LoadedAdventureShape {
             @{ Key = "CurrentY"; Value = 0 },
             @{ Key = "Visits"; Value = 0 },
             @{ Key = "DiscoveredLandmarks"; Value = @{} },
+            @{ Key = "LandmarkMemory"; Value = @{} },
             @{ Key = "Camps"; Value = @{} },
             @{ Key = "Oddities"; Value = @() },
             @{ Key = "DefeatedCreatures"; Value = @{} },

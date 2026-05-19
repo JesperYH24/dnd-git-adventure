@@ -49,11 +49,12 @@ Core loop to deepen:
 
 Next implementation priorities:
 
-- deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr, or needs to return safely
+- deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr or the Wall Watch, or needs to return safely
+- expand the Guard Station/Wall Watch stake in monster-zone pressure, including named gate damage, watcher reports, patrol shifts, and class-shaped advice before the hero leaves town
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
 - expand Dorr's monster-contract board with stronger dialogue and board actions now that it separates unreported proof, bookable contracts, pending capture crews, ready fights, and completed contracts
-- expand class-flavored monster-zone reads beyond the first search/observation pass, especially into ambush starts, objective follow-ups, landmark consequences, and Dorr reports
+- expand class-flavored monster-zone reads beyond the first search/observation pass, especially into ambush starts, objective follow-ups, landmark consequences, Wall Watch reports, and Dorr reports
 - later, after objectives and contracts feel good, add ranged weapon support on top of the monster-zone distance state so open ground can make bows, thrown weapons, and monster approach behavior matter
 
 Use a hidden coordinate-style zone rather than a visible dungeon map:
@@ -62,7 +63,7 @@ Use a hidden coordinate-style zone rather than a visible dungeon map:
 - each direction moves the hero to a persistent abstract position
 - landmarks have fixed positions, so repeatedly traveling west from the same route can find the same landmark again
 - the player should see prose, landmarks, and directional choices rather than coordinates
-- landmarks should track first visit, repeat visit, discoveries, future hooks, and danger level
+- landmarks should track first visit, repeat visit, discoveries, route familiarity across different days, direct-travel unlocks, future hooks, and danger level
 
 Possible landmarks:
 

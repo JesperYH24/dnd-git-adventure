@@ -204,6 +204,36 @@ function Test-StreetNpcFlavorTalkIsRemembered {
     Assert-True -Condition ($second -like "*Too many small problems*") -Message "Belor should shift to a shorter repeat warning on later talks."
 }
 
+function Test-BelorWallWatchTalkStartsAfterWallRumors {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+
+    $belor = Get-BelorWatchTalk -Game $game
+    $guardIntro = Get-TownQuestSourceIntroText -Source "Guard Station" -DefaultIntroText "unused" -Game $game
+
+    Assert-True -Condition ($belor -like "*wall-watchers*" -and $belor -like "*claw marks*") -Message "Belor should turn post-Halewick wall rumors into a concrete Wall Watch concern."
+    Assert-True -Condition ($guardIntro -like "*wall-watch reports*" -and $guardIntro -like "*beyond the wall*") -Message "The Guard Station should connect monster-zone work to attacks against the walls and gates."
+}
+
+function Test-BelorWallWatchTalkUsesMonsterZoneProof {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $game.Town.MonsterZone.DiscoveredLandmarks["collapsed_watchtower"] = $true
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    $proofTalk = Get-BelorWatchTalk -Game $game
+    $game.Town.MonsterZone.ReportedCreaturesToDorr["wall_wolf"] = @{ Name = "wall-prowling wolf" }
+    $reportedTalk = Get-BelorWatchTalk -Game $game
+
+    Assert-True -Condition ($proofTalk -like "*wall-prowling wolf*" -and $proofTalk -like "*Dorr*") -Message "Belor should read unreported monster-zone proof as useful to both Dorr and the watch."
+    Assert-True -Condition ($reportedTalk -like "*named trails*" -and $reportedTalk -like "*gates*") -Message "Belor should react once monster proof has become a reported trail."
+}
+
 function Test-BarbarianStreetTalkUsesBorzigsPhysicalRole {
     $game = Initialize-Game -Class "Barbarian"
 
@@ -617,6 +647,8 @@ Test-StreetNpcIntrosRecognizeBardAsGariand
 Test-StreetNpcIntrosRecognizeFighterAsKnightLike
 Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
+Test-BelorWallWatchTalkStartsAfterWallRumors
+Test-BelorWallWatchTalkUsesMonsterZoneProof
 Test-StreetNpcExtraFlavorTalksExist
 Test-RingMasterHasExtendedConversationHooks
 Test-LevelThreeNpcToneChangesAfterUnderstreet

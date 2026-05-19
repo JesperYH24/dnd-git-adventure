@@ -7,6 +7,7 @@ function Get-MonsterZoneDefaultState {
         CurrentY = 0
         Visits = 0
         DiscoveredLandmarks = @{}
+        LandmarkMemory = @{}
         Camps = @{}
         Oddities = @()
         DefeatedCreatures = @{}
@@ -33,6 +34,7 @@ function Initialize-MonsterZoneState {
         @{ Key = "CurrentY"; Value = 0 },
         @{ Key = "Visits"; Value = 0 },
         @{ Key = "DiscoveredLandmarks"; Value = @{} },
+        @{ Key = "LandmarkMemory"; Value = @{} },
         @{ Key = "Camps"; Value = @{} },
         @{ Key = "Oddities"; Value = @() },
         @{ Key = "DefeatedCreatures"; Value = @{} },
@@ -151,6 +153,182 @@ function Get-MonsterZoneLandmarkAtPosition {
     return (Get-MonsterZoneLandmarks | Where-Object { [int]$_.X -eq $X -and [int]$_.Y -eq $Y } | Select-Object -First 1)
 }
 
+function Get-MonsterZoneDirectTravelThreshold {
+    return 3
+}
+
+function Get-MonsterZoneLandmarkMemoryRecord {
+    param(
+        $Game,
+        [string]$LandmarkId
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ([string]::IsNullOrWhiteSpace($LandmarkId)) {
+        return $null
+    }
+
+    if (-not $Game.Town.MonsterZone.LandmarkMemory.ContainsKey($LandmarkId) -or $null -eq $Game.Town.MonsterZone.LandmarkMemory[$LandmarkId]) {
+        $Game.Town.MonsterZone.LandmarkMemory[$LandmarkId] = @{
+            VisitDays = @()
+            Familiarity = 0
+            FirstVisitDay = 0
+            LastVisitDay = 0
+            DirectTravelUnlocked = $false
+        }
+    }
+
+    $record = $Game.Town.MonsterZone.LandmarkMemory[$LandmarkId]
+
+    if (-not $record.ContainsKey("VisitDays") -or $null -eq $record["VisitDays"]) {
+        $record["VisitDays"] = @()
+    }
+    if (-not $record.ContainsKey("Familiarity") -or $null -eq $record["Familiarity"]) {
+        $record["Familiarity"] = @($record["VisitDays"]).Count
+    }
+    if (-not $record.ContainsKey("DirectTravelUnlocked") -or $null -eq $record["DirectTravelUnlocked"]) {
+        $record["DirectTravelUnlocked"] = $false
+    }
+    if (-not $record.ContainsKey("FirstVisitDay") -or $null -eq $record["FirstVisitDay"]) {
+        $record["FirstVisitDay"] = 0
+    }
+    if (-not $record.ContainsKey("LastVisitDay") -or $null -eq $record["LastVisitDay"]) {
+        $record["LastVisitDay"] = 0
+    }
+
+    return $record
+}
+
+function Get-MonsterZoneLandmarkFamiliarity {
+    param(
+        $Game,
+        [string]$LandmarkId
+    )
+
+    $record = Get-MonsterZoneLandmarkMemoryRecord -Game $Game -LandmarkId $LandmarkId
+
+    if ($null -eq $record) {
+        return 0
+    }
+
+    return [int]$record["Familiarity"]
+}
+
+function Update-MonsterZoneLandmarkMemory {
+    param(
+        $Game,
+        $Landmark
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Landmark) {
+        return [PSCustomObject]@{
+            Familiarity = 0
+            FamiliarityGained = $false
+            DirectTravelUnlocked = $false
+            DirectTravelJustUnlocked = $false
+            Text = ""
+        }
+    }
+
+    $day = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
+    $record = Get-MonsterZoneLandmarkMemoryRecord -Game $Game -LandmarkId ([string]$Landmark.Id)
+    $visitDays = @($record["VisitDays"] | ForEach-Object { [int]$_ })
+    $hadDay = $visitDays -contains $day
+    $wasDirect = [bool]$record["DirectTravelUnlocked"]
+
+    if (-not $hadDay) {
+        $visitDays += $day
+        $record["VisitDays"] = @($visitDays | Sort-Object -Unique)
+        if ([int]$record["FirstVisitDay"] -le 0) {
+            $record["FirstVisitDay"] = $day
+        }
+        $record["LastVisitDay"] = $day
+    }
+
+    $record["Familiarity"] = @($record["VisitDays"]).Count
+    $record["DirectTravelUnlocked"] = ([int]$record["Familiarity"] -ge (Get-MonsterZoneDirectTravelThreshold))
+
+    $text = ""
+
+    if (-not $hadDay) {
+        if ([bool]$record["DirectTravelUnlocked"] -and -not $wasDirect) {
+            $text = "$($Game.Hero.Name) knows the route to $($Landmark.Name) well enough now to travel there directly from the outer gate."
+        }
+        elseif ([int]$record["Familiarity"] -gt 1) {
+            $text = "$($Game.Hero.Name) recognizes more of the route to $($Landmark.Name). Next time, the place will be easier to find."
+        }
+    }
+
+    return [PSCustomObject]@{
+        Familiarity = [int]$record["Familiarity"]
+        FamiliarityGained = (-not $hadDay)
+        DirectTravelUnlocked = [bool]$record["DirectTravelUnlocked"]
+        DirectTravelJustUnlocked = ([bool]$record["DirectTravelUnlocked"] -and -not $wasDirect)
+        Text = $text
+    }
+}
+
+function Test-MonsterZoneLandmarkDirectTravelUnlocked {
+    param(
+        $Game,
+        $Landmark
+    )
+
+    if ($null -eq $Landmark) {
+        return $false
+    }
+
+    $record = Get-MonsterZoneLandmarkMemoryRecord -Game $Game -LandmarkId ([string]$Landmark.Id)
+    return ($null -ne $record -and [bool]$record["DirectTravelUnlocked"])
+}
+
+function Get-MonsterZoneDirectTravelLandmarks {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    return @(Get-MonsterZoneLandmarks | Where-Object { Test-MonsterZoneLandmarkDirectTravelUnlocked -Game $Game -Landmark $_ })
+}
+
+function Move-MonsterZoneToLandmark {
+    param(
+        $Game,
+        $Landmark
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Landmark) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Choose a known landmark."
+        }
+    }
+
+    if (-not (Test-MonsterZoneLandmarkDirectTravelUnlocked -Game $Game -Landmark $Landmark)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "$($Game.Hero.Name) does not know the route to $($Landmark.Name) well enough to travel there directly yet."
+            Landmark = $Landmark
+        }
+    }
+
+    $Game.Town.MonsterZone.CurrentX = [int]$Landmark.X
+    $Game.Town.MonsterZone.CurrentY = [int]$Landmark.Y
+    $Game.Town.MonsterZone.Visits = [int]$Game.Town.MonsterZone.Visits + 1
+
+    return [PSCustomObject]@{
+        Success = $true
+        Message = "$($Game.Hero.Name) leaves the outer gate by a route now familiar enough to trust, reaching $($Landmark.Name) without wandering the scrub first."
+        X = [int]$Landmark.X
+        Y = [int]$Landmark.Y
+        Landmark = $Landmark
+    }
+}
+
 function Get-MonsterZoneLocationText {
     param($Game)
 
@@ -240,11 +418,21 @@ function Discover-MonsterZoneLandmark {
 
     $alreadyDiscovered = [bool]$Game.Town.MonsterZone.DiscoveredLandmarks[$Landmark.Id]
     $Game.Town.MonsterZone.DiscoveredLandmarks[$Landmark.Id] = $true
+    $memory = Update-MonsterZoneLandmarkMemory -Game $Game -Landmark $Landmark
+    $text = if ($alreadyDiscovered) { $Landmark.RepeatVisitText } else { $Landmark.FirstVisitText }
+
+    if (-not [string]::IsNullOrWhiteSpace($memory.Text)) {
+        $text = "$text $($memory.Text)"
+    }
 
     return [PSCustomObject]@{
         Discovered = (-not $alreadyDiscovered)
         Landmark = $Landmark
-        Text = if ($alreadyDiscovered) { $Landmark.RepeatVisitText } else { $Landmark.FirstVisitText }
+        Familiarity = $memory.Familiarity
+        FamiliarityGained = $memory.FamiliarityGained
+        DirectTravelUnlocked = $memory.DirectTravelUnlocked
+        DirectTravelJustUnlocked = $memory.DirectTravelJustUnlocked
+        Text = $text
     }
 }
 
@@ -703,6 +891,45 @@ function Write-MonsterZoneObjectiveProgress {
     Write-Action "$prefix -> $($objective.Title). $($objective.Detail)" "Yellow"
 }
 
+function Start-MonsterZoneDirectTravelMenu {
+    param($Game)
+
+    $landmarks = @(Get-MonsterZoneDirectTravelLandmarks -Game $Game)
+
+    if ($landmarks.Count -le 0) {
+        Write-Scene "$($Game.Hero.Name) does not know any outer-wall landmark routes well enough for direct travel yet. Return to the same places on different days to build a reliable route."
+        Write-ColorLine ""
+        return $null
+    }
+
+    Write-SectionTitle -Text "Known Outer Routes" -Color "Yellow"
+    Write-Scene "These routes have become familiar enough to follow from the outer gate without wandering the scrub first."
+    Write-ColorLine ""
+
+    for ($i = 0; $i -lt $landmarks.Count; $i++) {
+        $familiarity = Get-MonsterZoneLandmarkFamiliarity -Game $Game -LandmarkId ([string]$landmarks[$i].Id)
+        Write-ColorLine "$($i + 1). $($landmarks[$i].Name) - route familiarity $familiarity/$(Get-MonsterZoneDirectTravelThreshold)" "White"
+    }
+
+    Write-ColorLine "0. Back" "DarkGray"
+    Write-ColorLine ""
+    $choice = Read-Host "Choose landmark"
+
+    if ($choice -eq "0") {
+        return $null
+    }
+
+    $selectedIndex = 0
+
+    if ([int]::TryParse($choice, [ref]$selectedIndex) -and $selectedIndex -ge 1 -and $selectedIndex -le $landmarks.Count) {
+        return (Move-MonsterZoneToLandmark -Game $Game -Landmark $landmarks[$selectedIndex - 1])
+    }
+
+    Write-ColorLine "Choose a listed landmark." "DarkYellow"
+    Write-ColorLine ""
+    return $null
+}
+
 function Get-MonsterZoneCampLevelName {
     param([int]$Level)
 
@@ -928,6 +1155,7 @@ function Start-MonsterZoneMenu {
         Write-ColorLine "6. Make or improve camp" "White"
         Write-ColorLine "7. Sleep under the open sky" "White"
         Write-ColorLine "8. Return to the city gate" "White"
+        Write-ColorLine "9. Travel to a known landmark" $(if (@(Get-MonsterZoneDirectTravelLandmarks -Game $Game).Count -gt 0) { "White" } else { "DarkGray" })
         Write-ColorLine "S. Status" "White"
         if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero) {
             Write-ColorLine (Get-HeroInvisibilityOutOfCombatOptionText -Hero $Game.Hero) "White"
@@ -958,7 +1186,8 @@ function Start-MonsterZoneMenu {
 
                     $encounterRoll = Roll-Dice -Sides 100
                     $danger = if ($null -ne $move.Landmark) { [int]$move.Landmark.DangerLevel } else { 1 }
-                    $encounterChance = 20 + ($danger * 10)
+                    $familiarity = if ($null -ne $move.Landmark) { Get-MonsterZoneLandmarkFamiliarity -Game $Game -LandmarkId ([string]$move.Landmark.Id) } else { 0 }
+                    $encounterChance = [Math]::Max(10, (20 + ($danger * 10)) - ([Math]::Max(0, $familiarity - 1) * 5))
 
                     if ($encounterRoll -le $encounterChance) {
                         $encounterResult = Start-MonsterZoneEncounter -Game $Game -HeroHP $HeroHP
@@ -1002,6 +1231,20 @@ function Start-MonsterZoneMenu {
                 $Game.Town.MonsterZone.CurrentY = 0
                 Write-Scene "$($Game.Hero.Name) follows the road markers back until the outer gate has shape again."
                 Write-ColorLine ""
+            }
+            "9" {
+                $directTravel = Start-MonsterZoneDirectTravelMenu -Game $Game
+
+                if ($null -ne $directTravel) {
+                    Write-Scene $directTravel.Message
+
+                    if ($directTravel.Success) {
+                        $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $directTravel.Landmark
+                        Write-Scene $discovery.Text
+                    }
+
+                    Write-ColorLine ""
+                }
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value

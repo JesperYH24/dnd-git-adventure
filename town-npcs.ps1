@@ -529,10 +529,102 @@ function Get-HadrikCityTalk {
     return "Hadrik scratches soot from his jaw. 'City still wants steel. City always wants steel. Means the forge sleeps last.'"
 }
 
+function Test-WallWatchReportsActive {
+    param($Game)
+
+    return ($null -ne $Game -and
+        $null -ne $Game.Town -and
+        $null -ne $Game.Town.StoryFlags -and
+        [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"])
+}
+
+function Get-WallWatchReportState {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.MonsterZone) {
+        return [PSCustomObject]@{
+            DiscoveredLandmarks = 0
+            DefeatedTrails = 0
+            UnreportedTrails = 0
+            ReportedTrails = 0
+            Oddities = 0
+            LatestCreatureName = ""
+        }
+    }
+
+    $monsterZone = $Game.Town.MonsterZone
+    $defeated = @($monsterZone.DefeatedCreatures.Keys)
+    $reported = @($monsterZone.ReportedCreaturesToDorr.Keys)
+    $unreported = @($defeated | Where-Object { -not [bool]$monsterZone.ReportedCreaturesToDorr[[string]$_] })
+    $latestCreatureName = ""
+
+    if ($defeated.Count -gt 0) {
+        $latestRecord = $defeated |
+            ForEach-Object { $monsterZone.DefeatedCreatures[[string]$_] } |
+            Sort-Object { if ($null -ne $_["LastDefeatedDay"]) { [int]$_["LastDefeatedDay"] } else { 0 } } -Descending |
+            Select-Object -First 1
+
+        if ($null -ne $latestRecord) {
+            $latestCreatureName = [string]$latestRecord["Name"]
+        }
+    }
+
+    return [PSCustomObject]@{
+        DiscoveredLandmarks = @($monsterZone.DiscoveredLandmarks.Keys).Count
+        DefeatedTrails = $defeated.Count
+        UnreportedTrails = $unreported.Count
+        ReportedTrails = $reported.Count
+        Oddities = @($monsterZone.Oddities).Count
+        LatestCreatureName = $latestCreatureName
+    }
+}
+
+function Get-BelorWallWatchTalk {
+    param($Game)
+
+    $persona = Get-HeroTownPersona -Hero $Game.Hero
+    $heroName = Get-HeroTownName -Hero $Game.Hero
+    $report = Get-WallWatchReportState -Game $Game
+
+    if ($report.UnreportedTrails -gt 0) {
+        if ($persona.IsBardLike -or $persona.IsCharming) {
+            return "Belor lowers his voice and taps the wall-watch slate. '$($report.LatestCreatureName) is more than a monster story if you can make the report hold together. Dorr will want the crowd version. I want the gate pattern: where it came close, what it watched, and whether it tested a hinge before it tested you.'"
+        }
+
+        if ($persona.IsKnightLike) {
+            return "Belor studies $heroName like a sentry captain measuring a breach. '$($report.LatestCreatureName) near the wall means the attacks have shape. Bring the proof cleanly: gate, angle, tracks, and what part of the line it threatened first.'"
+        }
+
+        return "Belor's eyes sharpen when $heroName names $($report.LatestCreatureName). 'Good. That is not tavern noise anymore. Dorr can turn it into a pit contract, but the watch needs the ugly details before the next gate crew stands in the wrong place.'"
+    }
+
+    if ($report.ReportedTrails -gt 0) {
+        return "Belor checks the wall-watch slate, where fresh chalk marks sit beside Dorr's monster notes. 'Now the watch has named trails instead of rumors. Next thing is pattern: which attacks scratch at gates, which ones stalk patrol roads, and which ones are only being pushed toward us by something worse.'"
+    }
+
+    if ($report.DiscoveredLandmarks -gt 0) {
+        return "Belor runs a thumb over a rough outer-road sketch. 'Landmarks matter. A broken tower, a burned orchard, a dry creek bed: those are not scenery once the wall starts taking pressure. They tell us where a creature can watch the gate without standing under a spear.'"
+    }
+
+    if ($persona.IsKnightLike) {
+        return "Belor nods toward the outer gate. 'The wall-watchers are logging claw marks, spooked patrol horses, and shapes that pull back when horns sound. This is not a glorious charge, Lubert. It is counting where fear touches stone until the pattern gives itself away.'"
+    }
+
+    if ($persona.IsBardLike -or $persona.IsCharming) {
+        return "Belor nods toward the outer gate. 'The wall-watchers hear the same story three ways: gate guards call it claw marks, carters call it hungry shadows, children call it Halewick coming back wrong. Find what repeats underneath the fear.'"
+    }
+
+    return "Belor nods toward the outer gate. 'The wall-watchers are logging claw marks, broken patrol markers, and things bold enough to test the roads before they test the gate. Go out, come back with proof, and we can stop guessing which part of the wall is being measured.'"
+}
+
 function Get-BelorWatchTalk {
     param($Game)
 
     $persona = Get-HeroTownPersona -Hero $Game.Hero
+
+    if (Test-WallWatchReportsActive -Game $Game) {
+        return (Get-BelorWallWatchTalk -Game $Game)
+    }
 
     if (Test-FighterHasWatchTourneyLead -Game $Game) {
         if (-not $Game.Town.StreetFlags["BelorWatchTalk_TourneyNotice"]) {
@@ -582,6 +674,10 @@ function Get-BelorWatchTalk {
 
 function Get-BelorDistrictRumorTalk {
     param($Game)
+
+    if (Test-WallWatchReportsActive -Game $Game) {
+        return "Belor's voice drops. 'Halewick made the city look up. The wall trouble is what happens when everyone looks the wrong way for too long. Gates, roads, Dorr's monster talk, dock salvage, Veyra's ledgers: sooner or later those reports are going to describe the same pressure.'"
+    }
 
     if (Test-FighterHasTourneyPatronNotice -Game $Game) {
         if (-not $Game.Town.StreetFlags["BelorDistrictRumorTalk_TourneyNotice"]) {
@@ -759,7 +855,7 @@ function Start-BelorConversation {
         Write-TownTimeTracker -Game $Game -Area "Belor"
         $workQuestion = if ($Game.Hero.Class -eq "Bard") { "1. Ask where someone with presence can find honest coin" } elseif ($Game.Hero.Class -eq "Fighter") { "1. Ask where a disciplined shield arm can be noticed" } else { "1. Ask where a capable fighter can find decent work" }
         Write-ColorLine $workQuestion "White"
-        Write-ColorLine "2. Ask what has the watch worried" "White"
+        Write-ColorLine $(if (Test-WallWatchReportsActive -Game $Game) { "2. Ask about the wall attacks" } else { "2. Ask what has the watch worried" }) "White"
         Write-ColorLine "3. Ask which part of the city feels wrong" "White"
         Write-ColorLine "4. Thank him and move on" "White"
         Write-ColorLine "0. Back to streets" "DarkGray"

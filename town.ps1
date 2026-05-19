@@ -710,6 +710,13 @@ function Get-TownQuestSourceIntroText {
                     -BardText "Fresh notices have started appearing now that Gariand's name carries more weight. Some want coin-work. Some want the man who sang his way through closed rooms and walked back out of the understreet to look into worse things.")
             }
             "Guard Station" {
+                if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The watch hall has a new board beside the old patrol ledgers: outer-gate scratches, missing road markers, and wall-watch reports from guards who no longer laugh at monster stories. Borzig's work beyond the wall can turn that fear into proof." `
+                        -BardText "The watch hall has a new board beside the old patrol ledgers: outer-gate scratches, witness fragments, and wall-watch reports that sound too similar to be coincidence. Gariand's work beyond the wall can turn fear into a story precise enough to act on." `
+                        -FighterText "The watch hall has a new board beside the old patrol ledgers: outer-gate scratches, weak sightlines, and wall-watch reports from guards trying to hold a line they cannot fully see. Lubert Stryer's work beyond the wall can turn those reports into a defensible pattern.")
+                }
+
                 if ($isNight) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "The watch hall runs sharper at night. Runners come faster, tired guards speak lower, and the jobs left on the table feel closer to real trouble." `

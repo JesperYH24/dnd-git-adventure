@@ -71,6 +71,7 @@ function New-DefaultTownState {
             CurrentY = 0
             Visits = 0
             DiscoveredLandmarks = @{}
+            LandmarkMemory = @{}
             Camps = @{}
             Oddities = @()
             DefeatedCreatures = @{}
