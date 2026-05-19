@@ -33,7 +33,7 @@
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
-- expand Fighter's tourney ground into level 4 mounted jousting using the new stable-owned riding horse state, splint-or-plate tourney armor, lances, and heraldic rewards
+- expand Fighter's tourney ground into level 4 mounted jousting using the new stable-owned riding horse state, splint-or-plate tourney armor, lances, heraldic rewards, and distance-before-clash choices
 - deeper inn events, shady city routes, and economic info payoffs
 
 ## Monster zone design direction
@@ -50,10 +50,11 @@ Core loop to deepen:
 Next implementation priorities:
 
 - add clearer monster-zone objectives so the player knows why they are leaving town: track a creature, collect a requested oddity, find a landmark, report proof to Dorr, or return safely before the zone wears them down
-- expand pre-combat encounter choices so `Perception` and `Stealth` results lead to meaningful options such as `avoid`, `track`, `ambush`, `study`, or `stand ground` before initiative
+- expand pre-combat encounter choices so `Perception` and `Stealth` results lead to meaningful options such as `avoid`, `track`, `ambush`, `study`, `close`, `hold range`, or `stand ground` before initiative
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
 - polish Dorr's monster-contract board so pending captures clearly show when the crew returns, which monster type was proven, and what the ring reward is
 - add class-flavored monster-zone text: Barbarian reads danger through instinct and physical signs, Bard notices folklore and strange sounds, and Fighter reads patrol logic, tracks, and wall-defense threats
+- add ranged weapon support on top of the new monster-zone distance state, so open ground can make bows, thrown weapons, and monster approach behavior matter
 
 Use a hidden coordinate-style zone rather than a visible dungeon map:
 
@@ -87,6 +88,7 @@ Add `Perception` and `Stealth` as pre-initiative wilderness skills:
 - monsters and beasts should have their own `PerceptionBonus` and `StealthBonus`
 - before combat, compare hero perception against monster stealth and monster perception against hero stealth
 - if the hero detects the creature first, the hero can observe, avoid, track, or attempt a surprise approach
+- successful stealth should keep giving positional choices: slip away, close into melee, shadow from near range, hold farther out for creature-specific observation, or deliberately reveal the hero
 - if the creature detects the hero first, it can stalk, ambush, flee, or block the route
 - if both sides detect each other, roll normal initiative
 - if neither side gets a clear read, surface tracks, sounds, disturbed ground, or a second approach choice

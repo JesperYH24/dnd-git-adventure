@@ -110,6 +110,23 @@ function Test-MonsterZoneBlindsightCountersInvisibilityBonus {
     Assert-Equal -Actual $invisible.HeroStealthTotal -Expected $visible.HeroStealthTotal -Message "Blindsight should remove the extra Invisibility stealth bonus from the contest."
 }
 
+function Test-MonsterZoneCreaturesHaveObservationFlavor {
+    $creatures = Get-MonsterZoneCreatures
+
+    foreach ($creature in $creatures) {
+        $lines = @(Get-MonsterZoneCreatureObservationLines -Creature $creature)
+
+        Assert-True -Condition ($lines.Count -ge 2) -Message "$($creature.id) should have multiple observation lines for the 60 ft stalk choice."
+        Assert-True -Condition (($lines -join " ").Length -gt 80) -Message "$($creature.id) observation text should give the player a real read, not a bare label."
+    }
+
+    $graveThing = $creatures | Where-Object { $_.id -eq "grave_hungry_thing" } | Select-Object -First 1
+    $graveText = @(Get-MonsterZoneCreatureObservationLines -Creature $graveThing) -join " "
+
+    Assert-True -Condition ($graveText -like "*abomination*") -Message "The grave-hungry thing observation should mark it as stranger than a normal beast."
+    Assert-True -Condition ($graveText -like "*sight alone*") -Message "The grave-hungry thing observation should hint that sight-based stealth is unreliable."
+}
+
 function Test-BardCanCastInvisibilityFromMonsterZoneMenu {
     $game = Initialize-Game -Class "Bard"
     $game.Hero.Level = 4
@@ -199,6 +216,7 @@ Test-BarbarianDangerSenseStartsAtLevelTwo
 Test-InvisibilityImprovesMonsterZoneStealth
 Test-MonsterZoneKeenSensesHelpAgainstStealth
 Test-MonsterZoneBlindsightCountersInvisibilityBonus
+Test-MonsterZoneCreaturesHaveObservationFlavor
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof

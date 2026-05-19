@@ -1079,6 +1079,29 @@ function Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop {
     Assert-Equal -Actual $encounterFled -Expected $true -Message "The hero should still be able to flee on the following turn."
 }
 
+function Test-EncounterDistanceMovementBands {
+    $distance = New-EncounterDistanceState -DistanceFeet 60 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
+
+    Assert-Equal -Actual $distance.DistanceFeet -Expected 60 -Message "Open encounters should be able to start at far range."
+    Assert-Equal -Actual (Get-EncounterDistanceBandText -DistanceState $distance) -Expected "Far" -Message "60 ft should read as far range."
+    Assert-Equal -Actual (Test-EncounterInMeleeRange -DistanceState $distance) -Expected $false -Message "60 ft should not be melee range."
+
+    Move-EncounterDistance -DistanceState $distance -Direction "Close" -Feet 30 | Out-Null
+    Assert-Equal -Actual $distance.DistanceFeet -Expected 30 -Message "A normal 30 ft move should close from 60 ft to 30 ft."
+    Assert-Equal -Actual (Get-EncounterDistanceBandText -DistanceState $distance) -Expected "Near" -Message "30 ft should read as near range."
+
+    Move-EncounterDistance -DistanceState $distance -Direction "Close" -Feet 30 | Out-Null
+    Assert-Equal -Actual $distance.DistanceFeet -Expected 5 -Message "Closing distance should stop at melee range instead of going below it."
+    Assert-Equal -Actual (Test-EncounterInMeleeRange -DistanceState $distance) -Expected $true -Message "5 ft should count as melee range."
+
+    Move-EncounterDistance -DistanceState $distance -Direction "Retreat" -Feet 60 | Out-Null
+    Assert-Equal -Actual $distance.DistanceFeet -Expected 65 -Message "Retreating from melee by 60 ft should open distance to 65 ft."
+    Assert-Equal -Actual (Get-EncounterDistanceBandText -DistanceState $distance) -Expected "Distant" -Message "More than 60 ft should read as distant."
+
+    Move-EncounterDistance -DistanceState $distance -Direction "Retreat" -Feet 300 | Out-Null
+    Assert-Equal -Actual $distance.DistanceFeet -Expected 120 -Message "Distance should respect the encounter's maximum range."
+}
+
 Test-FocusBonusImprovesHeroAttack
 Test-BlockRaisesArmorClassAgainstNextAttack
 Test-ClassCombatActionLabelsAreDistinct
@@ -1116,6 +1139,7 @@ Test-BarbarianFrenzyUnlocksAtLevelThree
 Test-RecklessExposureGivesMonsterAdvantage
 Test-BarbarianLongRestRestoresRages
 Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop
+Test-EncounterDistanceMovementBands
 
 Write-Host "Combat tactics tests passed." -ForegroundColor Green
 $global:RollDiceOverride = $null

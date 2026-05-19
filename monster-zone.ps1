@@ -327,6 +327,66 @@ function Get-RandomMonsterZoneCreature {
     return (Get-MonsterZoneCreatures | Get-Random)
 }
 
+function Get-MonsterZoneCreatureObservationLines {
+    param($Creature)
+
+    if ($null -eq $Creature) {
+        return @()
+    }
+
+    switch ([string]$Creature.id) {
+        "wall_wolf" {
+            return @(
+                "$($Creature.definite) keeps its belly close to the grass, circling for scent before it commits. It looks more like a hunter testing a weak flank than a starving animal.",
+                "Its shoulders bunch before every short rush. If it attacks, it will likely come fast and low, trying to drag the fight sideways rather than crash straight in.",
+                "The smoke-dark pelt is not just dirt. Something has marked or changed the creature, but it still thinks like a beast."
+            )
+        }
+        "razor_boar" {
+            return @(
+                "$($Creature.definite) tears up root and stone as it moves, less stalking than daring the world to stand in front of it.",
+                "Its tusks scrape bark clean from a trunk in one impatient jerk. This thing is dangerous in a charge, but it does not look subtle or especially careful.",
+                "No venom shows, no strange spell-sense, just muscle, rage, and tusks sharp enough to make armor feel like a suggestion."
+            )
+        }
+        "grave_hungry_thing" {
+            return @(
+                "$($Creature.definite) moves wrong: too many pauses, then too much speed, as if every joint remembers a different body.",
+                "It does not sniff the air or watch the road like a normal predator. Its head tilts toward warmth, breath, and the tiny sounds skin makes when fear starts.",
+                "This is no ordinary beast. It looks like an abomination from grave soil and appetite, and hiding by sight alone may not fool it."
+            )
+        }
+        "kobold_wall_scout" {
+            return @(
+                "$($Creature.definite) counts patrol markers with quick glances and keeps one claw near the black-waxed token, as if the token matters more than its own comfort.",
+                "It moves in bursts: freeze, listen, signal-check, then another skitter of ground. A fight with it may start with tricks, retreat, or a sudden jab rather than brute force.",
+                "It is dangerous because it is organized. Alone it looks fragile; as a scout, it may be the first visible piece of something larger."
+            )
+        }
+        "scale_touched_mastiff" {
+            return @(
+                "$($Creature.definite) samples the wind with a guard dog's patience, then plants its paws as if holding a gate no one else can see.",
+                "The black scale plates shift under its hide when it breathes. It looks built to close hard, bite deep, and keep pressure once it has found a target.",
+                "This is not a peaceful stray. It has a trained shape to its aggression, and the scale growth makes it feel touched by the same wrongness spreading beyond the wall."
+            )
+        }
+        default {
+            return @(
+                "$($Creature.definite) can be watched from a safer distance, but its habits are hard to name from here.",
+                "The safest read is simple: it has not noticed the hero yet, and that advantage may matter more than certainty."
+            )
+        }
+    }
+}
+
+function Write-MonsterZoneCreatureObservation {
+    param($Creature)
+
+    foreach ($line in (Get-MonsterZoneCreatureObservationLines -Creature $Creature)) {
+        Write-Scene $line
+    }
+}
+
 function Get-MonsterZoneCreatureSenseBonus {
     param($Creature)
 
@@ -574,6 +634,7 @@ function Start-MonsterZoneEncounter {
     $heroDroppedWeapon = if ($null -ne $Game.PSObject.Properties["HeroDroppedWeapon"]) { [bool]$Game.HeroDroppedWeapon } else { $false }
     $heroStarts = $false
     $monsterStarts = $false
+    $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
 
     Write-SectionTitle -Text "Wilderness Encounter" -Color "Red"
     Write-Scene $creature.introText
@@ -594,8 +655,10 @@ function Start-MonsterZoneEncounter {
         "HeroAdvantage" {
             Write-Scene "$($Game.Hero.Name) spots the danger first and has a heartbeat to choose the shape of the encounter."
             Write-ColorLine "1. Avoid it and move on" "White"
-            Write-ColorLine "2. Close in for a surprise attack" "White"
-            Write-ColorLine "3. Face it openly" "White"
+            Write-ColorLine "2. Close into melee for a surprise attack" "White"
+            Write-ColorLine "3. Shadow it from near range (30 ft)" "White"
+            Write-ColorLine "4. Hold farther out and observe (60 ft)" "White"
+            Write-ColorLine "5. Face it openly" "White"
             $choice = Read-Host "Choose"
 
             if ($choice -eq "1") {
@@ -607,7 +670,21 @@ function Start-MonsterZoneEncounter {
 
             if ($choice -eq "2") {
                 $monsterOffBalance = $true
+                $distanceState.DistanceFeet = 5
                 Write-Scene "$($Game.Hero.Name) closes the last distance quietly enough to begin with the creature off balance."
+            }
+            elseif ($choice -eq "3") {
+                $distanceState.DistanceFeet = 30
+                Write-Scene "$($Game.Hero.Name) shadows the creature from near range, close enough to act before it fully understands the danger."
+            }
+            elseif ($choice -eq "4") {
+                $distanceState.DistanceFeet = 60
+                Write-Scene "$($Game.Hero.Name) keeps a longer line of ground between them, buying space before the fight breaks open."
+                Write-MonsterZoneCreatureObservation -Creature $creature
+            }
+            else {
+                $distanceState.DistanceFeet = 30
+                Write-Scene "$($Game.Hero.Name) steps into view and lets the encounter begin on open terms."
             }
         }
         "CreatureAdvantage" {
@@ -632,7 +709,8 @@ function Start-MonsterZoneEncounter {
         -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
         -MonsterOffBalance ([ref]$monsterOffBalance) `
         -EncounterFled ([ref]$encounterFled) `
-        -HeroStarts $heroStarts
+        -HeroStarts $heroStarts `
+        -DistanceState $distanceState
 
     $Game.HeroDroppedWeapon = $heroDroppedWeapon
 

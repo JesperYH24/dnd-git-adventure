@@ -743,6 +743,94 @@ function Get-HeroBlockActionLabel {
     return "Block"
 }
 
+function New-EncounterDistanceState {
+    param(
+        [int]$DistanceFeet = 30,
+        [int]$HeroSpeedFeet = 30,
+        [int]$MonsterSpeedFeet = 30,
+        [int]$MeleeRangeFeet = 5,
+        [int]$MaxDistanceFeet = 120
+    )
+
+    return [PSCustomObject]@{
+        DistanceFeet = [Math]::Max($MeleeRangeFeet, $DistanceFeet)
+        HeroSpeedFeet = [Math]::Max(0, $HeroSpeedFeet)
+        MonsterSpeedFeet = [Math]::Max(0, $MonsterSpeedFeet)
+        MeleeRangeFeet = [Math]::Max(5, $MeleeRangeFeet)
+        MaxDistanceFeet = [Math]::Max($MeleeRangeFeet, $MaxDistanceFeet)
+    }
+}
+
+function Test-EncounterInMeleeRange {
+    param($DistanceState)
+
+    if ($null -eq $DistanceState) {
+        return $true
+    }
+
+    return ([int]$DistanceState.DistanceFeet -le [int]$DistanceState.MeleeRangeFeet)
+}
+
+function Get-EncounterDistanceBandText {
+    param($DistanceState)
+
+    if ($null -eq $DistanceState) {
+        return ""
+    }
+
+    $distance = [int]$DistanceState.DistanceFeet
+
+    if ($distance -le [int]$DistanceState.MeleeRangeFeet) {
+        return "Melee"
+    }
+
+    if ($distance -le 30) {
+        return "Near"
+    }
+
+    if ($distance -le 60) {
+        return "Far"
+    }
+
+    return "Distant"
+}
+
+function Move-EncounterDistance {
+    param(
+        $DistanceState,
+        [string]$Direction,
+        [int]$Feet
+    )
+
+    if ($null -eq $DistanceState) {
+        return $null
+    }
+
+    $movement = [Math]::Max(0, $Feet)
+    $current = [int]$DistanceState.DistanceFeet
+    $melee = [int]$DistanceState.MeleeRangeFeet
+    $max = [int]$DistanceState.MaxDistanceFeet
+
+    if ($Direction -eq "Close") {
+        $DistanceState.DistanceFeet = [Math]::Max($melee, $current - $movement)
+    }
+    elseif ($Direction -eq "Retreat") {
+        $DistanceState.DistanceFeet = [Math]::Min($max, $current + $movement)
+    }
+
+    return $DistanceState
+}
+
+function Write-EncounterDistanceStatus {
+    param($DistanceState)
+
+    if ($null -eq $DistanceState) {
+        return
+    }
+
+    Write-Action "Distance: $($DistanceState.DistanceFeet) ft ($((Get-EncounterDistanceBandText -DistanceState $DistanceState))). Move: $($DistanceState.HeroSpeedFeet) ft, dash: $([int]$DistanceState.HeroSpeedFeet * 2) ft." "Cyan"
+}
+
 function Get-HeroFocusActionLabel {
     param($Hero)
 
@@ -1531,11 +1619,14 @@ function Show-CombatTurnMenu {
     param(
         $Hero,
         [bool]$ActionSpent = $false,
-        [bool]$BonusActionSpent = $false
+        [bool]$BonusActionSpent = $false,
+        $DistanceState = $null,
+        [bool]$MovementSpent = $false
     )
 
     $actionText = "1. Action"
     $bonusText = "2. Bonus Action"
+    $movementText = ""
     $actionSurgeText = ""
 
     if ($ActionSpent) {
@@ -1546,23 +1637,31 @@ function Show-CombatTurnMenu {
         $bonusText = "2. Bonus Action (used)"
     }
 
+    if ($null -ne $DistanceState) {
+        $movementText = if ($MovementSpent) { "   M. Move (used)" } else { "   M. Move" }
+    }
+
     if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") {
         Initialize-HeroFighterResources -Hero $Hero
         $actionSurgeText = "   4. Action Surge ($($Hero.CurrentActionSurges)/$($Hero.MaxActionSurges))"
     }
 
-    Write-ColorLine "$actionText   $bonusText   3. End Turn$actionSurgeText   T. Text Speed ($(Get-TextSpeedLabel))" "White"
+    Write-ColorLine "$actionText   $bonusText$movementText   3. End Turn$actionSurgeText   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
 
 function Show-CombatChoiceMenu {
-    param($Hero)
+    param(
+        $Hero,
+        $DistanceState = $null
+    )
 
     $blockLabel = Get-HeroBlockActionLabel -Hero $Hero
     $focusLabel = Get-HeroFocusActionLabel -Hero $Hero
     $castText = if ($Hero.Class -eq "Bard") { "   C. Cast Spell" } else { "" }
+    $movementText = if ($null -ne $DistanceState) { "   D. Dash" } else { "" }
 
-    Write-ColorLine "A. Attack   B. $blockLabel   F. $focusLabel$castText" "White"
+    Write-ColorLine "A. Attack   B. $blockLabel   F. $focusLabel$castText$movementText" "White"
     Write-ColorLine "I. Inventory   P. Pass Action   R. Run   T. Text Speed ($(Get-TextSpeedLabel))" "White"
     Write-ColorLine ""
 }
@@ -1600,10 +1699,25 @@ function Resolve-MonsterCombatTurn {
         [ref]$HeroBlockArmorBonus,
         [ref]$HeroRecklessExposure,
         $MonsterHP = $null,
-        $HeroRiposteAvailable = $null
+        $HeroRiposteAvailable = $null,
+        $DistanceState = $null
     )
 
     if (-not $MonsterOffBalance.Value) {
+        if ($null -ne $DistanceState -and -not (Test-EncounterInMeleeRange -DistanceState $DistanceState)) {
+            $speed = [int]$DistanceState.MonsterSpeedFeet
+
+            if ([int]$DistanceState.DistanceFeet -gt $speed) {
+                Move-EncounterDistance -DistanceState $DistanceState -Direction "Close" -Feet ($speed * 2) | Out-Null
+                Write-Scene "$($Monster.definite) dashes across the open ground, cutting the distance to $($DistanceState.DistanceFeet) ft."
+                Write-ColorLine ""
+                return
+            }
+
+            Move-EncounterDistance -DistanceState $DistanceState -Direction "Close" -Feet $speed | Out-Null
+            Write-Scene "$($Monster.definite) closes to $($DistanceState.DistanceFeet) ft and brings the fight into reach."
+        }
+
         $recklessAdvantage = ($null -ne $HeroRecklessExposure -and $HeroRecklessExposure.Value)
         $monsterAttackResult = $null
         Invoke-MonsterAttack -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -BlockArmorBonus $HeroBlockArmorBonus.Value -Advantage $recklessAdvantage -AttackResult ([ref]$monsterAttackResult)
@@ -1643,7 +1757,8 @@ function Resolve-HeroCombatTurn {
         [ref]$EncounterFled,
         [ref]$HeroBlockArmorBonus,
         [ref]$HeroFocusAttackBonus,
-        [ref]$HeroRecklessExposure
+        [ref]$HeroRecklessExposure,
+        $DistanceState = $null
     )
 
     if ($HeroDroppedWeapon.Value) {
@@ -1657,13 +1772,51 @@ function Resolve-HeroCombatTurn {
     $turnHeroEnded = $false
     $actionSpent = $false
     $bonusActionSpent = $false
+    $movementSpent = $false
 
-    while (-not $actionSpent -or -not $bonusActionSpent) {
-        Show-CombatTurnMenu -Hero $Hero -ActionSpent $actionSpent -BonusActionSpent $bonusActionSpent
+    while (-not $actionSpent -or -not $bonusActionSpent -or ($null -ne $DistanceState -and -not $movementSpent)) {
+        Show-CombatTurnMenu -Hero $Hero -ActionSpent $actionSpent -BonusActionSpent $bonusActionSpent -DistanceState $DistanceState -MovementSpent $movementSpent
         $turnMenuChoice = (Read-Host "Choose").ToUpper()
 
         if ($turnMenuChoice -eq "T") {
             Toggle-TextSpeed | Out-Null
+            continue
+        }
+
+        if ($turnMenuChoice -eq "M" -and $null -ne $DistanceState) {
+            if ($movementSpent) {
+                Write-ColorLine ""
+                Write-ColorLine "Movement is already spent this round. Use Dash as an action if you need another 30 ft." "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+
+            $moveFeet = [int]$DistanceState.HeroSpeedFeet
+
+            Write-ColorLine "Move" "Cyan"
+            Write-ColorLine "1. Close distance by up to $moveFeet ft" "White"
+            Write-ColorLine "2. Back away by up to $moveFeet ft" "White"
+            Write-ColorLine "0. Cancel" "DarkGray"
+            Write-ColorLine ""
+            $moveChoice = Read-Host "Choose"
+
+            if ($moveChoice -eq "1") {
+                Move-EncounterDistance -DistanceState $DistanceState -Direction "Close" -Feet $moveFeet | Out-Null
+                Write-Scene "$($Hero.Name) closes the gap to $($DistanceState.DistanceFeet) ft."
+                Write-ColorLine ""
+                $movementSpent = $true
+            }
+            elseif ($moveChoice -eq "2") {
+                Move-EncounterDistance -DistanceState $DistanceState -Direction "Retreat" -Feet $moveFeet | Out-Null
+                Write-Scene "$($Hero.Name) gives ground, opening the distance to $($DistanceState.DistanceFeet) ft."
+                Write-ColorLine ""
+                $movementSpent = $true
+            }
+            elseif ($moveChoice -ne "0") {
+                Write-ColorLine "Choose 1, 2, or 0." "DarkYellow"
+                Write-ColorLine ""
+            }
+
             continue
         }
 
@@ -1725,7 +1878,8 @@ function Resolve-HeroCombatTurn {
 
         if ($turnMenuChoice -ne "1") {
             Write-ColorLine ""
-            $promptText = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { "Choose 1, 2, 3, 4 or T." } else { "Choose 1, 2, 3 or T." }
+            $movePrompt = if ($null -ne $DistanceState) { ", M" } else { "" }
+            $promptText = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ActionSurge") { "Choose 1, 2$movePrompt, 3, 4 or T." } else { "Choose 1, 2$movePrompt, 3 or T." }
             Write-ColorLine $promptText "DarkYellow"
             Write-ColorLine ""
             continue
@@ -1738,7 +1892,7 @@ function Resolve-HeroCombatTurn {
             continue
         }
 
-        Show-CombatChoiceMenu -Hero $Hero
+        Show-CombatChoiceMenu -Hero $Hero -DistanceState $DistanceState
         $choice = (Read-Host "Choose action").ToUpper()
 
         if ($choice -eq "T") {
@@ -1770,10 +1924,51 @@ function Resolve-HeroCombatTurn {
             return
         }
 
+        if ($choice -eq "D" -and $null -ne $DistanceState) {
+            $moveFeet = if (-not $movementSpent) { [int]$DistanceState.HeroSpeedFeet * 2 } else { [int]$DistanceState.HeroSpeedFeet }
+
+            Write-ColorLine "Dash" "Cyan"
+            Write-ColorLine "1. Close distance by up to $moveFeet ft" "White"
+            Write-ColorLine "2. Back away by up to $moveFeet ft" "White"
+            Write-ColorLine "0. Cancel" "DarkGray"
+            Write-ColorLine ""
+            $moveChoice = Read-Host "Choose"
+
+            if ($moveChoice -eq "1") {
+                Move-EncounterDistance -DistanceState $DistanceState -Direction "Close" -Feet $moveFeet | Out-Null
+                Write-Scene "$($Hero.Name) closes the gap to $($DistanceState.DistanceFeet) ft."
+                Write-ColorLine ""
+                $movementSpent = $true
+                $actionSpent = $true
+            }
+            elseif ($moveChoice -eq "2") {
+                Move-EncounterDistance -DistanceState $DistanceState -Direction "Retreat" -Feet $moveFeet | Out-Null
+                Write-Scene "$($Hero.Name) gives ground, opening the distance to $($DistanceState.DistanceFeet) ft."
+                Write-ColorLine ""
+                $movementSpent = $true
+                $actionSpent = $true
+            }
+            elseif ($moveChoice -ne "0") {
+                Write-ColorLine "Choose 1, 2, or 0." "DarkYellow"
+                Write-ColorLine ""
+            }
+
+            continue
+        }
+
         if ($choice -notin @("A", "B", "F", "C") -or ($choice -eq "C" -and $Hero.Class -ne "Bard")) {
             Write-ColorLine ""
-            $choiceText = if ($Hero.Class -eq "Bard") { "Type A, B, F, C, I, P, R or T." } else { "Type A, B, F, I, P, R or T." }
+            $movementPrompt = if ($null -ne $DistanceState) { ", D" } else { "" }
+            $choiceText = if ($Hero.Class -eq "Bard") { "Type A, B, F, C$movementPrompt, I, P, R or T." } else { "Type A, B, F$movementPrompt, I, P, R or T." }
             Write-ColorLine $choiceText "DarkYellow"
+            Write-ColorLine ""
+            $choice = $null
+            continue
+        }
+
+        if ($choice -eq "A" -and -not (Test-EncounterInMeleeRange -DistanceState $DistanceState)) {
+            Write-ColorLine ""
+            Write-ColorLine "$($Hero.Name) is $($DistanceState.DistanceFeet) ft away. A melee attack needs $($DistanceState.MeleeRangeFeet) ft or a future ranged weapon option." "DarkYellow"
             Write-ColorLine ""
             $choice = $null
             continue
@@ -1873,7 +2068,8 @@ function Start-CombatLoop {
         [ref]$HeroDroppedWeapon,
         [ref]$MonsterOffBalance,
         [ref]$EncounterFled,
-        [bool]$HeroStarts = $true
+        [bool]$HeroStarts = $true,
+        $DistanceState = $null
     )
 
     $heroBlockArmorBonus = 0
@@ -1883,26 +2079,27 @@ function Start-CombatLoop {
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
         Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value
+        Write-EncounterDistanceStatus -DistanceState $DistanceState
         Show-BardTutorialCombatHint -Hero $Hero
         Show-BarbarianTutorialCombatHint -Hero $Hero
 
         if ($HeroStarts) {
-            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -DistanceState $DistanceState
 
             if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
                 break
             }
 
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable) -DistanceState $DistanceState
         }
         else {
-            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable)
+            Resolve-MonsterCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterOffBalance $MonsterOffBalance -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -MonsterHP $MonsterHP -HeroRiposteAvailable ([ref]$heroRiposteAvailable) -DistanceState $DistanceState
 
             if ($HeroHP.Value -le 0) {
                 break
             }
 
-            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure)
+            Resolve-HeroCombatTurn -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -HeroDroppedWeapon $HeroDroppedWeapon -MonsterOffBalance $MonsterOffBalance -EncounterFled $EncounterFled -HeroBlockArmorBonus ([ref]$heroBlockArmorBonus) -HeroFocusAttackBonus ([ref]$heroFocusAttackBonus) -HeroRecklessExposure ([ref]$heroRecklessExposure) -DistanceState $DistanceState
 
             if ($EncounterFled.Value -or $MonsterHP.Value -le 0 -or $HeroHP.Value -le 0) {
                 break

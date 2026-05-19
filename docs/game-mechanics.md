@@ -41,6 +41,9 @@
 - if the monster detects the hero first, it can stalk, ambush, flee, or block the path before normal initiative
 - if both sides notice each other, combat starts with normal initiative
 - if neither side has a clear read, the game should surface tracks, sounds, disturbed ground, or another approach choice
+- monster-zone combat now has a first-pass abstract distance state: melee is `5 ft`, normal movement is `30 ft`, dash can use the action for up to `60 ft` total movement, and open encounters can start at near or far range
+- when the hero wins the awareness contest, the player can avoid the creature, close into melee for an off-balance opener, shadow it from `30 ft`, hold farther out at `60 ft` to read its movement and threat tells, or face it openly
+- melee attacks require melee range; ranged weapons are still future work, so distance currently matters most for approach choices, closing, retreating, and monster dash behavior
 - the zone supports soft boundaries near the edge of the city's patrol reach rather than a detailed hard map
 - camping is a meaningful rest choice: open-sky sleep is fast but riskier, while building or improving camp lowers night attack risk
 - stable-yard pack animals feed monster salvage capacity, especially for oddities requested by Docks buyers
@@ -103,6 +106,7 @@ Current camp levels:
 - true mounted jousting is planned as a level 4 Fighter/knight unlock, not an early-town activity
 - before level 4, the tourney ground should stay focused on foot sparring, armored aspirant duels, patron notice, and shield technique
 - mounted jousting is still a future system: it should require level 4, stable-owned riding horse, equipped splint or plate armor, and lance support before it opens
+- mounted jousting should reuse the abstract distance idea from monster-zone combat, with choices changing based on how many feet remain before the clash
 - the stable yard now sells pack animals for future monster-zone hauling and a riding horse that satisfies the future jousting horse requirement
 
 ## Town and day/night systems
