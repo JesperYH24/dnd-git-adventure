@@ -138,10 +138,11 @@ Completed next pass:
 2. Improve `Vicious Mockery` into a true control cantrip.
 3. Add visible check-result explanations for passive class features.
 4. Add `Faerie Fire` as a level 1 combat setup spell with a Dexterity save, level 1 slot cost, and next-attack advantage on a failed save.
-5. Add `Charm Person` as a tagged social quest spell: spends a level 1 slot, gives the target a Wisdom save with advantage, and grants advantage on the social CHA check only if the save fails.
-6. Add `Suggestion` as a first-pass level 2 social quest spell: spends a level 2 slot, gives the target a Wisdom save, and resolves tagged higher-pressure social openings on a failed save.
-7. Add `Invisibility` as a level 4 out-of-combat spell: spends a level 2 slot and grants a strong stealth bonus from quest prep, monster-zone exploration, and calm dungeon rooms.
-8. Add `Enhance Ability` as a level 4 utility spell: spends a level 2 slot, focuses one ability, and grants advantage on matching non-combat quest checks.
+5. Let Bard combat spells use the monster-zone distance layer: `Vicious Mockery`, `Dissonant Whispers`, and `Faerie Fire` can target up to `60 ft`; out-of-range casts do not spend slots.
+6. Add `Charm Person` as a tagged social quest spell: spends a level 1 slot, gives the target a Wisdom save with advantage, and grants advantage on the social CHA check only if the save fails.
+7. Add `Suggestion` as a first-pass level 2 social quest spell: spends a level 2 slot, gives the target a Wisdom save, and resolves tagged higher-pressure social openings on a failed save.
+8. Add `Invisibility` as a level 4 out-of-combat spell: spends a level 2 slot and grants a strong stealth bonus from quest prep, monster-zone exploration, and calm dungeon rooms.
+9. Add `Enhance Ability` as a level 4 utility spell: spends a level 2 slot, focuses one ability, and grants advantage on matching non-combat quest checks.
 
 Next pass:
 

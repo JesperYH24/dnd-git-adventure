@@ -76,7 +76,9 @@ Current camp levels:
 - inspiration dice equal to half Bard level plus positive `CHA` modifier, minimum 1
 - inspiration dice used after `Attack`, `Block`, or `Focus`
 - dedicated `Bonus Action` menu inside combat rounds
-- `Vicious Mockery` uses a `WIS` save
+- `Vicious Mockery` uses a `WIS` save and can target enemies up to `60 ft` away when monster-zone distance is active
+- `Dissonant Whispers` and `Faerie Fire` also use `60 ft` combat range, so the Bard can use spell control from near/far monster-zone openings before melee weapons matter
+- `Healing Word` targets the hero and is not blocked by enemy distance
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
 - `Suggestion` can spend a level 2 slot on tagged higher-pressure social quest checks; the target rolls a Wisdom save, and a failed save resolves the social opening without a further ability check
 - `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms at Bard level 4, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; creatures with blindsight can counter that invisibility bonus

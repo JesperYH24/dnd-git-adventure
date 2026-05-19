@@ -831,6 +831,60 @@ function Write-EncounterDistanceStatus {
     Write-Action "Distance: $($DistanceState.DistanceFeet) ft ($((Get-EncounterDistanceBandText -DistanceState $DistanceState))). Move: $($DistanceState.HeroSpeedFeet) ft, dash: $([int]$DistanceState.HeroSpeedFeet * 2) ft." "Cyan"
 }
 
+function Test-EncounterDistanceWithinFeet {
+    param(
+        $DistanceState,
+        [int]$RangeFeet
+    )
+
+    if ($null -eq $DistanceState) {
+        return $true
+    }
+
+    return ([int]$DistanceState.DistanceFeet -le [Math]::Max(0, $RangeFeet))
+}
+
+function Get-BardCombatSpellRangeFeet {
+    param([string]$SpellName)
+
+    switch ($SpellName) {
+        "Vicious Mockery" { return 60 }
+        "Dissonant Whispers" { return 60 }
+        "Faerie Fire" { return 60 }
+        default { return 0 }
+    }
+}
+
+function Test-BardCombatSpellInRange {
+    param(
+        [string]$SpellName,
+        $DistanceState
+    )
+
+    $range = Get-BardCombatSpellRangeFeet -SpellName $SpellName
+
+    if ($range -le 0) {
+        return $true
+    }
+
+    return (Test-EncounterDistanceWithinFeet -DistanceState $DistanceState -RangeFeet $range)
+}
+
+function Get-BardCombatSpellRangeMessage {
+    param(
+        [string]$SpellName,
+        $DistanceState
+    )
+
+    $range = Get-BardCombatSpellRangeFeet -SpellName $SpellName
+
+    if ($null -eq $DistanceState -or $range -le 0) {
+        return ""
+    }
+
+    return "$SpellName reaches $range ft. The target is $($DistanceState.DistanceFeet) ft away."
+}
+
 function Get-HeroFocusActionLabel {
     param($Hero)
 
@@ -985,7 +1039,8 @@ function Resolve-HeroBonusAction {
         [ref]$MonsterHP,
         $HeroHP = $null,
         $HeroTurnEnded = $null,
-        $BonusActionCancelled = $null
+        $BonusActionCancelled = $null,
+        $DistanceState = $null
     )
 
     if ($MonsterHP.Value -le 0) {
@@ -1113,6 +1168,12 @@ function Resolve-HeroBonusAction {
         }
 
         if ($choice -eq "M") {
+            if (-not (Test-BardCombatSpellInRange -SpellName "Vicious Mockery" -DistanceState $DistanceState)) {
+                Write-ColorLine (Get-BardCombatSpellRangeMessage -SpellName "Vicious Mockery" -DistanceState $DistanceState) "DarkYellow"
+                Write-ColorLine ""
+                continue
+            }
+
             $spellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
             $wisdomSaveBonus = 0
 
@@ -1212,7 +1273,8 @@ function Invoke-BardDissonantWhispers {
         $Hero,
         $Monster,
         [ref]$MonsterHP,
-        [ref]$MonsterOffBalance
+        [ref]$MonsterOffBalance,
+        $DistanceState = $null
     )
 
     $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Dissonant Whispers"
@@ -1230,6 +1292,14 @@ function Invoke-BardDissonantWhispers {
             Success = $false
             Damage = 0
             Message = "There is no living target for Dissonant Whispers."
+        }
+    }
+
+    if (-not (Test-BardCombatSpellInRange -SpellName "Dissonant Whispers" -DistanceState $DistanceState)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Damage = 0
+            Message = Get-BardCombatSpellRangeMessage -SpellName "Dissonant Whispers" -DistanceState $DistanceState
         }
     }
 
@@ -1281,7 +1351,8 @@ function Invoke-BardDissonantWhispers {
 function Invoke-BardFaerieFire {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        $DistanceState = $null
     )
 
     $castCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Faerie Fire"
@@ -1299,6 +1370,14 @@ function Invoke-BardFaerieFire {
             Success = $false
             Marked = $false
             Message = "There is no target for Faerie Fire."
+        }
+    }
+
+    if (-not (Test-BardCombatSpellInRange -SpellName "Faerie Fire" -DistanceState $DistanceState)) {
+        return [PSCustomObject]@{
+            Success = $false
+            Marked = $false
+            Message = Get-BardCombatSpellRangeMessage -SpellName "Faerie Fire" -DistanceState $DistanceState
         }
     }
 
@@ -1346,7 +1425,8 @@ function Resolve-HeroCastSpellAction {
         $Monster,
         [ref]$HeroHP,
         [ref]$MonsterHP,
-        [ref]$MonsterOffBalance
+        [ref]$MonsterOffBalance,
+        $DistanceState = $null
     )
 
     if ($Hero.Class -ne "Bard") {
@@ -1384,7 +1464,7 @@ function Resolve-HeroCastSpellAction {
         }
 
         if ($choice -eq "D") {
-            $dissonance = Invoke-BardDissonantWhispers -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance
+            $dissonance = Invoke-BardDissonantWhispers -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance -DistanceState $DistanceState
             Write-Scene $(if ($dissonance.Success) { Get-BardDissonantWhispersFlavorText -Hero $Hero -Monster $Monster } else { $dissonance.Message })
 
             if ($dissonance.Success) {
@@ -1405,7 +1485,7 @@ function Resolve-HeroCastSpellAction {
         }
 
         if ($choice -eq "F") {
-            $faerieFire = Invoke-BardFaerieFire -Hero $Hero -Monster $Monster
+            $faerieFire = Invoke-BardFaerieFire -Hero $Hero -Monster $Monster -DistanceState $DistanceState
             Write-Scene $(if ($faerieFire.Success) { Get-BardFaerieFireFlavorText -Hero $Hero -Monster $Monster } else { $faerieFire.Message })
 
             if ($faerieFire.Success) {
@@ -1863,7 +1943,7 @@ function Resolve-HeroCombatTurn {
             }
 
             $bonusActionCancelled = $false
-            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) -BonusActionCancelled ([ref]$bonusActionCancelled) | Out-Null
+            Resolve-HeroBonusAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) -BonusActionCancelled ([ref]$bonusActionCancelled) -DistanceState $DistanceState | Out-Null
 
             if (-not $bonusActionCancelled) {
                 $bonusActionSpent = $true
@@ -1975,7 +2055,7 @@ function Resolve-HeroCombatTurn {
         }
 
         if ($choice -eq "C") {
-            $castSpell = Resolve-HeroCastSpellAction -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance
+            $castSpell = Resolve-HeroCastSpellAction -Hero $Hero -Monster $Monster -HeroHP $HeroHP -MonsterHP $MonsterHP -MonsterOffBalance $MonsterOffBalance -DistanceState $DistanceState
 
             if ($castSpell) {
                 $actionSpent = $true

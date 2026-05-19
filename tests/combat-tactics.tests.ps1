@@ -353,6 +353,62 @@ function Test-BardViciousMockeryCanBeSavedAgainst {
     Assert-True -Condition ($null -eq $monster.PSObject.Properties["ViciousMockeryAttackDisadvantage"] -or -not [bool]$monster.ViciousMockeryAttackDisadvantage) -Message "A saved-against Vicious Mockery should not weaken the next attack."
 }
 
+function Test-BardViciousMockeryWorksAtSixtyFeet {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "M"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 4) { return 3 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $distance = New-EncounterDistanceState -DistanceFeet 60
+
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -DistanceState $distance | Out-Null
+
+    Assert-Equal -Actual $monsterHP -Expected 17 -Message "Vicious Mockery should be usable at its 60 ft range."
+}
+
+function Test-BardViciousMockeryCannotReachPastSixtyFeet {
+    Set-TestOutputStubs
+
+    $script:responses = @("M", "B")
+    $script:index = 0
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        $response = $script:responses[$script:index]
+        $script:index += 1
+        return $response
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+        throw "Vicious Mockery should not roll when target is out of range."
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $distance = New-EncounterDistanceState -DistanceFeet 90
+    $bonusCancelled = $false
+
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -BonusActionCancelled ([ref]$bonusCancelled) -DistanceState $distance | Out-Null
+
+    Assert-Equal -Actual $monsterHP -Expected 20 -Message "Out-of-range Vicious Mockery should not damage the monster."
+    Assert-Equal -Actual $bonusCancelled -Expected $true -Message "After an out-of-range warning, backing out should still cancel the bonus action."
+}
+
 function Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack {
     Set-TestOutputStubs
 
@@ -603,6 +659,46 @@ function Test-BardCanCastFaerieFireFromActionMenu {
 
     Assert-Equal -Actual $monster.FaerieFireAttackAdvantage -Expected $true -Message "Casting Faerie Fire from the action menu should mark the monster on a failed save."
     Assert-Equal -Actual $hero.CurrentSpellSlots.Level1 -Expected 1 -Message "Casting Faerie Fire from the action menu should spend a level 1 slot."
+}
+
+function Test-BardActionSpellsUseSixtyFootRange {
+    Set-TestOutputStubs
+
+    $script:rolls = @(5, 4, 3, 2, 5)
+    $script:rollIndex = 0
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        $roll = $script:rolls[$script:rollIndex]
+        $script:rollIndex += 1
+        return $roll
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+    $monsterOffBalance = $false
+    $sixtyFeet = New-EncounterDistanceState -DistanceFeet 60
+    $ninetyFeet = New-EncounterDistanceState -DistanceFeet 90
+
+    $dissonance = Invoke-BardDissonantWhispers -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) -MonsterOffBalance ([ref]$monsterOffBalance) -DistanceState $sixtyFeet
+    $faerieFire = Invoke-BardFaerieFire -Hero $hero -Monster $monster -DistanceState $sixtyFeet
+    $slotsAfterSixty = $hero.CurrentSpellSlots.Level1
+    $blockedHero = Get-Hero -Class "Bard"
+    $blocked = Invoke-BardFaerieFire -Hero $blockedHero -Monster $monster -DistanceState $ninetyFeet
+    $blockedDissonanceHP = $monster.hp
+    $blockedDissonanceOffBalance = $false
+    $blockedDissonanceHero = Get-Hero -Class "Bard"
+    $blockedDissonance = Invoke-BardDissonantWhispers -Hero $blockedDissonanceHero -Monster $monster -MonsterHP ([ref]$blockedDissonanceHP) -MonsterOffBalance ([ref]$blockedDissonanceOffBalance) -DistanceState $ninetyFeet
+
+    Assert-Equal -Actual $dissonance.Success -Expected $true -Message "Dissonant Whispers should be castable at 60 ft."
+    Assert-Equal -Actual $faerieFire.Success -Expected $true -Message "Faerie Fire should be castable at 60 ft."
+    Assert-Equal -Actual $slotsAfterSixty -Expected 0 -Message "The two successful ranged spells should spend the bard's two level 1 slots."
+    Assert-Equal -Actual $blocked.Success -Expected $false -Message "Faerie Fire should not be castable past 60 ft."
+    Assert-Equal -Actual $blockedHero.CurrentSpellSlots.Level1 -Expected 2 -Message "An out-of-range spell should not spend a slot."
+    Assert-Equal -Actual $blockedDissonance.Success -Expected $false -Message "Dissonant Whispers should not be castable past 60 ft."
+    Assert-Equal -Actual $blockedDissonanceHP -Expected $monster.hp -Message "Out-of-range Dissonant Whispers should not damage the monster."
+    Assert-Equal -Actual $blockedDissonanceHero.CurrentSpellSlots.Level1 -Expected 2 -Message "Out-of-range Dissonant Whispers should not spend a slot."
 }
 
 function Test-FaerieFireAdvantageAppliesToNextHeroAttack {
@@ -1114,6 +1210,8 @@ Test-BardInspirationBoostsCurrentAttack
 Test-BardInspirationCanBoostBlock
 Test-BardViciousMockeryBonusActionDealsPsychicDamage
 Test-BardViciousMockeryCanBeSavedAgainst
+Test-BardViciousMockeryWorksAtSixtyFeet
+Test-BardViciousMockeryCannotReachPastSixtyFeet
 Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack
 Test-BardViciousMockeryDisadvantageCancelsRecklessAdvantage
 Test-BardCuttingWordsCanTurnHitIntoMiss
@@ -1121,6 +1219,7 @@ Test-BardBonusActionCanResolveBeforeMainAction
 Test-BardCanBackOutOfBonusActionMenuWithoutSpendingIt
 Test-BardCanCastDissonantWhispersFromActionMenu
 Test-BardCanCastFaerieFireFromActionMenu
+Test-BardActionSpellsUseSixtyFootRange
 Test-FaerieFireAdvantageAppliesToNextHeroAttack
 Test-BardBonusActionCanResolveAfterMainAction
 Test-HeroCanPassActionAndBonusAction
