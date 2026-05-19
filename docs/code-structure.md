@@ -218,6 +218,7 @@ Ansvar:
 - XP och leveling
 - valuta
 - AC, ability modifiers, class-specific status
+- Bard spellcasting state, known spells, spell slots, and utility buffs such as `Invisibility` and `Enhance Ability`
 
 Bra att läsa när:
 
@@ -425,6 +426,7 @@ Ansvar:
 - `The Civic Vault`, en Understreet-liknande Docks-finale med dungeon rooms, short rest, ledtrådar, loot, boss och Halewicks drakflykt
 - Docks-specifika quest tiers efter Chapter Two, med strong/weak progression och flera quests per tier
 - level 4 story-readiness via Docks quest flags och XP, plus post-level-4 Docks Tier 4
+- non-combat quest checks, including Bard support from `Charm Person`, `Suggestion`, `Enhance Ability`, and Bardic Inspiration
 
 Tänk:  
 `city-quests.ps1` beskriver **hur questen spelas**

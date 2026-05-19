@@ -65,7 +65,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 Bard follow-ups:
 
 - decide whether Expertise should become player-chosen later instead of fixed to `Performance` and `Perception`
-- extend spellcasting beyond the first social/combat pass with more level 2 utility/control spells
+- pause further Bard spell expansion until other level 4 systems catch up
 - make monster-zone class text lean into strange sounds, folklore, performance misdirection, and reading behavior instead of raw weapon dominance
 
 ### Bard Spell Slots Implementation Plan
@@ -145,7 +145,11 @@ Completed next pass:
 
 Next pass:
 
-1. Tune level 3-4 enemy difficulty against the now-complete class kits.
-2. Add the next Bard spell layer:
-   - broaden level 2 utility/control beyond `Suggestion`, `Invisibility`, and `Enhance Ability`.
-3. Decide whether fixed Lore expertise should become player-chosen later.
+1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support:
+   - add clearer objectives for why the hero leaves town
+   - broaden pre-combat encounter choices beyond the first avoid/surprise/open fight pass
+   - make Dorr's captured-monster contract board clearer while crews are out
+   - add class-flavored wilderness text for Barbarian, Bard, and Fighter
+2. Tune level 3-4 enemy difficulty against the now-complete class kits.
+3. Build the Fighter level 4 mounted jousting path after the monster-zone loop has a stronger purpose.
+4. Decide whether fixed Lore expertise should become player-chosen later.

@@ -2,6 +2,7 @@
 
 ## Near-term priorities
 
+- next recommended focus: deepen the playable monster-zone and Dorr contract loop now that Bard spell work is paused
 - follow up on Lord Varric Halewick after the Civic Vault: he is exposed, draconic, and escaped rather than dead
 - decide what the city does after multiple high officials witness Halewick's transformation in the Civic Keep court room
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks

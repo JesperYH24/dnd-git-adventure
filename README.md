@@ -52,7 +52,11 @@ powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 - [Visualizations](docs/visualizations.md)
 - [Future Ideas](docs/future-ideas.md)
 
-The class progression doc tracks the current level cap, including Bard spell slots, cantrips, level-gated level 2 spells, and the next planned Bard spell/social routes.
+The class progression doc tracks the current level cap, including class kits, Bard spell slots, level-gated utility spells, and the next non-Bard priorities.
+
+## Current next-work direction
+
+The Bard spell pass is in a good stopping place. The strongest next focus is the post-Civic-Vault monster-zone loop: clearer objectives when leaving town, richer pre-combat encounter choices, Dorr's captured-monster contract board, and stronger class-flavored wilderness text. After that, Fighter level 4 mounted jousting is the next large class identity system.
 
 ## Hidden test shortcut
 

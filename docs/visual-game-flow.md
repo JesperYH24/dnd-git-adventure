@@ -27,6 +27,7 @@ flowchart TD
     TownChoice --> Shops["Shops"]
     TownChoice --> Quests["Quest work"]
     TownChoice --> Ring["Fighting ring"]
+    TownChoice --> MonsterZone["Monster zone\npost-Civic-Vault wall rumors"]
     TownChoice --> Streets["NPCs and street scenes"]
     TownChoice --> Save["Save / load"]
     TownChoice --> Status["Hero / inventory / quest log"]
@@ -36,7 +37,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    Zone["Zone wrapper\nTutorial cave today, future monster zones later"] --> Core["Start-RoomExploration"]
+    Zone["Zone wrapper\nTutorial cave + dungeon rooms"] --> Core["Start-RoomExploration"]
     Core --> Show["Show current room"]
     Show --> Encounter["Resolve zone encounter"]
     Encounter --> EncounterResult{"Encounter result"}
@@ -45,7 +46,7 @@ flowchart TD
     EncounterResult -- "Proceed" --> Actions["Room actions"]
     Actions --> Move["Move through exits"]
     Actions --> Common["Common actions\ninventory, loot, status, text speed"]
-    Actions --> Custom["Zone-specific actions\nleave cave now, future travel hooks later"]
+    Actions --> Custom["Zone-specific actions\nleave cave, dungeon tools, Bard utility"]
     Move --> Show
 ```
 
@@ -76,4 +77,6 @@ flowchart TD
     DocksGate -- "Yes" --> Docks["Open Docks district"]
     Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
     KnightGate -- "Needs stable horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
+    Town --> MonsterGate{"Wall rumors active?"}
+    MonsterGate -- "Yes" --> MonsterZone["Monster zone\nlandmarks, camp, stealth/perception, oddities"]
 ```
