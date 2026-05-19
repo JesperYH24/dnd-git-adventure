@@ -385,6 +385,7 @@ Ansvar:
 - `Perception`/`Stealth` awareness checks before wilderness combat
 - first-pass abstract encounter distance for monster-zone fights: `5 ft` melee, `30 ft` movement, action-based dash, and monster closing behavior
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
+- class-flavored wilderness reads for search and 60 ft observation
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
 - next implementation focus is deeper objective follow-ups, Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait

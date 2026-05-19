@@ -248,6 +248,67 @@ function Discover-MonsterZoneLandmark {
     }
 }
 
+function Get-MonsterZoneClassReadLines {
+    param(
+        $Hero,
+        $Landmark = $null,
+        $Creature = $null,
+        [string]$Context = "Search"
+    )
+
+    if ($null -eq $Hero) {
+        return @()
+    }
+
+    $class = [string]$Hero.Class
+    $placeName = if ($null -ne $Landmark) { [string]$Landmark.Name } else { "the scrubland" }
+    $creatureName = if ($null -ne $Creature) { [string]$Creature.definite } else { "the threat" }
+
+    switch ($class) {
+        "Barbarian" {
+            if ($Context -eq "Observation") {
+                return @("$($Hero.Name) reads $creatureName in the body first: weight in the shoulders, hunger in the breath, and the ugly promise of where the charge will land.")
+            }
+
+            return @("$($Hero.Name) reads $placeName through boot pressure, broken stems, and the old animal warning that lives below thought.")
+        }
+        "Bard" {
+            if ($Context -eq "Observation") {
+                return @("$($Hero.Name) listens for the rhythm around ${creatureName}: pauses too regular to be chance, breath too sharp for calm, and a story in the sounds it refuses to make.")
+            }
+
+            return @("$($Hero.Name) reads $placeName like a half-remembered verse: odd silences, local superstition, and the places where a frightened witness would leave something unsaid.")
+        }
+        "Fighter" {
+            if ($Context -eq "Observation") {
+                return @("$($Hero.Name) studies $creatureName like an opponent at the lists: first step, recovery angle, attack line, and how quickly it could threaten the wall road.")
+            }
+
+            return @("$($Hero.Name) reads $placeName in patrol terms: sightlines, retreat lanes, broken markers, and where a disciplined watch would have made its stand.")
+        }
+        default {
+            if ($Context -eq "Observation") {
+                return @("$($Hero.Name) keeps still and studies $creatureName for the first clear sign of how it means to attack.")
+            }
+
+            return @("$($Hero.Name) studies $placeName for tracks, shelter, and the safest way back to the city road.")
+        }
+    }
+}
+
+function Write-MonsterZoneClassRead {
+    param(
+        $Hero,
+        $Landmark = $null,
+        $Creature = $null,
+        [string]$Context = "Search"
+    )
+
+    foreach ($line in (Get-MonsterZoneClassReadLines -Hero $Hero -Landmark $Landmark -Creature $Creature -Context $Context)) {
+        Write-Scene $line
+    }
+}
+
 function Get-HeroWildernessSkillModifier {
     param(
         $Hero,
@@ -782,6 +843,7 @@ function Start-MonsterZoneEncounter {
                 $distanceState.DistanceFeet = 60
                 Write-Scene "$($Game.Hero.Name) keeps a longer line of ground between them, buying space before the fight breaks open."
                 Write-MonsterZoneCreatureObservation -Creature $creature
+                Write-MonsterZoneClassRead -Hero $Game.Hero -Creature $creature -Context "Observation"
             }
             else {
                 $distanceState.DistanceFeet = 30
@@ -916,6 +978,7 @@ function Start-MonsterZoneMenu {
                 $landmark = Get-MonsterZoneLandmarkAtPosition -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
                 $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $landmark
                 Write-Scene $discovery.Text
+                Write-MonsterZoneClassRead -Hero $Game.Hero -Landmark $landmark -Context "Search"
                 if ($discovery.Discovered) {
                     Write-MonsterZoneObjectiveProgress -Game $Game -Reason "landmark recorded"
                 }

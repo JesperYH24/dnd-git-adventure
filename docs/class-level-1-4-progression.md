@@ -150,7 +150,7 @@ Next pass:
    - deepen the first visible objectives for why the hero leaves town
    - add follow-up choices after tracking creatures, gathering oddities, returning proof, or investigating landmarks
    - add stronger Dorr dialogue and actions around the clearer captured-monster contract board
-   - add class-flavored wilderness text for Barbarian, Bard, and Fighter
+   - expand the first class-flavored wilderness reads into ambush starts, objective follow-ups, landmark consequences, and Dorr reports
    - keep ranged weapons on ice until objectives, contracts, and class reads feel stronger
 2. Tune level 3-4 enemy difficulty against the now-complete class kits.
 3. Build the Fighter level 4 mounted jousting path after the monster-zone loop has a stronger purpose.

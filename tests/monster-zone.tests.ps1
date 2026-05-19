@@ -127,6 +127,24 @@ function Test-MonsterZoneCreaturesHaveObservationFlavor {
     Assert-True -Condition ($graveText -like "*sight alone*") -Message "The grave-hungry thing observation should hint that sight-based stealth is unreliable."
 }
 
+function Test-MonsterZoneClassReadsAreDistinct {
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "dry_creek_bed" } | Select-Object -First 1
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+    $barbarian = Get-Hero -Class "Barbarian"
+    $bard = Get-Hero -Class "Bard"
+    $fighter = Get-Hero -Class "Fighter"
+
+    $barbarianSearch = @(Get-MonsterZoneClassReadLines -Hero $barbarian -Landmark $landmark -Context "Search") -join " "
+    $bardSearch = @(Get-MonsterZoneClassReadLines -Hero $bard -Landmark $landmark -Context "Search") -join " "
+    $fighterSearch = @(Get-MonsterZoneClassReadLines -Hero $fighter -Landmark $landmark -Context "Search") -join " "
+    $bardObservation = @(Get-MonsterZoneClassReadLines -Hero $bard -Creature $creature -Context "Observation") -join " "
+
+    Assert-True -Condition ($barbarianSearch -like "*boot pressure*") -Message "Barbarian wilderness reads should lean on body, tracks, and instinct."
+    Assert-True -Condition ($bardSearch -like "*verse*") -Message "Bard wilderness reads should lean on rhythm, lore, and story."
+    Assert-True -Condition ($fighterSearch -like "*patrol*") -Message "Fighter wilderness reads should lean on patrol logic and sightlines."
+    Assert-True -Condition ($bardObservation -like "*rhythm*") -Message "Bard observation reads should add class flavor to monster watching."
+}
+
 function Test-BardCanCastInvisibilityFromMonsterZoneMenu {
     $game = Initialize-Game -Class "Bard"
     $game.Hero.Level = 4
@@ -251,6 +269,7 @@ Test-InvisibilityImprovesMonsterZoneStealth
 Test-MonsterZoneKeenSensesHelpAgainstStealth
 Test-MonsterZoneBlindsightCountersInvisibilityBonus
 Test-MonsterZoneCreaturesHaveObservationFlavor
+Test-MonsterZoneClassReadsAreDistinct
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
