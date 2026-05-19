@@ -178,6 +178,7 @@ Docks is intentionally more linear at first than the main town hub.
 - wager choices before entering the ring: safe purse, crowd bet, or double-or-nothing
 - post-fight ring rumors that react to Docks progress, Halewick aftershocks, level 4 monster-zone foreshadowing, and ring reputation
 - level 4 monster-challenge cards in the ring become real contracts only after the hero defeats matching creatures in the monster zone and reports them to Dorr
+- Dorr's monster contract board now separates unreported proof, bookable contracts, capture crews still out, captured monsters ready in the pit, and completed contracts
 - taking a monster contract books Dorr's capture crew; the actual unarmed monster fight happens in the ring after the contract's return day
 - current Dorr monster contracts:
   - `Wall-Scraper Trial` from reported wall scouts or wall-prowling wolves

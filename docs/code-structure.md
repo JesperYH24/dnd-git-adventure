@@ -387,7 +387,7 @@ Ansvar:
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
-- next implementation focus is deeper objective follow-ups and Dorr contract clarity; ranged weapons should wait
+- next implementation focus is deeper objective follow-ups, Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

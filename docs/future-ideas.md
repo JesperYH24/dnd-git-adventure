@@ -52,7 +52,7 @@ Next implementation priorities:
 - deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr, or needs to return safely
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
-- polish Dorr's monster-contract board so pending captures clearly show when the crew returns, which monster type was proven, and what the ring reward is
+- expand Dorr's monster-contract board with stronger dialogue and board actions now that it separates unreported proof, bookable contracts, pending capture crews, ready fights, and completed contracts
 - add class-flavored monster-zone text: Barbarian reads danger through instinct and physical signs, Bard notices folklore and strange sounds, and Fighter reads patrol logic, tracks, and wall-defense threats
 - later, after objectives and contracts feel good, add ranged weapon support on top of the monster-zone distance state so open ground can make bows, thrown weapons, and monster approach behavior matter
 

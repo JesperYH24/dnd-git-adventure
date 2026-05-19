@@ -1077,6 +1077,141 @@ function Get-ReadyRingMonsterChallengeContracts {
     return $ready
 }
 
+function Get-RingMonsterContractBoardState {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $today = Get-TownDayNumber -Game $Game
+    $unreported = @()
+    $bookable = @()
+    $pending = @()
+    $ready = @()
+    $completed = @()
+
+    foreach ($creatureId in @($Game.Town.MonsterZone.DefeatedCreatures.Keys)) {
+        if (-not [bool]$Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]) {
+            $record = $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
+            $unreported += [PSCustomObject]@{
+                Id = [string]$creatureId
+                Name = [string]$record["Name"]
+                Count = [int]$record["Count"]
+                OddityName = [string]$record["OddityName"]
+            }
+        }
+    }
+
+    foreach ($contract in @(Get-RingMonsterChallengeContracts)) {
+        $pendingRecord = Get-RingMonsterContractPendingRecord -Game $Game -Contract $contract
+        $readiness = Get-RingMonsterContractReadiness -Game $Game -Contract $contract
+
+        if (Test-RingMonsterContractCompleted -Game $Game -Contract $contract) {
+            $completed += [PSCustomObject]@{
+                Contract = $contract
+                Status = "Completed"
+            }
+        }
+        elseif ($null -ne $pendingRecord) {
+            $readyDay = [int]$pendingRecord["ReadyDay"]
+            $entry = [PSCustomObject]@{
+                Contract = $contract
+                BookedDay = [int]$pendingRecord["BookedDay"]
+                ReadyDay = $readyDay
+                DaysRemaining = [Math]::Max(0, $readyDay - $today)
+                Status = if ($today -ge $readyDay) { "Ready to fight" } else { "Capture crew out" }
+            }
+
+            if ($today -ge $readyDay) {
+                $ready += $entry
+            }
+            else {
+                $pending += $entry
+            }
+        }
+        elseif ($readiness.CanTake) {
+            $bookable += [PSCustomObject]@{
+                Contract = $contract
+                Status = "Ready for Dorr to book"
+                CaptureDays = [int]$contract.CaptureDays
+            }
+        }
+    }
+
+    return [PSCustomObject]@{
+        Today = $today
+        UnreportedProof = $unreported
+        BookableContracts = $bookable
+        PendingContracts = $pending
+        ReadyContracts = $ready
+        CompletedContracts = $completed
+    }
+}
+
+function Show-RingMonsterContractBoard {
+    param(
+        $Game,
+        [string]$Title = "Dorr's Monster Contract Board"
+    )
+
+    $board = Get-RingMonsterContractBoardState -Game $Game
+
+    Write-SectionTitle -Text $Title -Color "DarkYellow"
+    Write-ColorLine "Today: day $($board.Today)" "DarkGray"
+
+    if (@($board.UnreportedProof).Count -gt 0) {
+        Write-ColorLine "Proof to report:" "Yellow"
+        foreach ($proof in @($board.UnreportedProof)) {
+            $oddityText = if ([string]::IsNullOrWhiteSpace([string]$proof.OddityName)) { "" } else { " | oddity: $($proof.OddityName)" }
+            Write-ColorLine "- $($proof.Name) x$($proof.Count)$oddityText" "White"
+        }
+    }
+    else {
+        Write-ColorLine "Proof to report: none" "DarkGray"
+    }
+
+    if (@($board.BookableContracts).Count -gt 0) {
+        Write-ColorLine "Bookable contracts:" "Yellow"
+        foreach ($entry in @($board.BookableContracts)) {
+            Write-ColorLine "- $($entry.Contract.Name) | capture crew: $($entry.CaptureDays) days | reward: $($entry.Contract.RewardPreview)" "White"
+        }
+    }
+    else {
+        Write-ColorLine "Bookable contracts: none" "DarkGray"
+    }
+
+    if (@($board.PendingContracts).Count -gt 0) {
+        Write-ColorLine "Capture crews out:" "Yellow"
+        foreach ($entry in @($board.PendingContracts)) {
+            Write-ColorLine "- $($entry.Contract.Name) | returns day $($entry.ReadyDay) ($($entry.DaysRemaining) day(s) left)" "White"
+        }
+    }
+    else {
+        Write-ColorLine "Capture crews out: none" "DarkGray"
+    }
+
+    if (@($board.ReadyContracts).Count -gt 0) {
+        Write-ColorLine "Ready in the pit:" "Yellow"
+        foreach ($entry in @($board.ReadyContracts)) {
+            Write-ColorLine "- $($entry.Contract.Name) | captured and ready" "White"
+        }
+    }
+    else {
+        Write-ColorLine "Ready in the pit: none" "DarkGray"
+    }
+
+    if (@($board.CompletedContracts).Count -gt 0) {
+        Write-ColorLine "Completed:" "DarkGray"
+        foreach ($entry in @($board.CompletedContracts)) {
+            Write-ColorLine "- $($entry.Contract.Name)" "DarkGray"
+        }
+    }
+    else {
+        Write-ColorLine "Completed: none" "DarkGray"
+    }
+
+    Write-ColorLine ""
+}
+
 function Book-RingMonsterChallengeContract {
     param(
         $Game,
@@ -1251,11 +1386,14 @@ function Start-RingMonsterChallengeMenu {
         return
     }
 
+    Show-RingMonsterContractBoard -Game $Game
+
     $report = Report-MonsterZoneDiscoveriesToDorr -Game $Game
 
     if (@($report.NewlyReported).Count -gt 0) {
         $names = @($report.NewlyReported | ForEach-Object { $_["Name"] }) -join ", "
         Write-Scene "Dorr listens to the report and marks the board: $names."
+        Show-RingMonsterContractBoard -Game $Game -Title "Dorr's Updated Monster Board"
     }
     elseif (@($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count -gt 0) {
         Write-Scene "Dorr has already written down every monster trail $($Game.Hero.Name) has brought him so far."
