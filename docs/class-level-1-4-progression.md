@@ -147,7 +147,7 @@ Next pass:
 
 1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support:
    - add clearer objectives for why the hero leaves town
-   - broaden pre-combat encounter choices beyond the first avoid/surprise/open fight pass
+   - broaden the new distance-aware encounter layer with ranged weapons, class-specific observation reads, and follow-up choices after the first avoid/close/shadow/observe/open pass
    - make Dorr's captured-monster contract board clearer while crews are out
    - add class-flavored wilderness text for Barbarian, Bard, and Fighter
 2. Tune level 3-4 enemy difficulty against the now-complete class kits.

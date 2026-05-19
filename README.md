@@ -56,7 +56,7 @@ The class progression doc tracks the current level cap, including class kits, Ba
 
 ## Current next-work direction
 
-The Bard spell pass is in a good stopping place. The strongest next focus is the post-Civic-Vault monster-zone loop: clearer objectives when leaving town, richer pre-combat encounter choices, Dorr's captured-monster contract board, and stronger class-flavored wilderness text. After that, Fighter level 4 mounted jousting is the next large class identity system.
+The Bard spell pass is in a good stopping place. The strongest next focus is the post-Civic-Vault monster-zone loop: clearer objectives when leaving town, ranged-weapon support for the new distance layer, Dorr's captured-monster contract board, and stronger class-flavored wilderness text. After that, Fighter level 4 mounted jousting is the next large class identity system.
 
 ## Hidden test shortcut
 

@@ -22,6 +22,7 @@ flowchart TD
     Level4 --> FighterJoust["Fighter knight path\nfuture mounted jousting hook"]
     DocksT4 --> CivicVault["Docks Tier 5\nThe Civic Vault climax"]
     CivicVault --> HalewickEscape["Halewick exposed\nsmaller dragon form escapes Civic Keep"]
+    HalewickEscape --> MonsterZone["Outer monster zone\nwall rumors, landmarks, stealth, distance"]
 ```
 
 ## Level 2-3 City Quest Chain

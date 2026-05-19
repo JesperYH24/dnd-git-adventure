@@ -27,7 +27,7 @@ flowchart TD
     TownChoice --> Shops["Shops"]
     TownChoice --> Quests["Quest work"]
     TownChoice --> Ring["Fighting ring"]
-    TownChoice --> MonsterZone["Monster zone\npost-Civic-Vault wall rumors"]
+    TownChoice --> MonsterZone["Monster zone\npost-Civic-Vault wall rumors\nstealth, distance, observation"]
     TownChoice --> Streets["NPCs and street scenes"]
     TownChoice --> Save["Save / load"]
     TownChoice --> Status["Hero / inventory / quest log"]
@@ -78,5 +78,5 @@ flowchart TD
     Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
     KnightGate -- "Needs stable horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
     Town --> MonsterGate{"Wall rumors active?"}
-    MonsterGate -- "Yes" --> MonsterZone["Monster zone\nlandmarks, camp, stealth/perception, oddities"]
+    MonsterGate -- "Yes" --> MonsterZone["Monster zone\nlandmarks, camp, stealth/perception, distance, oddities"]
 ```

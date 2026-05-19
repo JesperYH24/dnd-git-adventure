@@ -12,8 +12,12 @@ flowchart TD
 
     HeroRound --> ActionChoice["Choose action"]
     HeroRound --> BonusChoice["Choose bonus action"]
+    HeroRound --> MoveChoice["Move if distance is active\n30 ft without action"]
+    ActionChoice --> DashChoice["Dash if distance is active\nspend action for extra movement"]
     ActionChoice --> ActionResult{"Nat 1?"}
     BonusChoice --> BonusResult{"Nat 1?"}
+    MoveChoice --> ContinueTurn
+    DashChoice --> ContinueTurn
 
     ActionResult -- "Yes" --> CritFail["Hero takes mishap damage\nremaining hero turn ends"]
     BonusResult -- "Yes" --> CritFail

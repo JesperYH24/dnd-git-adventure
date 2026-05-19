@@ -210,7 +210,9 @@ Current first-pass implementation:
 - the zone edge is a soft boundary where the hero is warned about leaving the patrol radius or pushing into danger beyond the current chapter
 - `Perception` and `Stealth` decide who notices whom before initiative
 - monsters and beasts have their own perception and stealth values
-- discovery results can allow avoidance, surprise attacks, ambush pressure, unclear first beats, or normal initiative
+- discovery results can allow avoidance, closing to melee for surprise, shadowing at `30 ft`, holding at `60 ft` for observation, ambush pressure, unclear first beats, or normal initiative
+- the `60 ft` observation choice gives creature-specific tells about movement, attack style, senses, whether the threat seems beastlike, organized, trained, poisonous, or abomination-like
+- monster-zone combat now tracks abstract distance: `5 ft` melee, `30 ft` normal movement, dash as an action, and monster attempts to close open ground before attacking
 - the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers remain the best future place to make those parts more economically and narratively important
