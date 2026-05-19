@@ -19,7 +19,7 @@ flowchart LR
     Town --> Shops["town-shops.ps1\nbuy/sell/storage"]
     Town --> Ring["town-ring.ps1\nbrawls and rivals"]
     Town --> Jousting["town-jousting.ps1\nFighter foot duels\nfuture level 4 jousting"]
-    Town --> MonsterZone["monster-zone.ps1\nouter-wall landmarks\nawareness, distance, observation, camp loop"]
+    Town --> MonsterZone["monster-zone.ps1\nouter-wall objectives\nawareness, distance, observation, camp loop"]
     Town --> NPCs["town-npcs.ps1\nstreet scenes and hooks"]
     Town --> QuestDefs["quests.ps1\nquest definitions + unlocks"]
     QuestDefs --> CityQuests["city-quests.ps1\nplayable story quests"]

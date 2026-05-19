@@ -148,9 +148,10 @@ Next pass:
 
 1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support:
    - add clearer objectives for why the hero leaves town
-   - broaden the new distance-aware encounter layer with ranged weapons, class-specific observation reads, and follow-up choices after the first avoid/close/shadow/observe/open pass
+   - add visible reasons to track creatures, gather oddities, return proof, or investigate landmarks
    - make Dorr's captured-monster contract board clearer while crews are out
    - add class-flavored wilderness text for Barbarian, Bard, and Fighter
+   - keep ranged weapons on ice until objectives, contracts, and class reads feel stronger
 2. Tune level 3-4 enemy difficulty against the now-complete class kits.
 3. Build the Fighter level 4 mounted jousting path after the monster-zone loop has a stronger purpose.
 4. Decide whether fixed Lore expertise should become player-chosen later.

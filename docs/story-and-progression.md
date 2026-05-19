@@ -216,6 +216,8 @@ Current first-pass implementation:
 - the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers remain the best future place to make those parts more economically and narratively important
+- the next monster-zone pass should make the player's objective visible before or during travel: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr, or get home safely
+- ranged weapons are intentionally deferred until the objective and contract loop gives the distance system stronger purpose
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
 
 The level 4 XP curve is meant to feel earned across the whole Docks arc:

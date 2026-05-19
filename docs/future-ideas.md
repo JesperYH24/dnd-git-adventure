@@ -2,7 +2,7 @@
 
 ## Near-term priorities
 
-- next recommended focus: deepen the playable monster-zone and Dorr contract loop now that Bard spell work is paused
+- next recommended focus: deepen playable monster-zone objectives and the Dorr contract loop now that Bard spell work is paused and ranged weapons are intentionally on ice
 - follow up on Lord Varric Halewick after the Civic Vault: he is exposed, draconic, and escaped rather than dead
 - decide what the city does after multiple high officials witness Halewick's transformation in the Civic Keep court room
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
@@ -54,7 +54,7 @@ Next implementation priorities:
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
 - polish Dorr's monster-contract board so pending captures clearly show when the crew returns, which monster type was proven, and what the ring reward is
 - add class-flavored monster-zone text: Barbarian reads danger through instinct and physical signs, Bard notices folklore and strange sounds, and Fighter reads patrol logic, tracks, and wall-defense threats
-- add ranged weapon support on top of the new monster-zone distance state, so open ground can make bows, thrown weapons, and monster approach behavior matter
+- later, after objectives and contracts feel good, add ranged weapon support on top of the monster-zone distance state so open ground can make bows, thrown weapons, and monster approach behavior matter
 
 Use a hidden coordinate-style zone rather than a visible dungeon map:
 
