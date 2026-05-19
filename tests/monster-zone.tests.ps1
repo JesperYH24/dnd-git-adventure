@@ -194,6 +194,40 @@ function Test-MonsterZoneTracksDefeatedCreatureProof {
     Assert-Equal -Actual $game.Town.MonsterZone.DefeatedCreatures["wall_wolf"]["OddityName"] -Expected "Smoke-Tainted Pelt" -Message "Defeat proof should keep the linked oddity name for Dorr and buyers."
 }
 
+function Test-MonsterZoneObjectiveStartsWithLandmarkSearch {
+    $game = Initialize-Game
+
+    $objective = Get-MonsterZoneObjectiveState -Game $game
+
+    Assert-Equal -Actual $objective.Type -Expected "FindLandmark" -Message "A fresh monster-zone trip should first point the player toward a reliable landmark."
+    Assert-True -Condition ($objective.Detail -like "*first reliable place*") -Message "The first objective should explain why the player is leaving the gate road."
+}
+
+function Test-MonsterZoneObjectivePrioritizesDorrProof {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+    $objective = Get-MonsterZoneObjectiveState -Game $game
+
+    Assert-Equal -Actual $objective.Type -Expected "ReturnProofToDorr" -Message "Unreported defeated creatures should become the top monster-zone objective."
+    Assert-True -Condition ($objective.Detail -like "*kobold wall scout*") -Message "The Dorr proof objective should name the defeated creature trail."
+}
+
+function Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "razor_boar" } | Select-Object -First 1
+
+    $game.Town.MonsterZone.DiscoveredLandmarks["burned_orchard"] = $true
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+    $game.Town.MonsterZone.ReportedCreaturesToDorr["razor_boar"] = @{ Name = "razor-tusk boar" }
+    $objective = Get-MonsterZoneObjectiveState -Game $game
+
+    Assert-Equal -Actual $objective.Type -Expected "ReturnOddities" -Message "A full oddity haul should tell the player to return before wasting parts."
+    Assert-True -Condition ($objective.Detail -like "*1/1*") -Message "The full-haul objective should show current oddity capacity."
+}
+
 function Test-CampImprovementLowersNightRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -220,6 +254,9 @@ Test-MonsterZoneCreaturesHaveObservationFlavor
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
+Test-MonsterZoneObjectiveStartsWithLandmarkSearch
+Test-MonsterZoneObjectivePrioritizesDorrProof
+Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull
 Test-CampImprovementLowersNightRisk
 
 Write-Host "Monster zone tests passed." -ForegroundColor Green

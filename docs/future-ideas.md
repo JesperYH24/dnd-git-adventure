@@ -49,7 +49,7 @@ Core loop to deepen:
 
 Next implementation priorities:
 
-- add clearer monster-zone objectives so the player knows why they are leaving town: track a creature, collect a requested oddity, find a landmark, report proof to Dorr, or return safely before the zone wears them down
+- deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr, or needs to return safely
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
 - polish Dorr's monster-contract board so pending captures clearly show when the crew returns, which monster type was proven, and what the ring reward is

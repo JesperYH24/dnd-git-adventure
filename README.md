@@ -17,7 +17,7 @@ The project currently includes:
 - Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, combat spells like `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` with 60 ft monster-zone spell range, social quest spells like `Charm Person` and first-pass `Suggestion`, plus `Invisibility` and `Enhance Ability` as level 4 utility tools
 - expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
 - Fighter tourney ground foot duels, with a stable-yard horse requirement now in place for future mounted jousting; lance support is still future level 4 knight progression
-- first-pass monster zone beyond the outer wall with tracked landmarks, Perception/Stealth awareness checks, abstract encounter distance, camp safety, pack-animal monster oddity hauling, and defeated-creature reports that let Dorr book delayed captured-monster ring contracts
+- first-pass monster zone beyond the outer wall with visible objectives, tracked landmarks, Perception/Stealth awareness checks, abstract encounter distance, camp safety, pack-animal monster oddity hauling, and defeated-creature reports that let Dorr book delayed captured-monster ring contracts
 - repeatable level-based day jobs
 - split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
 
@@ -56,7 +56,7 @@ The class progression doc tracks the current level cap, including class kits, Ba
 
 ## Current next-work direction
 
-The Bard spell pass is in a good stopping place, and ranged weapons are intentionally on ice for now. The strongest next focus is the post-Civic-Vault monster-zone loop: clearer objectives when leaving town, visible reasons to track creatures or gather oddities, Dorr's captured-monster contract board, and stronger class-flavored wilderness text. After that, Fighter level 4 mounted jousting is the next large class identity system.
+The Bard spell pass is in a good stopping place, and ranged weapons are intentionally on ice for now. The strongest next focus is the post-Civic-Vault monster-zone loop: polish Dorr's captured-monster contract board, deepen objective follow-ups, and add stronger class-flavored wilderness text. After that, Fighter level 4 mounted jousting is the next large class identity system.
 
 ## Hidden test shortcut
 

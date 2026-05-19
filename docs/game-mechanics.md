@@ -32,6 +32,7 @@
 
 - the first monster zone opens after post-Civic-Vault outer-wall rumors start
 - it uses wilderness travel rather than room navigation or a detailed map
+- the menu shows a current objective inferred from state: find a landmark, track a wall creature, return full oddity haul, or report defeated-creature proof to Dorr
 - travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
 - new wilderness skills: `Perception` and `Stealth`
 - before wilderness combat begins, hero and monster awareness is resolved with opposed discovery checks:

@@ -380,13 +380,14 @@ Ansvar:
 
 - outer-wall monster zone after post-Civic-Vault wall rumors
 - hidden wilderness positions and persistent landmarks
+- inferred objective state for why the hero is currently beyond the wall
 - soft zone edge near the city's patrol reach
 - `Perception`/`Stealth` awareness checks before wilderness combat
 - first-pass abstract encounter distance for monster-zone fights: `5 ft` melee, `30 ft` movement, action-based dash, and monster closing behavior
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
-- next implementation focus is objective visibility and Dorr contract clarity; ranged weapons should wait
+- next implementation focus is deeper objective follow-ups and Dorr contract clarity; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

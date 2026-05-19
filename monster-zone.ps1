@@ -541,6 +541,107 @@ function Add-MonsterZoneOddity {
     }
 }
 
+function Get-MonsterZoneUnreportedCreatureRecords {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $records = @()
+
+    foreach ($creatureId in @($Game.Town.MonsterZone.DefeatedCreatures.Keys)) {
+        if (-not [bool]$Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]) {
+            $records += $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
+        }
+    }
+
+    return $records
+}
+
+function Get-MonsterZoneObjectiveState {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $oddityCount = @($Game.Town.MonsterZone.Oddities).Count
+    $oddityCapacity = Get-MonsterZoneOddityCapacity -Game $Game
+    $unreported = @(Get-MonsterZoneUnreportedCreatureRecords -Game $Game)
+    $discoveredCount = @($Game.Town.MonsterZone.DiscoveredLandmarks.Keys).Count
+    $currentLandmark = Get-MonsterZoneLandmarkAtPosition -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
+
+    if ($unreported.Count -gt 0) {
+        $names = @($unreported | ForEach-Object { $_["Name"] }) -join ", "
+
+        return [PSCustomObject]@{
+            Type = "ReturnProofToDorr"
+            Title = "Return proof to Dorr"
+            Detail = "Report the defeated trail: $names."
+            Hint = "Go back to town and visit the fighting ring so Dorr can turn proof into future monster contracts."
+        }
+    }
+
+    if ($oddityCount -ge $oddityCapacity -and $oddityCount -gt 0) {
+        return [PSCustomObject]@{
+            Type = "ReturnOddities"
+            Title = "Return with monster oddities"
+            Detail = "Haul is full: $oddityCount/$oddityCapacity oddities."
+            Hint = "Head back before another kill wastes valuable parts."
+        }
+    }
+
+    if ($null -ne $currentLandmark -and -not [bool]$Game.Town.MonsterZone.DiscoveredLandmarks[$currentLandmark.Id]) {
+        return [PSCustomObject]@{
+            Type = "InvestigateLandmark"
+            Title = "Investigate the landmark"
+            Detail = "Record what is strange about $($currentLandmark.Name)."
+            Hint = "Search the area before pushing deeper."
+        }
+    }
+
+    if ($discoveredCount -le 0) {
+        return [PSCustomObject]@{
+            Type = "FindLandmark"
+            Title = "Find a landmark"
+            Detail = "Leave the gate road and record the first reliable place beyond the wall."
+            Hint = "Travel into the scrubland and search what you find."
+        }
+    }
+
+    if ($oddityCount -gt 0) {
+        return [PSCustomObject]@{
+            Type = "KeepOrReturnOddities"
+            Title = "Choose the next risk"
+            Detail = "Haul: $oddityCount/$oddityCapacity oddities."
+            Hint = "Return safely for value, or keep hunting while there is still hauling room."
+        }
+    }
+
+    return [PSCustomObject]@{
+        Type = "TrackCreature"
+        Title = "Track a wall creature"
+        Detail = "Find a beast or stranger threat, then bring back proof or an oddity."
+        Hint = "Travel through landmarks, watch for tracks, and survive the first real trail."
+    }
+}
+
+function Write-MonsterZoneObjectiveStatus {
+    param($Game)
+
+    $objective = Get-MonsterZoneObjectiveState -Game $Game
+    Write-EmphasisLine -Text "Objective: $($objective.Title) | $($objective.Detail)" -Color "Cyan"
+    Write-Scene $objective.Hint
+}
+
+function Write-MonsterZoneObjectiveProgress {
+    param(
+        $Game,
+        [string]$Reason = ""
+    )
+
+    $objective = Get-MonsterZoneObjectiveState -Game $Game
+    $prefix = if ([string]::IsNullOrWhiteSpace($Reason)) { "Objective updated" } else { "Objective updated: $Reason" }
+    Write-Action "$prefix -> $($objective.Title). $($objective.Detail)" "Yellow"
+}
+
 function Get-MonsterZoneCampLevelName {
     param([int]$Level)
 
@@ -725,6 +826,7 @@ function Start-MonsterZoneEncounter {
         Add-MonsterZoneCreatureDefeat -Game $Game -Creature $creature | Out-Null
         $oddityResult = Add-MonsterZoneOddity -Game $Game -Creature $creature
         Write-Scene $oddityResult.Message
+        Write-MonsterZoneObjectiveProgress -Game $Game -Reason "creature proof secured"
         return "Won"
     }
 
@@ -754,6 +856,7 @@ function Start-MonsterZoneMenu {
         Write-TownTimeTracker -Game $Game -Area "Monster Zone" -HeroHP $HeroHP.Value
         Write-Scene "Past the outer gate, the road loosens into scrubland, old markers, ruined work sites, and too much quiet. The city is still visible, but it no longer feels close."
         Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-MonsterZoneObjectiveStatus -Game $Game
         Write-ColorLine ""
         Write-ColorLine "1. Travel north" "White"
         Write-ColorLine "2. Travel east" "White"
@@ -787,6 +890,9 @@ function Start-MonsterZoneMenu {
                 if ($move.Success) {
                     $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $move.Landmark
                     Write-Scene $discovery.Text
+                    if ($discovery.Discovered) {
+                        Write-MonsterZoneObjectiveProgress -Game $Game -Reason "landmark recorded"
+                    }
 
                     $encounterRoll = Roll-Dice -Sides 100
                     $danger = if ($null -ne $move.Landmark) { [int]$move.Landmark.DangerLevel } else { 1 }
@@ -810,6 +916,9 @@ function Start-MonsterZoneMenu {
                 $landmark = Get-MonsterZoneLandmarkAtPosition -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
                 $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $landmark
                 Write-Scene $discovery.Text
+                if ($discovery.Discovered) {
+                    Write-MonsterZoneObjectiveProgress -Game $Game -Reason "landmark recorded"
+                }
                 Write-ColorLine ""
             }
             "6" {

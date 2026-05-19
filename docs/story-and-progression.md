@@ -205,6 +205,7 @@ The monster zone is the first playable answer to the post-Civic-Vault wall rumor
 Current first-pass implementation:
 
 - the hero leaves through the outer gate and travels through abstract wilderness positions
+- the zone menu shows an inferred objective so the player knows whether to find a landmark, track a creature, return a full oddity haul, or report proof to Dorr
 - there is no visible room map, but landmarks are fixed and tracked so repeated direction choices can rediscover the same places
 - the zone contains fixed landmarks such as old shrines, watchtower ruins, burned sites, dry creek beds, camps, and boundary stones that can become future story hooks
 - the zone edge is a soft boundary where the hero is warned about leaving the patrol radius or pushing into danger beyond the current chapter
@@ -216,7 +217,7 @@ Current first-pass implementation:
 - the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers remain the best future place to make those parts more economically and narratively important
-- the next monster-zone pass should make the player's objective visible before or during travel: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr, or get home safely
+- the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr, or get home safely
 - ranged weapons are intentionally deferred until the objective and contract loop gives the distance system stronger purpose
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
 

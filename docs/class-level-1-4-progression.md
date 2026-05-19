@@ -147,8 +147,8 @@ Completed next pass:
 Next pass:
 
 1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support:
-   - add clearer objectives for why the hero leaves town
-   - add visible reasons to track creatures, gather oddities, return proof, or investigate landmarks
+   - deepen the first visible objectives for why the hero leaves town
+   - add follow-up choices after tracking creatures, gathering oddities, returning proof, or investigating landmarks
    - make Dorr's captured-monster contract board clearer while crews are out
    - add class-flavored wilderness text for Barbarian, Bard, and Fighter
    - keep ranged weapons on ice until objectives, contracts, and class reads feel stronger
