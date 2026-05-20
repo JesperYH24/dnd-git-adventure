@@ -1048,6 +1048,9 @@ function Resolve-InnLongRestLevelUp {
     Write-Scene "$($Game.Hero.Name) wakes fully restored at $($Game.Hero.HP) max HP."
     Write-ColorLine ""
 
+    $gateDefense = Invoke-LevelSixGateDefenseAfterLevelUp -Game $Game -HeroHP $HeroHP -LevelUpResult $levelUpResult -ForceWin:(Get-UiOutputSuppressed)
+    $levelUpResult | Add-Member -NotePropertyName GateDefenseEvent -NotePropertyValue $gateDefense -Force
+
     return $levelUpResult
 }
 

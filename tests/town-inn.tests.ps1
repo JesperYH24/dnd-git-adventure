@@ -165,6 +165,25 @@ function Test-LevelFourLongRestAppliesAbilityScoreIncrease {
     Assert-Equal -Actual $game.Hero.AbilityScoreIncreasesApplied["4"] -Expected $true -Message "The level 4 ASI should only be marked once."
 }
 
+function Test-LevelSixInnRestTriggersGateDefense {
+    $game = Initialize-Game
+    $heroHP = 20
+    $inn = Get-TownInns | Where-Object { $_.Id -eq "lantern_rest" } | Select-Object -First 1
+    $game.Town.ActiveInn = $inn
+    $game.Hero.CurrencyCopper = 500
+    $game.Hero.Level = 5
+    $game.Hero.LevelCap = 6
+    $game.Hero.XP = 9500
+    $game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] = $true
+
+    $result = Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $result -Expected $true -Message "The booked inn rest should complete when level 6 is ready."
+    Assert-Equal -Actual $game.Hero.Level -Expected 6 -Message "The inn rest should apply the pending level 6 gain."
+    Assert-Equal -Actual $game.Town.StoryFlags["LevelSixGateDefenseCompleted"] -Expected $true -Message "Reaching level 6 at an inn should trigger and complete the scripted gate defense in quiet tests."
+    Assert-Equal -Actual $game.Hero.XP -Expected 11540 -Message "The level 6 gate defense should award its one-time XP package after leveling."
+}
+
 function Test-StashCanStoreAndRetrieveGear {
     $hero = Get-Hero
     $startingInventoryCount = $hero.Inventory.Count
@@ -414,6 +433,7 @@ Test-BookedInnRestAfterHalewickStartsMonsterWallRumors
 Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick
 Test-BookedInnNightRestTriggersLevelUp
 Test-LevelFourLongRestAppliesAbilityScoreIncrease
+Test-LevelSixInnRestTriggersGateDefense
 Test-StashCanStoreAndRetrieveGear
 Test-CannotChooseNewInnWhileBooked
 Test-CannotCancelInnBookingWithStoredGear

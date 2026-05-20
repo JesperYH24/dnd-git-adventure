@@ -49,7 +49,8 @@ Core loop to deepen:
 
 Next implementation priorities:
 
-- add more level 5-6 content beyond the first `ash_horn_drakelet` and `gate_sunder_brute` escalation so the new cap spine is supported by enough varied encounters instead of only milestone bookkeeping
+- expand the level 6 gate-defense aftermath: damaged gate state, named wounded allies, Watch/temple/champion reactions, and follow-up city pressure after the first scripted wave defense
+- add more level 5-6 content beyond the first `ash_horn_drakelet`, `gate_sunder_brute`, and gate-defense escalation so the new cap spine is supported by enough varied encounters instead of only milestone bookkeeping
 - deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr or the Wall Watch, or needs to return safely
 - expand the Guard Station/Wall Watch stake in monster-zone pressure, including named gate damage, watcher reports, patrol shifts, and class-shaped advice before the hero leaves town
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`

@@ -316,6 +316,40 @@ function Test-MonsterZoneProgressionCanRaiseCapToSix {
     Assert-Equal -Actual $repeat.Changed -Expected $false -Message "A completed level 6 progression check should be quiet on repeat."
 }
 
+function Test-LevelSixGateDefenseRunsScriptedWaves {
+    $game = Initialize-Game
+    $game.Hero.Level = 6
+    $game.Hero.LevelCap = 6
+    $game.Hero.XP = 9500
+    $game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] = $true
+    $heroHP = $game.Hero.HP
+
+    $event = Start-LevelSixGateDefenseEvent -Game $game -HeroHP ([ref]$heroHP) -ForceWin $true
+    $repeat = Start-LevelSixGateDefenseEvent -Game $game -HeroHP ([ref]$heroHP) -ForceWin $true
+
+    Assert-Equal -Actual $event.Started -Expected $true -Message "The level 6 gate defense should start when the hero has reached level 6 and unlocked the cap."
+    Assert-Equal -Actual $event.Completed -Expected $true -Message "The scripted gate defense should complete after its wave sequence."
+    Assert-Equal -Actual $event.WavesCompleted -Expected 3 -Message "The gate defense should run three escalating waves."
+    Assert-Equal -Actual $event.XP -Expected 2040 -Message "The gate defense should award wave XP plus the city-defense milestone."
+    Assert-Equal -Actual $game.Hero.XP -Expected 11540 -Message "The hero should receive the scripted defense XP package once."
+    Assert-Equal -Actual $game.Town.StoryFlags["LevelSixGateDefenseStarted"] -Expected $true -Message "The gate defense should mark its started flag."
+    Assert-Equal -Actual $game.Town.StoryFlags["LevelSixGateDefenseCompleted"] -Expected $true -Message "The gate defense should mark its completion flag."
+    Assert-Equal -Actual $repeat.Started -Expected $false -Message "The completed gate defense should not start twice."
+}
+
+function Test-LevelSixGateDefenseWaitsForActualLevelSix {
+    $game = Initialize-Game
+    $game.Hero.Level = 5
+    $game.Hero.LevelCap = 6
+    $game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] = $true
+    $heroHP = $game.Hero.HP
+
+    $event = Start-LevelSixGateDefenseEvent -Game $game -HeroHP ([ref]$heroHP) -ForceWin $true
+
+    Assert-Equal -Actual $event.Started -Expected $false -Message "Opening the level 6 cap should not start the defense before the hero actually reaches level 6."
+    Assert-Equal -Actual $game.Town.StoryFlags["LevelSixGateDefenseCompleted"] -Expected $null -Message "The gate defense should remain untouched before level 6."
+}
+
 function Test-MonsterZoneObjectiveStartsWithLandmarkSearch {
     $game = Initialize-Game
 
@@ -382,6 +416,8 @@ Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
 Test-MonsterZoneProgressionCanRaiseCapToSix
+Test-LevelSixGateDefenseRunsScriptedWaves
+Test-LevelSixGateDefenseWaitsForActualLevelSix
 Test-MonsterZoneObjectiveStartsWithLandmarkSearch
 Test-MonsterZoneObjectivePrioritizesDorrProof
 Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull

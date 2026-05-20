@@ -733,6 +733,219 @@ function Get-RandomMonsterZoneCreature {
     return ($available | Get-Random)
 }
 
+function New-GateDefenseWaveMonster {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [string]$Definite,
+        [int]$HP,
+        [int]$XP,
+        [int]$ArmorClass,
+        [int]$AttackBonus,
+        [int]$InitiativeBonus,
+        [int]$DamageDiceSides,
+        [int]$DamageBonus,
+        [int]$WisdomSaveBonus = 0,
+        [int]$DexteritySaveBonus = 0,
+        [string]$Intro = ""
+    )
+
+    return @{
+        id = $Id
+        name = $Name
+        definite = $Definite
+        hp = $HP
+        xp = $XP
+        armorClass = $ArmorClass
+        attackBonus = $AttackBonus
+        wisdomSaveBonus = $WisdomSaveBonus
+        dexteritySaveBonus = $DexteritySaveBonus
+        initiativeBonus = $InitiativeBonus
+        damageDiceCount = 1
+        damageDiceSides = $DamageDiceSides
+        damageBonus = $DamageBonus
+        damageMin = [Math]::Max(1, 1 + $DamageBonus)
+        damageMax = [Math]::Max(1, $DamageDiceSides + $DamageBonus)
+        encounterChance = 100
+        isBoss = $false
+        intro = $Intro
+    }
+}
+
+function Get-LevelSixGateDefenseWaves {
+    return @(
+        [PSCustomObject]@{
+            Id = "gate_yard_breach"
+            Title = "Wave 1: Gate Yard Breach"
+            AllyLine = "Belor and the Guard Station form a shield line under the gate arch. Crossbow crews keep the smaller shapes off the hero while runners drag barricades into place."
+            SupportLine = "Temple healers wait behind a cart of clean linen and silver-thread charms, calling out when the wounded can still stand."
+            Monster = (New-GateDefenseWaveMonster -Id "scaled_breach_hound" -Name "scaled breach hound" -Definite "The Scaled Breach Hound" -HP 30 -XP 260 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -WisdomSaveBonus 1 -DexteritySaveBonus 2 -Intro "A hound-shaped thing hits the barricade low, black scale plates scraping sparks from the cobbles.")
+            AllyOpeningDamage = 8
+            HealerRestore = 8
+            VictoryLine = "The first push breaks against the guard line. Belor shouts for the wall horns to answer in pairs: one breach held, more coming."
+        }
+        [PSCustomObject]@{
+            Id = "champion_countercharge"
+            Title = "Wave 2: Champion Countercharge"
+            AllyLine = "Two city champions arrive from the tourney ground in dented bright armor, not waiting for heralds. A High Ledger mage burns sigils across the cobbles to split the next charge."
+            SupportLine = "The temple circle raises a ward over the wounded. It does not stop fear, but it gives shaking hands enough steadiness to reload."
+            Monster = (New-GateDefenseWaveMonster -Id "ash_horn_drakelet" -Name "ash-horn drakelet" -Definite "The Ash-Horn Drakelet" -HP 38 -XP 360 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -WisdomSaveBonus 1 -DexteritySaveBonus 2 -Intro "The Ash-Horn Drakelet scrambles over broken stone with smoke threading from its horn nubs, snapping at every spell-light that touches it.")
+            AllyOpeningDamage = 10
+            HealerRestore = 10
+            VictoryLine = "The champions force the drakelet's head down long enough for the line to close. The mage's last sigil cracks, but the street behind it is still standing."
+        }
+        [PSCustomObject]@{
+            Id = "gate_sunder_final"
+            Title = "Wave 3: Gate-Sunder Push"
+            AllyLine = "The outer gate groans as the largest shape reaches it. Guards, champions, temple healers, and every runner still breathing move as one ugly machine around the hero."
+            SupportLine = "A temple mage brands the broken gate with white fire. The ward will not win the fight, but it keeps the stones from giving up first."
+            Monster = (New-GateDefenseWaveMonster -Id "gate_sunder_brute" -Name "gate-sunder brute" -Definite "The Gate-Sunder Brute" -HP 52 -XP 520 -ArmorClass 13 -AttackBonus 6 -InitiativeBonus -1 -DamageDiceSides 10 -DamageBonus 4 -WisdomSaveBonus 0 -DexteritySaveBonus -1 -Intro "The Gate-Sunder Brute comes in with a hinge still bolted around one fist, dragging part of the outside world behind it.")
+            AllyOpeningDamage = 12
+            HealerRestore = 14
+            VictoryLine = "When the brute falls, the wall does not cheer. It exhales. Then the horns change from alarm to answer, carrying the news across the city."
+        }
+    )
+}
+
+function Test-LevelSixGateDefenseReady {
+    param($Game)
+
+    return ($null -ne $Game -and
+        $null -ne $Game.Hero -and
+        $null -ne $Game.Town -and
+        $null -ne $Game.Town.StoryFlags -and
+        [int]$Game.Hero.Level -ge 6 -and
+        [bool]$Game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] -and
+        -not [bool]$Game.Town.StoryFlags["LevelSixGateDefenseCompleted"])
+}
+
+function Start-LevelSixGateDefenseEvent {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        [bool]$ForceWin = $false
+    )
+
+    if (-not (Test-LevelSixGateDefenseReady -Game $Game)) {
+        return [PSCustomObject]@{
+            Started = $false
+            Completed = $false
+            WavesCompleted = 0
+            XP = 0
+            Message = "Level 6 gate defense is not ready."
+        }
+    }
+
+    $Game.Town.StoryFlags["LevelSixGateDefenseStarted"] = $true
+    $wavesCompleted = 0
+    $totalXP = 0
+
+    Write-SectionTitle -Text "The Wall Answers" -Color "Red"
+    Write-Scene "The morning after $($Game.Hero.Name)'s level 6 strength settles in, the city horns do not sound like ceremony. They sound like stone remembering it can break."
+    Write-Scene "The Guard Station is already moving. Belor's wall-watch runners point toward the outer gate, where the monster-zone trails have become a living attack."
+    Write-ColorLine ""
+
+    foreach ($wave in @(Get-LevelSixGateDefenseWaves)) {
+        $monster = $wave.Monster
+        $monsterHP = [Math]::Max(1, [int]$monster.hp - [int]$wave.AllyOpeningDamage)
+        $monsterOffBalance = $false
+        $encounterFled = $false
+        $heroDroppedWeapon = if ($null -ne $Game.PSObject.Properties["HeroDroppedWeapon"]) { [bool]$Game.HeroDroppedWeapon } else { $false }
+        $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 90
+
+        Write-SectionTitle -Text $wave.Title -Color "DarkRed"
+        Write-Scene $wave.AllyLine
+        Write-Scene $wave.SupportLine
+        Write-Scene $monster.intro
+        Write-Scene "Allied pressure deals $($wave.AllyOpeningDamage) opening damage before $($Game.Hero.Name) takes the center of the clash."
+
+        if ($ForceWin) {
+            $monsterHP = 0
+        }
+        else {
+            Start-CombatLoop `
+                -Hero $Game.Hero `
+                -Monster $monster `
+                -HeroHP $HeroHP `
+                -MonsterHP ([ref]$monsterHP) `
+                -HeroDroppedWeapon ([ref]$heroDroppedWeapon) `
+                -MonsterOffBalance ([ref]$monsterOffBalance) `
+                -EncounterFled ([ref]$encounterFled) `
+                -HeroStarts $true `
+                -DistanceState $distanceState
+        }
+
+        $Game.HeroDroppedWeapon = $heroDroppedWeapon
+
+        if ($HeroHP.Value -le 0 -or $monsterHP -gt 0) {
+            $HeroHP.Value = [Math]::Max(1, [Math]::Min([int]$Game.Hero.HP, [int]$HeroHP.Value + [int]$wave.HealerRestore))
+            $wavesCompleted += 1
+            Write-Scene "Temple hands drag $($Game.Hero.Name) behind the ward line before the street can take him. Belor's guards and the city champions finish the wave in a crush of shields, spell-light, and shouted names."
+            Write-ColorLine ""
+            continue
+        }
+
+        $wavesCompleted += 1
+        Write-Scene $wave.VictoryLine
+        Grant-HeroXP -Hero $Game.Hero -XP ([int]$monster.xp)
+        $totalXP += [int]$monster.xp
+        Write-Scene "$($Game.Hero.Name) gains $($monster.xp) XP from the wave."
+
+        if ([int]$wave.HealerRestore -gt 0) {
+            $beforeHeal = [int]$HeroHP.Value
+            $HeroHP.Value = [Math]::Min([int]$Game.Hero.HP, $beforeHeal + [int]$wave.HealerRestore)
+            $healed = [Math]::Max(0, [int]$HeroHP.Value - $beforeHeal)
+            if ($healed -gt 0) {
+                Write-Scene "Temple healers restore $healed HP before the next alarm reaches the gate."
+            }
+        }
+
+        Write-ColorLine ""
+    }
+
+    $milestone = Grant-MonsterZoneMilestoneXP -Game $Game -Key "level_6_gate_defense" -XP 900 -Reason "the city gate held through the first organized monster assault"
+    if ($milestone.Awarded) {
+        $totalXP += [int]$milestone.XP
+        Write-Scene $milestone.Message
+    }
+
+    $Game.Town.StoryFlags["LevelSixGateDefenseCompleted"] = $true
+    Write-EmphasisLine -Text "Gate defense complete: the city has seen $($Game.Hero.Name) stand with its watch, champions, healers, and mages." -Color "Green"
+    Write-ColorLine ""
+
+    return [PSCustomObject]@{
+        Started = $true
+        Completed = $true
+        WavesCompleted = $wavesCompleted
+        XP = $totalXP
+        Message = "The level 6 gate defense is complete."
+    }
+}
+
+function Invoke-LevelSixGateDefenseAfterLevelUp {
+    param(
+        $Game,
+        [ref]$HeroHP,
+        $LevelUpResult,
+        [bool]$ForceWin = $false
+    )
+
+    $reachedLevelSix = $false
+    if ($null -ne $LevelUpResult -and $null -ne $LevelUpResult.Results) {
+        foreach ($result in @($LevelUpResult.Results)) {
+            if ([int]$result.Level -ge 6) {
+                $reachedLevelSix = $true
+            }
+        }
+    }
+
+    if (-not $reachedLevelSix) {
+        return [PSCustomObject]@{ Started = $false; Completed = $false; WavesCompleted = 0; XP = 0; Message = "Level 6 was not reached." }
+    }
+
+    return Start-LevelSixGateDefenseEvent -Game $Game -HeroHP $HeroHP -ForceWin:$ForceWin
+}
+
 function Get-MonsterZoneCreatureObservationLines {
     param($Creature)
 
@@ -1405,12 +1618,14 @@ function Start-MonsterZoneMenu {
                 $camp = Resolve-MonsterZoneCampAction -Game $Game -HeroHP $HeroHP -Action $campAction
                 Write-Scene "$($Game.Hero.Name) works the site into a $($camp.CampName)."
                 Write-Scene $camp.Message
+                Invoke-LevelSixGateDefenseAfterLevelUp -Game $Game -HeroHP $HeroHP -LevelUpResult $camp.RestResult -ForceWin:(Get-UiOutputSuppressed) | Out-Null
                 Write-ColorLine ""
             }
             "7" {
                 $camp = Resolve-MonsterZoneCampAction -Game $Game -HeroHP $HeroHP -Action "OpenSky"
                 Write-Scene "$($Game.Hero.Name) sleeps under the open sky with the wall fires dim behind the grass."
                 Write-Scene $camp.Message
+                Invoke-LevelSixGateDefenseAfterLevelUp -Game $Game -HeroHP $HeroHP -LevelUpResult $camp.RestResult -ForceWin:(Get-UiOutputSuppressed) | Out-Null
                 Write-ColorLine ""
             }
             "8" {

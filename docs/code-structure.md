@@ -383,6 +383,7 @@ Ansvar:
 - landmark memory in `LandmarkMemory`, where different-day visits increase route familiarity and unlock direct travel from the gate
 - one-time monster-zone milestone XP in `MilestoneXP` for discoveries, route unlocks, creature proof, Dorr reports, and monster contracts
 - level 4-to-6 progression checks that open cap 5 from wall rumors and cap 6 from enough landmarks, creature proof, reports, and routes/contracts
+- level 6 scripted gate-defense event with three waves, allied opening pressure, healer recovery, and completion flags
 - inferred objective state for why the hero is currently beyond the wall
 - soft zone edge near the city's patrol reach
 - `Perception`/`Stealth` awareness checks before wilderness combat

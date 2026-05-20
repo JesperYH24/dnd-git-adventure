@@ -51,5 +51,6 @@ flowchart LR
     Derived --> CHA["CHA\nBard save DC, CHA skills, Bardic Inspiration"]
     Level4 --> FighterJoust["Fighter level 4 direction\nmounted jousting later"]
     Level4 --> MonsterZone["Monster-zone progression\ncap 5 from wall rumors\ncap 6 from outer-wall proof"]
+    MonsterZone --> GateDefense["Reach level 6\nscripted gate-defense waves"]
     FighterJoust --> JoustReq["Requires stable riding horse\nsplint or plate armor\nfuture lance support"]
 ```

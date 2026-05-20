@@ -55,6 +55,8 @@
 - defeated monster-zone creature types are tracked as proof for future city systems
 - monster-zone milestone XP is one-time per discovery/proof/report/contract: first landmark discoveries, direct-route unlocks, first defeated creature types, Dorr reports, and completed captured-monster ring contracts all move the hero along without repeat farming
 - the level cap can rise to `6` once the hero has enough outer-wall proof: at least `3` defeated creature types, `2` reported creature trails, `4` discovered landmarks, and either `1` direct landmark route or `1` completed monster contract
+- once the hero actually reaches level `6`, a one-time gate-defense event can trigger after a long rest: `3` waves hit the wall while Guard Station forces, Belor, higher city champions, temple healers, and mages support the hero
+- gate-defense waves use allied opening damage and healer restoration between fights, then award wave XP plus a one-time city-defense milestone if the wall holds
 - the Guard Station and Watchman Belor now connect post-Halewick wall attacks to monster-zone work: wall-watch reports react to discovered landmarks, unreported creature proof, and trails already reported through Dorr
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring

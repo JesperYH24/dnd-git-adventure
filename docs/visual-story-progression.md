@@ -25,6 +25,7 @@ flowchart TD
     HalewickEscape --> MonsterZone["Outer monster zone\nwall rumors, landmarks, stealth, distance"]
     MonsterZone --> Level5["Level cap 5\nopened by wall rumors"]
     Level5 --> Level6["Level cap 6\nouter-wall proof campaign"]
+    Level6 --> GateDefense["Level 6 long rest\nscripted gate defense waves"]
 ```
 
 ## Level 2-3 City Quest Chain

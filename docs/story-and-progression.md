@@ -223,6 +223,8 @@ Current first-pass implementation:
 - the zone now tracks one-time milestone XP for landmark discoveries, direct-route unlocks, first defeated creature proofs, Dorr reports, and completed captured-monster ring contracts
 - the level cap rises to 6 when the hero has built a real outer-wall case: at least 3 defeated creature types, 2 reported creature trails, 4 discovered landmarks, and either 1 reliable direct route or 1 completed monster contract
 - the encounter pool now begins adding stronger post-wall-rumor threats as the cap rises: an `ash_horn_drakelet` at the level 5 pressure stage, and a `gate_sunder_brute` once level 6 progression is open
+- after the hero actually reaches level 6 on a long rest, the first organized monster assault hits the gate in a scripted defense event
+- that defense runs as three waves with visible city help: Guard Station shield lines and Belor, higher city champions, temple healers, and mages all hold parts of the wall while the hero takes the center fight
 - the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr or the Wall Watch, get home safely, or face a stronger level 5-6 threat
 - ranged weapons are intentionally deferred until the objective and contract loop gives the distance system stronger purpose
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
@@ -249,6 +251,7 @@ After that, the monster-zone curve carries the hero toward levels 5 and 6 throug
 - completed captured-monster ring contracts: contract-specific XP, currently 420-760 XP
 - higher monster contracts now extend that range for level 5-6 threats, including `Ash-Horn Lockdown` and `Gate-Sunder Night`
 - enough combined landmarks, proofs, reports, and route/contract progress: raise level cap to 6 and award a 600 XP Wall Watch campaign milestone
+- long rest after reaching level 6: scripted gate defense, with wave XP and a 900 XP city-defense milestone once the gate holds
 
 ## Why High Ledger matters
 
