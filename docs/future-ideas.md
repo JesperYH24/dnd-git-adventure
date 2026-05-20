@@ -2,13 +2,13 @@
 
 ## Near-term priorities
 
-- next recommended focus: deepen playable monster-zone objectives and the Dorr contract loop now that Bard spell work is paused and ranged weapons are intentionally on ice
+- next recommended focus: deepen the level 4-to-6 monster-zone arc now that Bard spell work is paused, ranged weapons are intentionally on ice, and the first milestone XP/cap spine exists
 - follow up on Lord Varric Halewick after the Civic Vault: he is exposed, draconic, and escaped rather than dead
 - decide what the city does after multiple high officials witness Halewick's transformation in the Civic Keep court room
 - turn the public court reveal into the next political pressure state for Lady Veyra, the Guard Station, and the Docks
 - develop Lady Veyra and the `High Ledger` into a stronger strategic quest-giver hub
 - build the next post-Civic-Vault story chain around witnesses, dragon panic, civic cover-ups, and Halewick's escape route
-- expand the first playable monster zone beyond the city with more landmarks, contracts, weather, return-to-town payouts, and dragon-pressure escalation
+- expand the first playable monster zone beyond the city with more level 5-6-worthy threats, landmarks, contracts, weather, return-to-town payouts, and dragon-pressure escalation
 - deepen the existing day/night rhythm so more activities consume time or change their outcome by hour
 - expand the post-Civic-Vault city state with more witness reactions, tougher ring tracks, and new equipment tiers
 - let inn, street, and ring relationships feed more directly into future quest outcomes, payouts, and alternate leads
@@ -26,7 +26,7 @@
 
 ## Medium-term world and progression work
 
-- plan the next level progression after the Civic Vault and decide whether Halewick's escaped-dragon arc points toward level 5
+- flesh out the monster-zone progression from level 4 to level 6 now that Halewick's escaped-dragon arc opens the level 5 cap and outer-wall proof can unlock level 6
 - keep day jobs non-lethal and expandable for future classes, so later heroes can solve them through charm, discipline, stealth, or negotiation instead of raw force
 - add more day-job tracks that reinforce economy and city life without granting XP
 - more city districts and stronger NPC quest lines
@@ -49,11 +49,12 @@ Core loop to deepen:
 
 Next implementation priorities:
 
+- add more level 5-6 content beyond the first `ash_horn_drakelet` and `gate_sunder_brute` escalation so the new cap spine is supported by enough varied encounters instead of only milestone bookkeeping
 - deepen the first visible monster-zone objective layer with more explicit follow-ups after the player tracks a creature, collects an oddity, finds a landmark, reports proof to Dorr or the Wall Watch, or needs to return safely
 - expand the Guard Station/Wall Watch stake in monster-zone pressure, including named gate damage, watcher reports, patrol shifts, and class-shaped advice before the hero leaves town
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
-- expand Dorr's monster-contract board with stronger dialogue and board actions now that it separates unreported proof, bookable contracts, pending capture crews, ready fights, and completed contracts
+- expand Dorr's monster-contract board with stronger dialogue and board actions now that it separates unreported proof, bookable contracts, pending capture crews, ready fights, completed contracts, and the higher Ash-Horn/Gate-Sunder ladder
 - expand class-flavored monster-zone reads beyond the first search/observation pass, especially into ambush starts, objective follow-ups, landmark consequences, Wall Watch reports, and Dorr reports
 - later, after objectives and contracts feel good, add ranged weapon support on top of the monster-zone distance state so open ground can make bows, thrown weapons, and monster approach behavior matter
 

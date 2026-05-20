@@ -219,7 +219,11 @@ Current first-pass implementation:
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers remain the best future place to make those parts more economically and narratively important
 - the Guard Station and Watchman Belor now treat wall attacks as a Wall Watch problem, reacting to discovered landmarks, creature proof, and Dorr-reported trails so the city watch has a visible stake in gates and wall pressure
-- the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr, or get home safely
+- the post-Halewick wall-rumor rest raises the hero's level cap to 5, making the monster zone the current level 4-to-5 pressure space
+- the zone now tracks one-time milestone XP for landmark discoveries, direct-route unlocks, first defeated creature proofs, Dorr reports, and completed captured-monster ring contracts
+- the level cap rises to 6 when the hero has built a real outer-wall case: at least 3 defeated creature types, 2 reported creature trails, 4 discovered landmarks, and either 1 reliable direct route or 1 completed monster contract
+- the encounter pool now begins adding stronger post-wall-rumor threats as the cap rises: an `ash_horn_drakelet` at the level 5 pressure stage, and a `gate_sunder_brute` once level 6 progression is open
+- the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr or the Wall Watch, get home safely, or face a stronger level 5-6 threat
 - ranged weapons are intentionally deferred until the objective and contract loop gives the distance system stronger purpose
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
 
@@ -234,6 +238,17 @@ The level 4 XP curve is meant to feel earned across the whole Docks arc:
 - `The Charter Scribe`: 300 XP
 - post-level-4 Docks work continues with `The Shell Charter` at 320 XP, `Counting House Pressure` at 340 XP, and `The Customs Stamp` at 300 XP
 - `The Civic Vault`: 420 XP as the Chapter Three climax dungeon
+
+After that, the monster-zone curve carries the hero toward levels 5 and 6 through accumulated field proof instead of a single quest turn-in:
+
+- post-Halewick wall rumors: raise level cap to 5
+- first discovery of a landmark: 120 XP once per landmark
+- familiar route unlocked from the outer gate: 180 XP once per landmark route
+- first defeated creature type: 240 XP once per creature type
+- first report of a defeated creature trail to Dorr: 160 XP once per creature type
+- completed captured-monster ring contracts: contract-specific XP, currently 420-760 XP
+- higher monster contracts now extend that range for level 5-6 threats, including `Ash-Horn Lockdown` and `Gate-Sunder Night`
+- enough combined landmarks, proofs, reports, and route/contract progress: raise level cap to 6 and award a 600 XP Wall Watch campaign milestone
 
 ## Why High Ledger matters
 

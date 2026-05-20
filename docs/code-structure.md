@@ -381,16 +381,19 @@ Ansvar:
 - outer-wall monster zone after post-Civic-Vault wall rumors
 - hidden wilderness positions and persistent landmarks
 - landmark memory in `LandmarkMemory`, where different-day visits increase route familiarity and unlock direct travel from the gate
+- one-time monster-zone milestone XP in `MilestoneXP` for discoveries, route unlocks, creature proof, Dorr reports, and monster contracts
+- level 4-to-6 progression checks that open cap 5 from wall rumors and cap 6 from enough landmarks, creature proof, reports, and routes/contracts
 - inferred objective state for why the hero is currently beyond the wall
 - soft zone edge near the city's patrol reach
 - `Perception`/`Stealth` awareness checks before wilderness combat
 - first-pass abstract encounter distance for monster-zone fights: `5 ft` melee, `30 ft` movement, action-based dash, and monster closing behavior
+- level-cap-filtered encounter pool, including higher `ash_horn_drakelet` and `gate_sunder_brute` threats for the level 5-6 stretch
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
 - class-flavored wilderness reads for search and 60 ft observation
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
 - Guard Station/Watchman Belor wall-watch reactions to monster-zone landmarks, creature proof, and Dorr-reported trails
-- next implementation focus is deeper objective follow-ups, Wall Watch/Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
+- next implementation focus is deeper level 5-6 objective follow-ups, stronger threats, Wall Watch/Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

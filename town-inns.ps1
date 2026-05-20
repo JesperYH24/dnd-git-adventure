@@ -1068,11 +1068,13 @@ function Resolve-PostHalewickInnRestRumor {
 
     $Game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
     $Game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] = $true
+    $Game.Hero.LevelCap = [Math]::Max([int]$Game.Hero.LevelCap, 5)
+    $Game.Town.StoryFlags["MonsterZoneLevelFiveCapUnlocked"] = $true
 
     Write-SectionTitle -Text "Morning Rumor" -Color "Yellow"
     Write-Scene "By breakfast, the palace repairs are not the only sound moving through the city. Caravan hands, gate guards, and innkeepers all tell some version of the same new fear: things beyond the walls have started testing the stone more often since Halewick fled in draconic form."
     Write-Scene "No one has a clean map yet, only worried reports from patrol roads and watch fires. Still, the idea settles fast: if the walls are being tested, someone will need to go outside them."
-    Write-EmphasisLine -Text "New future premise: rumors now point toward an outer monster zone beyond the city walls." -Color "Yellow"
+    Write-EmphasisLine -Text "New progression premise: the outer monster zone can now carry $($Game.Hero.Name) toward level 5." -Color "Yellow"
     Write-ColorLine ""
 
     return $true

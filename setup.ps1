@@ -72,6 +72,7 @@ function New-DefaultTownState {
             Visits = 0
             DiscoveredLandmarks = @{}
             LandmarkMemory = @{}
+            MilestoneXP = @{}
             Camps = @{}
             Oddities = @()
             DefeatedCreatures = @{}

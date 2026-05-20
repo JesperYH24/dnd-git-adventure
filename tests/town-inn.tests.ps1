@@ -115,6 +115,8 @@ function Test-BookedInnRestAfterHalewickStartsMonsterWallRumors {
     Assert-Equal -Actual $rested -Expected $true -Message "The booked inn rest should complete normally after Halewick escapes."
     Assert-Equal -Actual $game.Town.StoryFlags["MonsterWallRumorsStarted"] -Expected $true -Message "The next inn rest after Halewick should start the wall-monster rumor state."
     Assert-Equal -Actual $game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] -Expected $true -Message "The wall rumor should mark the outer monster zone premise as available for future content."
+    Assert-Equal -Actual $game.Hero.LevelCap -Expected 5 -Message "The post-Halewick wall rumor should open monster-zone progression toward level 5."
+    Assert-Equal -Actual $game.Town.StoryFlags["MonsterZoneLevelFiveCapUnlocked"] -Expected $true -Message "The level 5 monster-zone cap flag should be set with the wall rumor."
 }
 
 function Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick {

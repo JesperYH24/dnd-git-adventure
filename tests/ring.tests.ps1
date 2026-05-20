@@ -167,7 +167,7 @@ function Test-RingMonsterChallengePreviewRequiresLevelFour {
     $unlockedPreview = @(Get-RingMonsterChallengePreview -Hero $hero)
 
     Assert-Equal -Actual $lockedPreview.Count -Expected 0 -Message "Monster challenge preview should stay hidden before level 4."
-    Assert-Equal -Actual $unlockedPreview.Count -Expected 3 -Message "Level 4 should reveal the three preview monster contracts."
+    Assert-Equal -Actual $unlockedPreview.Count -Expected 5 -Message "Level 4 should reveal the preview monster contract ladder."
     Assert-Equal -Actual $unlockedPreview[0].Name -Expected "Wall-Scraper Trial" -Message "The first preview contract should be the proof bout."
 }
 
@@ -222,6 +222,32 @@ function Test-RingMonsterContractsKeepExtraGates {
     Assert-Equal -Actual $ready.CanTake -Expected $true -Message "Mire-Tusk should unlock once the monster report and reputation gate are both satisfied."
 }
 
+function Test-RingMonsterContractsIncludeHigherZoneThreats {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $ash = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "ash_horn_drakelet" } | Select-Object -First 1
+    $gate = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "gate_sunder_brute" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $ash | Out-Null
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $gate | Out-Null
+    Report-MonsterZoneDiscoveriesToDorr -Game $game | Out-Null
+
+    $ashContract = Get-RingMonsterChallengeContracts | Where-Object { $_.Id -eq "ash_horn_lockdown" } | Select-Object -First 1
+    $gateContract = Get-RingMonsterChallengeContracts | Where-Object { $_.Id -eq "gate_sunder_night" } | Select-Object -First 1
+    $blockedAsh = Get-RingMonsterContractReadiness -Game $game -Contract $ashContract
+
+    $game.Hero.RingReputation = 55
+    $game.Hero.RingWinsTotal = 10
+    Complete-RingChampionNight -Hero $game.Hero | Out-Null
+    $readyAsh = Get-RingMonsterContractReadiness -Game $game -Contract $ashContract
+    $readyGate = Get-RingMonsterContractReadiness -Game $game -Contract $gateContract
+
+    Assert-True -Condition ($blockedAsh.Readiness -like "*ring reputation 35*" -and $blockedAsh.Readiness -like "*Pit Champion*") -Message "Ash-Horn should require both reputation and champion status after the trail is reported."
+    Assert-Equal -Actual $readyAsh.CanTake -Expected $true -Message "Ash-Horn should become bookable once its higher ring gates are met."
+    Assert-Equal -Actual $readyGate.CanTake -Expected $true -Message "Gate-Sunder should become bookable once the level 6 trail and higher ring gates are met."
+    Assert-Equal -Actual $gateContract.RewardXP -Expected 1150 -Message "The level 6 monster contract should carry a larger XP reward."
+}
+
 function Test-RingMonsterContractWinPaysAndLocksContract {
     $game = Initialize-Game
     $game.Hero.Level = 4
@@ -235,6 +261,7 @@ function Test-RingMonsterContractWinPaysAndLocksContract {
     $blockedEarly = Resolve-RingMonsterChallengeContract -Game $game -Contract $contract -ForceWin $true
 
     $game.Town.DayNumber = $booking.ReadyDay
+    $xpBeforeContract = [int]$game.Hero.XP
     $result = Resolve-RingMonsterChallengeContract -Game $game -Contract $contract -ForceWin $true
     $repeatReadiness = Get-RingMonsterContractReadiness -Game $game -Contract $contract
 
@@ -242,6 +269,8 @@ function Test-RingMonsterContractWinPaysAndLocksContract {
     Assert-Equal -Actual $blockedEarly.Success -Expected $false -Message "Booked monster contracts should not be fightable until the capture crew returns."
     Assert-Equal -Actual $result.Won -Expected $true -Message "Forced test win should resolve the monster contract as won."
     Assert-Equal -Actual $result.ReputationAdded -Expected 8 -Message "The Wall-Scraper Trial should award monster-challenge ring reputation."
+    Assert-Equal -Actual $result.RewardXP -Expected 420 -Message "The Wall-Scraper Trial should award its one-time monster-zone contract XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected ($xpBeforeContract + 420) -Message "Winning a monster contract should add contract XP to the hero."
     Assert-Equal -Actual $game.Town.MonsterZone.CompletedRingMonsterContracts["wall_scraper_trial"] -Expected $true -Message "Completed monster contracts should be locked in monster-zone state."
     Assert-Equal -Actual $game.Town.MonsterZone.PendingRingMonsterContracts.ContainsKey("wall_scraper_trial") -Expected $false -Message "Completed monster contracts should leave the pending capture board."
     Assert-True -Condition ($repeatReadiness.Readiness -like "*already completed*") -Message "Completed monster contracts should not be immediately repeatable."
@@ -827,6 +856,7 @@ Test-RingMonsterChallengePreviewRequiresLevelFour
 Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
 Test-RingMonsterContractsRequireReportedZoneDefeat
 Test-RingMonsterContractsKeepExtraGates
+Test-RingMonsterContractsIncludeHigherZoneThreats
 Test-RingMonsterContractWinPaysAndLocksContract
 Test-RingMonsterContractBookingRemovesAvailableUntilReady
 Test-RingMonsterContractBoardShowsProofAndBookableContracts

@@ -23,6 +23,8 @@ flowchart TD
     DocksT4 --> CivicVault["Docks Tier 5\nThe Civic Vault climax"]
     CivicVault --> HalewickEscape["Halewick exposed\nsmaller dragon form escapes Civic Keep"]
     HalewickEscape --> MonsterZone["Outer monster zone\nwall rumors, landmarks, stealth, distance"]
+    MonsterZone --> Level5["Level cap 5\nopened by wall rumors"]
+    Level5 --> Level6["Level cap 6\nouter-wall proof campaign"]
 ```
 
 ## Level 2-3 City Quest Chain

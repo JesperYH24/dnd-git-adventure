@@ -806,6 +806,7 @@ function Get-RingMonsterChallengeContracts {
             Rule = "Dorr only signs it after the hero has beaten a matching creature beyond the wall and reported the trail."
             RewardPreview = "+ring reputation, bounty coin, Beast-Hand notice"
             RewardCopper = 180
+            RewardXP = 420
             ReputationReward = 8
             Opponent = [PSCustomObject]@{
                 Name = "The Wall-Scraper"
@@ -834,6 +835,7 @@ function Get-RingMonsterChallengeContracts {
             Rule = "Unarmed takedown; weapons spoil the ring story even if they save skin."
             RewardPreview = "+larger reputation, tusk bounty, grappler crowd title"
             RewardCopper = 260
+            RewardXP = 560
             ReputationReward = 12
             Opponent = [PSCustomObject]@{
                 Name = "Mire-Tusk"
@@ -862,6 +864,7 @@ function Get-RingMonsterChallengeContracts {
             Rule = "Dorr needs both a champion name and a reported outer-wall monster trail before he books it."
             RewardPreview = "+major reputation, monster rumor, possible title beyond Pit Champion"
             RewardCopper = 400
+            RewardXP = 760
             ReputationReward = 18
             Opponent = [PSCustomObject]@{
                 Name = "The Lantern-Eater"
@@ -876,6 +879,64 @@ function Get-RingMonsterChallengeContracts {
                 FocusChance = 15
                 BlockChance = 15
                 Intro = "The lanterns around the pit burn low when the creature is led in. Even Dorr stops smiling until the ropes are checked twice."
+            }
+        },
+        [PSCustomObject]@{
+            Id = "ash_horn_lockdown"
+            Name = "Ash-Horn Lockdown"
+            Type = "Drake-Touched Contract"
+            SourceCreatureIds = @("ash_horn_drakelet")
+            RequiredReputation = 35
+            RequiresChampionNight = $true
+            CaptureDays = 5
+            Hook = "A smoking drakelet that proves the outer-wall pressure is moving from beasts into draconic signs."
+            Rule = "Dorr will only risk handlers after the hero has champion standing, reputation, and a reported ash-horn trail."
+            RewardPreview = "+high reputation, drake rumor, serious Wall Watch attention"
+            RewardCopper = 620
+            RewardXP = 920
+            ReputationReward = 24
+            Opponent = [PSCustomObject]@{
+                Name = "Ash-Horn"
+                Definite = "Ash-Horn"
+                ArmorClass = 14
+                HP = 28
+                AttackBonus = 5
+                DamageDiceSides = 8
+                DamageBonus = 3
+                GrappleBonus = 5
+                GrappleChance = 25
+                FocusChance = 20
+                BlockChance = 15
+                Intro = "Ash-Horn enters low and hot-breathed, horn nubs smoking under wet chains while the pit boards creak from handlers retreating too fast."
+            }
+        },
+        [PSCustomObject]@{
+            Id = "gate_sunder_night"
+            Name = "Gate-Sunder Night"
+            Type = "Gate-Breaker Contract"
+            SourceCreatureIds = @("gate_sunder_brute")
+            RequiredReputation = 55
+            RequiresChampionNight = $true
+            CaptureDays = 6
+            Hook = "A wall-breaking brute tied directly to the damaged gates and the Watch's worst reports."
+            Rule = "Dorr needs a completed outer-wall proof chain before he dares sell this as anything but a funeral."
+            RewardPreview = "+major reputation, gate-bounty coin, Wall Watch recognition"
+            RewardCopper = 840
+            RewardXP = 1150
+            ReputationReward = 32
+            Opponent = [PSCustomObject]@{
+                Name = "Gate-Sunder"
+                Definite = "Gate-Sunder"
+                ArmorClass = 13
+                HP = 38
+                AttackBonus = 6
+                DamageDiceSides = 10
+                DamageBonus = 4
+                GrappleBonus = 7
+                GrappleChance = 35
+                FocusChance = 10
+                BlockChance = 20
+                Intro = "Gate-Sunder is hauled in behind three ropes and a gate hinge still bolted to its fist. The ring crowd does not cheer until Dorr makes them."
             }
         }
     )
@@ -1037,9 +1098,14 @@ function Report-MonsterZoneDiscoveriesToDorr {
                 Count = [int]$record["Count"]
                 ReportedDay = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
             }
+            $recordName = [string]$record["Name"]
+            $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "dorr_report_$creatureId" -XP 160 -Reason "$recordName trail reported to Dorr and the wall-watch rumor network"
+            $Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]["MilestoneXPMessage"] = if ($xp.Awarded) { $xp.Message } else { "" }
             $newReports += $Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]
         }
     }
+
+    Update-MonsterZoneLevelProgression -Game $Game | Out-Null
 
     return [PSCustomObject]@{
         NewlyReported = $newReports
@@ -1270,6 +1336,8 @@ function Get-RingMonsterChallengePreview {
         $contracts[1] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($reputation -ge 25) { "Ready when monster zone opens" } else { "Needs stronger ring reputation" }) -Force
         $contracts[2] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($wonChampionNight) { "Champion preview" } else { "Champion Night recommended" }) -Force
         $contracts[2].RewardPreview = "+major reputation, monster rumor, possible title beyond $title"
+        $contracts[3] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($wonChampionNight -and $reputation -ge 35) { "Level 5 trail needed" } else { "Needs champion name and reputation 35" }) -Force
+        $contracts[4] | Add-Member -NotePropertyName Readiness -NotePropertyValue $(if ($wonChampionNight -and $reputation -ge 55) { "Level 6 trail needed" } else { "Needs champion name and reputation 55" }) -Force
 
         return $contracts
     }
@@ -1363,9 +1431,14 @@ function Resolve-RingMonsterChallengeContract {
     $Game.Town.MonsterZone.PendingRingMonsterContracts.Remove([string]$Contract.Id)
     Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount ([int]$Contract.RewardCopper) | Out-Null
     $reputation = Add-HeroRingReputation -Hero $Game.Hero -Amount ([int]$Contract.ReputationReward)
+    $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "ring_contract_$($Contract.Id)" -XP ([int]$Contract.RewardXP) -Reason "$($Contract.Name) completed before the city crowd"
 
     Write-EmphasisLine -Text "$($Game.Hero.Name) wins $($Contract.Name). Dorr pays $(Convert-CopperToCurrencyText -Copper ([int]$Contract.RewardCopper)) and lets the crowd chew on the story." -Color "Yellow"
+    if ($xp.Awarded) {
+        Write-Scene $xp.Message
+    }
     Write-EmphasisLine -Text "Monster challenge reputation: +$($reputation.Added)." -Color "Yellow"
+    Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
 
     return [PSCustomObject]@{
         Success = $true
@@ -1373,6 +1446,7 @@ function Resolve-RingMonsterChallengeContract {
         Contract = $Contract
         ReputationAdded = [int]$reputation.Added
         RewardCopper = [int]$Contract.RewardCopper
+        RewardXP = if ($xp.Awarded) { [int]$xp.XP } else { 0 }
     }
 }
 
@@ -1393,6 +1467,12 @@ function Start-RingMonsterChallengeMenu {
     if (@($report.NewlyReported).Count -gt 0) {
         $names = @($report.NewlyReported | ForEach-Object { $_["Name"] }) -join ", "
         Write-Scene "Dorr listens to the report and marks the board: $names."
+        foreach ($reported in @($report.NewlyReported)) {
+            if (-not [string]::IsNullOrWhiteSpace([string]$reported["MilestoneXPMessage"])) {
+                Write-Scene ([string]$reported["MilestoneXPMessage"])
+            }
+        }
+        Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
         Show-RingMonsterContractBoard -Game $Game -Title "Dorr's Updated Monster Board"
     }
     elseif (@($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count -gt 0) {

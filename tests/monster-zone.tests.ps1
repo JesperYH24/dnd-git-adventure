@@ -65,6 +65,25 @@ function Test-MonsterZoneLandmarkDirectTravelUnlocksAfterRepeatDays {
     Assert-Equal -Actual $game.Town.MonsterZone.CurrentY -Expected 1 -Message "Direct travel should move to the landmark Y coordinate."
 }
 
+function Test-MonsterZoneLandmarksAwardMilestoneXPOnce {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "burned_orchard" } | Select-Object -First 1
+
+    $first = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    $sameDay = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    Advance-TownToNextDay -Game $game | Out-Null
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    $route = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    $repeatRoute = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+
+    Assert-True -Condition ($first.Text -like "*120 XP*") -Message "A first landmark discovery should award monster-zone milestone XP."
+    Assert-True -Condition ($sameDay.Text -notlike "*120 XP*") -Message "The same landmark should not award discovery XP twice."
+    Assert-True -Condition ($route.Text -like "*180 XP*") -Message "Unlocking a reliable route should award route milestone XP."
+    Assert-True -Condition ($repeatRoute.Text -notlike "*180 XP*") -Message "Reliable route XP should only be awarded once."
+    Assert-Equal -Actual $game.Hero.XP -Expected 300 -Message "One landmark discovery and one direct-route unlock should total 300 XP."
+}
+
 function Test-MonsterZoneSoftEdgeBlocksOvertravel {
     $game = Initialize-Game
     Move-MonsterZonePosition -Game $game -Direction "west" | Out-Null
@@ -162,6 +181,19 @@ function Test-MonsterZoneCreaturesHaveObservationFlavor {
     Assert-True -Condition ($graveText -like "*sight alone*") -Message "The grave-hungry thing observation should hint that sight-based stealth is unreliable."
 }
 
+function Test-MonsterZoneCreaturePoolScalesWithLevelCap {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+
+    $levelFive = @(Get-MonsterZoneAvailableCreatures -Game $game)
+    $game.Hero.LevelCap = 6
+    $levelSix = @(Get-MonsterZoneAvailableCreatures -Game $game)
+
+    Assert-True -Condition ($levelFive.id -contains "ash_horn_drakelet") -Message "Level 5-cap monster-zone work should include the draconic pressure creature."
+    Assert-True -Condition ($levelFive.id -notcontains "gate_sunder_brute") -Message "Level 6 gate-breaker threats should stay out of the level 5 pool."
+    Assert-True -Condition ($levelSix.id -contains "gate_sunder_brute") -Message "Level 6-cap monster-zone work should unlock the stronger gate-breaker threat."
+}
+
 function Test-MonsterZoneClassReadsAreDistinct {
     $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "dry_creek_bed" } | Select-Object -First 1
     $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
@@ -245,6 +277,43 @@ function Test-MonsterZoneTracksDefeatedCreatureProof {
     Assert-Equal -Actual $first.Id -Expected "wall_wolf" -Message "Monster-zone defeat tracking should keep the creature id."
     Assert-Equal -Actual $second.Count -Expected 2 -Message "Repeated defeats should increment the creature proof counter."
     Assert-Equal -Actual $game.Town.MonsterZone.DefeatedCreatures["wall_wolf"]["OddityName"] -Expected "Smoke-Tainted Pelt" -Message "Defeat proof should keep the linked oddity name for Dorr and buyers."
+    Assert-Equal -Actual $game.Hero.XP -Expected 240 -Message "The first defeated creature type should award proof milestone XP once."
+    Assert-True -Condition ($first.MilestoneXPMessage -like "*240 XP*") -Message "The first defeat record should carry its XP message for combat output."
+    Assert-Equal -Actual $second.MilestoneXPMessage -Expected "" -Message "Repeated defeats of the same creature type should not repeat proof XP."
+}
+
+function Test-MonsterZoneProgressionCanRaiseCapToSix {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+
+    $landmarks = @(Get-MonsterZoneLandmarks | Select-Object -First 4)
+    foreach ($landmark in $landmarks) {
+        Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    }
+
+    Advance-TownToNextDay -Game $game | Out-Null
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmarks[0] | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmarks[0] | Out-Null
+
+    $creatures = @(Get-MonsterZoneCreatures | Select-Object -First 3)
+    foreach ($creature in $creatures) {
+        Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    }
+
+    $report = Report-MonsterZoneDiscoveriesToDorr -Game $game
+    $progression = Update-MonsterZoneLevelProgression -Game $game
+    $xpAfterUnlock = [int]$game.Hero.XP
+    $repeat = Update-MonsterZoneLevelProgression -Game $game
+
+    Assert-Equal -Actual @($report.NewlyReported).Count -Expected 3 -Message "Reporting three defeated monster types should satisfy the Dorr proof side of level 6 progression."
+    Assert-Equal -Actual $progression.State.LevelSixReady -Expected $true -Message "The monster zone should become level 6-ready after landmarks, routes, defeats, and reports line up."
+    Assert-Equal -Actual $game.Hero.LevelCap -Expected 6 -Message "Monster-zone progression should raise the level cap to 6."
+    Assert-Equal -Actual $game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] -Expected $true -Message "Level 6 monster-zone readiness should set a story flag."
+    Assert-Equal -Actual $xpAfterUnlock -Expected 2460 -Message "The level 4-6 monster-zone proof package should award meaningful one-time XP."
+    Assert-Equal -Actual $game.Hero.XP -Expected $xpAfterUnlock -Message "Rechecking level 6 progression should not duplicate cap XP."
+    Assert-Equal -Actual $repeat.Changed -Expected $false -Message "A completed level 6 progression check should be quiet on repeat."
 }
 
 function Test-MonsterZoneObjectiveStartsWithLandmarkSearch {
@@ -299,6 +368,7 @@ Test-MonsterZoneUnlocksFromWallRumors
 Test-MonsterZoneTravelFindsPersistentLandmark
 Test-MonsterZoneLandmarkFamiliarityGrowsAcrossDays
 Test-MonsterZoneLandmarkDirectTravelUnlocksAfterRepeatDays
+Test-MonsterZoneLandmarksAwardMilestoneXPOnce
 Test-MonsterZoneSoftEdgeBlocksOvertravel
 Test-WildernessAwarenessCanGiveHeroAdvantage
 Test-BarbarianDangerSenseStartsAtLevelTwo
@@ -306,10 +376,12 @@ Test-InvisibilityImprovesMonsterZoneStealth
 Test-MonsterZoneKeenSensesHelpAgainstStealth
 Test-MonsterZoneBlindsightCountersInvisibilityBonus
 Test-MonsterZoneCreaturesHaveObservationFlavor
+Test-MonsterZoneCreaturePoolScalesWithLevelCap
 Test-MonsterZoneClassReadsAreDistinct
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
+Test-MonsterZoneProgressionCanRaiseCapToSix
 Test-MonsterZoneObjectiveStartsWithLandmarkSearch
 Test-MonsterZoneObjectivePrioritizesDorrProof
 Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull

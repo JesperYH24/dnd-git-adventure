@@ -8,6 +8,7 @@ function Get-MonsterZoneDefaultState {
         Visits = 0
         DiscoveredLandmarks = @{}
         LandmarkMemory = @{}
+        MilestoneXP = @{}
         Camps = @{}
         Oddities = @()
         DefeatedCreatures = @{}
@@ -35,6 +36,7 @@ function Initialize-MonsterZoneState {
         @{ Key = "Visits"; Value = 0 },
         @{ Key = "DiscoveredLandmarks"; Value = @{} },
         @{ Key = "LandmarkMemory"; Value = @{} },
+        @{ Key = "MilestoneXP"; Value = @{} },
         @{ Key = "Camps"; Value = @{} },
         @{ Key = "Oddities"; Value = @() },
         @{ Key = "DefeatedCreatures"; Value = @{} },
@@ -56,6 +58,119 @@ function Test-MonsterZoneUnlocked {
         $null -ne $Game.Town -and
         $null -ne $Game.Town.StoryFlags -and
         [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"])
+}
+
+function Grant-MonsterZoneMilestoneXP {
+    param(
+        $Game,
+        [string]$Key,
+        [int]$XP,
+        [string]$Reason
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Game -or $null -eq $Game.Hero -or [string]::IsNullOrWhiteSpace($Key) -or $XP -le 0) {
+        return [PSCustomObject]@{
+            Awarded = $false
+            XP = 0
+            Message = ""
+        }
+    }
+
+    if ([bool]$Game.Town.MonsterZone.MilestoneXP[$Key]) {
+        return [PSCustomObject]@{
+            Awarded = $false
+            XP = 0
+            Message = ""
+        }
+    }
+
+    $Game.Town.MonsterZone.MilestoneXP[$Key] = $true
+    Grant-HeroXP -Hero $Game.Hero -XP $XP
+
+    $message = if ([string]::IsNullOrWhiteSpace($Reason)) {
+        "$($Game.Hero.Name) gains $XP XP from monster-zone progress."
+    }
+    else {
+        "$($Game.Hero.Name) gains $XP XP: $Reason."
+    }
+
+    return [PSCustomObject]@{
+        Awarded = $true
+        XP = $XP
+        Message = $message
+    }
+}
+
+function Get-MonsterZoneProgressionState {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $defeatedTypes = @($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count
+    $reportedTypes = @($Game.Town.MonsterZone.ReportedCreaturesToDorr.Keys).Count
+    $discoveredLandmarks = @($Game.Town.MonsterZone.DiscoveredLandmarks.Keys).Count
+    $directRoutes = @(Get-MonsterZoneDirectTravelLandmarks -Game $Game).Count
+    $completedContracts = @($Game.Town.MonsterZone.CompletedRingMonsterContracts.Keys).Count
+
+    return [PSCustomObject]@{
+        DefeatedTypes = $defeatedTypes
+        ReportedTypes = $reportedTypes
+        DiscoveredLandmarks = $discoveredLandmarks
+        DirectRoutes = $directRoutes
+        CompletedContracts = $completedContracts
+        LevelFiveCapUnlocked = ([int]$Game.Hero.LevelCap -ge 5)
+        LevelSixCapUnlocked = ([int]$Game.Hero.LevelCap -ge 6)
+        LevelSixReady = ($defeatedTypes -ge 3 -and $reportedTypes -ge 2 -and $discoveredLandmarks -ge 4 -and ($directRoutes -ge 1 -or $completedContracts -ge 1))
+    }
+}
+
+function Update-MonsterZoneLevelProgression {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $messages = @()
+    $state = Get-MonsterZoneProgressionState -Game $Game
+
+    if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+        if ([int]$Game.Hero.LevelCap -lt 5) {
+            $Game.Hero.LevelCap = 5
+            $messages += "Monster-zone progression: level cap raised to 5."
+        }
+        $Game.Town.StoryFlags["MonsterZoneLevelFiveCapUnlocked"] = $true
+    }
+
+    if ($state.LevelSixReady) {
+        if ([int]$Game.Hero.LevelCap -lt 6) {
+            $Game.Hero.LevelCap = 6
+            $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "level_cap_6_wall_pattern" -XP 600 -Reason "the Wall Watch has enough landmarks, monster trails, and routes to treat the attacks as a campaign"
+            $messages += "Monster-zone progression: level cap raised to 6."
+            if ($xp.Awarded) {
+                $messages += $xp.Message
+            }
+        }
+        $Game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] = $true
+    }
+
+    return [PSCustomObject]@{
+        Changed = ($messages.Count -gt 0)
+        Messages = $messages
+        State = (Get-MonsterZoneProgressionState -Game $Game)
+    }
+}
+
+function Write-MonsterZoneProgressionMessages {
+    param($Game)
+
+    $progression = Update-MonsterZoneLevelProgression -Game $Game
+
+    foreach ($message in @($progression.Messages)) {
+        Write-EmphasisLine -Text $message -Color "Green"
+    }
+
+    return $progression
 }
 
 function Get-MonsterZonePositionKey {
@@ -425,6 +540,25 @@ function Discover-MonsterZoneLandmark {
         $text = "$text $($memory.Text)"
     }
 
+    if (-not $alreadyDiscovered) {
+        $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "landmark_discovered_$($Landmark.Id)" -XP 120 -Reason "$($Landmark.Name) recorded for the outer-wall map"
+        if ($xp.Awarded) {
+            $text = "$text $($xp.Message)"
+        }
+    }
+
+    if ($memory.DirectTravelJustUnlocked) {
+        $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "landmark_route_$($Landmark.Id)" -XP 180 -Reason "a reliable route to $($Landmark.Name) is now known"
+        if ($xp.Awarded) {
+            $text = "$text $($xp.Message)"
+        }
+    }
+
+    $progression = Update-MonsterZoneLevelProgression -Game $Game
+    foreach ($message in @($progression.Messages)) {
+        $text = "$text $message"
+    }
+
     return [PSCustomObject]@{
         Discovered = (-not $alreadyDiscovered)
         Landmark = $Landmark
@@ -528,6 +662,8 @@ function New-MonsterZoneCreature {
         [string]$OddityName,
         [int]$OddityValue,
         [string]$IntroText,
+        [int]$MinLevelCap = 5,
+        [string]$ThreatTier = "Outer Wall",
         [string[]]$SenseTraits = @(),
         [int]$SenseBonus = 0,
         [bool]$CountersInvisibility = $false
@@ -553,6 +689,8 @@ function New-MonsterZoneCreature {
         isBoss = $false
         perceptionBonus = $PerceptionBonus
         stealthBonus = $StealthBonus
+        minLevelCap = $MinLevelCap
+        threatTier = $ThreatTier
         senseTraits = @($SenseTraits)
         senseBonus = $SenseBonus
         countersInvisibility = $CountersInvisibility
@@ -564,16 +702,35 @@ function New-MonsterZoneCreature {
 
 function Get-MonsterZoneCreatures {
     return @(
-        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall." -SenseTraits @("Keen Hearing and Smell") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves." -SenseTraits @("Keen Smell") -SenseBonus 1)
-        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true)
-        (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token.")
-        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -SenseTraits @("Keen Smell") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Hearing and Smell") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 1)
+        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true)
+        (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure")
+        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "ash_horn_drakelet" -Name "ash-horn drakelet" -Article "An" -Definite "The Ash-Horn Drakelet" -HP 32 -XP 240 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Ash-Horn Spur" -OddityValue 145 -IntroText "A low drake-shape drags itself over broken ground, horn nubs smoking as if the skull beneath them remembers fire." -MinLevelCap 5 -ThreatTier "Level 5 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "gate_sunder_brute" -Name "gate-sunder brute" -Article "A" -Definite "The Gate-Sunder Brute" -HP 46 -XP 390 -ArmorClass 13 -AttackBonus 6 -InitiativeBonus -1 -DamageDiceSides 10 -DamageBonus 4 -PerceptionBonus 2 -StealthBonus -1 -OddityName "Cracked Gate-Bone" -OddityValue 210 -IntroText "A huge crooked figure lumbers through the dust carrying a gate hinge like a club, its arms marked by black scale scars that have split and healed badly." -MinLevelCap 6 -ThreatTier "Level 6 gate-breaker threat" -SenseTraits @("Blood Scent") -SenseBonus 1)
     )
 }
 
+function Get-MonsterZoneAvailableCreatures {
+    param($Game)
+
+    $levelCap = if ($null -ne $Game -and $null -ne $Game.Hero -and $null -ne $Game.Hero.LevelCap) { [int]$Game.Hero.LevelCap } else { 5 }
+    return @(Get-MonsterZoneCreatures | Where-Object {
+        $minLevelCap = if ($null -ne $_.minLevelCap) { [int]$_.minLevelCap } else { 5 }
+        $minLevelCap -le $levelCap
+    })
+}
+
 function Get-RandomMonsterZoneCreature {
-    return (Get-MonsterZoneCreatures | Get-Random)
+    param($Game)
+
+    $available = @(Get-MonsterZoneAvailableCreatures -Game $Game)
+    if ($available.Count -le 0) {
+        $available = @(Get-MonsterZoneCreatures | Where-Object { [int]$_.minLevelCap -le 5 })
+    }
+
+    return ($available | Get-Random)
 }
 
 function Get-MonsterZoneCreatureObservationLines {
@@ -617,6 +774,20 @@ function Get-MonsterZoneCreatureObservationLines {
                 "$($Creature.definite) samples the wind with a guard dog's patience, then plants its paws as if holding a gate no one else can see.",
                 "The black scale plates shift under its hide when it breathes. It looks built to close hard, bite deep, and keep pressure once it has found a target.",
                 "This is not a peaceful stray. It has a trained shape to its aggression, and the scale growth makes it feel touched by the same wrongness spreading beyond the wall."
+            )
+        }
+        "ash_horn_drakelet" {
+            return @(
+                "$($Creature.definite) keeps its head low and sideways, protecting the smoking horn nubs while it tests the air for heat and movement.",
+                "It does not rush like a simple beast. It waits for a line, then coils its whole body into a short violent lunge that could punish anyone standing too close.",
+                "This feels closer to Halewick's shadow than the wall beasts do: draconic, young or stunted, and dangerous because it is learning the ground."
+            )
+        }
+        "gate_sunder_brute" {
+            return @(
+                "$($Creature.definite) walks as if distance is only a delay before impact, dragging the stolen hinge until sparks jump from stone.",
+                "It is slow to turn but brutal once committed. The safest read is that it breaks obstacles first and asks whether they were people afterward.",
+                "The black scale scars along its arms are old wounds, not armor. Something draconic has survived inside the damage and left the creature stronger for it."
             )
         }
         default {
@@ -740,7 +911,9 @@ function Add-MonsterZoneCreatureDefeat {
         return $null
     }
 
-    if (-not $Game.Town.MonsterZone.DefeatedCreatures.ContainsKey($creatureId) -or $null -eq $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]) {
+    $isFirstDefeatType = (-not $Game.Town.MonsterZone.DefeatedCreatures.ContainsKey($creatureId) -or $null -eq $Game.Town.MonsterZone.DefeatedCreatures[$creatureId])
+
+    if ($isFirstDefeatType) {
         $Game.Town.MonsterZone.DefeatedCreatures[$creatureId] = @{
             Id = $creatureId
             Name = [string]$Creature.name
@@ -753,6 +926,15 @@ function Add-MonsterZoneCreatureDefeat {
     $record = $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
     $record["Count"] = [int]$record["Count"] + 1
     $record["LastDefeatedDay"] = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
+    $recordName = [string]$record["Name"]
+    $xp = if ($isFirstDefeatType) {
+        Grant-MonsterZoneMilestoneXP -Game $Game -Key "creature_proof_$creatureId" -XP 240 -Reason "$recordName proof secured for the wall reports"
+    }
+    else {
+        [PSCustomObject]@{ Awarded = $false; XP = 0; Message = "" }
+    }
+    $record["MilestoneXPMessage"] = if ($xp.Awarded) { $xp.Message } else { "" }
+    Update-MonsterZoneLevelProgression -Game $Game | Out-Null
 
     return [PSCustomObject]$record
 }
@@ -1016,7 +1198,7 @@ function Start-MonsterZoneEncounter {
         [bool]$ForceEncounter = $false
     )
 
-    $creature = Get-RandomMonsterZoneCreature
+    $creature = Get-RandomMonsterZoneCreature -Game $Game
     $monsterHP = [int]$creature.hp
     $monsterOffBalance = $false
     $encounterFled = $false
@@ -1112,10 +1294,14 @@ function Start-MonsterZoneEncounter {
         Write-Scene "$($creature.definite) falls, leaving the outer grass suddenly too quiet."
         Grant-HeroXP -Hero $Game.Hero -XP ([int]$creature.xp)
         Write-Scene "$($Game.Hero.Name) gains $($creature.xp) XP."
-        Add-MonsterZoneCreatureDefeat -Game $Game -Creature $creature | Out-Null
+        $defeatRecord = Add-MonsterZoneCreatureDefeat -Game $Game -Creature $creature
+        if ($null -ne $defeatRecord -and -not [string]::IsNullOrWhiteSpace([string]$defeatRecord.MilestoneXPMessage)) {
+            Write-Scene ([string]$defeatRecord.MilestoneXPMessage)
+        }
         $oddityResult = Add-MonsterZoneOddity -Game $Game -Creature $creature
         Write-Scene $oddityResult.Message
         Write-MonsterZoneObjectiveProgress -Game $Game -Reason "creature proof secured"
+        Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
         return "Won"
     }
 
@@ -1139,6 +1325,7 @@ function Start-MonsterZoneMenu {
     }
 
     Initialize-MonsterZoneState -Game $Game
+    Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
 
     while ($true) {
         Write-SectionTitle -Text "Beyond the Wall" -Color "Yellow"

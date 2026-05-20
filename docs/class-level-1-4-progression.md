@@ -1,6 +1,6 @@
 # Class Level 1-4 Progression
 
-This document tracks the intended class feature shape up to the current level cap. The goal is not a full rules clone, but each class should feel recognizable, complete, and distinct by level 4.
+This document tracks the intended class feature shape through level 4, where the current class kits are meant to feel recognizable, complete, and distinct. The monster zone now starts the next progression spine from level 4 toward level 6, but class feature design beyond level 4 is still future work.
 
 Legend:
 
@@ -72,7 +72,7 @@ Bard follow-ups:
 
 The Bard should keep feeling like a control, tempo, and problem-solving class instead of becoming a weaker weapon fighter. Spell slots should be implemented as a clear resource layer, separate from cantrips.
 
-Target Bard spell progression through the current level cap:
+Target Bard spell progression through the current class-feature pass:
 
 | Bard Level | Cantrips Known | Spells Known | Level 1 Slots | Level 2 Slots |
 |---:|---:|---:|---:|---:|
@@ -146,10 +146,11 @@ Completed next pass:
 
 Next pass:
 
-1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support:
+1. Deepen the post-Civic-Vault monster-zone loop now that all three class kits have level 4 support and the first level 4-to-6 milestone spine exists:
    - deepen the first visible objectives for why the hero leaves town
    - add follow-up choices after tracking creatures, gathering oddities, returning proof, or investigating landmarks
    - add stronger Wall Watch and Dorr dialogue/actions around gate attacks, proof reports, and the captured-monster contract board
+   - add more level 5-6-worthy threats, proof types, and landmark consequences so the new cap progression has enough playable content behind it
    - expand the first class-flavored wilderness reads into ambush starts, objective follow-ups, landmark consequences, Wall Watch reports, and Dorr reports
    - keep ranged weapons on ice until objectives, contracts, and class reads feel stronger
 2. Tune level 3-4 enemy difficulty against the now-complete class kits.

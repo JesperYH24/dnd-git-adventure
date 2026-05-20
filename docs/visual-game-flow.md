@@ -78,5 +78,5 @@ flowchart TD
     Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
     KnightGate -- "Needs stable horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
     Town --> MonsterGate{"Wall rumors active?"}
-    MonsterGate -- "Yes" --> MonsterZone["Monster zone\nobjectives, landmarks, camp,\nstealth/perception, distance, oddities"]
+    MonsterGate -- "Yes" --> MonsterZone["Monster zone\nlevel 4-6 objectives, landmarks, camp,\nstealth/perception, distance, oddities"]
 ```
