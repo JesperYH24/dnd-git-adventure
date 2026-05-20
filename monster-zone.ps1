@@ -126,6 +126,40 @@ function Get-MonsterZoneProgressionState {
     }
 }
 
+function Get-MonsterZoneProgressionSummaryText {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if (-not [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+        return "Monster-zone progression: locked until the outer-wall rumors begin."
+    }
+
+    $state = Get-MonsterZoneProgressionState -Game $Game
+
+    if ([int]$Game.Hero.LevelCap -lt 6) {
+        $routeProgress = if ([int]$state.DirectRoutes -gt 0 -or [int]$state.CompletedContracts -gt 0) { "1/1" } else { "0/1" }
+        return "Level 6 proof: landmarks $([Math]::Min([int]$state.DiscoveredLandmarks, 4))/4 | defeated types $([Math]::Min([int]$state.DefeatedTypes, 3))/3 | Dorr reports $([Math]::Min([int]$state.ReportedTypes, 2))/2 | route/contract $routeProgress."
+    }
+
+    if ([int]$Game.Hero.Level -lt 6) {
+        $nextXP = Get-XPThresholdForLevel -Level 6
+        return "Level 6 cap open: reach $nextXP XP and take a long rest. Current XP: $($Game.Hero.XP)/$nextXP."
+    }
+
+    if (-not [bool]$Game.Town.StoryFlags["LevelSixGateDefenseCompleted"]) {
+        return "Level 6 reached: long rest will draw the first organized gate-defense assault."
+    }
+
+    return "Level 6 gate defense complete: the wall held, and the city knows who stood there."
+}
+
+function Write-MonsterZoneProgressionStatus {
+    param($Game)
+
+    Write-EmphasisLine -Text (Get-MonsterZoneProgressionSummaryText -Game $Game) -Color "DarkCyan"
+}
+
 function Update-MonsterZoneLevelProgression {
     param($Game)
 
@@ -1545,6 +1579,7 @@ function Start-MonsterZoneMenu {
         Write-TownTimeTracker -Game $Game -Area "Monster Zone" -HeroHP $HeroHP.Value
         Write-Scene "Past the outer gate, the road loosens into scrubland, old markers, ruined work sites, and too much quiet. The city is still visible, but it no longer feels close."
         Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-MonsterZoneProgressionStatus -Game $Game
         Write-MonsterZoneObjectiveStatus -Game $Game
         Write-ColorLine ""
         Write-ColorLine "1. Travel north" "White"

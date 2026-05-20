@@ -316,6 +316,37 @@ function Test-MonsterZoneProgressionCanRaiseCapToSix {
     Assert-Equal -Actual $repeat.Changed -Expected $false -Message "A completed level 6 progression check should be quiet on repeat."
 }
 
+function Test-MonsterZoneProgressionSummaryShowsLevelSixRequirements {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $game.Town.MonsterZone.DiscoveredLandmarks["old_mile_shrine"] = $true
+    $game.Town.MonsterZone.DiscoveredLandmarks["burned_orchard"] = $true
+    $game.Town.MonsterZone.DefeatedCreatures["wall_wolf"] = @{ Name = "wall-prowling wolf" }
+    $game.Town.MonsterZone.ReportedCreaturesToDorr["wall_wolf"] = @{ Name = "wall-prowling wolf" }
+
+    $summary = Get-MonsterZoneProgressionSummaryText -Game $game
+
+    Assert-True -Condition ($summary -like "*landmarks 2/4*") -Message "Monster-zone progression summary should show landmark progress toward level 6."
+    Assert-True -Condition ($summary -like "*defeated types 1/3*") -Message "Monster-zone progression summary should show defeated creature type progress."
+    Assert-True -Condition ($summary -like "*Dorr reports 1/2*") -Message "Monster-zone progression summary should show Dorr report progress."
+    Assert-True -Condition ($summary -like "*route/contract 0/1*") -Message "Monster-zone progression summary should show the route or contract requirement."
+}
+
+function Test-MonsterZoneProgressionSummaryChangesAfterCapUnlock {
+    $game = Initialize-Game
+    $game.Hero.Level = 5
+    $game.Hero.LevelCap = 6
+    $game.Hero.XP = 8200
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $game.Town.StoryFlags["MonsterZoneLevelSixCapUnlocked"] = $true
+
+    $summary = Get-MonsterZoneProgressionSummaryText -Game $game
+
+    Assert-True -Condition ($summary -like "*Level 6 cap open*") -Message "After cap unlock, progression summary should tell the player to earn XP and rest."
+    Assert-True -Condition ($summary -like "*8200/9500*") -Message "After cap unlock, progression summary should show XP progress to level 6."
+}
+
 function Test-LevelSixGateDefenseRunsScriptedWaves {
     $game = Initialize-Game
     $game.Hero.Level = 6
@@ -416,6 +447,8 @@ Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof
 Test-MonsterZoneProgressionCanRaiseCapToSix
+Test-MonsterZoneProgressionSummaryShowsLevelSixRequirements
+Test-MonsterZoneProgressionSummaryChangesAfterCapUnlock
 Test-LevelSixGateDefenseRunsScriptedWaves
 Test-LevelSixGateDefenseWaitsForActualLevelSix
 Test-MonsterZoneObjectiveStartsWithLandmarkSearch

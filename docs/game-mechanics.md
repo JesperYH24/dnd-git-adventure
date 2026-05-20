@@ -34,6 +34,7 @@
 - those wall rumors raise the level cap to `5`, making the monster zone the current progression space after level 4
 - it uses wilderness travel rather than room navigation or a detailed map
 - the menu shows a current objective inferred from state: find a landmark, track a wall creature, return full oddity haul, or report defeated-creature proof to Dorr
+- the menu also shows a compact monster-zone progression line, so the player can see level 6 proof requirements, XP-to-level after cap unlock, or gate-defense completion without opening documentation
 - travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
 - landmarks now track route familiarity by different visit days; repeat visits on later days make the place easier to find, and at `3` familiarity the hero can travel there directly from the outer gate
 - search and long-range observation include first-pass class wilderness reads: Barbarian reads body/ground/instinct, Bard reads rhythm/folklore/silence, and Fighter reads patrol logic/sightlines/attack lanes
