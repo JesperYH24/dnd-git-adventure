@@ -89,7 +89,7 @@ function Test-BardLevelTwoSpellsStayLevelGated {
     $hero.Level = 3
     Restore-HeroSpellSlots -Hero $hero | Out-Null
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Suggestion").CanCast -Expected $true -Message "Suggestion should become castable at bard level 3."
-    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $false -Message "Invisibility should remain locked until bard level 4."
+    Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $true -Message "Invisibility should become castable when bard level 3 unlocks level 2 slots."
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $false -Message "Enhance Ability should remain locked until bard level 4."
 
     $hero.Level = 4
@@ -97,6 +97,20 @@ function Test-BardLevelTwoSpellsStayLevelGated {
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $true -Message "Invisibility should become castable at bard level 4."
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $true -Message "Enhance Ability should become castable at bard level 4."
     Assert-Equal -Actual (@($hero.KnownSpells | Where-Object { [int]$_.SpellLevel -eq 2 }).Count) -Expected 3 -Message "A level 4 bard should know three level 2 utility/control spells in this pass."
+}
+
+function Test-LevelThreeBardCanUseInvisibilityInCalmDungeonRooms {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+
+    Assert-Equal -Actual (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $hero) -Expected $true -Message "A level 3 bard with level 2 slots should see Invisibility in calm dungeon rooms."
+    Assert-True -Condition ((Get-HeroInvisibilityOutOfCombatOptionText -Hero $hero) -like "*L2 slots 2/2*") -Message "The calm-room Invisibility option should show level 3 slot availability."
+
+    $result = Invoke-HeroInvisibility -Hero $hero
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A level 3 bard should be able to cast Invisibility."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 1 -Message "Casting Invisibility should spend one level 2 slot at level 3."
 }
 
 function Test-BardCantripsDoNotSpendSpellSlots {
@@ -324,6 +338,7 @@ function Test-NonBardDoesNotGetSpellcastingStatus {
 Test-BardStartsWithSpellcastingState
 Test-BardSpellcastingProgressionScalesByLevel
 Test-BardLevelTwoSpellsStayLevelGated
+Test-LevelThreeBardCanUseInvisibilityInCalmDungeonRooms
 Test-BardCantripsDoNotSpendSpellSlots
 Test-BardSlottedSpellsSpendAndRestoreSlots
 Test-BardSpellcastingStatusReportsSlots

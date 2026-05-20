@@ -116,8 +116,8 @@ function Test-TownCharacterMenuCanOpenSkillTree {
 
 function Test-BardCanCastInvisibilityFromQuestPreparation {
     $game = Initialize-Game -Class "Bard"
-    $game.Hero.Level = 4
-    $game.Hero.LevelCap = 4
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
     Restore-HeroSpellSlots -Hero $game.Hero | Out-Null
     $heroHP = $game.Hero.HP
     $quest = Find-TownQuest -Game $game -QuestId "guard_night_watch"
@@ -125,8 +125,8 @@ function Test-BardCanCastInvisibilityFromQuestPreparation {
 
     Start-TownQuestPreparationMenu -Game $game -HeroHP ([ref]$heroHP) -Quest $quest
 
-    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "Quest preparation should let a level 4 bard cast Invisibility before danger."
-    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Preparing Invisibility should spend one level 2 spell slot."
+    Assert-Equal -Actual $game.Hero.ActiveBuff.Type -Expected "Invisibility" -Message "Quest preparation should let a level 3 bard cast Invisibility before danger."
+    Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 1 -Message "Preparing Invisibility should spend one level 2 spell slot."
     Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The preparation menu should accept invisibility then back out."
 }
 

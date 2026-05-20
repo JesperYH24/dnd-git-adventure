@@ -1440,16 +1440,16 @@ function Get-HeroKnownSpells {
         [PSCustomObject]@{ Name = "Charm Person"; Kind = "Spell"; SpellLevel = 1 }
     )
 
-    if ($level -ge 2 -and $level -lt 4) {
+    if ($level -eq 2) {
         $spells += [PSCustomObject]@{ Name = "Heroism"; Kind = "Spell"; SpellLevel = 1 }
     }
 
     if ($level -ge 3) {
         $spells += [PSCustomObject]@{ Name = "Suggestion"; Kind = "Spell"; SpellLevel = 2 }
+        $spells += [PSCustomObject]@{ Name = "Invisibility"; Kind = "Spell"; SpellLevel = 2 }
     }
 
     if ($level -ge 4) {
-        $spells += [PSCustomObject]@{ Name = "Invisibility"; Kind = "Spell"; SpellLevel = 2 }
         $spells += [PSCustomObject]@{ Name = "Enhance Ability"; Kind = "Spell"; SpellLevel = 2 }
     }
 
