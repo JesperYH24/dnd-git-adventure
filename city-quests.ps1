@@ -725,10 +725,26 @@ function Start-NonCombatQuestCheck {
         [string]$Ability,
         [int]$DC,
         [string]$ActionText,
-        [string]$CheckTag = ""
+        [string]$CheckTag = "",
+        [string]$Skill = ""
     )
 
-    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Ability -CheckTag $CheckTag
+    $resolvedSkill = Resolve-NonCombatQuestCheckSkill -Ability $Ability -CheckTag $CheckTag -Skill $Skill
+    $effectiveAbility = Normalize-HeroAbilityName -Ability $Ability
+
+    if (-not [string]::IsNullOrWhiteSpace($resolvedSkill)) {
+        $skillAbility = Get-HeroSkillAbility -Skill $resolvedSkill
+        if (-not [string]::IsNullOrWhiteSpace($skillAbility)) {
+            $effectiveAbility = $skillAbility
+        }
+    }
+
+    if ([string]::IsNullOrWhiteSpace($effectiveAbility)) {
+        $effectiveAbility = "STR"
+    }
+
+    $effectiveCheckTag = if (-not [string]::IsNullOrWhiteSpace($resolvedSkill)) { $resolvedSkill } else { $CheckTag }
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $effectiveAbility -CheckTag $effectiveCheckTag
     $bardicBonus = 0
     $bonusText = Format-HeroAbilityCheckBonusText -CheckProfile $checkProfile
     $useCharmPerson = $false
@@ -739,7 +755,7 @@ function Start-NonCombatQuestCheck {
         $charmableTags = @("Social", "Persuasion", "Deception", "Charm")
         $suggestionTags = @("Suggestion", "Directive")
 
-        if ($Ability -eq "CHA" -and $suggestionTags -contains $normalizedTag) {
+        if ($effectiveAbility -eq "CHA" -and $suggestionTags -contains $normalizedTag) {
             $suggestionCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Suggestion"
 
             if ($suggestionCheck.CanCast) {
@@ -786,7 +802,7 @@ function Start-NonCombatQuestCheck {
             }
         }
 
-        if ($Ability -eq "CHA" -and $charmableTags -contains $normalizedTag) {
+        if ($effectiveAbility -eq "CHA" -and $charmableTags -contains $normalizedTag) {
             $charmCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Charm Person"
 
             if ($charmCheck.CanCast) {
@@ -836,12 +852,12 @@ function Start-NonCombatQuestCheck {
             }
         }
 
-        if (-not $suggestionSuccess -and -not $useCharmPerson -and -not (Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $Ability)) {
+        if (-not $suggestionSuccess -and -not $useCharmPerson -and -not (Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $effectiveAbility)) {
             $enhanceCheck = Test-HeroCanCastSpell -Hero $Hero -SpellName "Enhance Ability"
 
             if ($enhanceCheck.CanCast) {
-                $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
-                Write-ColorLine "Cast Enhance Ability for advantage on this ${Ability} check?" "Cyan"
+                $normalizedAbility = Normalize-HeroAbilityName -Ability $effectiveAbility
+                Write-ColorLine "Cast Enhance Ability for advantage on this ${effectiveAbility} check?" "Cyan"
                 Write-ColorLine "1. Yes (spend one level $($enhanceCheck.Spell.SpellLevel) slot; focus $normalizedAbility)" "White"
                 Write-ColorLine "2. No" "White"
                 Write-ColorLine ""
@@ -906,14 +922,14 @@ function Start-NonCombatQuestCheck {
 
     if ($suggestionSuccess) {
         Write-Scene $ActionText
-        Write-Action "$($Hero.Name)'s Suggestion carries the social exchange without a further ${Ability} check." "Cyan"
+        Write-Action "$($Hero.Name)'s Suggestion carries the social exchange without a further ${effectiveAbility} check." "Cyan"
         Write-ColorLine ""
         return $true
     }
 
     $roll = Roll-Dice -Sides 20
     $rollText = "roll $roll"
-    $useEnhanceAbility = Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $Ability
+    $useEnhanceAbility = Test-HeroEnhanceAbilityApplies -Hero $Hero -Ability $effectiveAbility
     $hasAdvantage = $useCharmPerson -or $useEnhanceAbility
 
     if ($hasAdvantage) {
@@ -937,10 +953,47 @@ function Start-NonCombatQuestCheck {
     $total = $roll + $checkProfile.TotalModifier + $bardicBonus
 
     Write-Scene $ActionText
-    Write-Action "$($Hero.Name) tests ${Ability}: $rollText $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier)$bonusText = $total vs DC $DC" "Cyan"
+    $checkLabel = if (-not [string]::IsNullOrWhiteSpace($checkProfile.Skill)) { "$($checkProfile.Skill) ($($checkProfile.Ability))" } else { $checkProfile.Ability }
+    Write-Action "$($Hero.Name) tests ${checkLabel}: $rollText $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier)$bonusText = $total vs DC $DC" "Cyan"
     Write-ColorLine ""
 
     return ($total -ge $DC)
+}
+
+function Resolve-NonCombatQuestCheckSkill {
+    param(
+        [string]$Ability,
+        [string]$CheckTag = "",
+        [string]$Skill = ""
+    )
+
+    $explicitSkill = Normalize-HeroSkillName -Skill $Skill
+
+    if (-not [string]::IsNullOrWhiteSpace($explicitSkill)) {
+        return $explicitSkill
+    }
+
+    $tagSkill = Normalize-HeroSkillName -Skill $CheckTag
+
+    if (-not [string]::IsNullOrWhiteSpace($tagSkill)) {
+        return $tagSkill
+    }
+
+    switch ($CheckTag) {
+        "Social" { return "Persuasion" }
+        "Charm" { return "Persuasion" }
+        "Suggestion" { return "Persuasion" }
+        "Directive" { return "Persuasion" }
+    }
+
+    switch ((Normalize-HeroAbilityName -Ability $Ability)) {
+        "STR" { return "Athletics" }
+        "DEX" { return "Sleight of Hand" }
+        "INT" { return "Investigation" }
+        "WIS" { return "Insight" }
+        "CHA" { return "Persuasion" }
+        default { return "" }
+    }
 }
 
 function Register-ClassStoryApproach {

@@ -17,6 +17,9 @@
   - `WIS`: `Animal Handling`, `Insight`, `Medicine`, `Perception`, `Survival`
   - `CHA`: `Deception`, `Intimidation`, `Performance`, `Persuasion`
 - skill checks can now resolve from a skill name to the correct ability automatically, while older ability-only quest checks continue to work
+- non-combat quest checks now flow through the skill resolver: untagged quest checks default to `Athletics`, `Sleight of Hand`, `Investigation`, `Insight`, or `Persuasion` depending on the original ability, while `CON` remains a raw endurance check because 5e has no Constitution skill
+- explicit quest tags such as `Performance`, `Perception`, `Stealth`, `Social`, or `Suggestion` can override that default; Bard social spell hooks still require those explicit social/suggestion tags rather than triggering on every Charisma check
+- the `Hero & Records` town submenu has a `Skill tree` view that lists all 18 skills, groups them by ability, and marks each as `[E]` Expertise, `[P]` Proficient, or `[-]` Untrained
 - current starting skill identity:
   - Barbarian: `Athletics`, `Perception`, `Survival`
   - Bard: `Performance`, `Perception`, `Persuasion`

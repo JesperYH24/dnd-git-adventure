@@ -87,6 +87,33 @@ function Test-TownHeroResourceHudShowsMartialResources {
     Assert-True -Condition ($fighterHud -like "*Action Surge 1/1*") -Message "The resource HUD should show fighter Action Surge once it is unlocked."
 }
 
+function Test-HeroSkillTreeRowsShowProficiencyAndExpertise {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 3
+
+    $rows = @(Get-HeroSkillTreeRows -Hero $hero)
+    $performance = $rows | Where-Object { $_.Name -eq "Performance" } | Select-Object -First 1
+    $persuasion = $rows | Where-Object { $_.Name -eq "Persuasion" } | Select-Object -First 1
+    $athletics = $rows | Where-Object { $_.Name -eq "Athletics" } | Select-Object -First 1
+
+    Assert-Equal -Actual $rows.Count -Expected 18 -Message "The skill tree submenu should list every DnD skill."
+    Assert-Equal -Actual $performance.Marker -Expected "E" -Message "Bard Performance should be marked as expertise at level 3."
+    Assert-Equal -Actual $performance.State -Expected "Expertise" -Message "Bard Performance should label expertise clearly."
+    Assert-Equal -Actual $persuasion.Marker -Expected "P" -Message "Bard Persuasion should be marked as proficient."
+    Assert-Equal -Actual $persuasion.State -Expected "Proficient" -Message "Bard Persuasion should label proficiency clearly."
+    Assert-Equal -Actual $athletics.Marker -Expected "-" -Message "Untrained skills should be marked as untrained."
+}
+
+function Test-TownCharacterMenuCanOpenSkillTree {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    Set-TestReadHostSequence -Values @("4", "0")
+
+    Start-TownCharacterMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The character menu should open the skill tree and return without extra prompts."
+}
+
 function Test-BardCanCastInvisibilityFromQuestPreparation {
     $game = Initialize-Game -Class "Bard"
     $game.Hero.Level = 4
@@ -297,6 +324,8 @@ Test-TownHeroHudShowsNameHpAndCoin
 Test-TownHeroHudFlagsLevelUpReady
 Test-TownHeroResourceHudShowsBardResources
 Test-TownHeroResourceHudShowsMartialResources
+Test-HeroSkillTreeRowsShowProficiencyAndExpertise
+Test-TownCharacterMenuCanOpenSkillTree
 Test-BardCanCastInvisibilityFromQuestPreparation
 Test-TownLocationIntroShortensAfterRepeatVisits
 Test-TownLocationIntroResetsAfterRest

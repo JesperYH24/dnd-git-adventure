@@ -1728,6 +1728,22 @@ function Test-DndSkillChecksUseMappedAbilitiesAndProficiencies {
     Assert-Equal -Actual $sleight.TotalModifier -Expected 1 -Message "Unproficient Sleight of Hand should use only DEX at level 1."
 }
 
+function Test-QuestChecksResolveDefaultAbilitiesToSkills {
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "STR") -Expected "Athletics" -Message "Quest STR checks should default to Athletics."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "DEX") -Expected "Sleight of Hand" -Message "Quest DEX checks should default to Sleight of Hand."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "INT") -Expected "Investigation" -Message "Quest INT checks should default to Investigation."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "WIS") -Expected "Insight" -Message "Quest WIS checks should default to Insight."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CHA") -Expected "Persuasion" -Message "Quest CHA checks should default to Persuasion."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CON") -Expected "" -Message "Quest CON checks should stay raw ability checks because 5e has no CON skill."
+}
+
+function Test-QuestCheckTagsOverrideDefaultSkills {
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "WIS" -CheckTag "Perception") -Expected "Perception" -Message "Explicit skill tags should override the default ability mapping."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CHA" -CheckTag "Social") -Expected "Persuasion" -Message "Social quest tags should resolve to Persuasion."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CHA" -CheckTag "Suggestion") -Expected "Persuasion" -Message "Suggestion quest tags should resolve to Persuasion while keeping the spell hook."
+    Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "DEX" -Skill "Stealth") -Expected "Stealth" -Message "Explicit skill parameters should override the ability default."
+}
+
 function Test-BardJackOfAllTradesAppliesToUntrainedDndSkills {
     $hero = Get-Hero -Class "Bard"
     $hero.Level = 2
@@ -1945,6 +1961,8 @@ Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
 Test-FullDndSkillListIsAvailable
 Test-DndSkillChecksUseMappedAbilitiesAndProficiencies
+Test-QuestChecksResolveDefaultAbilitiesToSkills
+Test-QuestCheckTagsOverrideDefaultSkills
 Test-BardJackOfAllTradesAppliesToUntrainedDndSkills
 Test-BardJackOfAllTradesStartsAtLevelTwo
 Test-InvisibilityBoostsBardStealthChecks

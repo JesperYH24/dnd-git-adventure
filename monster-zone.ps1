@@ -671,11 +671,13 @@ function Get-HeroWildernessSkillModifier {
         [string]$Skill
     )
 
-    switch ($Skill) {
-        "Perception" { return Get-HeroAbilityCheckModifier -Hero $Hero -Ability "WIS" -CheckTag "Perception" }
-        "Stealth" { return Get-HeroAbilityCheckModifier -Hero $Hero -Ability "DEX" -CheckTag "Stealth" }
-        default { return Get-HeroAbilityCheckModifier -Hero $Hero -Ability "WIS" -CheckTag $Skill }
+    $skillProfile = Get-HeroSkillCheckModifier -Hero $Hero -Skill $Skill
+
+    if ($null -ne $skillProfile) {
+        return $skillProfile
     }
+
+    return Get-HeroAbilityCheckModifier -Hero $Hero -Ability "WIS" -CheckTag $Skill
 }
 
 function New-MonsterZoneCreature {

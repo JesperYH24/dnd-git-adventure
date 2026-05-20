@@ -15,6 +15,7 @@ The project currently includes:
 - a Chapter Three cliffhanger where Lord Varric Halewick is publicly exposed, reveals a smaller draconic form, and escapes the Civic Keep
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - full DnD 5e skill list support with skill-to-ability mapping, class starting skill proficiencies, Jack of All Trades, and Expertise
+- a Hero & Records skill tree submenu that shows every skill with proficiency and expertise markers
 - Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, combat spells like `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` with 60 ft monster-zone spell range, social quest spells like `Charm Person` and first-pass `Suggestion`, plus `Invisibility` and `Enhance Ability` as level 4 utility tools
 - expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
 - Fighter tourney ground foot duels plus first-pass mounted jousting at level 4 once Lubert has a riding horse and splint or plate armor

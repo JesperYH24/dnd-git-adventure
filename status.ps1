@@ -199,6 +199,77 @@ function Write-HeroStatusDetails {
     }
 }
 
+function Get-HeroSkillTreeRows {
+    param($Hero)
+
+    $rows = @()
+
+    foreach ($skill in (Get-DndSkillDefinitions)) {
+        $profile = Get-HeroSkillCheckModifier -Hero $Hero -Skill $skill.Name
+        $state = "Untrained"
+        $marker = "-"
+
+        if ($null -ne $profile -and $profile.IsExpertise) {
+            $state = "Expertise"
+            $marker = "E"
+        }
+        elseif ($null -ne $profile -and $profile.IsProficient) {
+            $state = "Proficient"
+            $marker = "P"
+        }
+
+        $totalModifier = if ($null -ne $profile) { [int]$profile.TotalModifier } else { Get-HeroAbilityModifier -Hero $Hero -Ability $skill.Ability }
+        $classBonus = if ($null -ne $profile) { [int]$profile.ClassBonus } else { 0 }
+        $buffBonus = if ($null -ne $profile) { [int]$profile.BuffBonus } else { 0 }
+
+        $rows += [PSCustomObject]@{
+            Name = $skill.Name
+            Ability = $skill.Ability
+            Marker = $marker
+            State = $state
+            TotalModifier = $totalModifier
+            ClassBonus = $classBonus
+            BuffBonus = $buffBonus
+            BonusSource = if ($null -ne $profile) { [string]$profile.BonusSource } else { "" }
+        }
+    }
+
+    return $rows
+}
+
+function Show-HeroSkillTree {
+    param($Hero)
+
+    Write-ColorLine ""
+    Write-SectionTitle -Text "Skill Tree" -Color "Yellow"
+    Write-ColorLine "Legend: [E] Expertise | [P] Proficient | [-] Untrained" "DarkGray"
+    Write-ColorLine ""
+
+    $currentAbility = ""
+
+    foreach ($row in (Get-HeroSkillTreeRows -Hero $Hero)) {
+        if ($row.Ability -ne $currentAbility) {
+            $currentAbility = $row.Ability
+            Write-ColorLine "$currentAbility skills" "DarkYellow"
+        }
+
+        $modifierText = if ($row.TotalModifier -ge 0) { "+$($row.TotalModifier)" } else { "$($row.TotalModifier)" }
+        $detailParts = @($row.State)
+
+        if ($row.BonusSource -eq "JackOfAllTrades") {
+            $detailParts += "Jack of All Trades +$($row.ClassBonus)"
+        }
+
+        if ($row.BuffBonus -gt 0) {
+            $detailParts += "Buff +$($row.BuffBonus)"
+        }
+
+        Write-ColorLine ("  [{0}] {1,-16} {2,3}  {3}" -f $row.Marker, $row.Name, $modifierText, ($detailParts -join " | ")) "White"
+    }
+
+    Write-ColorLine ""
+}
+
 function Show-Status {
     param(
         $Hero,

@@ -2032,7 +2032,8 @@ function Start-TownCharacterMenu {
         Write-ColorLine "1. Check inventory" "White"
         Write-ColorLine "2. Check quest log" "White"
         Write-ColorLine "3. Status" "White"
-        Write-ColorLine "4. Save adventure" "White"
+        Write-ColorLine "4. Skill tree" "White"
+        Write-ColorLine "5. Save adventure" "White"
         Write-ColorLine "T. Toggle text speed ($(Get-TextSpeedLabel))" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
@@ -2043,7 +2044,8 @@ function Start-TownCharacterMenu {
             "1" { Open-InventoryMenu -Hero $Game.Hero -HeroHP $HeroHP | Out-Null }
             "2" { Start-TownQuestLogMenu -Game $Game -HeroHP $HeroHP }
             "3" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
-            "4" { Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null }
+            "4" { Show-HeroSkillTree -Hero $Game.Hero }
+            "5" { Start-AdventureSaveMenu -Game $Game -HeroHP $HeroHP.Value -HeroDroppedWeapon ([bool]$Game.HeroDroppedWeapon) | Out-Null }
             "T" { Toggle-TextSpeed | Out-Null }
             "0" { return }
             default {

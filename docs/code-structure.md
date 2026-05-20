@@ -220,6 +220,8 @@ Ansvar:
 - AC, ability modifiers, class-specific status
 - Bard spellcasting state, known spells, spell slots, and utility buffs such as `Invisibility` and `Enhance Ability`
 - core 5e skill definitions, skill-to-ability mapping, class starting skill proficiencies, skill check modifier helpers, Jack of All Trades, and Expertise
+- non-combat quest checks resolve old ability-based calls through the new skill layer, with explicit quest tags still preserved for Bard social and suggestion spell prompts
+- status helpers build the `Hero & Records` skill tree rows so tests can verify proficiency and expertise markers without scraping UI text
 
 Bra att läsa när:
 
