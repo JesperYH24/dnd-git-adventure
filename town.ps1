@@ -1191,18 +1191,70 @@ function Get-BardPerformanceVenue {
     return $null
 }
 
+function Get-HeroPublicPerformanceVenue {
+    param(
+        $Game,
+        [string]$VenueId
+    )
+
+    $venue = Get-BardPerformanceVenue -VenueId $VenueId
+
+    if ($null -eq $venue -or $null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -eq "Bard") {
+        return $venue
+    }
+
+    if ($VenueId -ne "market_square") {
+        return $null
+    }
+
+    switch ($Game.Hero.Class) {
+        "Barbarian" {
+            return [PSCustomObject]@{
+                Id = "market_square"
+                Name = "Market Square"
+                CheckDC = 12
+                IntroText = "The market gives {hero} a wary circle as {he} stamps a hard rhythm into the stones: a stylized war-call of breath, chest, heel, and glare that turns strength into spectacle."
+                PoorRewardCopper = 4
+                GoodRewardCopper = 10
+                GreatRewardCopper = 18
+                SuccessText = "The haka-like display catches the square by surprise. A few workers laugh in delight, others clap the rhythm back, and the hat gains honest coin."
+                GreatSuccessText = "The whole square falls into the beat. By the final shout, the crowd answers like it has been dared into courage, and the purse comes back heavier than anyone expected."
+                FailureText = "The rhythm lands too hard for the market's mood. People give {hero} room, a little coin, and the careful respect owed to someone best not mocked."
+            }
+        }
+        "Fighter" {
+            return [PSCustomObject]@{
+                Id = "market_square"
+                Name = "Market Square"
+                CheckDC = 12
+                IntroText = "{hero} chooses no tavern stage and no noble room, only the open square. The song is an old war-ballad: low, plain, and melancholy enough to make even busy people remember that history had names."
+                PoorRewardCopper = 4
+                GoodRewardCopper = 10
+                GreatRewardCopper = 18
+                SuccessText = "The ballad holds a small crowd in place. Veterans lower their eyes, apprentices stop pretending not to listen, and the coins come softly rather than loudly."
+                GreatSuccessText = "The square goes quiet around the old tragedy. When the last line fades, the applause is restrained but real, and the purse fills with the respect of people who understood enough."
+                FailureText = "The ballad is too heavy for the market's hurry. A few listeners leave coin out of courtesy, but the square moves on before the sorrow can take root."
+            }
+        }
+    }
+
+    return $null
+}
+
 function Start-BardPerformanceCheck {
     param(
         $Game,
         $Venue,
-        [int]$CheckDC = 0
+        [int]$CheckDC = 0,
+        [string]$Ability = "CHA",
+        [string]$CheckTag = "Performance"
     )
 
     if ($CheckDC -le 0) {
         $CheckDC = [int]$Venue.CheckDC
     }
 
-    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Game.Hero -Ability "CHA" -CheckTag "Performance"
+    $checkProfile = Get-HeroAbilityCheckModifier -Hero $Game.Hero -Ability $Ability -CheckTag $CheckTag
     $instrument = Get-HeroInstrument -Hero $Game.Hero
     $instrumentBonus = if ($null -ne $instrument -and $null -ne $instrument.PSObject.Properties["InspirationBonus"]) { [int]$instrument.InspirationBonus } else { 0 }
     $roll = Roll-Dice -Sides 20
@@ -1242,7 +1294,7 @@ function Start-BardPerformanceCheck {
 
     $total = $roll + $checkProfile.TotalModifier + $instrumentBonus + $bardicBonus
 
-    Write-Scene $Venue.IntroText
+    Write-Scene (Resolve-HeroNarrativeText -Text $Venue.IntroText -Hero $Game.Hero)
     $performanceBreakdown = "d20 roll $roll $(Format-AbilityModifier -Modifier $checkProfile.AbilityModifier) + $($checkProfile.ClassBonus) proficiency"
 
     if ($instrumentBonus -gt 0) {
@@ -1553,10 +1605,10 @@ function Resolve-BardPerformance {
         [string]$VenueId
     )
 
-    if ($Game.Hero.Class -ne "Bard") {
+    if ($Game.Hero.Class -ne "Bard" -and $VenueId -ne "market_square") {
         return [PSCustomObject]@{
             Success = $false
-            Message = ""
+            Message = "Only bards can perform in inn rooms or private salons."
         }
     }
 
@@ -1578,12 +1630,12 @@ function Resolve-BardPerformance {
         }
     }
 
-    $venue = Get-BardPerformanceVenue -VenueId $VenueId
+    $venue = Get-HeroPublicPerformanceVenue -Game $Game -VenueId $VenueId
 
     if ($null -eq $venue) {
         return [PSCustomObject]@{
             Success = $false
-            Message = ""
+            Message = "Performance venue unavailable."
         }
     }
 
@@ -1593,6 +1645,15 @@ function Resolve-BardPerformance {
         return [PSCustomObject]@{
             Success = $false
             Message = "Venue already used today."
+        }
+    }
+
+    if ($Game.Hero.Class -ne "Bard" -and $VenueId -ne "market_square") {
+        Write-Scene "$($Game.Hero.Name) can test the public market crowd, but inn stages and private rooms are bard work."
+        Write-ColorLine ""
+        return [PSCustomObject]@{
+            Success = $false
+            Message = "Only bards can perform in inn rooms or private salons."
         }
     }
 
@@ -1621,7 +1682,8 @@ function Resolve-BardPerformance {
     }
 
     $venueRecordBefore = Get-BardPerformanceVenueRecord -Game $Game -VenueId $VenueId
-    $total = Start-BardPerformanceCheck -Game $Game -Venue $venue -CheckDC $effectiveCheckDC
+    $performanceAbility = if ($Game.Hero.Class -eq "Barbarian" -and $VenueId -eq "market_square") { "STR" } else { "CHA" }
+    $total = Start-BardPerformanceCheck -Game $Game -Venue $venue -CheckDC $effectiveCheckDC -Ability $performanceAbility -CheckTag "Performance"
     $rewardCopper = 0
     $outcome = "Poor"
 
@@ -1667,13 +1729,13 @@ function Resolve-BardPerformance {
         $Game.Town.Relationships["SquareAudience"] = if ($outcome -eq "Great") { "Delighted" } else { "Warm" }
     }
 
-    if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great" -and -not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
+    if ($Game.Hero.Class -eq "Bard" -and $VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great" -and -not $Game.Town.InnFlags["SilverKettlePatronFavor"]) {
         $Game.Town.InnFlags["SilverKettlePatronFavor"] = $true
         $Game.Town.Relationships["MerchantPatron"] = "Favorable"
         Write-EmphasisLine -Text "A patron remembers the set and starts asking after $($Game.Hero.Name) by name." -Color "Yellow"
     }
 
-    if ($VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great") {
+    if ($Game.Hero.Class -eq "Bard" -and $VenueId -eq "silver_kettle_stage" -and $outcome -eq "Great") {
         $Game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
     }
 
@@ -1977,6 +2039,10 @@ function Start-TownWorkMenu {
         }
         elseif ($Game.Hero.Class -eq "Fighter") {
             Write-ColorLine "3. Visit the tourney ground" "White"
+            Write-ColorLine $(if ($isNight) { "4. Sing an old war-ballad in the market" } else { "4. Try a public market performance (best after dark)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") { "White" } else { "DarkGray" })
+        }
+        elseif ($Game.Hero.Class -eq "Barbarian") {
+            Write-ColorLine $(if ($isNight) { "3. Lead a war-rhythm performance in the market" } else { "3. Try a public market performance (best after dark)" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance") { "White" } else { "DarkGray" })
         }
 
         Write-ColorLine "S. Status" "White"
@@ -2010,6 +2076,30 @@ function Start-TownWorkMenu {
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
                     Start-JoustingArena -Game $Game
+                }
+                elseif ($Game.Hero.Class -eq "Barbarian") {
+                    if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance")) {
+                        Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Performance")
+                        Write-ColorLine ""
+                    }
+                    else {
+                        Resolve-BardPerformance -Game $Game -VenueId "market_square" | Out-Null
+                    }
+                }
+                else {
+                    Write-ColorLine "Choose a listed option." "DarkYellow"
+                    Write-ColorLine ""
+                }
+            }
+            "4" {
+                if ($Game.Hero.Class -eq "Fighter") {
+                    if (-not (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Performance")) {
+                        Write-Scene (Get-TownActionUnavailableText -Game $Game -Action "Performance")
+                        Write-ColorLine ""
+                    }
+                    else {
+                        Resolve-BardPerformance -Game $Game -VenueId "market_square" | Out-Null
+                    }
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"

@@ -40,6 +40,7 @@ After the warning is delivered, the game opens into a full town hub where the he
 - buy and sell gear
 - buy pack animals or a riding horse at the stable yard
 - if playing `Bard`, perform for coin, build venue reputation, and later turn Silver Kettle/private salon standing into patron-paid upper-room work
+- if playing `Barbarian` or `Fighter`, test the public market crowd with a rough war-rhythm or old war-ballad, but not inn stages or private salons
 - any class can test the tourney ground's open guest lists, while `Fighter` gets the real squire, patron, armored-duel, and later mounted-jousting progression
 
 If the hero is defeated during a city quest, the quest fails and the player chooses between:

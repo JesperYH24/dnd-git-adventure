@@ -188,6 +188,22 @@ function Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle {
     Assert-True -Condition ($advancedPreview[2].RewardPreview -like "*Pit Champion*") -Message "Named monster rewards should reference the hero's current unarmed title."
 }
 
+function Test-RingMonsterContractsStayBarbarianOnly {
+    $bard = Initialize-Game -Class "Bard"
+    $fighter = Initialize-Game -Class "Fighter"
+    $barbarian = Initialize-Game -Class "Barbarian"
+
+    $bard.Hero.Level = 4
+    $fighter.Hero.Level = 4
+    $barbarian.Hero.Level = 4
+
+    Assert-Equal -Actual (Test-HeroReadyForRingMonsterChallenges -Hero $bard.Hero) -Expected $false -Message "Bard should be able to use the base ring but not Dorr's monster contracts."
+    Assert-Equal -Actual (Test-HeroReadyForRingMonsterChallenges -Hero $fighter.Hero) -Expected $false -Message "Fighter should be able to use the base ring but not Dorr's monster contracts."
+    Assert-Equal -Actual (Test-HeroReadyForRingMonsterChallenges -Hero $barbarian.Hero) -Expected $true -Message "Barbarian should keep the monster-contract ring path at level 4."
+    Assert-Equal -Actual @(Get-RingMonsterChallengePreview -Hero $bard.Hero).Count -Expected 0 -Message "Bard should not see the monster contract ladder."
+    Assert-Equal -Actual @(Get-RingMonsterChallengePreview -Hero $fighter.Hero).Count -Expected 0 -Message "Fighter should not see the monster contract ladder."
+}
+
 function Test-RingMonsterContractsRequireReportedZoneDefeat {
     $game = Initialize-Game
     $game.Hero.Level = 4
@@ -854,6 +870,7 @@ Test-RingVeteranCircuitUnlocksAfterFifteenWins
 Test-RingMonsterChallengesUnlockAtLevelFour
 Test-RingMonsterChallengePreviewRequiresLevelFour
 Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
+Test-RingMonsterContractsStayBarbarianOnly
 Test-RingMonsterContractsRequireReportedZoneDefeat
 Test-RingMonsterContractsKeepExtraGates
 Test-RingMonsterContractsIncludeHigherZoneThreats

@@ -201,7 +201,8 @@ Docks is intentionally more linear at first than the main town hub.
 - fight-style crowd taste for `Quick Finish`, `Technical`, `Grappler`, and `Brawler` wins, with small reputation bonuses and a saved dominant style
 - wager choices before entering the ring: safe purse, crowd bet, or double-or-nothing
 - post-fight ring rumors that react to Docks progress, Halewick aftershocks, level 4 monster-zone foreshadowing, and ring reputation
-- level 4 monster-challenge cards in the ring become real contracts only after the hero defeats matching creatures in the monster zone and reports them to Dorr
+- Bard and Fighter can enter the base fighting ring, build ordinary ring records, and take normal purses, but Dorr's monster-zone contract board is reserved for the Barbarian path
+- level 4 monster-challenge cards in the ring become real contracts only after a Barbarian defeats matching creatures in the monster zone and reports them to Dorr
 - Dorr's monster contract board now separates unreported proof, bookable contracts, capture crews still out, captured monsters ready in the pit, and completed contracts
 - taking a monster contract books Dorr's capture crew; the actual unarmed monster fight happens in the ring after the contract's return day
 - current Dorr monster contracts:
@@ -239,6 +240,7 @@ Docks is intentionally more linear at first than the main town hub.
 - performances do not consume the normal day-job slot
 - performance permit and venue recognition can improve bard income and standing
 - Silver Kettle artist standing and private salon invitations now add patron retainer coin on successful upper-room performances, so the Bard has a class-shaped path toward finer lodging and equipment instead of needing the fighting ring economy
+- Barbarian and Fighter can try only the public `Market Square` performance slot: Barbarian uses a stylized haka-like war rhythm, Fighter sings a melancholy historical war-ballad, and neither can perform inside inns or private rooms
 - each venue keeps its own performance history: total plays, `Poor` / `Good` / `Great` outcomes, last outcome, and copper earned
 - audiences react differently once they know the bard: shaky rooms are guarded after repeated poor sets, known rooms carry good performances, and favorite rooms forgive weaker nights while rewarding great ones harder in flavor
 

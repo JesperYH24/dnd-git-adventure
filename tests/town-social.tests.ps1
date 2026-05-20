@@ -649,6 +649,38 @@ function Test-PrivateSalonPerformancePaysAfterInvite {
     Assert-Equal -Actual $result.RewardCopper -Expected 120 -Message "Private salon performances should pay as upper-room patron work once unlocked."
 }
 
+function Test-BarbarianCanTryPublicMarketPerformanceOnly {
+    $global:RollDiceOverride = { param([int]$Sides) return 20 }
+
+    $game = Initialize-Game -Class "Barbarian"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+
+    $marketResult = Resolve-BardPerformance -Game $game -VenueId "market_square"
+    $innResult = Resolve-BardPerformance -Game $game -VenueId "bent_nail_stage"
+
+    Assert-Equal -Actual $marketResult.Success -Expected $true -Message "Barbarian should be able to try a public market performance."
+    Assert-Equal -Actual $marketResult.Outcome -Expected "Great" -Message "A strong Barbarian market performance should resolve normally."
+    Assert-Equal -Actual $marketResult.RewardCopper -Expected 18 -Message "Barbarian market performance should pay a modest public purse."
+    Assert-Equal -Actual $innResult.Success -Expected $false -Message "Barbarian should not be able to perform on inn stages."
+    Assert-True -Condition ($innResult.Message -like "*Only bards*") -Message "Blocked inn performance should explain that inn stages are bard work."
+}
+
+function Test-FighterCanTryPublicMarketPerformanceOnly {
+    $global:RollDiceOverride = { param([int]$Sides) return 20 }
+
+    $game = Initialize-Game -Class "Fighter"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+
+    $marketResult = Resolve-BardPerformance -Game $game -VenueId "market_square"
+    $privateResult = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"
+
+    Assert-Equal -Actual $marketResult.Success -Expected $true -Message "Fighter should be able to try a public market ballad."
+    Assert-Equal -Actual $marketResult.Outcome -Expected "Great" -Message "A strong Fighter market performance should resolve normally."
+    Assert-Equal -Actual $marketResult.RewardCopper -Expected 18 -Message "Fighter market performance should pay a modest public purse."
+    Assert-Equal -Actual $privateResult.Success -Expected $false -Message "Fighter should not be able to perform in private patron rooms."
+    Assert-True -Condition ($privateResult.Message -like "*Only bards*") -Message "Blocked private performance should explain that private rooms are bard work."
+}
+
 Test-StreetChoicesAreRemembered
 Test-TownQuestCanBeAcceptedOnce
 Test-BentNailShadyInfoIsRemembered
@@ -686,6 +718,8 @@ Test-SilverKettlePerformanceCanEarnPatronFavor
 Test-SilverKettlePatronStandingImprovesBardPerformanceIncome
 Test-PrivateSalonPerformanceRequiresInvite
 Test-PrivateSalonPerformancePaysAfterInvite
+Test-BarbarianCanTryPublicMarketPerformanceOnly
+Test-FighterCanTryPublicMarketPerformanceOnly
 
 $global:RollDiceOverride = $null
 

@@ -758,6 +758,10 @@ function Test-HeroReadyForRingMonsterChallenges {
         return $false
     }
 
+    if ($null -eq $Hero.PSObject.Properties["Class"] -or $Hero.Class -ne "Barbarian") {
+        return $false
+    }
+
     return ([int]$Hero.Level -ge 4)
 }
 
