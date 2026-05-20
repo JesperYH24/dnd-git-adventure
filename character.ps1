@@ -862,7 +862,6 @@ function Resolve-HeroLongRestLevelUp {
 
     if ($availableLevelUps -gt 0) {
         $HeroHP.Value = $Hero.HP
-        Restore-HeroBardicInspiration -Hero $Hero | Out-Null
         Restore-HeroSpellSlots -Hero $Hero | Out-Null
         Restore-HeroRages -Hero $Hero
         Restore-HeroSecondWind -Hero $Hero | Out-Null

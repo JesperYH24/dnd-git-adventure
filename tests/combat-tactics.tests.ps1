@@ -353,6 +353,35 @@ function Test-BardViciousMockeryCanBeSavedAgainst {
     Assert-True -Condition ($null -eq $monster.PSObject.Properties["ViciousMockeryAttackDisadvantage"] -or -not [bool]$monster.ViciousMockeryAttackDisadvantage) -Message "A saved-against Vicious Mockery should not weaken the next attack."
 }
 
+function Test-BardViciousMockeryTracksRepeatedCombatUseForShortText {
+    Set-TestOutputStubs
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "M"
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 5 }
+        if ($Sides -eq 4) { return 1 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Bard"
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
+    Resolve-HeroBonusAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP) | Out-Null
+    $briefText = Get-BardViciousMockeryFlavorText -Hero $hero -Monster $monster -Brief
+
+    Assert-Equal -Actual $hero.ViciousMockeryUsesThisCombat -Expected 3 -Message "Repeated Vicious Mockery casts should be counted during combat."
+    Assert-True -Condition ($briefText -like "*another cutting line*") -Message "Later Vicious Mockery uses should have a shorter repeat line available."
+}
+
 function Test-BardViciousMockeryWorksAtSixtyFeet {
     Set-TestOutputStubs
 
@@ -1210,6 +1239,7 @@ Test-BardInspirationBoostsCurrentAttack
 Test-BardInspirationCanBoostBlock
 Test-BardViciousMockeryBonusActionDealsPsychicDamage
 Test-BardViciousMockeryCanBeSavedAgainst
+Test-BardViciousMockeryTracksRepeatedCombatUseForShortText
 Test-BardViciousMockeryWorksAtSixtyFeet
 Test-BardViciousMockeryCannotReachPastSixtyFeet
 Test-BardViciousMockeryDisadvantageAppliesToNextMonsterAttack

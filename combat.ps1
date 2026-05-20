@@ -92,8 +92,13 @@ function Get-BarbarianRecklessSwingFlavorText {
 function Get-BardViciousMockeryFlavorText {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        [switch]$Brief
     )
+
+    if ($Brief) {
+        return (Resolve-CombatFlavorText -Text "{Hero} snaps off another cutting line at {target}." -Hero $Hero -Monster $Monster)
+    }
 
     $line = Get-RandomCombatFlavorText -Options @(
         "{Hero} looks {target} up and down. 'I've heard doors threaten better than you, and at least doors know when to close.'",
@@ -110,8 +115,13 @@ function Get-BardViciousMockeryFlavorText {
 function Get-BardViciousMockeryHitFlavorText {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        [switch]$Brief
     )
+
+    if ($Brief) {
+        return (Resolve-CombatFlavorText -Text "The insult bites, and {target}'s focus breaks." -Hero $Hero -Monster $Monster)
+    }
 
     $line = Get-RandomCombatFlavorText -Options @(
         "The words land under {target}'s skin and twist.",
@@ -126,8 +136,13 @@ function Get-BardViciousMockeryHitFlavorText {
 function Get-BardViciousMockerySaveFlavorText {
     param(
         $Hero,
-        $Monster
+        $Monster,
+        [switch]$Brief
     )
+
+    if ($Brief) {
+        return (Resolve-CombatFlavorText -Text "{target} shakes off the words." -Hero $Hero -Monster $Monster)
+    }
 
     $line = Get-RandomCombatFlavorText -Options @(
         "{target} snarls through the insult before it can fully bite.",
@@ -1183,19 +1198,30 @@ function Resolve-HeroBonusAction {
 
             $saveRoll = Roll-Dice -Sides 20
             $saveTotal = $saveRoll + $wisdomSaveBonus
+            $mockeryUseCount = 1
 
-            Write-Scene (Get-BardViciousMockeryFlavorText -Hero $Hero -Monster $Monster)
+            if ($null -eq $Hero.PSObject.Properties["ViciousMockeryUsesThisCombat"]) {
+                $Hero | Add-Member -NotePropertyName ViciousMockeryUsesThisCombat -NotePropertyValue 1
+            }
+            else {
+                $Hero.ViciousMockeryUsesThisCombat = [int]$Hero.ViciousMockeryUsesThisCombat + 1
+                $mockeryUseCount = [int]$Hero.ViciousMockeryUsesThisCombat
+            }
+
+            $briefMockeryText = $mockeryUseCount -gt 2
+
+            Write-Scene (Get-BardViciousMockeryFlavorText -Hero $Hero -Monster $Monster -Brief:$briefMockeryText)
             Write-Action "$($Monster.definite) makes a Wisdom save: d20 roll $saveRoll $(Format-AbilityModifier -Modifier $wisdomSaveBonus) = $saveTotal vs DC $spellSaveDC." "DarkCyan"
 
             if ($saveTotal -lt $spellSaveDC) {
                 $damage = Roll-Dice -Sides 4
                 $MonsterHP.Value = [Math]::Max(0, $MonsterHP.Value - $damage)
                 Set-BardViciousMockeryDisadvantage -Monster $Monster
-                Write-Scene (Get-BardViciousMockeryHitFlavorText -Hero $Hero -Monster $Monster)
+                Write-Scene (Get-BardViciousMockeryHitFlavorText -Hero $Hero -Monster $Monster -Brief:$briefMockeryText)
                 Write-Action "Vicious Mockery deals $damage psychic damage and gives disadvantage to $($Monster.definite)'s next attack." "Yellow"
             }
             else {
-                Write-Scene (Get-BardViciousMockerySaveFlavorText -Hero $Hero -Monster $Monster)
+                Write-Scene (Get-BardViciousMockerySaveFlavorText -Hero $Hero -Monster $Monster -Brief:$briefMockeryText)
                 Write-Action "$($Monster.definite) shakes off the mockery and takes no damage." "DarkGray"
             }
 
@@ -2156,6 +2182,15 @@ function Start-CombatLoop {
     $heroFocusAttackBonus = 0
     $heroRecklessExposure = $false
     $heroRiposteAvailable = ($Hero.Class -eq "Fighter")
+
+    if ($null -ne $Hero -and $Hero.Class -eq "Bard") {
+        if ($null -eq $Hero.PSObject.Properties["ViciousMockeryUsesThisCombat"]) {
+            $Hero | Add-Member -NotePropertyName ViciousMockeryUsesThisCombat -NotePropertyValue 0
+        }
+        else {
+            $Hero.ViciousMockeryUsesThisCombat = 0
+        }
+    }
 
     while ($HeroHP.Value -gt 0 -and $MonsterHP.Value -gt 0) {
         Show-Status -Hero $Hero -HeroHP $HeroHP.Value -Monster $Monster -MonsterHP $MonsterHP.Value

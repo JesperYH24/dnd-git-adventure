@@ -89,7 +89,7 @@ function Test-BookedInnNightRestResetsDailySystems {
     Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "A booked-room rest should clear lingering buffs."
 }
 
-function Test-BookedInnNightRestRestoresPreparedBardicInspiration {
+function Test-BookedInnNightRestDoesNotAutoPrepareBardicInspiration {
     $game = Initialize-Game -Class "Bard"
     $heroHP = $game.Hero.HP
     $game.Hero.CurrencyCopper = 600
@@ -100,7 +100,7 @@ function Test-BookedInnNightRestRestoresPreparedBardicInspiration {
 
     Resolve-BookedInnNightRest -Game $game -HeroHP ([ref]$heroHP) | Out-Null
 
-    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected (Get-HeroBardicInspirationMaxDice -Hero $game.Hero) -Message "A full inn rest should restore bardic inspiration to max even if some dice were unused."
+    Assert-Equal -Actual $game.Hero.CurrentBardicInspirationDice -Expected 1 -Message "A full inn rest should not auto-prepare bardic inspiration; the bard must ready it with an instrument."
 }
 
 function Test-BookedInnRestAfterHalewickStartsMonsterWallRumors {
@@ -428,7 +428,7 @@ Test-InnStayChargesGoldAndHealsHero
 Test-TutorialArrivalStarterFundsCoverCheapestInn
 Test-InnStayResetsDailyRingLockout
 Test-BookedInnNightRestResetsDailySystems
-Test-BookedInnNightRestRestoresPreparedBardicInspiration
+Test-BookedInnNightRestDoesNotAutoPrepareBardicInspiration
 Test-BookedInnRestAfterHalewickStartsMonsterWallRumors
 Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick
 Test-BookedInnNightRestTriggersLevelUp

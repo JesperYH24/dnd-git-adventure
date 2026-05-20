@@ -379,14 +379,14 @@ function Get-UnderstreetHoundEnemy {
         combatantType = "Opponent"
         hp = 20
         xp = 0
-        armorClass = 14
-        attackBonus = 5
+        armorClass = 13
+        attackBonus = 4
         initiativeBonus = 3
         damageDiceCount = 1
-        damageDiceSides = 8
-        damageBonus = 3
-        damageMin = 4
-        damageMax = 11
+        damageDiceSides = 6
+        damageBonus = 2
+        damageMin = 3
+        damageMax = 8
         isBoss = $false
     }
 }

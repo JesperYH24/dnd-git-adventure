@@ -99,7 +99,7 @@ Story quests now also remember successful class-specific solutions as a small pe
 - hidden lore
 - locked caches
 - safe-room short rests
-- stronger finale encounters that make potion use and pacing matter
+- stronger finale encounters that make potion use and pacing matter, with non-boss hound burst tuned down so the route stays tense without randomly deleting a healthy level 3 Bard before Serik
 
 ## Post-Chapter-Two state
 

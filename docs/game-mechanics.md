@@ -99,9 +99,10 @@ Current camp levels:
 
 - `Bardic Inspiration` prepared before danger with an instrument
 - inspiration dice equal to half Bard level plus positive `CHA` modifier, minimum 1
+- long rests no longer auto-prepare bardic inspiration; the bard must still ready the pool with an instrument, while short rests can rebuild prepared inspiration during a dungeon push
 - inspiration dice used after `Attack`, `Block`, or `Focus`
 - dedicated `Bonus Action` menu inside combat rounds
-- `Vicious Mockery` uses a `WIS` save and can target enemies up to `60 ft` away when monster-zone distance is active
+- `Vicious Mockery` uses a `WIS` save and can target enemies up to `60 ft` away when monster-zone distance is active; after repeated uses in the same combat, its flavor text collapses into shorter repeat lines so long fights stay readable
 - `Dissonant Whispers` and `Faerie Fire` also use `60 ft` combat range, so the Bard can use spell control from near/far monster-zone openings before melee weapons matter
 - `Healing Word` targets the hero and is not blocked by enemy distance
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
@@ -109,7 +110,7 @@ Current camp levels:
 - `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms as soon as Bard level 3 unlocks level 2 slots, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; creatures with blindsight can counter that invisibility bonus
 - `Enhance Ability` can be cast at Bard level 4 before non-combat quest checks, spends a level 2 slot, focuses the check's ability, and grants advantage on matching ability checks while active
 - `Cutting Words` works as a reaction and spends bardic inspiration
-- prepared bardic inspiration recovers on short rest
+- prepared bardic inspiration recovers on short rest, not automatically on an inn long rest
 - `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack
 - visible `Spell Save DC`
 

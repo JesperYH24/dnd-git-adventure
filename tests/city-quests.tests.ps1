@@ -1239,6 +1239,17 @@ function Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce {
     Assert-Equal -Actual $secondHint -Expected "" -Message "The short-rest hint should only appear once per room."
 }
 
+function Test-UnderstreetHoundCritIsDangerousButNotBardErasing {
+    $hound = Get-UnderstreetHoundEnemy
+    $global:RollDiceOverride = { param([int]$Sides) return $Sides }
+
+    $criticalDamage = Get-MonsterCriticalDamage -Monster $hound
+
+    Assert-Equal -Actual $hound.attackBonus -Expected 4 -Message "The tunnel hound should be accurate but not tuned like a boss."
+    Assert-Equal -Actual $hound.damageDiceSides -Expected 6 -Message "The tunnel hound should use a d6 damage die after the burst tuning pass."
+    Assert-True -Condition ($criticalDamage.Damage -le 14) -Message "A max tunnel hound crit should stay dangerous without one-shotting a healthy level 3 bard."
+}
+
 function Test-UnderstreetShortRestHealsAndClearsBuff {
     $game = Initialize-Game
     $heroHP = 6
@@ -1925,6 +1936,7 @@ Test-UnderstreetComplexCanBeAcceptedAfterUnlock
 Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
 Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
+Test-UnderstreetHoundCritIsDangerousButNotBardErasing
 Test-UnderstreetShortRestHealsAndClearsBuff
 Test-BardCanCastInvisibilityInCalmUnderstreetRoom
 Test-UnderstreetComplexIncludesExtendedMazeLayout
