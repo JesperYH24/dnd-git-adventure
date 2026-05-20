@@ -93,6 +93,7 @@ function Get-HeroStatusSnapshot {
         WISMod = Get-HeroAbilityModifier -Hero $Hero -Ability "WIS"
         CHAMod = Get-HeroAbilityModifier -Hero $Hero -Ability "CHA"
         SpellSaveDC = Get-HeroSpellSaveDC -Hero $Hero
+        SkillProficiencies = @(Get-HeroSkillProficiencies -Hero $Hero)
         DisplayXP = $displayXP
         NextLevelXP = $nextLevelXP
         UnarmedTrainingLevel = $unarmedTrainingLevel
@@ -153,6 +154,9 @@ function Write-HeroStatusDetails {
     }
     Write-ColorLine "STR $($Hero.STR) $(Format-AbilityModifier -Modifier $Snapshot.STRMod) | DEX $($Hero.DEX) $(Format-AbilityModifier -Modifier $Snapshot.DEXMod) | CON $($Hero.CON) $(Format-AbilityModifier -Modifier $Snapshot.CONMod)" "DarkGray"
     Write-ColorLine "INT $($Hero.INT) $(Format-AbilityModifier -Modifier $Snapshot.INTMod) | WIS $($Hero.WIS) $(Format-AbilityModifier -Modifier $Snapshot.WISMod) | CHA $($Hero.CHA) $(Format-AbilityModifier -Modifier $Snapshot.CHAMod)" "DarkGray"
+    if ($null -ne $Snapshot.SkillProficiencies -and @($Snapshot.SkillProficiencies).Count -gt 0) {
+        Write-ColorLine "Skill Proficiencies: $(@($Snapshot.SkillProficiencies) -join ', ')" "DarkGray"
+    }
     Write-ColorLine "Active Buff: $($Snapshot.ActiveBuff)" "DarkYellow"
 
     if ($null -ne $Snapshot.BardicInspiration) {

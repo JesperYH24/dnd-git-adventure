@@ -144,6 +144,8 @@ function Test-OlderSaveDataGetsNewDefaultsOnLoad {
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("CompletedRingMonsterContracts") -Message "Older saves should gain completed monster contract tracking."
         Assert-True -Condition $loadedGame.Town["MonsterZone"].ContainsKey("MilestoneXP") -Message "Older saves should gain one-time monster-zone milestone XP tracking."
         Assert-True -Condition (@(Get-HeroCheckProficiencies -Hero $loadedGame.Hero) -contains "Perception") -Message "Older heroes should gain the new Perception proficiency tag."
+        Assert-True -Condition (@(Get-HeroSkillProficiencies -Hero $loadedGame.Hero) -contains "Athletics") -Message "Older barbarian heroes should gain their class skill proficiencies."
+        Assert-True -Condition (@(Get-HeroSkillProficiencies -Hero $loadedGame.Hero) -contains "Survival") -Message "Older barbarian heroes should gain their wilderness skill proficiency."
         Assert-Equal -Actual $loadedGame.Hero.RingReputation -Expected 0 -Message "Older saves should gain a default ring reputation value."
         Assert-Equal -Actual $loadedGame.Hero.RingChampionNightWon -Expected $false -Message "Older saves should gain a default champion night flag."
         Assert-Equal -Actual $loadedGame.Hero.RingStyleCounts["QuickFinish"] -Expected 0 -Message "Older saves should gain default ring style counts."

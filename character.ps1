@@ -55,6 +55,111 @@ function Normalize-HeroAbilityName {
     return ""
 }
 
+function Get-DndSkillDefinitions {
+    return @(
+        [PSCustomObject]@{ Name = "Acrobatics"; Ability = "DEX" }
+        [PSCustomObject]@{ Name = "Animal Handling"; Ability = "WIS" }
+        [PSCustomObject]@{ Name = "Arcana"; Ability = "INT" }
+        [PSCustomObject]@{ Name = "Athletics"; Ability = "STR" }
+        [PSCustomObject]@{ Name = "Deception"; Ability = "CHA" }
+        [PSCustomObject]@{ Name = "History"; Ability = "INT" }
+        [PSCustomObject]@{ Name = "Insight"; Ability = "WIS" }
+        [PSCustomObject]@{ Name = "Intimidation"; Ability = "CHA" }
+        [PSCustomObject]@{ Name = "Investigation"; Ability = "INT" }
+        [PSCustomObject]@{ Name = "Medicine"; Ability = "WIS" }
+        [PSCustomObject]@{ Name = "Nature"; Ability = "INT" }
+        [PSCustomObject]@{ Name = "Perception"; Ability = "WIS" }
+        [PSCustomObject]@{ Name = "Performance"; Ability = "CHA" }
+        [PSCustomObject]@{ Name = "Persuasion"; Ability = "CHA" }
+        [PSCustomObject]@{ Name = "Religion"; Ability = "INT" }
+        [PSCustomObject]@{ Name = "Sleight of Hand"; Ability = "DEX" }
+        [PSCustomObject]@{ Name = "Stealth"; Ability = "DEX" }
+        [PSCustomObject]@{ Name = "Survival"; Ability = "WIS" }
+    )
+}
+
+function Get-HeroSkillNames {
+    return @((Get-DndSkillDefinitions) | ForEach-Object { $_.Name })
+}
+
+function Get-NormalizedSkillKey {
+    param([string]$Skill)
+
+    if ([string]::IsNullOrWhiteSpace($Skill)) {
+        return ""
+    }
+
+    return ($Skill.Trim().ToLowerInvariant() -replace "[^a-z]", "")
+}
+
+function Normalize-HeroSkillName {
+    param([string]$Skill)
+
+    $skillKey = Get-NormalizedSkillKey -Skill $Skill
+
+    if ([string]::IsNullOrWhiteSpace($skillKey)) {
+        return ""
+    }
+
+    foreach ($definition in (Get-DndSkillDefinitions)) {
+        if ((Get-NormalizedSkillKey -Skill $definition.Name) -eq $skillKey) {
+            return $definition.Name
+        }
+    }
+
+    return ""
+}
+
+function Get-HeroSkillDefinition {
+    param([string]$Skill)
+
+    $normalizedSkill = Normalize-HeroSkillName -Skill $Skill
+
+    if ([string]::IsNullOrWhiteSpace($normalizedSkill)) {
+        return $null
+    }
+
+    return ((Get-DndSkillDefinitions) | Where-Object { $_.Name -eq $normalizedSkill } | Select-Object -First 1)
+}
+
+function Get-HeroSkillAbility {
+    param([string]$Skill)
+
+    $definition = Get-HeroSkillDefinition -Skill $Skill
+
+    if ($null -eq $definition) {
+        return ""
+    }
+
+    return [string]$definition.Ability
+}
+
+function Get-HeroClassSkillProficiencies {
+    param($Hero)
+
+    switch ($Hero.Class) {
+        "Barbarian" { return @("Athletics", "Perception", "Survival") }
+        "Bard" { return @("Performance", "Perception", "Persuasion") }
+        "Fighter" { return @("Athletics", "Intimidation", "Perception") }
+        default { return @() }
+    }
+}
+
+function Get-HeroSkillProficiencies {
+    param($Hero)
+
+    $skills = @()
+
+    foreach ($entry in (Get-HeroCheckProficiencies -Hero $Hero)) {
+        $skill = Normalize-HeroSkillName -Skill ([string]$entry)
+        if (-not [string]::IsNullOrWhiteSpace($skill)) {
+            $skills += $skill
+        }
+    }
+
+    return @($skills | Select-Object -Unique)
+}
+
 function Format-AbilityModifier {
     param([int]$Modifier)
 
@@ -1094,8 +1199,10 @@ function Get-HeroCheckProficiencies {
         }
     }
 
+    $proficiencies += Get-HeroClassSkillProficiencies -Hero $Hero
+
     if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "LoreBonusProficiencies") {
-        $proficiencies += @("Lore", "Investigation", "Insight")
+        $proficiencies += @("Lore", "History", "Investigation", "Insight")
     }
 
     return @($proficiencies | Select-Object -Unique)
@@ -1122,24 +1229,39 @@ function Get-HeroAbilityCheckModifier {
         [string]$CheckTag = ""
     )
 
-    $modifier = Get-HeroAbilityModifier -Hero $Hero -Ability $Ability
+    $normalizedTag = if ([string]::IsNullOrWhiteSpace($CheckTag)) { "" } else { $CheckTag.Trim() }
+    $normalizedSkill = Normalize-HeroSkillName -Skill $normalizedTag
+    $skillAbility = if (-not [string]::IsNullOrWhiteSpace($normalizedSkill)) { Get-HeroSkillAbility -Skill $normalizedSkill } else { "" }
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+
+    if ([string]::IsNullOrWhiteSpace($normalizedAbility) -and -not [string]::IsNullOrWhiteSpace($skillAbility)) {
+        $normalizedAbility = $skillAbility
+    }
+
+    if ([string]::IsNullOrWhiteSpace($normalizedAbility)) {
+        $normalizedAbility = "STR"
+    }
+
+    $modifier = Get-HeroAbilityModifier -Hero $Hero -Ability $normalizedAbility
     $proficiencyBonus = Get-HeroProficiencyBonus -Hero $Hero
     $checkProficiencies = @(Get-HeroCheckProficiencies -Hero $Hero)
-    $normalizedAbility = $Ability.ToUpper()
-    $normalizedTag = if ([string]::IsNullOrWhiteSpace($CheckTag)) { "" } else { $CheckTag.Trim() }
     $isProficient = $false
     $isExpertise = $false
 
     foreach ($entry in $checkProficiencies) {
+        $entrySkill = Normalize-HeroSkillName -Skill ([string]$entry)
         if ([string]::Equals([string]$entry, $normalizedAbility, [System.StringComparison]::OrdinalIgnoreCase) -or
-            (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase))) {
+            (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase)) -or
+            (-not [string]::IsNullOrWhiteSpace($normalizedSkill) -and [string]::Equals($entrySkill, $normalizedSkill, [System.StringComparison]::OrdinalIgnoreCase))) {
             $isProficient = $true
             break
         }
     }
 
     foreach ($entry in (Get-HeroExpertiseTags -Hero $Hero)) {
-        if (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $entrySkill = Normalize-HeroSkillName -Skill ([string]$entry)
+        if ((-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase)) -or
+            (-not [string]::IsNullOrWhiteSpace($normalizedSkill) -and [string]::Equals($entrySkill, $normalizedSkill, [System.StringComparison]::OrdinalIgnoreCase))) {
             $isExpertise = $isProficient
             break
         }
@@ -1169,10 +1291,27 @@ function Get-HeroAbilityCheckModifier {
         BuffBonus = $buffBonus
         TotalModifier = $modifier + $classBonus + $buffBonus
         CheckTag = $normalizedTag
+        Skill = $normalizedSkill
+        Ability = $normalizedAbility
         IsProficient = $isProficient
         IsExpertise = $isExpertise
         BonusSource = if ($isExpertise) { "Expertise" } elseif ($isProficient) { "Proficiency" } elseif ($classBonus -gt 0) { "JackOfAllTrades" } else { "" }
     }
+}
+
+function Get-HeroSkillCheckModifier {
+    param(
+        $Hero,
+        [string]$Skill
+    )
+
+    $normalizedSkill = Normalize-HeroSkillName -Skill $Skill
+
+    if ([string]::IsNullOrWhiteSpace($normalizedSkill)) {
+        return $null
+    }
+
+    return Get-HeroAbilityCheckModifier -Hero $Hero -Ability (Get-HeroSkillAbility -Skill $normalizedSkill) -CheckTag $normalizedSkill
 }
 
 function Format-HeroAbilityCheckBonusText {
@@ -2442,7 +2581,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 11
-                CheckProficiencies = @("CON", "WIS", "Perception")
+                CheckProficiencies = @("CON", "WIS", "Athletics", "Intimidation", "Perception")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4
@@ -2489,7 +2628,7 @@ function Get-Hero {
                 INT                = 10
                 WIS                = 10
                 CHA                = 15
-                CheckProficiencies = @("CHA", "Performance", "Perception")
+                CheckProficiencies = @("CHA", "Performance", "Perception", "Persuasion")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4
@@ -2537,7 +2676,7 @@ function Get-Hero {
                 INT                = 8
                 WIS                = 10
                 CHA                = 8
-                CheckProficiencies = @("STR", "CON", "Perception")
+                CheckProficiencies = @("STR", "CON", "Athletics", "Perception", "Survival")
                 BaseArmorClass     = 10
                 BaseInventorySlots = 8
                 BackpackCapacitySlots = 4

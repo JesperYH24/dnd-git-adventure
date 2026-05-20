@@ -56,7 +56,7 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 | 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, `Enhance Ability`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
 | 2 | Jack of All Trades | Implemented | Adds half proficiency to non-proficient ability checks. |
 | 2 | Song of Rest | Implemented | Adds `1d6` extra healing to Bard short rests. |
-| 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, `Investigation`, and `Insight` proficiencies at level 3. |
+| 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, plus 5e-backed `History`, `Investigation`, and `Insight` proficiencies at level 3. |
 | 3 | College of Lore: Cutting Words | Implemented | Level-gated reaction that spends Bardic Inspiration to reduce incoming attack pressure. |
 | 3 | Expertise | Implemented | Fixed first pass: doubles proficiency for `Performance` and `Perception` at level 3. |
 | 4 | Ability Score Increase | Implemented | Level 4 ASI supports `+2` or split `+1/+1`, capped at 20. Default class focus is `CHA`. |

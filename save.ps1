@@ -197,13 +197,13 @@ function Ensure-LoadedAdventureShape {
     }
 
     $expectedSkillProficiencies = switch ($Game.Hero.Class) {
-        "Fighter" { @("CON", "WIS", "Perception") }
-        "Bard" { @("CHA", "Performance", "Perception") }
-        default { @("STR", "CON", "Perception") }
+        "Fighter" { @("CON", "WIS", "Athletics", "Intimidation", "Perception") }
+        "Bard" { @("CHA", "Performance", "Perception", "Persuasion") }
+        default { @("STR", "CON", "Athletics", "Perception", "Survival") }
     }
 
     foreach ($skillProficiency in $expectedSkillProficiencies) {
-        if (-not (@(Get-HeroCheckProficiencies -Hero $Game.Hero) -contains $skillProficiency)) {
+        if (-not (@($Game.Hero.CheckProficiencies) -contains $skillProficiency)) {
             $Game.Hero.CheckProficiencies = @($Game.Hero.CheckProficiencies) + $skillProficiency
         }
     }

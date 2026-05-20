@@ -9,7 +9,18 @@
   - `Fighter` as `Lubert Stryer`
 - level-up readiness and long-rest leveling from level 1 to level 4, with the first monster-zone progression spine extending the level cap from 4 toward 6 after the Civic Vault
 - level 4 Ability Score Increase choices during long rest, including `+2` or split `+1/+1` choices capped at 20
-- derived-stat scaling from ability scores: STR/DEX attacks, DEX initiative and armor, CON HP and Unarmored Defense, CHA bard resources, and skill checks
+- derived-stat scaling from ability scores: STR/DEX attacks, DEX initiative and armor, CON HP and Unarmored Defense, CHA bard resources, and 5e-style skill checks
+- the full DnD 5e skill list is now represented as a central rules table:
+  - `STR`: `Athletics`
+  - `DEX`: `Acrobatics`, `Sleight of Hand`, `Stealth`
+  - `INT`: `Arcana`, `History`, `Investigation`, `Nature`, `Religion`
+  - `WIS`: `Animal Handling`, `Insight`, `Medicine`, `Perception`, `Survival`
+  - `CHA`: `Deception`, `Intimidation`, `Performance`, `Persuasion`
+- skill checks can now resolve from a skill name to the correct ability automatically, while older ability-only quest checks continue to work
+- current starting skill identity:
+  - Barbarian: `Athletics`, `Perception`, `Survival`
+  - Bard: `Performance`, `Perception`, `Persuasion`
+  - Fighter: `Athletics`, `Intimidation`, `Perception`
 - local `save/load` support with manual save slots and backward-safe state normalization
 - inventory with ready-use slots, backpack storage, equipping, consumables, and persistent loot
 - currency system with `CP`, `SP`, `GP` and a gold pouch

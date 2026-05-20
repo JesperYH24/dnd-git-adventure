@@ -1704,6 +1704,42 @@ function Test-BardPerformanceChecksUsePerformanceProficiency {
     Assert-Equal -Actual $instrument.InspirationBonus -Expected 1 -Message "A bard's starting instrument should still add its own separate performance bonus."
 }
 
+function Test-FullDndSkillListIsAvailable {
+    $skills = @(Get-HeroSkillNames)
+
+    Assert-Equal -Actual $skills.Count -Expected 18 -Message "The core DnD 5e skill list should include all 18 skills."
+    Assert-True -Condition ($skills -contains "Acrobatics") -Message "The skill list should include Acrobatics."
+    Assert-True -Condition ($skills -contains "Animal Handling") -Message "The skill list should include Animal Handling."
+    Assert-True -Condition ($skills -contains "Sleight of Hand") -Message "The skill list should include Sleight of Hand."
+    Assert-True -Condition ($skills -contains "Survival") -Message "The skill list should include Survival."
+}
+
+function Test-DndSkillChecksUseMappedAbilitiesAndProficiencies {
+    $hero = Get-Hero -Class "Fighter"
+
+    $athletics = Get-HeroSkillCheckModifier -Hero $hero -Skill "athletics"
+    $sleight = Get-HeroSkillCheckModifier -Hero $hero -Skill "sleight-of-hand"
+
+    Assert-Equal -Actual $athletics.Ability -Expected "STR" -Message "Athletics should map to STR."
+    Assert-Equal -Actual $athletics.IsProficient -Expected $true -Message "Fighter should start proficient in Athletics."
+    Assert-Equal -Actual $athletics.TotalModifier -Expected 4 -Message "Fighter Athletics should include STR and proficiency."
+    Assert-Equal -Actual $sleight.Ability -Expected "DEX" -Message "Sleight of Hand should map to DEX."
+    Assert-Equal -Actual $sleight.IsProficient -Expected $false -Message "Fighter should not start proficient in Sleight of Hand."
+    Assert-Equal -Actual $sleight.TotalModifier -Expected 1 -Message "Unproficient Sleight of Hand should use only DEX at level 1."
+}
+
+function Test-BardJackOfAllTradesAppliesToUntrainedDndSkills {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 2
+
+    $profile = Get-HeroSkillCheckModifier -Hero $hero -Skill "Medicine"
+
+    Assert-Equal -Actual $profile.Ability -Expected "WIS" -Message "Medicine should map to WIS."
+    Assert-Equal -Actual $profile.IsProficient -Expected $false -Message "The current Bard should not start proficient in Medicine."
+    Assert-Equal -Actual $profile.ClassBonus -Expected 1 -Message "Jack of All Trades should apply to untrained DnD skills."
+    Assert-Equal -Actual $profile.BonusSource -Expected "JackOfAllTrades" -Message "The bonus source should still identify Jack of All Trades."
+}
+
 function Test-BardJackOfAllTradesStartsAtLevelTwo {
     $hero = Get-Hero -Class "Bard"
 
@@ -1907,6 +1943,9 @@ Test-AcceptTownQuestUsesCurrentHeroNameInQuestLogMessage
 Test-BarbarianStrengthChecksUseAbilityAndProficiency
 Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
+Test-FullDndSkillListIsAvailable
+Test-DndSkillChecksUseMappedAbilitiesAndProficiencies
+Test-BardJackOfAllTradesAppliesToUntrainedDndSkills
 Test-BardJackOfAllTradesStartsAtLevelTwo
 Test-InvisibilityBoostsBardStealthChecks
 Test-BardExpertiseStartsAtLevelThree

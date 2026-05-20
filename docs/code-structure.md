@@ -219,6 +219,7 @@ Ansvar:
 - valuta
 - AC, ability modifiers, class-specific status
 - Bard spellcasting state, known spells, spell slots, and utility buffs such as `Invisibility` and `Enhance Ability`
+- core 5e skill definitions, skill-to-ability mapping, class starting skill proficiencies, skill check modifier helpers, Jack of All Trades, and Expertise
 
 Bra att läsa när:
 
