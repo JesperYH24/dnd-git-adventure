@@ -235,6 +235,7 @@ function Test-FighterQuestAcceptanceUsesKnightlyTone {
 
 function Test-MountedJoustingRequiresHorseAndTourneyArmor {
     $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
     $initialRequirements = Get-MountedJoustingRequirements -Game $game
 
     Assert-Equal -Actual $initialRequirements.CanEnter -Expected $false -Message "Mounted jousting should start locked."
@@ -255,6 +256,55 @@ function Test-MountedJoustingRequiresHorseAndTourneyArmor {
 
     Assert-Equal -Actual $readyRequirements.CanEnter -Expected $true -Message "Mounted jousting should be ready with horse and plate armor."
     Assert-Equal -Actual (Get-HeroJoustingStatus -Game $game).Title -Expected "Mounted Prospect" -Message "Horse and tourney armor should mark the Fighter as a mounted prospect."
+}
+
+function Test-MountedJoustingRequiresLevelFour {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 3
+    $game.Town.Jousting.HasHorse = $true
+    $plate = New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5
+    $game.Hero.Inventory += $plate
+    Set-EquippedItem -Hero $game.Hero -Item $plate | Out-Null
+
+    $requirements = Get-MountedJoustingRequirements -Game $game
+
+    Assert-Equal -Actual $requirements.CanEnter -Expected $false -Message "Mounted jousting should wait until Fighter level 4."
+    Assert-True -Condition ($requirements.Missing -contains "level 4") -Message "Mounted jousting requirements should explain the level gate."
+}
+
+function Test-MountedJoustingPassesCanWin {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
+    $game.Town.Jousting.HasHorse = $true
+    $plate = New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5
+    $game.Hero.Inventory += $plate
+    Set-EquippedItem -Hero $game.Hero -Item $plate | Out-Null
+
+    $result = Resolve-MountedJoustingPasses -Game $game -SectionChoices @("1", "2", "1") -OpponentId "red_plume_prospect" -HeroRolls @(14, 14, 14) -OpponentRolls @(6, 6, 6)
+    $status = Get-HeroJoustingStatus -Game $game
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A strong mounted pass sequence should win the joust."
+    Assert-Equal -Actual $result.MountedWins -Expected 1 -Message "Mounted wins should be tracked separately from foot duels."
+    Assert-Equal -Actual $status.MountedWins -Expected 1 -Message "Jousting status should expose mounted wins."
+    Assert-True -Condition ($result.ExchangeLog[0] -like "*90 ft*") -Message "Mounted exchange log should show the distance-before-clash layer."
+    Assert-Equal -Actual $result.SectionChoices[0].Name -Expected "Hold the Line" -Message "The 90 ft choice should be recorded on the mounted result."
+    Assert-Equal -Actual $result.SectionChoices[1].Name -Expected "Lower the Lance" -Message "The 60 ft choice should be recorded on the mounted result."
+    Assert-Equal -Actual $result.SectionChoices[2].Name -Expected "Commit the Strike" -Message "The 30 ft choice should be recorded on the mounted result."
+}
+
+function Test-MountedJoustingPassesCanLose {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
+    $game.Town.Jousting.HasHorse = $true
+    $plate = New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5
+    $game.Hero.Inventory += $plate
+    Set-EquippedItem -Hero $game.Hero -Item $plate | Out-Null
+
+    $result = Resolve-MountedJoustingPasses -Game $game -SectionChoices @("2", "2", "3") -OpponentId "white_gate_rider" -HeroRolls @(4, 4, 4) -OpponentRolls @(14, 14, 14)
+
+    Assert-Equal -Actual $result.Success -Expected $false -Message "A poor mounted sequence should lose the joust."
+    Assert-Equal -Actual $result.MountedLosses -Expected 1 -Message "Mounted losses should be tracked separately from foot duels."
+    Assert-Equal -Actual $result.Technique -Expected "Spur Early / Lower the Lance / Last-Breath Feint" -Message "Mounted jousting should keep the selected section labels."
 }
 
 function Test-ClassSelectionCanChooseFighter {
@@ -283,6 +333,9 @@ Test-FighterHeraldicPresentationBuildsPatronBacking
 Test-FighterTourneyLossStillTracksRecord
 Test-FighterQuestAcceptanceUsesKnightlyTone
 Test-MountedJoustingRequiresHorseAndTourneyArmor
+Test-MountedJoustingRequiresLevelFour
+Test-MountedJoustingPassesCanWin
+Test-MountedJoustingPassesCanLose
 Test-ClassSelectionCanChooseFighter
 
 Write-Host "Fighter tests passed." -ForegroundColor Green

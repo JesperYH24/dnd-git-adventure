@@ -42,7 +42,7 @@ Lubert Stryer is the knight-aspirant: defense, discipline, civic trust, and form
 
 Fighter follow-ups:
 
-- decide how Fighter's level 4 jousting hook should sit beside ASI, stable-owned horse, splint/plate requirement, and future lance support
+- tune the first mounted jousting pass beside ASI, stable-owned horse, and splint/plate requirements
 - add more combat text around `Action Surge` and `Improved Critical` so Lubert's discipline feels distinct from raw aggression
 - make monster-zone class text lean into patrol logic, shield discipline, wall defense, and reading organized threats
 
@@ -154,5 +154,5 @@ Next pass:
    - expand the first class-flavored wilderness reads into ambush starts, objective follow-ups, landmark consequences, Wall Watch reports, and Dorr reports
    - keep ranged weapons on ice until objectives, contracts, and class reads feel stronger
 2. Tune level 3-4 enemy difficulty against the now-complete class kits.
-3. Build the Fighter level 4 mounted jousting path after the monster-zone loop has a stronger purpose.
+3. Tune the Fighter level 4 mounted jousting path now that the first playable pass exists.
 4. Decide whether fixed Lore expertise should become player-chosen later.

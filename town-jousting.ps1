@@ -1,4 +1,4 @@
-# Fighter-facing arena scaffolding. Mounted jousting waits for heavy tourney armor and lance systems later.
+# Fighter-facing arena scaffolding: foot lists, patron attention, and first-pass mounted jousting.
 
 function Initialize-JoustingState {
     param($Game)
@@ -18,6 +18,8 @@ function Initialize-JoustingState {
         @{ Key = "SquireLosses"; Value = 0 },
         @{ Key = "DuelWins"; Value = 0 },
         @{ Key = "DuelLosses"; Value = 0 },
+        @{ Key = "MountedWins"; Value = 0 },
+        @{ Key = "MountedLosses"; Value = 0 },
         @{ Key = "PatronAttention"; Value = 0 },
         @{ Key = "LastPatronMilestone"; Value = 0 },
         @{ Key = "PresentationMade"; Value = $false },
@@ -34,6 +36,10 @@ function Get-JoustingStandingTitle {
 
     Initialize-JoustingState -Game $Game
     $mountedRequirements = Get-MountedJoustingRequirements -Game $Game
+
+    if ([int]$Game.Town.Jousting.MountedWins -ge 3) {
+        return "Jousting Contender"
+    }
 
     if ([bool]$mountedRequirements.CanEnter) {
         return "Mounted Prospect"
@@ -112,6 +118,8 @@ function Get-HeroJoustingStatus {
         SquireLosses = [int]$Game.Town.Jousting.SquireLosses
         DuelWins = [int]$Game.Town.Jousting.DuelWins
         DuelLosses = [int]$Game.Town.Jousting.DuelLosses
+        MountedWins = [int]$Game.Town.Jousting.MountedWins
+        MountedLosses = [int]$Game.Town.Jousting.MountedLosses
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
         PresentationMade = [bool]$Game.Town.Jousting.PresentationMade
         HasHeraldicSurcoat = Test-HeroHasHeraldicSurcoat -Hero $Game.Hero
@@ -190,12 +198,18 @@ function Get-MountedJoustingRequirements {
 
     $hasHorse = Test-HeroHasMountedJoustingHorse -Game $Game
     $hasTourneyArmor = $false
+    $hasLevel = $false
 
     if ($null -ne $Game -and $null -ne $Game.Hero) {
         $hasTourneyArmor = Test-HeroHasMountedJoustingArmor -Hero $Game.Hero
+        $hasLevel = [int]$Game.Hero.Level -ge 4
     }
 
     $missing = @()
+
+    if (-not $hasLevel) {
+        $missing += "level 4"
+    }
 
     if (-not $hasHorse) {
         $missing += "horse"
@@ -206,7 +220,8 @@ function Get-MountedJoustingRequirements {
     }
 
     return [PSCustomObject]@{
-        CanEnter = ($hasHorse -and $hasTourneyArmor)
+        CanEnter = ($hasLevel -and $hasHorse -and $hasTourneyArmor)
+        HasLevel = $hasLevel
         HasHorse = $hasHorse
         HasTourneyArmor = $hasTourneyArmor
         Missing = $missing
@@ -302,7 +317,7 @@ function Get-JoustingArenaPreviewText {
     }
 
     if ($mountedRequirements.CanEnter) {
-        return "{hero}'s name is now spoken near the mounted lists. The arena can still offer ground bouts today, but the real promise is waiting: horse, lance, splint or plate, heraldry, and a crowd that calls violence sport because the right people paid to watch."
+        return "{hero}'s name is now spoken near the mounted lists. The arena can still offer ground bouts today, and the list-master can now hand over a blunted practice lance for proper mounted passes."
     }
 
     if ($status.HasHorse) {
@@ -718,6 +733,277 @@ function Resolve-TourneyGroundDuel {
     }
 }
 
+function Get-MountedJoustingOpponents {
+    return @(
+        [PSCustomObject]@{
+            Id = "red_plume_prospect"
+            Name = "Cassian Redplume"
+            Definite = "Cassian Redplume"
+            LanceBonus = 5
+            SeatBonus = 3
+            Intro = "Cassian Redplume wheels a bay horse into the near lane, red feathers tied at the helm like a dare."
+        },
+        [PSCustomObject]@{
+            Id = "white_gate_rider"
+            Name = "Tamsin of White Gate"
+            Definite = "Tamsin of White Gate"
+            LanceBonus = 6
+            SeatBonus = 4
+            Intro = "Tamsin of White Gate lowers a practice lance with courtly precision, her horse already answering the smallest knee pressure."
+        }
+    )
+}
+
+function Get-MountedJoustingOpponent {
+    param(
+        $Game,
+        [string]$OpponentId = ""
+    )
+
+    $opponents = @(Get-MountedJoustingOpponents)
+
+    if (-not [string]::IsNullOrWhiteSpace($OpponentId)) {
+        $match = $opponents | Where-Object { $_.Id -eq $OpponentId } | Select-Object -First 1
+        if ($null -ne $match) {
+            return $match
+        }
+    }
+
+    Initialize-JoustingState -Game $Game
+    if ([int]$Game.Town.Jousting.MountedWins -ge 2) {
+        return ($opponents | Where-Object { $_.Id -eq "white_gate_rider" } | Select-Object -First 1)
+    }
+
+    return ($opponents | Where-Object { $_.Id -eq "red_plume_prospect" } | Select-Object -First 1)
+}
+
+function Get-MountedJoustingSectionOption {
+    param(
+        [int]$DistanceFeet,
+        [string]$Choice = ""
+    )
+
+    $normalizedChoice = if ([string]::IsNullOrWhiteSpace($Choice)) { "1" } else { $Choice.Trim() }
+
+    switch ($DistanceFeet) {
+        90 {
+            if ($normalizedChoice -in @("2", "SPUR", "FAST")) {
+                return [PSCustomObject]@{
+                    Id = "SpurEarly"
+                    Name = "Spur Early"
+                    LanceBonus = 2
+                    SeatBonus = -1
+                    PatronBonus = 1
+                    Description = "Push speed early and ask the horse to own the lane."
+                }
+            }
+
+            if ($normalizedChoice -in @("3", "READ", "WATCH")) {
+                return [PSCustomObject]@{
+                    Id = "ReadLine"
+                    Name = "Read the Line"
+                    LanceBonus = 0
+                    SeatBonus = 2
+                    PatronBonus = 1
+                    Description = "Read the opponent's angle before the lane narrows."
+                }
+            }
+
+            return [PSCustomObject]@{
+                Id = "HoldLine"
+                Name = "Hold the Line"
+                LanceBonus = 1
+                SeatBonus = 1
+                PatronBonus = 1
+                Description = "Keep the horse straight and make the first line honest."
+            }
+        }
+        60 {
+            if ($normalizedChoice -in @("2", "LOWER", "LANCE")) {
+                return [PSCustomObject]@{
+                    Id = "LowerLance"
+                    Name = "Lower the Lance"
+                    LanceBonus = 2
+                    SeatBonus = 0
+                    PatronBonus = 1
+                    Description = "Commit the lance point while there is still time to correct the seat."
+                }
+            }
+
+            if ($normalizedChoice -in @("3", "SHIELD", "GUARD")) {
+                return [PSCustomObject]@{
+                    Id = "SetShield"
+                    Name = "Set the Shield"
+                    LanceBonus = -1
+                    SeatBonus = 3
+                    PatronBonus = 1
+                    Description = "Protect the seat and make the opponent spend force badly."
+                }
+            }
+
+            return [PSCustomObject]@{
+                Id = "AdjustSeat"
+                Name = "Adjust Seat"
+                LanceBonus = 0
+                SeatBonus = 2
+                PatronBonus = 1
+                Description = "Settle balance before the rail starts deciding the pass."
+            }
+        }
+        default {
+            if ($normalizedChoice -in @("2", "BRACE")) {
+                return [PSCustomObject]@{
+                    Id = "BraceImpact"
+                    Name = "Brace for Impact"
+                    LanceBonus = -1
+                    SeatBonus = 4
+                    PatronBonus = 1
+                    Description = "Survive the crash first and trust the rail to respect control."
+                }
+            }
+
+            if ($normalizedChoice -in @("3", "FEINT")) {
+                return [PSCustomObject]@{
+                    Id = "Last-Breath Feint"
+                    Name = "Last-Breath Feint"
+                    LanceBonus = 3
+                    SeatBonus = -2
+                    PatronBonus = 2
+                    Description = "Shift the point late and gamble the seat on timing."
+                }
+            }
+
+            return [PSCustomObject]@{
+                Id = "CommitStrike"
+                Name = "Commit the Strike"
+                LanceBonus = 2
+                SeatBonus = 0
+                PatronBonus = 2
+                Description = "Take the final line and let the lance decide the pass."
+            }
+        }
+    }
+}
+
+function Get-MountedJoustingSectionMenuOptions {
+    param([int]$DistanceFeet)
+
+    switch ($DistanceFeet) {
+        90 { return @("1. Hold the Line", "2. Spur Early", "3. Read the Line") }
+        60 { return @("1. Adjust Seat", "2. Lower the Lance", "3. Set the Shield") }
+        default { return @("1. Commit the Strike", "2. Brace for Impact", "3. Last-Breath Feint") }
+    }
+}
+
+function Resolve-MountedJoustingPasses {
+    param(
+        $Game,
+        [string]$Technique = "Steady",
+        [string[]]$SectionChoices = @(),
+        [string]$OpponentId = "",
+        [int[]]$HeroRolls = @(),
+        [int[]]$OpponentRolls = @()
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -ne "Fighter") {
+        return [PSCustomObject]@{ Success = $false; Blocked = $true; Message = "The mounted lists are not ready to make room for this hero yet."; Reputation = "" }
+    }
+
+    Initialize-JoustingState -Game $Game
+    $requirements = Get-MountedJoustingRequirements -Game $Game
+    if (-not $requirements.CanEnter) {
+        return [PSCustomObject]@{
+            Success = $false
+            Blocked = $true
+            Message = "Mounted jousting requires $($requirements.MissingText)."
+            Reputation = Get-JoustingStandingTitle -Game $Game
+        }
+    }
+
+    if ($SectionChoices.Count -le 0) {
+        $SectionChoices = switch ($Technique) {
+            "Spur" { @("2", "2", "3") }
+            "Guarded" { @("3", "3", "2") }
+            default { @("1", "1", "1") }
+        }
+    }
+
+    $opponent = Get-MountedJoustingOpponent -Game $Game -OpponentId $OpponentId
+    $strengthModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "STR"
+    $constitutionModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "CON"
+    $heroScore = 0
+    $opponentScore = 0
+    $exchangeTexts = @()
+    $distances = @(90, 60, 30)
+    $chosenOptions = @()
+    $totalPatronBonus = 0
+
+    for ($pass = 0; $pass -lt 3; $pass++) {
+        $heroRoll = if ($pass -lt $HeroRolls.Count -and $HeroRolls[$pass] -gt 0) { [int]$HeroRolls[$pass] } else { Roll-Dice -Sides 20 }
+        $opponentRoll = if ($pass -lt $OpponentRolls.Count -and $OpponentRolls[$pass] -gt 0) { [int]$OpponentRolls[$pass] } else { Roll-Dice -Sides 20 }
+        $choice = if ($pass -lt $SectionChoices.Count) { [string]$SectionChoices[$pass] } else { "1" }
+        $sectionOption = Get-MountedJoustingSectionOption -DistanceFeet ([int]$distances[$pass]) -Choice $choice
+        $chosenOptions += $sectionOption
+        $totalPatronBonus += [int]$sectionOption.PatronBonus
+        $heroTotal = $heroRoll + $strengthModifier + $constitutionModifier + [int]$sectionOption.LanceBonus + [int]$sectionOption.SeatBonus
+        $opponentTotal = $opponentRoll + [int]$opponent.LanceBonus + [int]$opponent.SeatBonus
+
+        if ($heroRoll -eq 20 -or ($heroRoll -ne 1 -and $heroTotal -ge $opponentTotal)) {
+            $heroScore++
+        }
+        else {
+            $opponentScore++
+        }
+
+        $exchangeTexts += "Pass $($pass + 1) from $($distances[$pass]) ft: $($Game.Hero.Name) $heroTotal with $($sectionOption.Name); $($opponent.Definite) $opponentTotal."
+    }
+
+    $heroWon = $heroScore -gt $opponentScore
+    $Game.Town.Jousting.Visits = [int]$Game.Town.Jousting.Visits + 1
+
+    if ($heroWon) {
+        $Game.Town.Jousting.MountedWins = [int]$Game.Town.Jousting.MountedWins + 1
+        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + $totalPatronBonus
+        $Game.Town.Relationships["TourneyPatrons"] = "Mounted Watching"
+        return [PSCustomObject]@{
+            Success = $true
+            Opponent = $opponent.Name
+            IntroText = $opponent.Intro
+            Technique = (@($chosenOptions | ForEach-Object { $_.Name }) -join " / ")
+            SectionChoices = $chosenOptions
+            Message = "{hero} keeps the horse under him through the final crash and wins the mounted passes by $heroScore-$opponentScore."
+            ExchangeLog = $exchangeTexts
+            HeroScore = $heroScore
+            OpponentScore = $opponentScore
+            MountedWins = [int]$Game.Town.Jousting.MountedWins
+            MountedLosses = [int]$Game.Town.Jousting.MountedLosses
+            PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+            Reputation = Get-JoustingStandingTitle -Game $Game
+        }
+    }
+
+    $Game.Town.Jousting.MountedLosses = [int]$Game.Town.Jousting.MountedLosses + 1
+    if ($heroScore -gt 0) {
+        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 1
+    }
+
+    return [PSCustomObject]@{
+        Success = $false
+        Opponent = $opponent.Name
+        IntroText = $opponent.Intro
+        Technique = (@($chosenOptions | ForEach-Object { $_.Name }) -join " / ")
+        SectionChoices = $chosenOptions
+        Message = "{hero} loses the mounted passes $heroScore-$opponentScore. The marshal calls it clean, and the rail learns exactly what still needs work."
+        ExchangeLog = $exchangeTexts
+        HeroScore = $heroScore
+        OpponentScore = $opponentScore
+        MountedWins = [int]$Game.Town.Jousting.MountedWins
+        MountedLosses = [int]$Game.Town.Jousting.MountedLosses
+        PatronAttention = [int]$Game.Town.Jousting.PatronAttention
+        Reputation = Get-JoustingStandingTitle -Game $Game
+    }
+}
+
 function Resolve-JoustingArenaSquireSpar {
     param(
         $Game,
@@ -800,13 +1086,14 @@ function Start-JoustingArena {
         $horseText = if ($status.HasHorse) { "Owned" } else { "Needed" }
         $armorText = if ($status.HasTourneyArmor) { "Ready" } else { "Needs splint/plate" }
         $bashText = if ($status.ShieldBashUnlocked) { "Shield Bash" } else { "Shield Bash locked" }
-        Write-ColorLine "Arena Standing: $($status.Title) | Duel: $($status.DuelWins)-$($status.DuelLosses) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention) | $bashText | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
+        Write-ColorLine "Arena Standing: $($status.Title) | Mounted: $($status.MountedWins)-$($status.MountedLosses) | Duel: $($status.DuelWins)-$($status.DuelLosses) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention) | $bashText | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
         Write-ColorLine ""
         Write-ColorLine "1. Enter an armored aspirant duel" "White"
         Write-ColorLine "2. Spar lightly against a squire" "White"
-        Write-ColorLine "3. Ask what the patrons think" "White"
-        Write-ColorLine "4. Ask about mounted jousting" "White"
-        Write-ColorLine "5. Present colors to the patron rail" "White"
+        Write-ColorLine "3. Enter mounted jousting" $(if ($status.MountedReady) { "White" } else { "DarkGray" })
+        Write-ColorLine "4. Ask what the patrons think" "White"
+        Write-ColorLine "5. Ask about mounted jousting" "White"
+        Write-ColorLine "6. Present colors to the patron rail" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
@@ -847,21 +1134,47 @@ function Start-JoustingArena {
                 Write-ColorLine ""
             }
             "3" {
-                Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingPatronAttentionText -Game $Game) -Hero $Game.Hero)
+                $requirements = Get-MountedJoustingRequirements -Game $Game
+                if (-not $requirements.CanEnter) {
+                    Write-EmphasisLine -Text "Mounted jousting requires $($requirements.MissingText)." -Color "Yellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
+                Write-Scene "The list-master sends Lubert to the mounted lane with a blunted practice lance and no patience for pretending this is still footwork."
+                $sectionChoices = @()
+                foreach ($distance in @(90, 60, 30)) {
+                    Write-SectionTitle -Text "$distance ft" -Color "DarkYellow"
+                    foreach ($optionText in @(Get-MountedJoustingSectionMenuOptions -DistanceFeet $distance)) {
+                        Write-ColorLine $optionText "White"
+                    }
+                    $sectionChoices += (Read-Host "Choose at $distance ft")
+                }
+                $result = Resolve-MountedJoustingPasses -Game $Game -SectionChoices $sectionChoices
+                Write-Scene $result.IntroText
+                Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
+                foreach ($exchange in @($result.ExchangeLog)) {
+                    Write-ColorLine $exchange "DarkGray"
+                }
+                Write-EmphasisLine -Text "Mounted record: $($result.MountedWins)-$($result.MountedLosses). Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)." -Color "Yellow"
                 Write-ColorLine ""
             }
             "4" {
+                Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingPatronAttentionText -Game $Game) -Hero $Game.Hero)
+                Write-ColorLine ""
+            }
+            "5" {
                 $requirements = Get-MountedJoustingRequirements -Game $Game
-                Write-Scene "The list-master taps a lance rack with two fingers. 'Horse first. Splint or plate after that. Then we find out whether your shield arm belongs in a tourney or only in an alley.'"
+                Write-Scene "The list-master taps a lance rack with two fingers. 'Level, horse, splint or plate. Then we give you a practice lance and see whether your shield arm belongs in a tourney or only in an alley.'"
                 if ($requirements.CanEnter) {
-                    Write-EmphasisLine -Text "Future unlock ready: horse and tourney armor are secured; mounted jousting still waits for the lance system." -Color "Yellow"
+                    Write-EmphasisLine -Text "Mounted jousting ready: choose the mounted list and ride a three-pass match." -Color "Yellow"
                 }
                 else {
                     Write-EmphasisLine -Text "Future unlock requirements: $($requirements.MissingText)." -Color "Yellow"
                 }
                 Write-ColorLine ""
             }
-            "5" {
+            "6" {
                 $result = Resolve-JoustingPatronPresentation -Game $Game
                 Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
                 if ($result.Success) {

@@ -75,8 +75,8 @@ flowchart TD
     Districts --> DocksGate{"Docks unlocked?"}
     DocksGate -- "No" --> DocksLead["Linear Docks lead only"]
     DocksGate -- "Yes" --> Docks["Open Docks district"]
-    Town --> KnightGate{"Fighter level 4\nfuture jousting ready?"}
-    KnightGate -- "Needs stable horse + splint/plate + lance" --> FutureJoust["Mounted jousting\nfuture knight progression"]
+    Town --> KnightGate{"Fighter level 4\nmounted jousting ready?"}
+    KnightGate -- "Needs stable horse + splint/plate" --> FutureJoust["Mounted jousting\nthree-pass knight progression"]
     Town --> MonsterGate{"Wall rumors active?"}
     MonsterGate -- "Yes" --> MonsterZone["Monster zone\nlevel 4-6 objectives, landmarks, camp,\nstealth/perception, distance, oddities"]
 ```

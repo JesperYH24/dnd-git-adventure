@@ -33,7 +33,7 @@
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
-- expand Fighter's tourney ground into level 4 mounted jousting using the new stable-owned riding horse state, splint-or-plate tourney armor, lances, heraldic rewards, and distance-before-clash choices
+- tune Fighter's first mounted jousting pass with richer opponents, heraldic rewards, better failure consequences, and more distance-before-clash choices
 - deeper inn events, shady city routes, and economic info payoffs
 
 ## Monster zone design direction

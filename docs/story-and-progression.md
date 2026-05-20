@@ -181,7 +181,7 @@ After the level 4 long rest, Docks Tier 4 opens:
 
 At level 4, the fighting ring connects to the outer monster-zone track: after the hero defeats and reports matching creatures beyond the wall, Dorr can book captured-monster contracts for later unarmed ring exhibitions.
 
-At level 4, the Fighter route should also be allowed to start looking past foot duels toward true knightly tournament play. Mounted jousting is the intended next unlock direction. The stable yard now covers horse ownership, but the playable system still needs lance support, a level gate, and the splint-or-plate armor requirement before it opens.
+At level 4, the Fighter route can start looking past foot duels toward true knightly tournament play. Mounted jousting now opens once Lubert has a stable-owned riding horse and equipped splint or plate armor, using a list-master practice lance and three distance-marked passes.
 
 Once the higher-city trail is complete, Docks Tier 5 opens `The Civic Vault`.
 
@@ -305,4 +305,4 @@ The fighter route is meant to grow toward upper-class legitimacy:
 - the tourney ground gives him a city pastime that is about posture, recognition, and class aspiration as much as fighting
 - repeated squire sparring builds patron attention until the upper rail starts treating him as a possible aspirant instead of another armed townsman
 - true mounted jousting is a level 4 knight-path goal, not part of Lubert's early city routine
-- when built, mounted jousting should require a stable-owned riding horse, a lance system, and splint or plate armor so the unlock feels like a real class ascent
+- mounted jousting now requires a stable-owned riding horse and equipped splint or plate armor, then resolves as three distance-marked passes with a practice lance from the list-master and a tactical choice at `90 ft`, `60 ft`, and `30 ft`

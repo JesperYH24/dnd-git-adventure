@@ -116,10 +116,10 @@ Current camp levels:
 - `Shield Bash` unlocks after three armored duel wins while Lubert is fighting with a shield
 - at `6` patron attention, upper-city patrons start watching Lubert as a `Patron-Noticed Aspirant`
 - with patron notice plus a `Heraldic Surcoat`, Lubert can present colors to the patron rail, becoming a `Patron-Backed Aspirant` and unlocking future splint armor savings
-- true mounted jousting is planned as a level 4 Fighter/knight unlock, not an early-town activity
+- mounted jousting is a first playable level 4 Fighter/knight unlock, not an early-town activity
 - before level 4, the tourney ground should stay focused on foot sparring, armored aspirant duels, patron notice, and shield technique
-- mounted jousting is still a future system: it should require level 4, stable-owned riding horse, equipped splint or plate armor, and lance support before it opens
-- mounted jousting should reuse the abstract distance idea from monster-zone combat, with choices changing based on how many feet remain before the clash
+- mounted jousting requires level 4, stable-owned riding horse, and equipped splint or plate armor; the list-master provides a blunted practice lance for the first pass
+- mounted jousting uses three-pass scoring with a player choice at each distance beat: `90 ft` (`Hold the Line`, `Spur Early`, `Read the Line`), `60 ft` (`Adjust Seat`, `Lower the Lance`, `Set the Shield`), and `30 ft` (`Commit the Strike`, `Brace for Impact`, `Last-Breath Feint`)
 - the stable yard now sells pack animals for future monster-zone hauling and a riding horse that satisfies the future jousting horse requirement
 
 ## Town and day/night systems
@@ -143,7 +143,7 @@ Current camp levels:
 - the daytime stable yard sells pack animals and riding horses; pack animals prepare the future monster-zone haul loop instead of using normal inventory slots
 - manual `Wait for nightfall` transition
 - long rests advance to the next day and reset daily limits
-- once the future level 4 jousting system exists, the town day loop can reuse existing stable ownership while keeping mounted jousting itself gated behind level, armor, and lance support
+- mounted jousting reuses existing stable ownership while keeping the mounted list gated behind level and tourney armor
 
 ## Inns
 

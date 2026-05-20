@@ -49,8 +49,8 @@ flowchart LR
     Derived --> INT["INT\nInvestigation-style checks"]
     Derived --> WIS["WIS\nfuture Wisdom checks"]
     Derived --> CHA["CHA\nBard save DC, CHA skills, Bardic Inspiration"]
-    Level4 --> FighterJoust["Fighter level 4 direction\nmounted jousting later"]
+    Level4 --> FighterJoust["Fighter level 4 direction\nmounted jousting"]
     Level4 --> MonsterZone["Monster-zone progression\ncap 5 from wall rumors\ncap 6 from outer-wall proof"]
     MonsterZone --> GateDefense["Reach level 6\nscripted gate-defense waves"]
-    FighterJoust --> JoustReq["Requires stable riding horse\nsplint or plate armor\nfuture lance support"]
+    FighterJoust --> JoustReq["Requires stable riding horse\nsplint or plate armor\nchoices at 90, 60, 30 ft"]
 ```

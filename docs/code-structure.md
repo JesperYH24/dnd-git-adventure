@@ -371,8 +371,8 @@ Ansvar:
 - Fighter/tourney ground city activity
 - squire sparring on foot
 - armored aspirant duels with named win/loss records
-- future level 4 hook for mounted jousting
-- mounted jousting now reads stable-owned riding horse state, but still needs splint or plate armor and future lance support
+- first playable level 4 mounted jousting hook
+- mounted jousting reads stable-owned riding horse state and equipped splint/plate armor, then resolves three distance-marked practice-lance passes with one player choice per distance beat
 
 ### `monster-zone.ps1`
 

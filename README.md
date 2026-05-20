@@ -16,7 +16,7 @@ The project currently includes:
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, combat spells like `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` with 60 ft monster-zone spell range, social quest spells like `Charm Person` and first-pass `Suggestion`, plus `Invisibility` and `Enhance Ability` as level 4 utility tools
 - expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
-- Fighter tourney ground foot duels, with a stable-yard horse requirement now in place for future mounted jousting; lance support is still future level 4 knight progression
+- Fighter tourney ground foot duels plus first-pass mounted jousting at level 4 once Lubert has a riding horse and splint or plate armor
 - first-pass monster zone beyond the outer wall built to carry progression from level 4 toward level 6, with visible objectives, tracked landmarks that become easier to find across different visit days and eventually unlock direct travel from the gate, milestone XP for discoveries/proof/reports/contracts, level-cap-filtered threat escalation, a scripted level 6 gate-defense event with city allies and wave pressure, Perception/Stealth awareness checks, abstract encounter distance, camp safety, pack-animal monster oddity hauling, Wall Watch/Guard Station reactions, and defeated-creature reports that let Dorr book delayed captured-monster ring contracts
 - repeatable level-based day jobs
 - split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
