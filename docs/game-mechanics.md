@@ -238,5 +238,18 @@ Docks is intentionally more linear at first than the main town hub.
   - `Private Patron Salon`
 - performances do not consume the normal day-job slot
 - performance permit and venue recognition can improve bard income and standing
+- Silver Kettle artist standing and private salon invitations now add patron retainer coin on successful upper-room performances, so the Bard has a class-shaped path toward finer lodging and equipment instead of needing the fighting ring economy
 - each venue keeps its own performance history: total plays, `Poor` / `Good` / `Great` outcomes, last outcome, and copper earned
 - audiences react differently once they know the bard: shaky rooms are guarded after repeated poor sets, known rooms carry good performances, and favorite rooms forgive weaker nights while rewarding great ones harder in flavor
+
+## Fighter tourney economy
+
+- the `Tourney Ground` now pays coin directly as a Fighter income path:
+  - squire spar win: `40 CP`
+  - close squire loss: `10 CP`
+  - armored duel win: `100 CP`, or `150 CP` after accepted patron presentation
+  - close armored duel loss: `25 CP`
+  - mounted jousting win: `180 CP`, or `250 CP` after accepted patron presentation
+  - close mounted jousting loss: `40 CP`
+- this keeps the fighting ring as the rough, high-risk public purse while giving Lubert a steadier knightly economy tied to discipline, patrons, horse, and armor progression
+- Bard and Barbarian can still test the open tourney ground as guest challengers through squire sparring and ground duels, earning only modest guest purses and guest-list records; they do not gain Fighter patron attention, Shield Bash unlocks, patron presentation, or mounted-list progression

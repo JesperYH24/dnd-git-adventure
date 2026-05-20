@@ -595,6 +595,24 @@ function Test-SilverKettlePerformanceCanEarnPatronFavor {
     Assert-Equal -Actual $game.Town.Relationships["MerchantPatron"] -Expected "Favorable" -Message "A great salon performance should improve the bard's standing with wealthy patrons."
 }
 
+function Test-SilverKettlePatronStandingImprovesBardPerformanceIncome {
+    function global:Read-Host {
+        param([string]$Prompt)
+        return "2"
+    }
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    $game = Initialize-Game -Class "Bard"
+    Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
+    $game.Town.InnFlags["SilverKettleArtistWelcome"] = $true
+
+    $result = Resolve-BardPerformance -Game $game -VenueId "silver_kettle_stage"
+
+    Assert-Equal -Actual $result.Outcome -Expected "Good" -Message "A solid Silver Kettle set should land as a good performance."
+    Assert-Equal -Actual $result.RewardCopper -Expected 58 -Message "Silver Kettle artist standing should add a patron retainer to the normal good payout."
+}
+
 function Test-PrivateSalonPerformanceRequiresInvite {
     function global:Read-Host {
         param([string]$Prompt)
@@ -628,7 +646,7 @@ function Test-PrivateSalonPerformancePaysAfterInvite {
     $result = Resolve-BardPerformance -Game $game -VenueId "private_patron_salons"
 
     Assert-Equal -Actual $result.Success -Expected $true -Message "Private salons should become playable after the bard earns an invitation."
-    Assert-True -Condition ($result.RewardCopper -ge 40) -Message "Private salon performances should pay meaningfully better than open street work."
+    Assert-Equal -Actual $result.RewardCopper -Expected 120 -Message "Private salon performances should pay as upper-room patron work once unlocked."
 }
 
 Test-StreetChoicesAreRemembered
@@ -665,6 +683,7 @@ Test-BardCannotPerformTwiceAtSameVenueInOneDay
 Test-BardCanPerformAtDifferentVenuesOnSameDay
 Test-BardHasThreePerformanceSlotsPerDay
 Test-SilverKettlePerformanceCanEarnPatronFavor
+Test-SilverKettlePatronStandingImprovesBardPerformanceIncome
 Test-PrivateSalonPerformanceRequiresInvite
 Test-PrivateSalonPerformancePaysAfterInvite
 

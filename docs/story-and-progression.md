@@ -39,8 +39,8 @@ After the warning is delivered, the game opens into a full town hub where the he
 - visit the fighting ring
 - buy and sell gear
 - buy pack animals or a riding horse at the stable yard
-- if playing `Bard`, perform for coin and build venue reputation
-- if playing `Fighter`, visit the tourney ground for squire sparring and a first step toward knightly status; mounted jousting waits until level 4 progression
+- if playing `Bard`, perform for coin, build venue reputation, and later turn Silver Kettle/private salon standing into patron-paid upper-room work
+- any class can test the tourney ground's open guest lists, while `Fighter` gets the real squire, patron, armored-duel, and later mounted-jousting progression
 
 If the hero is defeated during a city quest, the quest fails and the player chooses between:
 

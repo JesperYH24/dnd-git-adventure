@@ -87,6 +87,7 @@ function Test-FighterShopOffersPointTowardKnightProgression {
 
 function Test-FighterJoustingArenaPreviewAndSquireSpar {
     $game = Initialize-Game -Class "Fighter"
+    $beforeCopper = $game.Hero.CurrencyCopper
 
     $preview = Get-JoustingArenaPreviewText -Game $game
     $result = Resolve-JoustingArenaSquireSpar -Game $game -Roll 15
@@ -96,6 +97,8 @@ function Test-FighterJoustingArenaPreviewAndSquireSpar {
     Assert-Equal -Actual $game.Town.Jousting.SquireWins -Expected 1 -Message "Successful sparring should track squire wins."
     Assert-Equal -Actual $game.Town.Jousting.PatronAttention -Expected 2 -Message "Successful sparring should build patron attention."
     Assert-Equal -Actual $game.Town.Relationships["TourneyGround"] -Expected "Noticed" -Message "Successful sparring should mark tourney ground recognition."
+    Assert-Equal -Actual $result.RewardCopper -Expected 40 -Message "Squire sparring should pay a small tourney purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($beforeCopper + 40) -Message "Squire sparring purse should be added to the Fighter's coin."
 }
 
 function Test-FighterTourneyPatronAttentionUnlocks {
@@ -117,6 +120,7 @@ function Test-FighterTourneyPatronAttentionUnlocks {
 
 function Test-FighterArmoredDuelUsesWeaponAndArmor {
     $game = Initialize-Game -Class "Fighter"
+    $beforeCopper = $game.Hero.CurrencyCopper
 
     $result = Resolve-TourneyGroundDuel -Game $game -Technique "Measured" -OpponentId "shield_squire" -HeroRolls @(14, 14) -OpponentRolls @(8, 8)
     $status = Get-HeroJoustingStatus -Game $game
@@ -129,10 +133,13 @@ function Test-FighterArmoredDuelUsesWeaponAndArmor {
     Assert-True -Condition ($result.IntroText -like "*Sirren Vale*") -Message "Armored duel results should include a named opponent intro."
     Assert-True -Condition ($result.RivalOutcomeText -like "*Sirren*") -Message "Armored duel results should include named rivalry outcome text."
     Assert-True -Condition ($result.ExchangeLog[0] -like "*Shortsword*" -or $result.Message -like "*Shortsword*") -Message "Duel output should be grounded in the equipped weapon."
+    Assert-Equal -Actual $result.RewardCopper -Expected 100 -Message "Armored duel wins should pay a useful Fighter tourney purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($beforeCopper + 100) -Message "Armored duel purse should be added to the Fighter's coin."
 }
 
 function Test-FighterArmoredDuelCanLoseOnPoints {
     $game = Initialize-Game -Class "Fighter"
+    $beforeCopper = $game.Hero.CurrencyCopper
 
     $result = Resolve-TourneyGroundDuel -Game $game -Technique "Committed" -OpponentId "maul_aspirant" -HeroRolls @(3, 3) -OpponentRolls @(18, 18)
 
@@ -140,6 +147,8 @@ function Test-FighterArmoredDuelCanLoseOnPoints {
     Assert-Equal -Actual $game.Town.Jousting.DuelLosses -Expected 1 -Message "Armored duel losses should be tracked."
     Assert-Equal -Actual $result.Technique -Expected "Committed Strike" -Message "Committed Strike should be a supported risky duel technique."
     Assert-Equal -Actual $game.Hero.TourneyDuelRivalries["Maudren Pike"].OpponentWins -Expected 1 -Message "Named duel losses should update that rival's record."
+    Assert-Equal -Actual $result.RewardCopper -Expected 0 -Message "A clean armored duel loss should not pay a consolation purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected $beforeCopper -Message "A clean armored duel loss should not change coin."
 }
 
 function Test-FighterTourneyDuelRivalryChangesRematchText {
@@ -274,6 +283,7 @@ function Test-MountedJoustingRequiresLevelFour {
 
 function Test-MountedJoustingPassesCanWin {
     $game = Initialize-Game -Class "Fighter"
+    $beforeCopper = $game.Hero.CurrencyCopper
     $game.Hero.Level = 4
     $game.Town.Jousting.HasHorse = $true
     $plate = New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5
@@ -290,10 +300,13 @@ function Test-MountedJoustingPassesCanWin {
     Assert-Equal -Actual $result.SectionChoices[0].Name -Expected "Hold the Line" -Message "The 90 ft choice should be recorded on the mounted result."
     Assert-Equal -Actual $result.SectionChoices[1].Name -Expected "Lower the Lance" -Message "The 60 ft choice should be recorded on the mounted result."
     Assert-Equal -Actual $result.SectionChoices[2].Name -Expected "Commit the Strike" -Message "The 30 ft choice should be recorded on the mounted result."
+    Assert-Equal -Actual $result.RewardCopper -Expected 180 -Message "Mounted jousting wins should pay a stronger tourney purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($beforeCopper + 180) -Message "Mounted jousting purse should be added to the Fighter's coin."
 }
 
 function Test-MountedJoustingPassesCanLose {
     $game = Initialize-Game -Class "Fighter"
+    $beforeCopper = $game.Hero.CurrencyCopper
     $game.Hero.Level = 4
     $game.Town.Jousting.HasHorse = $true
     $plate = New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5
@@ -305,6 +318,42 @@ function Test-MountedJoustingPassesCanLose {
     Assert-Equal -Actual $result.Success -Expected $false -Message "A poor mounted sequence should lose the joust."
     Assert-Equal -Actual $result.MountedLosses -Expected 1 -Message "Mounted losses should be tracked separately from foot duels."
     Assert-Equal -Actual $result.Technique -Expected "Spur Early / Lower the Lance / Last-Breath Feint" -Message "Mounted jousting should keep the selected section labels."
+    Assert-Equal -Actual $result.RewardCopper -Expected 0 -Message "A clean mounted jousting loss should not pay a consolation purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected $beforeCopper -Message "A clean mounted jousting loss should not change coin."
+}
+
+function Test-BardCanTryOpenTourneySquireSpar {
+    $game = Initialize-Game -Class "Bard"
+    $beforeCopper = $game.Hero.CurrencyCopper
+    $preview = Get-JoustingArenaPreviewText -Game $game
+
+    $result = Resolve-JoustingArenaSquireSpar -Game $game -Roll 20
+    $status = Get-HeroJoustingStatus -Game $game
+
+    Assert-True -Condition ($preview -like "*guest challenger*") -Message "Bard should see the tourney as an open guest list, not a blocked system."
+    Assert-Equal -Actual $result.Success -Expected $true -Message "Bard should be able to try a light squire spar."
+    Assert-Equal -Actual $result.RewardCopper -Expected 20 -Message "Guest sparring should pay a small purse, below the Fighter path."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($beforeCopper + 20) -Message "Bard guest spar purse should be added to coin."
+    Assert-Equal -Actual $status.GuestWins -Expected 1 -Message "Bard tourney attempts should track guest wins."
+    Assert-Equal -Actual $status.SquireWins -Expected 0 -Message "Bard guest wins should not advance Fighter squire progression."
+    Assert-Equal -Actual $status.PatronAttention -Expected 0 -Message "Bard guest wins should not grant Fighter patron attention."
+}
+
+function Test-BarbarianCanTryOpenTourneyGroundDuel {
+    $game = Initialize-Game -Class "Barbarian"
+    $beforeCopper = $game.Hero.CurrencyCopper
+    $preview = Get-TourneyGroundDuelPreviewText -Game $game
+
+    $result = Resolve-TourneyGroundDuel -Game $game -Technique "Committed" -OpponentId "shield_squire" -HeroRolls @(20, 20) -OpponentRolls @(1, 1)
+    $status = Get-HeroJoustingStatus -Game $game
+
+    Assert-True -Condition ($preview -like "*guest*") -Message "Barbarian should be able to enter the open ground list as a guest."
+    Assert-Equal -Actual $result.Success -Expected $true -Message "Barbarian should be able to win a guest ground duel."
+    Assert-Equal -Actual $result.RewardCopper -Expected 45 -Message "Guest duel purse should be modest compared with Fighter armored duel purses."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($beforeCopper + 45) -Message "Barbarian guest duel purse should be added to coin."
+    Assert-Equal -Actual $status.GuestWins -Expected 1 -Message "Barbarian duel should track as a guest win."
+    Assert-Equal -Actual $status.DuelWins -Expected 0 -Message "Barbarian guest duel should not advance Fighter duel wins."
+    Assert-Equal -Actual $status.PatronAttention -Expected 0 -Message "Barbarian guest duel should not build Fighter patron attention."
 }
 
 function Test-ClassSelectionCanChooseFighter {
@@ -336,6 +385,8 @@ Test-MountedJoustingRequiresHorseAndTourneyArmor
 Test-MountedJoustingRequiresLevelFour
 Test-MountedJoustingPassesCanWin
 Test-MountedJoustingPassesCanLose
+Test-BardCanTryOpenTourneySquireSpar
+Test-BarbarianCanTryOpenTourneyGroundDuel
 Test-ClassSelectionCanChooseFighter
 
 Write-Host "Fighter tests passed." -ForegroundColor Green

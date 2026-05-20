@@ -1457,6 +1457,33 @@ function Update-BardPerformanceVenueRecord {
     return $record
 }
 
+function Get-BardPerformancePatronBonusCopper {
+    param(
+        $Game,
+        [string]$VenueId,
+        [string]$Outcome
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $Outcome -eq "Poor") {
+        return 0
+    }
+
+    switch ($VenueId) {
+        "silver_kettle_stage" {
+            if ([bool]$Game.Town.InnFlags["SilverKettleArtistWelcome"] -or [string]$Game.Town.Relationships["MerchantPatron"] -eq "Favorable") {
+                return 30
+            }
+        }
+        "private_patron_salons" {
+            if ([bool]$Game.Town.InnFlags["SilverKettlePrivateInvite"]) {
+                return 50
+            }
+        }
+    }
+
+    return 0
+}
+
 function Get-BardPerformanceRecognitionText {
     param(
         $Game,
@@ -1622,6 +1649,12 @@ function Resolve-BardPerformance {
     if ($permitRewardCopper -gt 0 -and $outcome -ne "Poor") {
         $rewardCopper += $permitRewardCopper
         Write-EmphasisLine -Text "Belor's market permit keeps the wardens off the set and the tip hat fuller." -Color "Yellow"
+    }
+
+    $patronBonusCopper = Get-BardPerformancePatronBonusCopper -Game $Game -VenueId $VenueId -Outcome $outcome
+    if ($patronBonusCopper -gt 0) {
+        $rewardCopper += $patronBonusCopper
+        Write-EmphasisLine -Text "Patron attention turns the set into paid upper-room work instead of loose tips." -Color "Yellow"
     }
 
     Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $rewardCopper | Out-Null

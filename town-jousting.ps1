@@ -1,4 +1,5 @@
 # Fighter-facing arena scaffolding: foot lists, patron attention, and first-pass mounted jousting.
+# Other heroes can test the open ground lists, but the mounted/patron path remains Fighter-led.
 
 function Initialize-JoustingState {
     param($Game)
@@ -18,6 +19,8 @@ function Initialize-JoustingState {
         @{ Key = "SquireLosses"; Value = 0 },
         @{ Key = "DuelWins"; Value = 0 },
         @{ Key = "DuelLosses"; Value = 0 },
+        @{ Key = "GuestWins"; Value = 0 },
+        @{ Key = "GuestLosses"; Value = 0 },
         @{ Key = "MountedWins"; Value = 0 },
         @{ Key = "MountedLosses"; Value = 0 },
         @{ Key = "PatronAttention"; Value = 0 },
@@ -31,10 +34,102 @@ function Initialize-JoustingState {
     }
 }
 
+function Test-HeroHasFighterTourneyPath {
+    param($Game)
+
+    return ($null -ne $Game -and $null -ne $Game.Hero -and $Game.Hero.Class -eq "Fighter")
+}
+
+function Add-TourneyPurse {
+    param(
+        $Game,
+        [int]$Copper
+    )
+
+    $purseCopper = [Math]::Max(0, $Copper)
+    if ($purseCopper -gt 0) {
+        Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $purseCopper | Out-Null
+    }
+
+    return $purseCopper
+}
+
+function Get-TourneySquirePurseCopper {
+    param(
+        [bool]$Success,
+        [int]$RollTotal = 0
+    )
+
+    if ($Success) {
+        return 40
+    }
+
+    if ($RollTotal -ge 12) {
+        return 10
+    }
+
+    return 0
+}
+
+function Get-TourneyDuelPurseCopper {
+    param(
+        $Game,
+        [bool]$Success,
+        [int]$HeroScore = 0
+    )
+
+    if ($Success) {
+        $purse = 100
+        if ($null -ne $Game -and $null -ne $Game.Town -and $null -ne $Game.Town.Jousting -and [bool]$Game.Town.Jousting.PresentationMade) {
+            $purse += 50
+        }
+
+        return $purse
+    }
+
+    if ($HeroScore -gt 0) {
+        return 25
+    }
+
+    return 0
+}
+
+function Get-MountedJoustingPurseCopper {
+    param(
+        $Game,
+        [bool]$Success,
+        [int]$HeroScore = 0
+    )
+
+    if ($Success) {
+        $purse = 180
+        if ($null -ne $Game -and $null -ne $Game.Town -and $null -ne $Game.Town.Jousting -and [bool]$Game.Town.Jousting.PresentationMade) {
+            $purse += 70
+        }
+
+        return $purse
+    }
+
+    if ($HeroScore -gt 0) {
+        return 40
+    }
+
+    return 0
+}
+
 function Get-JoustingStandingTitle {
     param($Game)
 
     Initialize-JoustingState -Game $Game
+
+    if (-not (Test-HeroHasFighterTourneyPath -Game $Game)) {
+        if ([int]$Game.Town.Jousting.GuestWins -gt 0) {
+            return "Guest Challenger"
+        }
+
+        return "Guest of the Lists"
+    }
+
     $mountedRequirements = Get-MountedJoustingRequirements -Game $Game
 
     if ([int]$Game.Town.Jousting.MountedWins -ge 3) {
@@ -118,6 +213,8 @@ function Get-HeroJoustingStatus {
         SquireLosses = [int]$Game.Town.Jousting.SquireLosses
         DuelWins = [int]$Game.Town.Jousting.DuelWins
         DuelLosses = [int]$Game.Town.Jousting.DuelLosses
+        GuestWins = [int]$Game.Town.Jousting.GuestWins
+        GuestLosses = [int]$Game.Town.Jousting.GuestLosses
         MountedWins = [int]$Game.Town.Jousting.MountedWins
         MountedLosses = [int]$Game.Town.Jousting.MountedLosses
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
@@ -312,8 +409,12 @@ function Get-JoustingArenaPreviewText {
     $status = Get-HeroJoustingStatus -Game $Game
     $mountedRequirements = Get-MountedJoustingRequirements -Game $Game
 
-    if ($null -eq $Game -or $Game.Hero.Class -ne "Fighter") {
-        return "The tourney ground is not ready to make room for {hero} yet. For now the lists are a rumor of polished shields, horse sweat, and families who only notice heroes once they look like status."
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
+        return "The tourney ground is quiet without a proper challenger to place in the sand."
+    }
+
+    if (-not (Test-HeroHasFighterTourneyPath -Game $Game)) {
+        return "{hero} can step into the open tourney lists as a guest challenger. The marshals will allow light squire sparring and a blunted ground duel for coin and curiosity, but patron presentation and mounted jousting remain reserved for heroes pursuing the knightly path."
     }
 
     if ($mountedRequirements.CanEnter) {
@@ -592,8 +693,12 @@ function Get-TourneyGroundDuelTechniqueSummary {
 function Get-TourneyGroundDuelPreviewText {
     param($Game)
 
-    if ($null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -ne "Fighter") {
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
         return "The armed tourney ring is not ready to make room for this hero yet."
+    }
+
+    if (-not (Test-HeroHasFighterTourneyPath -Game $Game)) {
+        return "The open ground list lets a guest try blunted weapons under a marshal's eye. A win proves nerve and earns a modest purse, but it does not become patron attention, knightly backing, or mounted-list eligibility."
     }
 
     Initialize-JoustingState -Game $Game
@@ -612,7 +717,7 @@ function Resolve-TourneyGroundDuel {
         [int[]]$OpponentRolls = @()
     )
 
-    if ($null -eq $Game -or $null -eq $Game.Hero -or $Game.Hero.Class -ne "Fighter") {
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
         return [PSCustomObject]@{
             Success = $false
             Message = "The armed tourney ring is not ready to make room for this hero yet."
@@ -621,6 +726,7 @@ function Resolve-TourneyGroundDuel {
     }
 
     Initialize-JoustingState -Game $Game
+    $hasFighterPath = Test-HeroHasFighterTourneyPath -Game $Game
     $techniqueSummary = Get-TourneyGroundDuelTechniqueSummary -Game $Game -Technique $Technique
 
     if (-not $techniqueSummary.CanUse) {
@@ -633,7 +739,7 @@ function Resolve-TourneyGroundDuel {
     }
 
     $opponent = Get-TourneyGroundDuelOpponent -Game $Game -OpponentId $OpponentId
-    $introText = Get-TourneyDuelOpponentIntro -Hero $Game.Hero -Opponent $opponent
+    $introText = if ($hasFighterPath) { Get-TourneyDuelOpponentIntro -Hero $Game.Hero -Opponent $opponent } else { Resolve-HeroNarrativeText -Text $opponent.Intro -Hero $Game.Hero }
     $weapon = Get-HeroWeaponProfile -Hero $Game.Hero
     $heroArmorClass = Get-HeroArmorClass -Hero $Game.Hero
     $heroScore = 0
@@ -666,21 +772,30 @@ function Resolve-TourneyGroundDuel {
     $Game.Town.Jousting.Visits = [int]$Game.Town.Jousting.Visits + 1
 
     if ($heroWon) {
-        $updatedRecord = Update-HeroTourneyDuelRivalryRecord -Hero $Game.Hero -Opponent $opponent -HeroWon $true
-        $rivalOutcome = Get-TourneyDuelRivalOutcomeText -Hero $Game.Hero -Opponent $opponent -Record $updatedRecord -HeroWon $true
-        $Game.Town.Jousting.DuelWins = [int]$Game.Town.Jousting.DuelWins + 1
-        $Game.Town.Jousting.SquireWins = [int]$Game.Town.Jousting.SquireWins + 1
-        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 2 + [int]$techniqueSummary.PatronBonus
-        $Game.Town.Relationships["TourneyGround"] = "Duelist"
+        $updatedRecord = $null
+        $rivalOutcome = ""
+        if ($hasFighterPath) {
+            $updatedRecord = Update-HeroTourneyDuelRivalryRecord -Hero $Game.Hero -Opponent $opponent -HeroWon $true
+            $rivalOutcome = Get-TourneyDuelRivalOutcomeText -Hero $Game.Hero -Opponent $opponent -Record $updatedRecord -HeroWon $true
+            $Game.Town.Jousting.DuelWins = [int]$Game.Town.Jousting.DuelWins + 1
+            $Game.Town.Jousting.SquireWins = [int]$Game.Town.Jousting.SquireWins + 1
+            $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 2 + [int]$techniqueSummary.PatronBonus
+            $Game.Town.Relationships["TourneyGround"] = "Duelist"
+        }
+        else {
+            $Game.Town.Jousting.GuestWins = [int]$Game.Town.Jousting.GuestWins + 1
+            $Game.Town.Relationships["TourneyGround"] = "Guest"
+        }
+        $purseCopper = Add-TourneyPurse -Game $Game -Copper $(if ($hasFighterPath) { Get-TourneyDuelPurseCopper -Game $Game -Success $true -HeroScore $heroScore } else { 45 })
 
         $shieldBashUnlocked = $false
-        if (-not [bool]$Game.Town.Jousting.ShieldBashUnlocked -and [int]$Game.Town.Jousting.DuelWins -ge 3 -and (Test-HeroHasEquippedShield -Hero $Game.Hero)) {
+        if ($hasFighterPath -and -not [bool]$Game.Town.Jousting.ShieldBashUnlocked -and [int]$Game.Town.Jousting.DuelWins -ge 3 -and (Test-HeroHasEquippedShield -Hero $Game.Hero)) {
             $Game.Town.Jousting.ShieldBashUnlocked = $true
             $shieldBashUnlocked = $true
             $Game.Town.StreetFlags["ShieldBashUnlocked"] = $true
         }
 
-        if ([int]$Game.Town.Jousting.PatronAttention -ge 6) {
+        if ($hasFighterPath -and [int]$Game.Town.Jousting.PatronAttention -ge 6) {
             $Game.Town.Relationships["TourneyPatrons"] = "Watching"
             $Game.Town.StreetFlags["TourneyPatronAttentionUnlocked"] = $true
             $Game.Town.Jousting.LastPatronMilestone = [Math]::Max([int]$Game.Town.Jousting.LastPatronMilestone, 6)
@@ -691,7 +806,7 @@ function Resolve-TourneyGroundDuel {
             Opponent = $opponent.Name
             IntroText = $introText
             Technique = $techniqueSummary.Name
-            Message = if ($shieldBashUnlocked) { "{hero} wins the armored duel and the marshal finally nods at the shield work. Shield Bash is no longer a trick; it is trained technique." } else { "{hero} wins the armored duel by making $($weapon.Name) and armor discipline look like one clean argument." }
+            Message = if ($shieldBashUnlocked) { "{hero} wins the armored duel and the marshal finally nods at the shield work. Shield Bash is no longer a trick; it is trained technique." } elseif ($hasFighterPath) { "{hero} wins the armored duel by making $($weapon.Name) and armor discipline look like one clean argument." } else { "{hero} wins the guest duel cleanly enough that the marshal allows the purse, even if the rail treats it as sport rather than sponsorship." }
             RivalOutcomeText = $rivalOutcome
             ExchangeLog = $exchangeTexts
             HeroScore = $heroScore
@@ -702,24 +817,33 @@ function Resolve-TourneyGroundDuel {
             PatronAttention = [int]$Game.Town.Jousting.PatronAttention
             ShieldBashUnlocked = [bool]$Game.Town.Jousting.ShieldBashUnlocked
             Reputation = Get-JoustingStandingTitle -Game $Game
+            RewardCopper = $purseCopper
         }
     }
 
-    $updatedRecord = Update-HeroTourneyDuelRivalryRecord -Hero $Game.Hero -Opponent $opponent -HeroWon $false
-    $rivalOutcome = Get-TourneyDuelRivalOutcomeText -Hero $Game.Hero -Opponent $opponent -Record $updatedRecord -HeroWon $false
-    $Game.Town.Jousting.DuelLosses = [int]$Game.Town.Jousting.DuelLosses + 1
-    $Game.Town.Jousting.SquireLosses = [int]$Game.Town.Jousting.SquireLosses + 1
+    $updatedRecord = $null
+    $rivalOutcome = ""
+    if ($hasFighterPath) {
+        $updatedRecord = Update-HeroTourneyDuelRivalryRecord -Hero $Game.Hero -Opponent $opponent -HeroWon $false
+        $rivalOutcome = Get-TourneyDuelRivalOutcomeText -Hero $Game.Hero -Opponent $opponent -Record $updatedRecord -HeroWon $false
+        $Game.Town.Jousting.DuelLosses = [int]$Game.Town.Jousting.DuelLosses + 1
+        $Game.Town.Jousting.SquireLosses = [int]$Game.Town.Jousting.SquireLosses + 1
+    }
+    else {
+        $Game.Town.Jousting.GuestLosses = [int]$Game.Town.Jousting.GuestLosses + 1
+    }
 
-    if ($heroScore -gt 0) {
+    if ($hasFighterPath -and $heroScore -gt 0) {
         $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 1
     }
+    $purseCopper = Add-TourneyPurse -Game $Game -Copper $(if ($hasFighterPath) { Get-TourneyDuelPurseCopper -Game $Game -Success $false -HeroScore $heroScore } elseif ($heroScore -gt 0) { 15 } else { 0 })
 
     return [PSCustomObject]@{
         Success = $false
         Opponent = $opponent.Name
         IntroText = $introText
         Technique = $techniqueSummary.Name
-        Message = "{hero} loses the armored duel on points. The marshal calls it clean, which somehow makes it more irritating."
+        Message = if ($hasFighterPath) { "{hero} loses the armored duel on points. The marshal calls it clean, which somehow makes it more irritating." } else { "{hero} loses the guest duel on points. The marshal keeps it courteous, but the rail has already moved on to the next formal card." }
         RivalOutcomeText = $rivalOutcome
         ExchangeLog = $exchangeTexts
         HeroScore = $heroScore
@@ -730,6 +854,7 @@ function Resolve-TourneyGroundDuel {
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
         ShieldBashUnlocked = [bool]$Game.Town.Jousting.ShieldBashUnlocked
         Reputation = Get-JoustingStandingTitle -Game $Game
+        RewardCopper = $purseCopper
     }
 }
 
@@ -965,6 +1090,7 @@ function Resolve-MountedJoustingPasses {
         $Game.Town.Jousting.MountedWins = [int]$Game.Town.Jousting.MountedWins + 1
         $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + $totalPatronBonus
         $Game.Town.Relationships["TourneyPatrons"] = "Mounted Watching"
+        $purseCopper = Add-TourneyPurse -Game $Game -Copper (Get-MountedJoustingPurseCopper -Game $Game -Success $true -HeroScore $heroScore)
         return [PSCustomObject]@{
             Success = $true
             Opponent = $opponent.Name
@@ -979,6 +1105,7 @@ function Resolve-MountedJoustingPasses {
             MountedLosses = [int]$Game.Town.Jousting.MountedLosses
             PatronAttention = [int]$Game.Town.Jousting.PatronAttention
             Reputation = Get-JoustingStandingTitle -Game $Game
+            RewardCopper = $purseCopper
         }
     }
 
@@ -986,6 +1113,7 @@ function Resolve-MountedJoustingPasses {
     if ($heroScore -gt 0) {
         $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 1
     }
+    $purseCopper = Add-TourneyPurse -Game $Game -Copper (Get-MountedJoustingPurseCopper -Game $Game -Success $false -HeroScore $heroScore)
 
     return [PSCustomObject]@{
         Success = $false
@@ -1001,6 +1129,7 @@ function Resolve-MountedJoustingPasses {
         MountedLosses = [int]$Game.Town.Jousting.MountedLosses
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
         Reputation = Get-JoustingStandingTitle -Game $Game
+        RewardCopper = $purseCopper
     }
 }
 
@@ -1010,7 +1139,7 @@ function Resolve-JoustingArenaSquireSpar {
         [int]$Roll = 0
     )
 
-    if ($null -eq $Game -or $Game.Hero.Class -ne "Fighter") {
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
         return [PSCustomObject]@{
             Success = $false
             Message = "The arena has no proper card for this hero yet."
@@ -1023,6 +1152,7 @@ function Resolve-JoustingArenaSquireSpar {
     }
 
     Initialize-JoustingState -Game $Game
+    $hasFighterPath = Test-HeroHasFighterTourneyPath -Game $Game
     $constitutionModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "CON"
     $strengthModifier = Get-HeroAbilityModifier -Hero $Game.Hero -Ability "STR"
     $total = $Roll + $constitutionModifier + $strengthModifier
@@ -1032,11 +1162,18 @@ function Resolve-JoustingArenaSquireSpar {
     $patronAttentionBefore = [int]$Game.Town.Jousting.PatronAttention
 
     if ($success) {
-        $Game.Town.Jousting.SquireWins = [int]$Game.Town.Jousting.SquireWins + 1
-        $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 2
-        $Game.Town.Relationships["TourneyGround"] = "Noticed"
+        if ($hasFighterPath) {
+            $Game.Town.Jousting.SquireWins = [int]$Game.Town.Jousting.SquireWins + 1
+            $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 2
+            $Game.Town.Relationships["TourneyGround"] = "Noticed"
+        }
+        else {
+            $Game.Town.Jousting.GuestWins = [int]$Game.Town.Jousting.GuestWins + 1
+            $Game.Town.Relationships["TourneyGround"] = "Guest"
+        }
+        $purseCopper = Add-TourneyPurse -Game $Game -Copper $(if ($hasFighterPath) { Get-TourneySquirePurseCopper -Success $true -RollTotal $total } else { 20 })
 
-        $milestoneUnlocked = $patronAttentionBefore -lt 6 -and [int]$Game.Town.Jousting.PatronAttention -ge 6
+        $milestoneUnlocked = $hasFighterPath -and $patronAttentionBefore -lt 6 -and [int]$Game.Town.Jousting.PatronAttention -ge 6
         if ($milestoneUnlocked) {
             $Game.Town.Relationships["TourneyPatrons"] = "Watching"
             $Game.Town.StreetFlags["TourneyPatronAttentionUnlocked"] = $true
@@ -1045,27 +1182,35 @@ function Resolve-JoustingArenaSquireSpar {
 
         return [PSCustomObject]@{
             Success = $true
-            Message = if ($milestoneUnlocked) { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a clerk at the upper rail asks for {his} name. That is not knighthood. It is better than anonymity." } else { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a watching knight stops pretending not to care." }
+            Message = if ($milestoneUnlocked) { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a clerk at the upper rail asks for {his} name. That is not knighthood. It is better than anonymity." } elseif ($hasFighterPath) { "{hero} holds the shield line, answers with the shortsword, and wins the exchange cleanly enough that a watching knight stops pretending not to care." } else { "{hero} wins the guest spar cleanly. The squires laugh, the marshal pays the small purse, and the rail treats it as a lively interruption rather than a formal prospect." }
             Reputation = Get-JoustingStandingTitle -Game $Game
             RollTotal = $total
             PatronAttention = [int]$Game.Town.Jousting.PatronAttention
             MilestoneUnlocked = $milestoneUnlocked
+            RewardCopper = $purseCopper
         }
     }
 
-    $Game.Town.Jousting.SquireLosses = [int]$Game.Town.Jousting.SquireLosses + 1
+    if ($hasFighterPath) {
+        $Game.Town.Jousting.SquireLosses = [int]$Game.Town.Jousting.SquireLosses + 1
+    }
+    else {
+        $Game.Town.Jousting.GuestLosses = [int]$Game.Town.Jousting.GuestLosses + 1
+    }
 
-    if ($total -ge 12) {
+    if ($hasFighterPath -and $total -ge 12) {
         $Game.Town.Jousting.PatronAttention = [int]$Game.Town.Jousting.PatronAttention + 1
     }
+    $purseCopper = Add-TourneyPurse -Game $Game -Copper $(if ($hasFighterPath) { Get-TourneySquirePurseCopper -Success $false -RollTotal $total } elseif ($total -ge 12) { 5 } else { 0 })
 
     return [PSCustomObject]@{
         Success = $false
-        Message = "{hero} stays standing, which matters, but the exchange ends with sand on the knees and a squire's polite little bow that stings worse than mockery."
+        Message = if ($hasFighterPath) { "{hero} stays standing, which matters, but the exchange ends with sand on the knees and a squire's polite little bow that stings worse than mockery." } else { "{hero} stays standing through the guest spar, but the last touch belongs to the squire and the marshal calls the exchange there." }
         Reputation = Get-JoustingStandingTitle -Game $Game
         RollTotal = $total
         PatronAttention = [int]$Game.Town.Jousting.PatronAttention
         MilestoneUnlocked = $false
+        RewardCopper = $purseCopper
     }
 }
 
@@ -1075,25 +1220,26 @@ function Start-JoustingArena {
     Write-SectionTitle -Text "Tourney Ground" -Color "Yellow"
     Write-TownTimeTracker -Game $Game -Area "Tourney Ground"
     Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingArenaPreviewText -Game $Game) -Hero $Game.Hero)
-
-    if ($Game.Hero.Class -ne "Fighter") {
-        Write-ColorLine ""
-        return
-    }
+    $hasFighterPath = Test-HeroHasFighterTourneyPath -Game $Game
 
     while ($true) {
         $status = Get-HeroJoustingStatus -Game $Game
         $horseText = if ($status.HasHorse) { "Owned" } else { "Needed" }
         $armorText = if ($status.HasTourneyArmor) { "Ready" } else { "Needs splint/plate" }
         $bashText = if ($status.ShieldBashUnlocked) { "Shield Bash" } else { "Shield Bash locked" }
-        Write-ColorLine "Arena Standing: $($status.Title) | Mounted: $($status.MountedWins)-$($status.MountedLosses) | Duel: $($status.DuelWins)-$($status.DuelLosses) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention) | $bashText | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
+        if ($hasFighterPath) {
+            Write-ColorLine "Arena Standing: $($status.Title) | Mounted: $($status.MountedWins)-$($status.MountedLosses) | Duel: $($status.DuelWins)-$($status.DuelLosses) | Squire: $($status.SquireWins)-$($status.SquireLosses) | Patron attention: $($status.PatronAttention) | $bashText | Horse: $horseText | Tourney armor: $armorText" "DarkYellow"
+        }
+        else {
+            Write-ColorLine "Arena Standing: $($status.Title) | Guest list: $($status.GuestWins)-$($status.GuestLosses) | Patron path: Fighter only | Mounted: Fighter only" "DarkYellow"
+        }
         Write-ColorLine ""
         Write-ColorLine "1. Enter an armored aspirant duel" "White"
         Write-ColorLine "2. Spar lightly against a squire" "White"
-        Write-ColorLine "3. Enter mounted jousting" $(if ($status.MountedReady) { "White" } else { "DarkGray" })
+        Write-ColorLine "3. Enter mounted jousting" $(if ($hasFighterPath -and $status.MountedReady) { "White" } else { "DarkGray" })
         Write-ColorLine "4. Ask what the patrons think" "White"
         Write-ColorLine "5. Ask about mounted jousting" "White"
-        Write-ColorLine "6. Present colors to the patron rail" "White"
+        Write-ColorLine "6. Present colors to the patron rail" $(if ($hasFighterPath) { "White" } else { "DarkGray" })
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
 
@@ -1124,16 +1270,28 @@ function Start-JoustingArena {
                         Write-ColorLine $exchange "DarkGray"
                     }
                 }
+                if ($null -ne $result.PSObject.Properties["RewardCopper"] -and [int]$result.RewardCopper -gt 0) {
+                    Write-EmphasisLine -Text "Tourney purse: $(Convert-CopperToCurrencyText -Copper ([int]$result.RewardCopper))." -Color "Yellow"
+                }
                 Write-EmphasisLine -Text "Duel record: $($result.DuelWins)-$($result.DuelLosses). Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)." -Color "Yellow"
                 Write-ColorLine ""
             }
             "2" {
                 $result = Resolve-JoustingArenaSquireSpar -Game $Game
                 Write-Scene (Resolve-HeroNarrativeText -Text $result.Message -Hero $Game.Hero)
+                if ($null -ne $result.PSObject.Properties["RewardCopper"] -and [int]$result.RewardCopper -gt 0) {
+                    Write-EmphasisLine -Text "Squire purse: $(Convert-CopperToCurrencyText -Copper ([int]$result.RewardCopper))." -Color "Yellow"
+                }
                 Write-EmphasisLine -Text "Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)." -Color "Yellow"
                 Write-ColorLine ""
             }
             "3" {
+                if (-not $hasFighterPath) {
+                    Write-EmphasisLine -Text "Mounted jousting is part of the Fighter tourney path; guest challengers can use the ground lists only." -Color "Yellow"
+                    Write-ColorLine ""
+                    continue
+                }
+
                 $requirements = Get-MountedJoustingRequirements -Game $Game
                 if (-not $requirements.CanEnter) {
                     Write-EmphasisLine -Text "Mounted jousting requires $($requirements.MissingText)." -Color "Yellow"
@@ -1156,20 +1314,33 @@ function Start-JoustingArena {
                 foreach ($exchange in @($result.ExchangeLog)) {
                     Write-ColorLine $exchange "DarkGray"
                 }
+                if ($null -ne $result.PSObject.Properties["RewardCopper"] -and [int]$result.RewardCopper -gt 0) {
+                    Write-EmphasisLine -Text "Mounted purse: $(Convert-CopperToCurrencyText -Copper ([int]$result.RewardCopper))." -Color "Yellow"
+                }
                 Write-EmphasisLine -Text "Mounted record: $($result.MountedWins)-$($result.MountedLosses). Arena standing: $($result.Reputation). Patron attention: $($result.PatronAttention)." -Color "Yellow"
                 Write-ColorLine ""
             }
             "4" {
-                Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingPatronAttentionText -Game $Game) -Hero $Game.Hero)
+                if ($hasFighterPath) {
+                    Write-Scene (Resolve-HeroNarrativeText -Text (Get-JoustingPatronAttentionText -Game $Game) -Hero $Game.Hero)
+                }
+                else {
+                    Write-Scene "The upper rail will applaud a guest's good exchange, but it does not write guest names into patron books. That kind of attention belongs to the knightly path."
+                }
                 Write-ColorLine ""
             }
             "5" {
                 $requirements = Get-MountedJoustingRequirements -Game $Game
-                Write-Scene "The list-master taps a lance rack with two fingers. 'Level, horse, splint or plate. Then we give you a practice lance and see whether your shield arm belongs in a tourney or only in an alley.'"
+                if ($hasFighterPath) {
+                    Write-Scene "The list-master taps a lance rack with two fingers. 'Level, horse, splint or plate. Then we give you a practice lance and see whether your shield arm belongs in a tourney or only in an alley.'"
+                }
+                else {
+                    Write-Scene "The list-master shakes his head toward the lance rack. Guest challengers can test the sand, not the mounted lane. The horse-and-heraldry path is for fighters trying to become tourney prospects."
+                }
                 if ($requirements.CanEnter) {
                     Write-EmphasisLine -Text "Mounted jousting ready: choose the mounted list and ride a three-pass match." -Color "Yellow"
                 }
-                else {
+                elseif ($hasFighterPath) {
                     Write-EmphasisLine -Text "Future unlock requirements: $($requirements.MissingText)." -Color "Yellow"
                 }
                 Write-ColorLine ""
