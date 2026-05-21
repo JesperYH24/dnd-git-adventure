@@ -2330,144 +2330,28 @@ function Start-NightCourierInterceptQuest {
         Write-Scene "'Runner moves light, keeps to shadow, and never uses the same lane twice unless he thinks no one is watching,' Belor says. 'The clerk's books say messages are moving with the goods. Tonight we make that runner prove it.'"
     }
     Write-ColorLine ""
-    Write-ColorLine "1. Set a hard ambush and block the lane with brute presence (STR)" "White"
-    Write-ColorLine "2. Trail the courier quietly until he reveals the handoff point (WIS)" "White"
-    Write-ColorLine "3. Step into the open and force a panicked mistake (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Draw the courier off-rhythm with a staged street performance (Performance)" "White"
+
+    $approaches = @(
+        (New-QuestApproachOption -Key "ambush" -Label "Set a hard ambush and block the narrow lane" -Ability "STR" -Skill "Athletics" -DC 11 -ActionText "{hero} plants himself in the narrowest part of the lane and turns surprise into a wall of muscle." -SuccessText "The courier freezes for half a heartbeat too long. {hero} gets a hand on him, tears the satchel free, and sends him running empty into the dark." -FailureText "The courier slips away clean. {hero} keeps only a wax strip and a guessed lane pattern, enough to prove there is a courier game but not enough to own the route." -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -HintText "A hard ambush can end the chase before it starts.")
+        (New-QuestApproachOption -Key "trail" -Label "Trail the courier by echoes and reflections" -Ability "WIS" -Skill "Perception" -DC 11 -ActionText "{hero} hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible." -SuccessText "The trail leads to a hurried exchange beneath a shuttered stair. {hero} does not get the man, but he gets the route and the signal mark." -FailureText "The courier senses something and breaks early. {hero} learns which mark to watch for, but not the full route." -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -HintText "Careful observation can reveal the handoff without spooking it.")
+        (New-QuestApproachOption -Key "challenge" -Label "Step into the lantern light and force panic" -Ability "CHA" -Skill "Intimidation" -DC 10 -ActionText "{hero} steps out under the lantern light and barks a challenge sharp enough to turn speed into panic." -SuccessText "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in {hero}'s hands." -FailureText "The courier still escapes, and {hero} gets only a signal token and another glimpse of the same marked network." -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -HintText "A public challenge may make the courier choose the wrong exit.")
+        (New-QuestApproachOption -Key "performance" -Label "Draw the courier off-rhythm with a staged street performance" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window." -SuccessText "The courier misreads the lane, slows for the wrong doorway, and loses both message case and route advantage in one bad step." -FailureText "The ploy buys a glimpse of the signal marks, but the courier still slips the net before the handoff is exposed." -Class "Bard" -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -ApproachKey "SoftPowerStreetRhythm" -HintText "A Bard can make the street's rhythm lie for him.")
+        (New-QuestApproachOption -Key "run-down" -Label "Run the courier down by sheer pursuit" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the runner head-on, forcing the whole chase into a test of lungs, legs, and stubbornness." -SuccessText "The courier cannot shake him. By the time the runner stumbles, the message case, route signs, and one bad handoff point all belong to the watch." -FailureText "The runner slips away at the last turn, but not before dropping a signal strip that proves the marked route is real." -Class "Barbarian" -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -ApproachKey "HardProofRunDownCourier" -HintText "A Barbarian can make distance lose the argument.")
+        (New-QuestApproachOption -Key "close-lane" -Label "Read the handoff pattern and close the lane without spooking it" -Ability "WIS" -Skill "Insight" -DC 10 -ActionText "$($Game.Hero.Name) reads the handoff pattern, waits for the courier to commit, and closes each exit only when the route has already betrayed itself." -SuccessText "The courier keeps running until the route itself disappears around him. The message case, handoff point, and signal marks all end up in watch hands." -FailureText "The courier slips one gap before the lane closes, but drops a signal strip that proves the marked route is real." -Class "Fighter" -SuccessFlag "FoundCourierRoute" -FailureFlag "FoundStreetCourierMark" -ApproachKey "CivicTrustClosedLane" -HintText "A Fighter can turn the route into a controlled checkpoint.")
+    )
+
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The courier's route is built on timing: a blind corner, a shuttered stair, and one fast handoff. The cleanest answer is to break the rhythm without announcing the trap too early." `
+        -ReadFailureText "{hero} can feel the courier route moving around him, but the exact handoff stays slippery until he commits." `
+        -QuestId "guard_night_courier"
+
+    if ([bool]$result.Success) {
+        $Game.Town.Relationships["Belor"] = "Trusting"
     }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Run the courier down and break the route open by sheer pursuit (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Read the handoff pattern and close the lane without spooking it (WIS)" "White"
-    }
-    Write-ColorLine "" 
 
-    $strongOutcome = $false
-
-    while ($true) {
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} plants himself in the narrowest part of the lane and turns surprise into a wall of muscle."
-
-                if ($success) {
-                    Write-Scene "The courier freezes for half a heartbeat too long. {hero} gets a hand on him, tears the satchel free, and sends him running empty into the dark."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                    $Game.Town.Relationships["Belor"] = "Trusting"
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The courier slips away clean. {hero} keeps only a wax strip and a guessed lane pattern, enough to prove there is a courier game but not enough to own the route."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible." -Skill "Perception"
-
-                if ($success) {
-                    Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. {hero} does not get the man, but he gets the route and the signal mark."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The courier senses something and breaks early. {hero} learns which mark to watch for, but not the full route."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} steps out under the lantern light and barks a challenge sharp enough to turn speed into panic." -Skill "Intimidation"
-
-                if ($success) {
-                    Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in {hero}'s hands."
-                    $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The courier still escapes, and {hero} gets only a signal token and another glimpse of the same marked network."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the lane into cover, striking up just enough noise and rhythm to pull the courier into the wrong window." -CheckTag "Performance"
-
-                    if ($success) {
-                        Write-Scene "The courier misreads the lane, slows for the wrong doorway, and loses both message case and route advantage in one bad step."
-                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        $Game.Town.Relationships["Belor"] = "Trusting"
-                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "SoftPowerStreetRhythm"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The ploy buys a glimpse of the signal marks, but the courier still slips the net before the handoff is exposed."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the runner head-on, forcing the whole chase into a test of lungs, legs, and stubbornness."
-
-                    if ($success) {
-                        Write-Scene "The courier cannot shake him. By the time the runner stumbles, the message case, route signs, and one bad handoff point all belong to the watch."
-                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        $Game.Town.Relationships["Belor"] = "Trusting"
-                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "HardProofRunDownCourier"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The runner slips away at the last turn, but not before dropping a signal strip that proves the marked route is real."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the handoff pattern, waits for the courier to commit, and closes each exit only when the route has already betrayed itself."
-
-                    if ($success) {
-                        Write-Scene "The courier keeps running until the route itself disappears around him. The message case, handoff point, and signal marks all end up in watch hands."
-                        $Game.Town.StoryFlags["FoundCourierRoute"] = $true
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        $Game.Town.Relationships["Belor"] = "Trusting"
-                        Register-ClassStoryApproach -Game $Game -QuestId "guard_night_courier" -ApproachKey "CivicTrustClosedLane"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The courier slips one gap before the lane closes, but drops a signal strip that proves the marked route is real."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $progressText = if ($strongOutcome) {
         "Story Progress: $($Game.Hero.Name) has identified a real courier route feeding the understreet network."
@@ -2537,141 +2421,28 @@ function Start-WarehouseLedgerRecoveryQuest {
     }
     Write-Scene "The warehouse office is dark, shuttered, and recently searched. Someone knew the papers were worth hiding."
     Write-ColorLine ""
-    Write-ColorLine "1. Force the office lock and search fast (STR)" "White"
-    Write-ColorLine "2. Piece the hiding place together from the disturbed room (WIS)" "White"
-    Write-ColorLine "3. Pressure the night clerk into giving up where the ledger was moved (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Walk the clerk through a polished lie until he corrects it for you (CHA)" "White"
+
+    $approaches = @(
+        (New-QuestApproachOption -Key "force-lock" -Label "Force the office lock and search fast" -Ability "STR" -Skill "Athletics" -DC 11 -ActionText "{hero} forces the office before anyone can come back for the papers." -SuccessText "Behind a false shelf panel {hero} finds the true warehouse ledger, complete with hidden marks and payout names." -FailureText "The search turns rough. {hero} saves fragments and margin codes, but not the clean ledger itself." -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -HintText "Speed and force can beat whoever is coming back for the papers.")
+        (New-QuestApproachOption -Key "read-room" -Label "Piece the hiding place together from the disturbed room" -Ability "WIS" -Skill "Investigation" -DC 12 -ActionText "{hero} slows down and reads the office by what has been moved, scrubbed, or disturbed too recently." -SuccessText "A dragged stool and fresh dust line lead {hero} straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain." -FailureText "The room gives up only fragments. {hero} preserves enough to keep the suspicion alive, but not enough to own the case." -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -HintText "The room has already been searched; the mistake is in what moved.")
+        (New-QuestApproachOption -Key "pressure-clerk" -Label "Pressure the night clerk into naming the hiding place" -Ability "CHA" -Skill "Intimidation" -DC 11 -ActionText "{hero} corners the night clerk with the kind of flat certainty that makes lies feel expensive." -SuccessText "The clerk breaks and points {hero} to the hidden compartment. The ledger inside names the warehouse route and the hand above it." -FailureText "The clerk lies first and folds late. {hero} comes away with scraps and irregular entries, not the clean ledger he wanted." -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -HintText "The clerk knows where the ledger moved, but fear has to be aimed carefully.")
+        (New-QuestApproachOption -Key "corrected-lie" -Label "Walk the clerk through a polished lie until he corrects it" -Ability "CHA" -CheckTag "Social" -DC 10 -ActionText "$($Game.Hero.Name) feeds the clerk a polished false version of the books and waits for vanity and fear to make the man correct it." -SuccessText "The clerk snaps at the lie, then realizes too late that he has pointed straight at the hidden compartment and the real ledger inside." -FailureText "The clerk holds longer than expected. {hero} still comes away with scraps and accounting tells, but not the whole book." -Class "Bard" -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "SoftPowerCorrectedLie" -HintText "A Bard can make the clerk's pride correct the trap.")
+        (New-QuestApproachOption -Key "tear-office" -Label "Tear the office apart until the hiding place gives itself away" -Ability "STR" -Skill "Athletics" -DC 10 -ActionText "$($Game.Hero.Name) turns the office upside down with such force that the room starts confessing before the clerk does." -SuccessText "A false backing cracks under the search. Behind it sits the real ledger, still hidden with the names that tie the warehouse route to Serik's chain." -FailureText "The office comes apart noisily, and {hero} saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper." -Class "Barbarian" -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "HardProofOpenedOffice" -HintText "A Barbarian can make the room run out of places to hide.")
+        (New-QuestApproachOption -Key "account-pages" -Label "Make the clerk account for every moved page" -Ability "WIS" -Skill "Investigation" -DC 10 -ActionText "$($Game.Hero.Name) reads the disturbed office like a patrol scene, then makes the clerk explain every shelf that moved for the wrong reason." -SuccessText "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact." -FailureText "The room never fully yields, but the controlled search preserves fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper." -Class "Fighter" -SuccessFlag "SecuredLedgerEvidence" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "CivicTrustAccountedPages" -HintText "A Fighter can make each moved page testify.")
+    )
+
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The office has been searched by someone in a hurry. Fresh dust edges, a dragged stool, and the clerk's stiff posture all point toward the same false shelf." `
+        -ReadFailureText "The office is too disturbed to read cleanly at a glance. {hero} still sees enough to know the ledger is hidden, not gone." `
+        -QuestId "patron_warehouse_ledger"
+
+    if ([bool]$Game.Town.StoryFlags["SecuredLedgerEvidence"]) {
+        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
     }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Tear the office apart until the real hiding place gives itself away (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Read the disturbed office and make the clerk account for every moved page (WIS)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
-
-    while ($true) {
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} forces the office before anyone can come back for the papers."
-
-                if ($success) {
-                    Write-Scene "Behind a false shelf panel {hero} finds the true warehouse ledger, complete with hidden marks and payout names."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The search turns rough. {hero} saves fragments and margin codes, but not the clean ledger itself."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} slows down and reads the office by what has been moved, scrubbed, or disturbed too recently." -Skill "Investigation"
-
-                if ($success) {
-                    Write-Scene "A dragged stool and fresh dust line lead {hero} straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The room gives up only fragments. {hero} preserves enough to keep the suspicion alive, but not enough to own the case."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} corners the night clerk with the kind of flat certainty that makes lies feel expensive." -Skill "Intimidation"
-
-                if ($success) {
-                    Write-Scene "The clerk breaks and points {hero} to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
-                    $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The clerk lies first and folds late. {hero} comes away with scraps and irregular entries, not the clean ledger he wanted."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) feeds the clerk a polished false version of the books and waits for vanity and fear to make the man correct it." -CheckTag "Social"
-
-                    if ($success) {
-                        Write-Scene "The clerk snaps at the lie, then realizes too late that he has pointed straight at the hidden compartment and the real ledger inside."
-                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "SoftPowerCorrectedLie"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The clerk holds longer than expected. {hero} still comes away with scraps and accounting tells, but not the whole book."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) turns the office upside down with such force that the room starts confessing before the clerk does."
-
-                    if ($success) {
-                        Write-Scene "A false backing cracks under the search. Behind it sits the real ledger, still hidden with the names that tie the warehouse route to Serik's chain."
-                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "HardProofOpenedOffice"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The office comes apart noisily, and {hero} saves only fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the disturbed office like a patrol scene, then makes the clerk explain every shelf that moved for the wrong reason." -Skill "Investigation"
-
-                    if ($success) {
-                        Write-Scene "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact."
-                        $Game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_warehouse_ledger" -ApproachKey "CivicTrustAccountedPages"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The room never fully yields, but the controlled search preserves fragments, hidden marks, and enough disturbed records to prove the fraud runs deeper."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $progressText = if ($strongOutcome) {
         "Story Progress: $($Game.Hero.Name) now holds hard ledger evidence tying the city's missing goods to the understreet operation."

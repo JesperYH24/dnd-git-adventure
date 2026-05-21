@@ -304,7 +304,7 @@ function Test-NightCourierCompletesAndSetsCourierRoute {
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
 
     $global:RollDiceOverride = { param([int]$Sides) return 14 }
 
@@ -325,7 +325,7 @@ function Test-NightCourierWeakOutcomeOnlyFindsCourierMarks {
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
 
     $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
@@ -402,7 +402,7 @@ function Test-BardCanUseStreetPerformanceToCatchNightCourier {
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -422,7 +422,7 @@ function Test-BardCanTalkWarehouseClerkIntoCorrectingALie {
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
-    Use-ReadHostSequence -Values @("4", "2")
+    Use-ReadHostSequence -Values @("5", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -497,7 +497,7 @@ function Test-BarbarianCanRunDownNightCourier {
     $game.Town.StoryFlags["FoundStreetCourierMark"] = $true
 
     Accept-TownQuest -Game $game -QuestId "guard_night_courier" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -517,7 +517,7 @@ function Test-BarbarianCanRipWarehouseOfficeOpen {
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -567,7 +567,7 @@ function Test-WarehouseLedgerCompletesAndSecuresEvidence {
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
 
     $global:RollDiceOverride = { param([int]$Sides) return 16 }
 
@@ -589,7 +589,7 @@ function Test-WarehouseLedgerWeakOutcomeDoesNotOpenFinalTierByItself {
     $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
 
     Accept-TownQuest -Game $game -QuestId "patron_warehouse_ledger" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
 
     $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
