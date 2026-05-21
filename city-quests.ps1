@@ -1014,6 +1014,181 @@ function Resolve-NonCombatQuestCheckSkill {
     }
 }
 
+function New-QuestApproachOption {
+    param(
+        [string]$Key,
+        [string]$Label,
+        [string]$Ability,
+        [int]$DC,
+        [string]$ActionText,
+        [string]$SuccessText,
+        [string]$FailureText,
+        [string]$Skill = "",
+        [string]$CheckTag = "",
+        [string]$Class = "",
+        [string]$SuccessFlag = "",
+        [string]$FailureFlag = "",
+        [bool]$StrongOnSuccess = $true,
+        [string]$ApproachKey = "",
+        [string]$HintText = ""
+    )
+
+    return [PSCustomObject]@{
+        Key = $Key
+        Label = $Label
+        Ability = $Ability
+        Skill = $Skill
+        CheckTag = $CheckTag
+        DC = $DC
+        ActionText = $ActionText
+        SuccessText = $SuccessText
+        FailureText = $FailureText
+        Class = $Class
+        SuccessFlag = $SuccessFlag
+        FailureFlag = $FailureFlag
+        StrongOnSuccess = $StrongOnSuccess
+        ApproachKey = $ApproachKey
+        HintText = $HintText
+    }
+}
+
+function Get-QuestApproachCheckLabel {
+    param($Approach)
+
+    $skill = Resolve-NonCombatQuestCheckSkill -Ability $Approach.Ability -CheckTag $Approach.CheckTag -Skill $Approach.Skill
+
+    if (-not [string]::IsNullOrWhiteSpace($skill)) {
+        return "$skill ($($Approach.Ability))"
+    }
+
+    return $Approach.Ability
+}
+
+function Get-QuestApproachHeroScore {
+    param(
+        $Hero,
+        $Approach
+    )
+
+    $skill = Resolve-NonCombatQuestCheckSkill -Ability $Approach.Ability -CheckTag $Approach.CheckTag -Skill $Approach.Skill
+    $tag = if (-not [string]::IsNullOrWhiteSpace($skill)) { $skill } else { $Approach.CheckTag }
+    $profile = Get-HeroAbilityCheckModifier -Hero $Hero -Ability $Approach.Ability -CheckTag $tag
+
+    return [int]$profile.TotalModifier
+}
+
+function Show-QuestApproachReadHint {
+    param(
+        $Game,
+        [object[]]$Approaches,
+        [string]$SuccessText,
+        [string]$FailureText
+    )
+
+    $success = Start-NonCombatQuestCheck `
+        -Hero $Game.Hero `
+        -Ability "WIS" `
+        -Skill "Insight" `
+        -DC 10 `
+        -ActionText "Before committing, $($Game.Hero.Name) slows down and reads the scene for the cleanest opening."
+
+    if (-not $success) {
+        Write-Scene $FailureText
+        return
+    }
+
+    Write-Scene $SuccessText
+
+    $ranked = @($Approaches | Sort-Object @{ Expression = { $_.DC - (Get-QuestApproachHeroScore -Hero $Game.Hero -Approach $_) }; Ascending = $true })
+    $top = @($ranked | Select-Object -First 2)
+
+    foreach ($approach in $top) {
+        $score = Get-QuestApproachHeroScore -Hero $Game.Hero -Approach $approach
+        $label = Get-QuestApproachCheckLabel -Approach $approach
+        $hint = if ([string]::IsNullOrWhiteSpace($approach.HintText)) { $approach.Label } else { $approach.HintText }
+        Write-ColorLine "Promising path: $hint [$label, DC $($approach.DC), your modifier $(Format-AbilityModifier -Modifier $score)]" "DarkYellow"
+    }
+
+    Write-ColorLine ""
+}
+
+function Invoke-QuestApproachMenu {
+    param(
+        $Game,
+        [object[]]$Approaches,
+        [string]$ReadSuccessText,
+        [string]$ReadFailureText,
+        [string]$QuestId = ""
+    )
+
+    $availableApproaches = @($Approaches | Where-Object { [string]::IsNullOrWhiteSpace($_.Class) -or $_.Class -eq $Game.Hero.Class })
+    $hasReadScene = $true
+
+    while ($true) {
+        Write-ColorLine "1. Read the scene before choosing a method (Insight)" "White"
+        $index = 2
+
+        foreach ($approach in $availableApproaches) {
+            $label = Get-QuestApproachCheckLabel -Approach $approach
+            Write-ColorLine "$index. $($approach.Label) [$label]" "White"
+            $index++
+        }
+
+        Write-ColorLine ""
+        $choice = Read-Host "Choose"
+
+        if ($choice -eq "1" -and $hasReadScene) {
+            Show-QuestApproachReadHint -Game $Game -Approaches $availableApproaches -SuccessText $ReadSuccessText -FailureText $ReadFailureText
+            $hasReadScene = $false
+            continue
+        }
+
+        $chosenIndex = 0
+        if ([int]::TryParse($choice, [ref]$chosenIndex)) {
+            $approachOffset = $chosenIndex - 2
+
+            if ($approachOffset -ge 0 -and $approachOffset -lt $availableApproaches.Count) {
+                $approach = $availableApproaches[$approachOffset]
+                $success = Start-NonCombatQuestCheck `
+                    -Hero $Game.Hero `
+                    -Ability $approach.Ability `
+                    -DC $approach.DC `
+                    -ActionText $approach.ActionText `
+                    -CheckTag $approach.CheckTag `
+                    -Skill $approach.Skill
+
+                if ($success) {
+                    Write-Scene $approach.SuccessText
+
+                    if (-not [string]::IsNullOrWhiteSpace($approach.SuccessFlag)) {
+                        $Game.Town.StoryFlags[$approach.SuccessFlag] = $true
+                    }
+
+                    if (-not [string]::IsNullOrWhiteSpace($QuestId) -and -not [string]::IsNullOrWhiteSpace($approach.ApproachKey)) {
+                        Register-ClassStoryApproach -Game $Game -QuestId $QuestId -ApproachKey $approach.ApproachKey
+                    }
+                }
+                else {
+                    Write-Scene $approach.FailureText
+
+                    if (-not [string]::IsNullOrWhiteSpace($approach.FailureFlag)) {
+                        $Game.Town.StoryFlags[$approach.FailureFlag] = $true
+                    }
+                }
+
+                return [PSCustomObject]@{
+                    Success = $success
+                    StrongOutcome = ($success -and $approach.StrongOnSuccess)
+                    Approach = $approach
+                }
+            }
+        }
+
+        Write-ColorLine "Choose a listed option." "DarkYellow"
+        Write-ColorLine ""
+    }
+}
+
 function Register-ClassStoryApproach {
     param(
         $Game,
@@ -1898,139 +2073,24 @@ function Start-MissingHerbSatchelQuest {
     Write-Scene "The satchel turns up quickly enough on the old road, wedged under a splintered cart wheel beside scattered bundles of dried leaf."
     Write-Scene "A pair of hungry scavengers lurk nearby, more scared than cruel, and one of them keeps glancing at a chalk mark cut into the stones beside the road."
     Write-ColorLine ""
-    Write-ColorLine "1. Intimidate the scavengers into handing everything over (STR)" "White"
-    Write-ColorLine "2. Calm them down and hear what frightened them (CHA)" "White"
-    Write-ColorLine "3. Search the road yourself and ignore them (WIS)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Play a calming refrain and coax the truth out gently (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Hold the road and wait the fear out until someone finally talks (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Read their fear and make the road feel safe enough for the truth (WIS)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "intimidate" -Label "Step close and make the road feel too narrow to lie" -Ability "STR" -Skill "Intimidation" -DC 10 -ActionText "{hero} steps in close enough that the old road itself feels narrower, letting brute presence do the talking." -SuccessText "The scavengers surrender the satchel and blurt out that marked runners have been using the old road at night." -FailureText "The scavengers bolt, leaving {hero} with the satchel but only half-heard panic about the road. He learns less than he wanted." -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -HintText "A hard push may break the moment open fast.")
+        (New-QuestApproachOption -Key "persuade" -Label "Lower your hands and make the scavengers feel heard" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} forces himself to lower his voice and listen before the moment goes bad." -SuccessText "The scavengers explain they found the satchel after a courier dropped it while fleeing someone from the city." -FailureText "{hero} gets the satchel back, but the scavengers never settle enough to say who they feared." -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -HintText "A calm social approach is the cleanest way to get their story.")
+        (New-QuestApproachOption -Key "survival" -Label "Read the road marks and recover the trail yourself" -Ability "WIS" -Skill "Survival" -DC 11 -ActionText "{hero} crouches by the broken road and follows the little signs most people walk past." -SuccessText "He spots the courier mark, the satchel, and a fresh heelprint pointing back toward the city." -FailureText "The search is clumsy, but {hero} still recovers the satchel after turning half the roadside ditch upside down." -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -HintText "The road itself can reveal the courier mark if people fail you.")
+        (New-QuestApproachOption -Key "performance" -Label "Play a calming refrain and coax the truth out gently" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) gives the fear a soft rhythm, quiet enough that the scavengers can speak before shame catches up." -SuccessText "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes." -FailureText "The tune softens the moment, but not enough to get a clean story before the scavengers scatter." -Class "Bard" -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -ApproachKey "SoftPowerCalmedWitnesses" -HintText "A Bard's best path is to make fear loosen its grip.")
+        (New-QuestApproachOption -Key "hold" -Label "Hold the road until fear and exhaustion crack" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) plants his feet in the road, blocks every way out, and waits until fear and exhaustion finally crack the silence." -SuccessText "Unable to slip past the iron patience in front of them, the scavengers finally admit they saw a marked courier drop the satchel while running for the city." -FailureText "They break and run in the end, leaving the satchel behind but only fragments about a marked man and a night road." -Class "Barbarian" -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -ApproachKey "HardProofHeldRoad" -HintText "A Barbarian can make running feel less possible than talking.")
+        (New-QuestApproachOption -Key "protect" -Label "Read their fear and offer lawful protection" -Ability "WIS" -Skill "Insight" -DC 10 -ActionText "$($Game.Hero.Name) lowers his shield, reads which glance is fear and which is guilt, and gives the scavengers a lawful way out before panic takes over." -SuccessText "The scavengers stop seeing a trap and start seeing protection. They admit a marked courier dropped the satchel while fleeing back toward the city lanes." -FailureText "The promise of order helps, but fear still scatters them before the whole story comes out." -Class "Fighter" -SuccessFlag "FoundStreetCourierMark" -FailureFlag "HelpedLocalVictim" -ApproachKey "CivicTrustProtectedWitnesses" -HintText "A Fighter can turn authority into safety instead of threat.")
+    )
 
-    $strongOutcome = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The scavenger with the torn sleeve keeps looking at the chalk mark, not the satchel. They are afraid of the courier route, not of {hero}." `
+        -ReadFailureText "{hero} catches fear in the air, but not its shape. The satchel, the scavengers, and the chalk mark still all matter." `
+        -QuestId "quest_board_missing_herbs"
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps in close and lets brute presence do the talking." -Skill "Intimidation"
-
-                if ($success) {
-                    Write-Scene "The scavengers surrender the satchel and blurt out that marked runners have been using the old road at night."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The scavengers bolt, leaving {hero} with the satchel but only half-heard panic about the road. He learns less than he wanted."
-                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} forces himself to lower his voice and listen before the moment goes bad." -CheckTag "Social"
-
-                if ($success) {
-                    Write-Scene "The scavengers explain they found the satchel after a courier dropped it while fleeing someone from the city."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "{hero} gets the satchel back, but the scavengers never settle enough to say who they feared."
-                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} crouches by the broken road and follows the little signs most people walk past." -Skill "Survival"
-
-                if ($success) {
-                    Write-Scene "He spots the courier mark, the satchel, and a fresh heelprint pointing back toward the city."
-                    $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The search is clumsy, but {hero} still recovers the satchel after turning half the roadside ditch upside down."
-                    $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) eases the tension with a low, steady refrain and lets the scavengers talk before fear hardens again." -CheckTag "Performance"
-
-                    if ($success) {
-                        Write-Scene "The scavengers calm enough to admit they saw a marked courier drop the satchel while fleeing back toward the city lanes."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "SoftPowerCalmedWitnesses"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The tune softens the moment, but not enough to get a clean story before the scavengers scatter."
-                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) plants his feet in the road, blocks every way out, and waits until fear and exhaustion finally crack the silence."
-
-                    if ($success) {
-                        Write-Scene "Unable to slip past the iron patience in front of them, the scavengers finally admit they saw a marked courier drop the satchel while running for the city."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "HardProofHeldRoad"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "They break and run in the end, leaving the satchel behind but only fragments about a marked man and a night road."
-                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) lowers his shield, reads which glance is fear and which is guilt, and gives the scavengers a lawful way out before panic takes over."
-
-                    if ($success) {
-                        Write-Scene "The scavengers stop seeing a trap and start seeing protection. They admit a marked courier dropped the satchel while fleeing back toward the city lanes."
-                        $Game.Town.StoryFlags["FoundStreetCourierMark"] = $true
-                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "quest_board_missing_herbs" -ApproachKey "CivicTrustProtectedWitnesses"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The promise of order helps, but fear still scatters them before the whole story comes out."
-                        $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     if (-not $Game.Town.StoryFlags["FoundStreetCourierMark"]) {
         $Game.Town.StoryFlags["HelpedLocalVictim"] = $true
@@ -2105,129 +2165,24 @@ function Start-LedgerOfAshQuest {
         Write-Scene "'The watch sees doors and broken seals,' the clerk says quietly. 'I see the money that keeps those doors useful.'"
     }
     Write-ColorLine ""
-    Write-ColorLine "1. Intimidate the dock clerk named in the ledger (STR)" "White"
-    Write-ColorLine "2. Study the ledger line by line (INT)" "White"
-    Write-ColorLine "3. Lean on merchant contacts for help reading the pattern (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Work the room, flatter egos, and tease the hidden name loose (CHA)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Break the dockside bluff until the hidden name finally slips (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Read the account like sworn testimony until the false duty shows (WIS)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "intimidate" -Label "Corner the named clerk and let silence do the work" -Ability "STR" -Skill "Intimidation" -DC 11 -ActionText "{hero} corners the named clerk in a back office and lets silence do most of the work." -SuccessText "The clerk folds quickly and gives up a chain of payments tied to an under-street handler called Serik." -FailureText "The clerk lies badly, but {hero} still gets enough names to prove the books were cooked." -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -HintText "A physical threat can force the name out, but it risks panic.")
+        (New-QuestApproachOption -Key "investigate" -Label "Study the ledger line by line" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} grinds through the numbers until the lies in the ink start to stand out." -SuccessText "Three fake freight lines all point back to the same middleman. The name Serik surfaces again and again." -FailureText "The ledger is a mess, but {hero} still proves the irregular payments are real." -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -HintText "The safest proof is hiding in the ledger itself.")
+        (New-QuestApproachOption -Key "persuade" -Label "Lean on merchant contacts for help reading the pattern" -Ability "CHA" -Skill "Persuasion" -DC 11 -ActionText "{hero} leans on the best merchant contacts he has and trades plain truth for useful insight." -SuccessText "A contact quietly points {hero} to the same under-street name hidden behind the payments: Serik." -FailureText "Even without a clean name, {hero} confirms the payments were not normal trade." -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -HintText "The merchant network can translate the pattern into a name.")
+        (New-QuestApproachOption -Key "bard-social" -Label "Work the room until the hidden name shakes loose" -Ability "CHA" -CheckTag "Social" -DC 10 -ActionText "$($Game.Hero.Name) turns charm, gossip, and merchant vanity into a cleaner reading of who is really profiting." -SuccessText "Three people contradict each other in exactly the right way. By the time the talk settles, the name Serik sits plainly behind the false payments." -FailureText "The gossip yields only half-truths, but even half-truths are enough to prove the ledger was built to hide corruption." -Class "Bard" -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "SoftPowerMerchantContradictions" -HintText "A Bard can make contradictions perform themselves.")
+        (New-QuestApproachOption -Key "barbarian-bluff" -Label "Break the dockside bluff by refusing to blink" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) looms over the dockside liar until swagger turns to sweat and the story starts breaking in his mouth." -SuccessText "The bluff collapses in pieces. By the time the clerk stops backpedaling, Serik's name is out in the open and everyone in the room knows it." -FailureText "The clerk holds the clean name back, but the panic in his answers still proves the payments were built to hide corruption." -Class "Barbarian" -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "HardProofBrokenBluff" -HintText "A Barbarian can make the lie physically exhausting to keep.")
+        (New-QuestApproachOption -Key "fighter-testimony" -Label "Treat the account like sworn testimony" -Ability "WIS" -Skill "Insight" -DC 10 -ActionText "$($Game.Hero.Name) treats the questioning like sworn testimony, watching which answers carry duty and which ones only imitate it." -SuccessText "The clerk finally chooses the smaller disgrace. Serik's name lands in the room cleanly, carried less by fear than by the sense that the account is now official." -FailureText "The clerk withholds the clean name, but the disciplined questioning still proves the payments were built to hide corruption." -Class "Fighter" -SuccessFlag "NamedUnderstreetLeader" -FailureFlag "FoundEconomicIrregularity" -ApproachKey "CivicTrustSwornAccount" -HintText "A Fighter can make the lie sound like perjury.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The clerk's finger keeps stopping on the same three names. The money is not hidden randomly; it is hiding behind repetition, pride, and one frightened dock clerk." `
+        -ReadFailureText "The ledger has too many hands in it. {hero} can tell it is false, but not yet which pressure point will open it cleanly." `
+        -QuestId "patron_ledger_of_ash"
 
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} corners the named clerk in a back office and lets silence do most of the work." -Skill "Intimidation"
-                if ($success) {
-                    Write-Scene "The clerk folds quickly and gives up a chain of payments tied to an under-street handler called Serik."
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The clerk lies badly, but {hero} still gets enough names to prove the books were cooked."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} grinds through the numbers until the lies in the ink start to stand out."
-                if ($success) {
-                    Write-Scene "Three fake freight lines all point back to the same middleman. The name Serik surfaces again and again."
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The ledger is a mess, but {hero} still proves the irregular payments are real."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} leans on the best merchant contacts he has and trades plain truth for useful insight."
-                if ($success) {
-                    Write-Scene "A contact quietly points {hero} to the same under-street name hidden behind the payments: Serik."
-                    $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "Even without a clean name, {hero} confirms the payments were not normal trade."
-                    $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns charm, gossip, and merchant vanity into a cleaner reading of who is really profiting." -CheckTag "Social"
-                    if ($success) {
-                        Write-Scene "Three people contradict each other in exactly the right way. By the time the talk settles, the name Serik sits plainly behind the false payments."
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "SoftPowerMerchantContradictions"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The gossip yields only half-truths, but even half-truths are enough to prove the ledger was built to hide corruption."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) looms over the dockside liar until swagger turns to sweat and the story starts breaking in his mouth."
-                    if ($success) {
-                        Write-Scene "The bluff collapses in pieces. By the time the clerk stops backpedaling, Serik's name is out in the open and everyone in the room knows it."
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "HardProofBrokenBluff"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The clerk holds the clean name back, but the panic in his answers still proves the payments were built to hide corruption."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) treats the questioning like sworn testimony, watching which answers carry duty and which ones only imitate it."
-                    if ($success) {
-                        Write-Scene "The clerk finally chooses the smaller disgrace. Serik's name lands in the room cleanly, carried less by fear than by the sense that the account is now official."
-                        $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
-                        Register-ClassStoryApproach -Game $Game -QuestId "patron_ledger_of_ash" -ApproachKey "CivicTrustSwornAccount"
-                        $strongOutcome = $true
-                    }
-                    else {
-                        Write-Scene "The clerk withholds the clean name, but the disciplined questioning still proves the payments were built to hide corruption."
-                        $Game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $progressText = if ($strongOutcome) {
         "Story Progress: $($Game.Hero.Name) has traced the money behind the city's disappearing goods."

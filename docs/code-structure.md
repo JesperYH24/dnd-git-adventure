@@ -441,6 +441,7 @@ Ansvar:
 - Docks-specifika quest tiers efter Chapter Two, med strong/weak progression och flera quests per tier
 - level 4 story-readiness via Docks quest flags och XP, plus post-level-4 Docks Tier 4
 - non-combat quest checks, including Bard support from `Charm Person`, `Suggestion`, `Enhance Ability`, and Bardic Inspiration
+- reusable quest-approach helpers for listing multiple skill-based methods, optional `Read the scene` guidance, and approach-specific success/failure flavor
 
 Tänk:  
 `city-quests.ps1` beskriver **hur questen spelas**

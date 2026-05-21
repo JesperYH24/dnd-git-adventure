@@ -345,7 +345,7 @@ function Test-BardCanUsePerformanceStyleToSolveMissingHerbSatchel {
     $heroHP = $game.Hero.HP
 
     Accept-TownQuest -Game $game -QuestId "quest_board_missing_herbs" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -358,13 +358,31 @@ function Test-BardCanUsePerformanceStyleToSolveMissingHerbSatchel {
     Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "The bard's class-specific satchel route should still uncover the courier clue."
 }
 
+function Test-QuestApproachReadSceneThenChosenMethodResolves {
+    $game = Initialize-Game -Class "Fighter"
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "quest_board_missing_herbs" | Out-Null
+    Use-ReadHostSequence -Values @("1", "3")
+
+    $global:RollDiceOverride = { param([int]$Sides) return 12 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "quest_board_missing_herbs"
+
+    $quest = Find-TownQuest -Game $game -QuestId "quest_board_missing_herbs"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "A quest approach menu should allow reading the scene before choosing the actual resolving method."
+    Assert-Equal -Actual $quest.AdvanceOutcome -Expected "Strong" -Message "The chosen approach after reading the scene should still determine the final outcome."
+    Assert-Equal -Actual $game.Town.StoryFlags["FoundStreetCourierMark"] -Expected $true -Message "The final approach, not the read itself, should secure the quest clue."
+}
+
 function Test-BardCanCharmSeriksNameOutOfLedgerContacts {
     $game = Initialize-Game -Class "Bard"
     $heroHP = $game.Hero.HP
     Set-StoryTier -Game $game -Tier 2
 
     Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
-    Use-ReadHostSequence -Values @("4", "2")
+    Use-ReadHostSequence -Values @("5", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -440,7 +458,7 @@ function Test-BarbarianCanHoldTheRoadForMissingHerbSatchel {
     $heroHP = $game.Hero.HP
 
     Accept-TownQuest -Game $game -QuestId "quest_board_missing_herbs" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -459,7 +477,7 @@ function Test-BarbarianCanBreakLedgerBluffForSeriksName {
     Set-StoryTier -Game $game -Tier 2
 
     Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -1951,7 +1969,7 @@ function Test-BardLedgerRouteBuildsSoftPower {
     Set-StoryTier -Game $game -Tier 2
 
     Accept-TownQuest -Game $game -QuestId "patron_ledger_of_ash" | Out-Null
-    Use-ReadHostSequence -Values @("4", "2")
+    Use-ReadHostSequence -Values @("5", "2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -1977,6 +1995,7 @@ Test-NightCourierUnlocksFromCourierLead
 Test-NightCourierCompletesAndSetsCourierRoute
 Test-NightCourierWeakOutcomeOnlyFindsCourierMarks
 Test-BardCanUsePerformanceStyleToSolveMissingHerbSatchel
+Test-QuestApproachReadSceneThenChosenMethodResolves
 Test-BardCanCharmSeriksNameOutOfLedgerContacts
 Test-BardCanUseStreetPerformanceToCatchNightCourier
 Test-BardCanTalkWarehouseClerkIntoCorrectingALie

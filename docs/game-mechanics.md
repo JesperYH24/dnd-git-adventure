@@ -19,6 +19,8 @@
 - skill checks can now resolve from a skill name to the correct ability automatically, while older ability-only quest checks continue to work
 - non-combat quest checks now flow through the skill resolver: untagged quest checks default to `Athletics`, `Sleight of Hand`, `Investigation`, `Insight`, or `Persuasion` depending on the original ability, while `CON` remains a raw endurance check because 5e has no Constitution skill
 - explicit quest tags such as `Performance`, `Perception`, `Stealth`, `Social`, or `Suggestion` can override that default; Bard social spell hooks still require those explicit social/suggestion tags rather than triggering on every Charisma check
+- the first quest-approach menus now let the player read the scene with `Insight` before committing; that read gives guidance about likely approaches and class strengths, but the final quest result still comes from a chosen method such as `Intimidation`, `Persuasion`, `Survival`, `Investigation`, or `Performance`
+- explicit quest approaches can preserve alternate ability pairings, such as `STR (Intimidation)`, when the fiction is physical pressure rather than courtly charisma
 - the `Hero & Records` town submenu has a `Skill tree` view that lists all 18 skills, groups them by ability, and marks each as `[E]` Expertise, `[P]` Proficient, or `[-]` Untrained
 - current starting skill identity:
   - Barbarian: `Athletics`, `Perception`, `Survival`
