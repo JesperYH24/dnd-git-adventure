@@ -101,6 +101,7 @@ function New-UnderstreetQuestRoom {
     $room | Add-Member -NotePropertyName LockedCacheFailText -NotePropertyValue ""
     $room | Add-Member -NotePropertyName EncounterRewardFlag -NotePropertyValue ""
     $room | Add-Member -NotePropertyName EncounterRewardText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName EncounterRewardLoot -NotePropertyValue @()
     $room | Add-Member -NotePropertyName DangerText -NotePropertyValue ""
     return $room
 }
@@ -233,8 +234,16 @@ function Get-UnderstreetComplexRooms {
     $rooms["old_armory"].LockedCacheLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
     $rooms["old_armory"].LockedCacheLoot += (New-ArmorItem -Name "Braced Leather Vest" -Value 220 -ArmorBonus 1 -SlotCost 2)
 
+    $rooms["sentry_turn"].EncounterRewardText = "The sentry's belt pouch hits the stone with a hard little clink."
+    $rooms["sentry_turn"].EncounterRewardLoot += (New-CurrencyItem -Name "Sentry's Copper Pouch" -Denomination "CP" -Amount 18)
+    $rooms["flooded_switchback"].EncounterRewardText = "The handler's dropped satchel bobs against the ledge, heavy enough to be worth hauling out of the dirty water."
+    $rooms["flooded_switchback"].EncounterRewardLoot += (New-CurrencyItem -Name "Waterlogged Handler Purse" -Denomination "SP" -Amount 3)
+    $rooms["flooded_switchback"].EncounterRewardLoot += (New-ConsumableItem -Name "Bandage Roll" -Value 15 -HealAmount 4 -SlotCost 1)
+    $rooms["old_armory"].EncounterRewardText = "The warden's coat has a stamped pay chit and a few emergency coins tucked under the lining."
+    $rooms["old_armory"].EncounterRewardLoot += (New-CurrencyItem -Name "Stamped Pay Chit" -Denomination "SP" -Amount 6)
     $rooms["smugglers_lockup"].EncounterRewardText = "The gaoler drops a ring of cell keys and a pouch of emergency silver, but the armory hook beside the red cloth is already empty."
     $rooms["smugglers_lockup"].Loot += (New-CurrencyItem -Denomination "SP" -Amount 10)
+    $rooms["smugglers_lockup"].EncounterRewardLoot += (New-CurrencyItem -Name "Gaoler's Emergency Silver" -Denomination "SP" -Amount 6)
 
     $rooms["record_chamber"].SearchHintText = "The shelves that stand away from the wall look recently disturbed. If anything else was hidden here, it may still be nearby."
     $rooms["record_chamber"].SearchPromptText = "Search the displaced shelves and hidden folios for overlooked evidence."
@@ -243,6 +252,11 @@ function Get-UnderstreetComplexRooms {
     $rooms["record_chamber"].SearchDC = 13
     $rooms["record_chamber"].HiddenLoot += (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1)
     $rooms["record_chamber"].SearchRewardText = "Lore: the reserve folio confirms the understreet was only one branch of a larger smuggling network."
+    $rooms["record_chamber"].EncounterRewardText = "The ledger-keeper's folio falls open around waxed coin sleeves and a cheap emergency tonic."
+    $rooms["record_chamber"].EncounterRewardLoot += (New-CurrencyItem -Name "Waxed Ledger Coins" -Denomination "SP" -Amount 8)
+    $rooms["record_chamber"].EncounterRewardLoot += (New-ConsumableItem -Name "Thin Healing Tonic" -Value 35 -HealAmount 6 -SlotCost 1)
+    $rooms["command_vault"].EncounterRewardText = "Serik's command pouch spills contract coin across the table, mixed with the key-tagged scraps of a route account."
+    $rooms["command_vault"].EncounterRewardLoot += (New-CurrencyItem -Name "Serik's Command Purse" -Denomination "SP" -Amount 15)
 
     return $rooms
 }
@@ -1171,6 +1185,16 @@ function Resolve-UnderstreetRoomEncounter {
 
         if (-not [string]::IsNullOrWhiteSpace($Room.EncounterRewardText)) {
             Write-Scene $Room.EncounterRewardText
+            Write-ColorLine ""
+        }
+
+        if ($null -ne $Room.PSObject.Properties["EncounterRewardLoot"] -and @($Room.EncounterRewardLoot).Count -gt 0) {
+            foreach ($item in @($Room.EncounterRewardLoot)) {
+                $Room.Loot += $item
+            }
+
+            $Room.EncounterRewardLoot = @()
+            Write-Scene "A few spoils are left in the room for $($Game.Hero.Name) to collect."
             Write-ColorLine ""
         }
 

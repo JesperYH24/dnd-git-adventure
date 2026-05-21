@@ -1250,6 +1250,26 @@ function Test-UnderstreetHoundCritIsDangerousButNotBardErasing {
     Assert-True -Condition ($criticalDamage.Damage -le 14) -Message "A max tunnel hound crit should stay dangerous without one-shotting a healthy level 3 bard."
 }
 
+function Test-UnderstreetEncountersAddSimpleLootAfterVictory {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $rooms = Get-UnderstreetComplexRooms
+    $room = $rooms["flooded_switchback"]
+    $currentRoomId = "flooded_switchback"
+
+    Use-StoryCombatWinStub
+
+    Assert-Equal -Actual $room.Loot.Count -Expected 0 -Message "Encounter loot should not be visible before the room fight is won."
+
+    $result = Resolve-UnderstreetRoomEncounter -Game $game -Room $room -HeroHP ([ref]$heroHP) -PreviousRoomId "sentry_turn" -CurrentRoomId ([ref]$currentRoomId)
+
+    Assert-Equal -Actual $result -Expected "Won" -Message "The hound room should resolve as won under the combat stub."
+    Assert-Equal -Actual $room.EncounterResolved -Expected $true -Message "Winning the encounter should mark the room resolved."
+    Assert-True -Condition (@($room.Loot | Where-Object { $_.Name -eq "Waterlogged Handler Purse" }).Count -eq 1) -Message "The hound encounter should add its coin purse to room loot."
+    Assert-True -Condition (@($room.Loot | Where-Object { $_.Name -eq "Bandage Roll" }).Count -eq 1) -Message "The hound encounter should add a small utility heal item."
+    Assert-Equal -Actual @($room.EncounterRewardLoot).Count -Expected 0 -Message "Encounter reward loot should be moved only once."
+}
+
 function Test-UnderstreetShortRestHealsAndClearsBuff {
     $game = Initialize-Game
     $heroHP = 6
@@ -1937,6 +1957,7 @@ Test-UnderstreetComplexCannotStartBeforeLevelThree
 Test-UnderstreetComplexCompletesAndMarksChapterTwo
 Test-UnderstreetFirstSafeRoomShowsShortRestHintOnce
 Test-UnderstreetHoundCritIsDangerousButNotBardErasing
+Test-UnderstreetEncountersAddSimpleLootAfterVictory
 Test-UnderstreetShortRestHealsAndClearsBuff
 Test-BardCanCastInvisibilityInCalmUnderstreetRoom
 Test-UnderstreetComplexIncludesExtendedMazeLayout
