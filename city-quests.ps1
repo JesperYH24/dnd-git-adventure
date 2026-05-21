@@ -3049,63 +3049,24 @@ function Start-DocksSalvageWitnessQuest {
     Write-Scene "Auntie Brindle produces a cracked bottle seal, a strip of black wax, and a bit of glove leather from a tray labeled 'things fools thought were gone.'"
     Write-Scene "Somewhere in that rubbish is proof that the contract against Lady Veyra passed through careful hands, not dockside chance."
     Write-ColorLine ""
-    Write-ColorLine "1. Sort the rubbish like evidence instead of junk (INT)" "White"
-    Write-ColorLine "2. Read Auntie's strange pattern of keepsakes (WIS)" "White"
-    Write-ColorLine "3. Coax Auntie into naming who brought the scraps in (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Trade a little song for Auntie's sharpest memory (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Hold the salvage room steady while Auntie circles the truth (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Make the room feel protected enough for Auntie to remember cleanly (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "sort-scraps" -Label "Sort the rubbish like evidence instead of junk" -Ability "INT" -Skill "Investigation" -DC 11 -ActionText "{hero} lays each scrap out by seal, stain, and river grit until the trail starts behaving like evidence." -SuccessText "The scraps resolve into a clean little witness: black wax, glove leather, and bottle seal all passed through the same careful runner." -FailureText "The proof is less elegant than anyone would like, but the scraps still point at a deliberate contract trail." -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -HintText "A careful evidence sort is the cleanest way to make Auntie's rubbish speak.")
+        (New-QuestApproachOption -Key "auntie-pattern" -Label "Read Auntie's strange pattern of keepsakes" -Ability "WIS" -Skill "Investigation" -DC 11 -ActionText "{hero} stops trying to make Auntie's shelves normal and follows the odd logic underneath them." -SuccessText "Auntie's shelves suddenly make sense: every saved scrap marks a handoff, and these three came from the contract runner." -FailureText "The pattern never fully opens, but Auntie's rubbish still points at a deliberate contract trail." -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -HintText "Auntie's keepsakes have their own logic if you can slow down enough to see it.")
+        (New-QuestApproachOption -Key "coax-auntie" -Label "Coax Auntie into naming who brought the scraps in" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} lets Auntie talk sideways until the name hidden in the story finally comes out straight." -SuccessText "Auntie gives the name by pretending not to give it, and the scraps become witness evidence instead of curios." -FailureText "Auntie never names the runner cleanly, but her story still pins the scraps to a deliberate contract trail." -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -HintText "A social approach can turn Auntie's riddles into a name.")
+        (New-QuestApproachOption -Key "memory-song" -Label "Trade a little song for Auntie's sharpest memory" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) plays softly enough that Auntie forgets to pretend she has forgotten." -SuccessText "The tune catches one memory on its way past. Auntie hums, smiles, and names the runner who carried the scraps." -FailureText "The song warms the room, but Auntie's sharpest memory stays blurred; the scraps still prove the trail was deliberate." -Class "Bard" -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -ApproachKey "SoftPowerAuntiesMemory" -HintText "A Bard can make memory feel safe enough to return.")
+        (New-QuestApproachOption -Key "steady-room" -Label "Hold the salvage room steady while Auntie circles the truth" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands like a wall between Auntie's shop and the dock noise until the old woman can think." -SuccessText "With the room held steady, Auntie circles the truth until it stops running from her: the scraps came through the contract runner." -FailureText "The room never gets fully quiet, but the scraps still prove the trail was deliberate." -Class "Barbarian" -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -ApproachKey "HardProofSteadySalvageRoom" -HintText "A Barbarian can make the room calm by refusing to let it break.")
+        (New-QuestApproachOption -Key "protected-room" -Label "Make the room feel protected enough for Auntie to remember cleanly" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the doorway like a sworn guard, lets Auntie set the pace, and keeps every impatient dock voice outside." -SuccessText "Auntie sees protection instead of pressure and gives the memory cleanly: these scraps passed through the contract runner's hands." -FailureText "The protection helps, but Auntie's memory stays partly guarded; the scraps still prove the trail was deliberate." -Class "Fighter" -SuccessFlag "DocksSalvageWitnessSecured" -FailureFlag "DocksSalvageWitnessSecured" -ApproachKey "CivicTrustProtectedSalvageRoom" -HintText "A Fighter can make testimony feel protected instead of extracted.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The cleanest paths are to treat the scraps like evidence or to make Auntie feel safe enough to let the real memory surface." `
+        -ReadFailureText "Auntie's room is too strange to solve at a glance, but the wax strip and glove leather look more useful than the bottle seal." `
+        -QuestId "docks_salvage_witness"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 11 -ActionText "{hero} lays each scrap out by seal, stain, and river grit until the trail starts behaving like evidence." -Skill "Investigation" }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} stops trying to make Auntie's shelves normal and follows the odd logic underneath them." -Skill "Investigation" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} lets Auntie talk sideways until the name hidden in the story finally comes out straight." }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) plays softly enough that Auntie forgets to pretend she has forgotten." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands like a wall between Auntie's shop and the dock noise until the old woman can think."
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) takes the doorway like a sworn guard, lets Auntie set the pace, and keeps every impatient dock voice outside."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The scraps resolve into a clean little witness: the black wax, glove leather, and bottle seal all passed through the same careful runner."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The proof is less elegant than anyone would like, but Auntie's rubbish still points at a deliberate contract trail."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksSalvageWitnessSecured"] = $true
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
@@ -3140,63 +3101,24 @@ function Start-DocksDebtHooksQuest {
     Write-Scene "Warehouse Row looks honest until $($Game.Hero.Name) starts watching who pays whom after the official ledgers close."
     Write-Scene "The organization does not only threaten people with knives. It buys hunger, rent, and shame, then calls the debt a service."
     Write-ColorLine ""
-    Write-ColorLine "1. Trace the false debt marks through warehouse ledgers (INT)" "White"
-    Write-ColorLine "2. Follow the collectors without being seen too early (WIS)" "White"
-    Write-ColorLine "3. Convince a dock family to show the payment slips (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Make the collectors brag where frightened workers can hear them (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Put yourself between the collectors and their next victim (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Stand the row like a shield wall and force the collectors into the open (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "false-debt-marks" -Label "Trace the false debt marks through warehouse ledgers" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} compares debt marks, cargo losses, and service fees until the numbers start confessing." -SuccessText "The debt hooks come loose with names attached: false service fees, dock families under pressure, and collectors moving under the same seal." -FailureText "The numbers stay ugly and incomplete, but they still prove the protection scheme is more than rumor." -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -HintText "The ledgers can prove the debt racket without relying on frightened witnesses.")
+        (New-QuestApproachOption -Key "follow-collectors" -Label "Follow the collectors without being seen too early" -Ability "WIS" -Skill "Survival" -DC 11 -ActionText "{hero} follows the collectors by the spaces they leave behind: shut doors, sudden quiet, and paid fear." -SuccessText "The route exposes the scheme in motion: collectors, pressured families, and false fees moving together under one seal." -FailureText "The collectors scatter before the full route is clean, but they leave enough slips behind to prove the protection scheme." -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -HintText "Following the collectors can show who they threaten and where the money goes.")
+        (New-QuestApproachOption -Key "dock-family" -Label "Convince a dock family to show the payment slips" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} earns enough trust for a dock family to reveal the slips they were told to burn." -SuccessText "The family lays out payment slips, threats, and service marks until the protection scheme has a human shape and a paper trail." -FailureText "The family shows only part of what they hid, but even that proves the protection scheme is real." -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -HintText "A trusted witness can make the debt racket harder to dismiss.")
+        (New-QuestApproachOption -Key "bragging-collectors" -Label "Make the collectors brag where frightened workers can hear them" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) turns the row into a listening room and lets the collectors perform their own guilt." -SuccessText "The collectors puff themselves up in public and say too much. Workers who were too afraid to speak suddenly have details to confirm." -FailureText "The performance loosens some tongues but not the clean confession; the slips still prove the protection scheme." -Class "Bard" -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -ApproachKey "SoftPowerCollectorBoasts" -HintText "A Bard can make the collectors incriminate themselves by giving them an audience.")
+        (New-QuestApproachOption -Key "block-collectors" -Label "Put yourself between the collectors and their next victim" -Ability "STR" -Skill "Intimidation" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible." -SuccessText "The collectors find they cannot reach the victim or keep their courage. Their threats break into names, fees, and proof." -FailureText "The collectors back away without confessing cleanly, but their dropped slips still prove the protection scheme." -Class "Barbarian" -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -ApproachKey "HardProofBlockedCollectors" -HintText "A Barbarian can turn protection into immediate physical proof.")
+        (New-QuestApproachOption -Key "shield-row" -Label "Stand the row like a shield wall and force the collectors into the open" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) organizes the frightened workers behind him and makes the collectors state their business where everyone can hear it." -SuccessText "The row holds together. The collectors lose the advantage of private fear and say enough in the open to expose the scheme." -FailureText "The row wavers before the full truth lands, but enough workers preserve slips and details to prove the protection scheme." -Class "Fighter" -SuccessFlag "DocksDebtLedgerSecured" -FailureFlag "DocksDebtLedgerSecured" -ApproachKey "CivicTrustShieldedRow" -HintText "A Fighter can make scattered workers behave like protected witnesses.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The strongest paths are either paper-first through the ledgers or people-first through the next collector visit." `
+        -ReadFailureText "The row is too scared to read cleanly, but the false service fees and collector timing both look promising." `
+        -QuestId "docks_debt_hooks"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares debt marks, cargo losses, and service fees until the numbers start confessing." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} follows the collectors by the spaces they leave behind: shut doors, sudden quiet, and paid fear." -Skill "Survival" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} earns enough trust for a dock family to reveal the slips they were told to burn." }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the row into a listening room and lets the collectors perform their own guilt." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible." -Skill "Intimidation"
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) organizes the frightened workers behind him and makes the collectors state their business where everyone can hear it."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The debt hooks come loose with names attached: false service fees, dock families under pressure, and collectors moving under the same seal."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The collectors scatter before the full ledger is clean, but they leave enough slips behind to prove the protection scheme."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksDebtLedgerSecured"] = $true
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
@@ -3231,63 +3153,24 @@ function Start-DocksTideLedgerMarksQuest {
     Write-Scene "The tide-ledger shack keeps little marks in the margins: boring to honest eyes, useful to people who move contracts under cargo names."
     Write-Scene "If $($Game.Hero.Name) can make sense of those marks, even a muddy contract trail can become proof."
     Write-ColorLine ""
-    Write-ColorLine "1. Decode the copied margin marks (INT)" "White"
-    Write-ColorLine "2. Watch which clerk panics when the marks are named (WIS)" "White"
-    Write-ColorLine "3. Convince a dock runner to explain the shorthand (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the ledger shorthand into a call-and-response memory trick (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Hold the ledger desk until the nervous clerk reads it aloud (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Run the shack like a witness desk until the marks are read aloud (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "decode-marks" -Label "Decode the copied margin marks" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} compares tide marks, copied initials, and berth numbers until the fake freight code opens." -SuccessText "The margin marks turn into a clean contract map: who received black wax, who passed berth access, and which cargo name hid the knife." -FailureText "The code never opens completely, but the marks still prove the contract trail was planned through the tide-ledger shack." -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -HintText "The copied marks can become proof if the fake freight code opens.")
+        (New-QuestApproachOption -Key "clerk-flinch" -Label "Watch which clerk panics when the marks are named" -Ability "WIS" -Skill "Insight" -DC 11 -ActionText "{hero} names the wrong mark first and watches the right clerk flinch at the right lie." -SuccessText "The clerk gives the pattern away by trying not to. The marks point to black wax, berth access, and a cargo name that hid the knife." -FailureText "The clerk recovers too quickly for a clean confession, but the marks still prove the contract trail was planned through the shack." -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -HintText "The clerk's reaction may reveal which mark actually matters.")
+        (New-QuestApproachOption -Key "runner-shorthand" -Label "Convince a dock runner to explain the shorthand" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} gives a runner enough room to pretend this is advice instead of confession." -SuccessText "The runner explains the shorthand as if correcting a harmless mistake, and the contract map opens in the margins." -FailureText "The runner only explains half the code, but that half still proves the contract trail was planned through the shack." -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -HintText "A runner can translate the shorthand if pride feels safer than fear.")
+        (New-QuestApproachOption -Key "ledger-refrain" -Label "Turn the ledger shorthand into a call-and-response memory trick" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) makes the shorthand catchy enough that a dockhand corrects the verse without thinking." -SuccessText "The dockhand corrects the refrain twice, then realizes too late that the corrected words describe the contract route." -FailureText "The refrain catches only part of the shorthand, but enough remains to prove the contract trail was planned through the shack." -Class "Bard" -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -ApproachKey "SoftPowerLedgerRefrain" -HintText "A Bard can make the shorthand easier to remember than to hide.")
+        (New-QuestApproachOption -Key "hold-desk" -Label "Hold the ledger desk until the nervous clerk reads it aloud" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) waits beside the desk like bad weather until the clerk decides reading is safer than silence." -SuccessText "The clerk reads too much aloud. Black wax, berth access, and the hidden cargo name all fall into place." -FailureText "The clerk stops short of the full map, but the marks still prove the contract trail was planned through the shack." -Class "Barbarian" -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -ApproachKey "HardProofHeldLedgerDesk" -HintText "A Barbarian can make silence more uncomfortable than reading.")
+        (New-QuestApproachOption -Key "witness-desk" -Label "Run the shack like a witness desk until the marks are read aloud" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) sets the ledger between them like testimony and waits, mailed and formal, until the clerk reads the marks aloud." -SuccessText "The shack becomes a witness desk. The clerk reads the marks cleanly enough to map the contract route." -FailureText "The clerk gives only partial testimony, but the marks still prove the contract trail was planned through the shack." -Class "Fighter" -SuccessFlag "DocksTideLedgerMarksSecured" -FailureFlag "DocksTideLedgerMarksSecured" -ApproachKey "CivicTrustWitnessDesk" -HintText "A Fighter can make paperwork feel like formal testimony.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The safest way is to decode the marks directly, but the nervous clerk and dock runners may expose the pattern faster." `
+        -ReadFailureText "The margin code is muddy, though the repeated initials and the clerk's guarded posture both look useful." `
+        -QuestId "docks_tide_ledger_marks"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares tide marks, copied initials, and berth numbers until the fake freight code opens." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} names the wrong mark first and watches the right clerk flinch at the right lie." -Skill "Insight" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives a runner enough room to pretend this is advice instead of confession." -CheckTag "Social" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) makes the shorthand catchy enough that a dockhand corrects the verse without thinking." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) waits beside the desk like bad weather until the clerk decides reading is safer than silence."
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) sets the ledger between them like testimony and waits, mailed and formal, until the clerk reads the marks aloud."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The margin marks turn into a clean contract map: who received black wax, who passed berth access, and which cargo name hid the knife."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The code never opens completely, but the marks still prove the contract trail was planned through the tide-ledger shack."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksTideLedgerMarksSecured"] = $true
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
@@ -3323,63 +3206,24 @@ function Start-DocksBlackmailBookQuest {
     Write-Scene "The old knife berth has a hiding place no one admits exists: a dry box under warped planks, filled with names and little ruinous notes."
     Write-Scene "The organization did not only buy obedience with debt. It kept people useful by keeping their worst days indexed."
     Write-ColorLine ""
-    Write-ColorLine "1. Read the coded shame-list without missing the pattern (INT)" "White"
-    Write-ColorLine "2. Search the berth for the second half of the cipher (WIS)" "White"
-    Write-ColorLine "3. Talk a frightened name in the book into confirming the system (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Make one blackmail story sound survivable enough to be told (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Break the dry box open and keep the berth from taking it back (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Secure the berth and turn the dry box into protected evidence (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "coded-list" -Label "Read the coded shame-list without missing the pattern" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} reads names, symbols, and old favors until the book's cruelty becomes a ledger." -SuccessText "The book opens cleanly: names, leverage, and payment routes all tied to the same dockside service." -FailureText "Some names stay coded, but the book still proves the organization uses shame as another kind of chain." -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -HintText "The coded list can turn cruelty into a usable ledger.")
+        (New-QuestApproachOption -Key "second-cipher" -Label "Search the berth for the second half of the cipher" -Ability "WIS" -Skill "Investigation" -DC 11 -ActionText "{hero} searches the berth by what the book refuses to say and finds the missing cipher scrap." -SuccessText "The missing cipher scrap makes the book speak plainly: names, leverage, and payment routes all tied to the same dockside service." -FailureText "The second cipher stays partly hidden, but the book still proves the organization uses shame as another kind of chain." -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -HintText "The berth may hold the part of the cipher the book tries to hide.")
+        (New-QuestApproachOption -Key "frightened-name" -Label "Talk a frightened name in the book into confirming the system" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} gives one frightened worker a way to tell the truth without being alone in it." -SuccessText "The witness confirms how the book is used: names, leverage, and payments all feeding the same dockside service." -FailureText "The witness confirms only enough to stay safe, but the book still proves the organization uses shame as another kind of chain." -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -HintText "A protected witness can confirm what the coded names mean.")
+        (New-QuestApproachOption -Key "survivable-story" -Label "Make one blackmail story sound survivable enough to be told" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) turns confession into something less lonely, and the book loses some of its power." -SuccessText "One story becomes tellable, then another. The book's power cracks, exposing names, leverage, and payment routes." -FailureText "The first story only partly surfaces, but the book still proves the organization uses shame as another kind of chain." -Class "Bard" -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -ApproachKey "SoftPowerSurvivableStory" -HintText "A Bard can make shame less isolating, which makes the book weaker.")
+        (New-QuestApproachOption -Key "break-dry-box" -Label "Break the dry box open and keep the berth from taking it back" -Ability "STR" -Skill "Athletics" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again." -SuccessText "The berth loses its hiding place in one violent moment. The book comes out with names, leverage, and payment routes intact." -FailureText "The box comes free damaged and partial, but enough remains to prove the organization uses shame as another kind of chain." -Class "Barbarian" -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -ApproachKey "HardProofBrokenDryBox" -HintText "A Barbarian can deny the berth its hiding place before fear catches up.")
+        (New-QuestApproachOption -Key "protected-evidence" -Label "Secure the berth and turn the dry box into protected evidence" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) secures the berth, keeps the exits honest, and handles the dry box like evidence no one gets to threaten back into hiding." -SuccessText "No one gets close enough to bury the box again. The book becomes protected evidence with names, leverage, and payment routes intact." -FailureText "The berth stays restless and the book comes out partial, but enough remains to prove the organization uses shame as another kind of chain." -Class "Fighter" -SuccessFlag "DocksBlackmailBookRecovered" -FailureFlag "DocksBlackmailBookRecovered" -ApproachKey "CivicTrustProtectedDryBox" -HintText "A Fighter can make the evidence feel guarded before anyone can silence it.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The book can be solved by code, by the berth's hidden cipher, or by making one frightened name safe enough to confirm the system." `
+        -ReadFailureText "The dry box and the coded names both matter, but the safest witness path is harder to see in this berth." `
+        -QuestId "docks_blackmail_book"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} reads names, symbols, and old favors until the book's cruelty becomes a ledger." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} searches the berth by what the book refuses to say and finds the missing cipher scrap." -Skill "Investigation" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives one frightened worker a way to tell the truth without being alone in it." -CheckTag "Social" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns confession into something less lonely, and the book loses some of its power." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again." -Skill "Athletics"
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) secures the berth, keeps the exits honest, and handles the dry box like evidence no one gets to threaten back into hiding."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The book opens cleanly: names, leverage, and payment routes all tied to the same dockside service."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "Some names stay coded, but the book still proves the organization uses shame as another kind of chain."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksBlackmailBookRecovered"] = $true
     $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }

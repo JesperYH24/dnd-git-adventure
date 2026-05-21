@@ -66,7 +66,8 @@ function Use-ReadHostSequence {
         param([string]$Prompt)
 
         if ($script:QuestReadHostQueue.Count -eq 0) {
-            throw "Read-Host was called more times than expected."
+            $caller = (Get-PSCallStack | Where-Object { $_.FunctionName -like "Test-*" } | Select-Object -First 1).FunctionName
+            throw "Read-Host was called more times than expected. Test: $caller. Prompt: $Prompt"
         }
 
         return $script:QuestReadHostQueue.Dequeue()
@@ -116,7 +117,7 @@ function Test-DayJobPaysCoinButNoXP {
     $heroHP = $game.Hero.HP
 
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
 
@@ -135,7 +136,7 @@ function Test-DayJobVeteranRateImprovesPayAtLevelThree {
     $game.Hero.LevelCap = 3
 
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
 
@@ -740,7 +741,7 @@ function Test-SalvageWitnessCompletesAsDocksTierOneQuest {
     $game.Town.StoryQuestDoneToday = $false
 
     Accept-TownQuest -Game $game -QuestId "docks_salvage_witness" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_salvage_witness"
@@ -750,6 +751,29 @@ function Test-SalvageWitnessCompletesAsDocksTierOneQuest {
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Salvage Witness should complete as a Docks Tier 1 clue quest."
     Assert-Equal -Actual $game.Town.StoryFlags["DocksSalvageWitnessSecured"] -Expected $true -Message "Salvage Witness should secure Auntie's evidence flag."
     Assert-Equal -Actual $game.Hero.XP -Expected 220 -Message "Salvage Witness should grant its listed story XP."
+    $global:RollDiceOverride = $null
+}
+
+function Test-TideLedgerMarksCompletesAsDocksTierOneFallbackQuest {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_tide_ledger_marks" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_tide_ledger_marks"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_tide_ledger_marks"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "Tide-Ledger Marks should complete as a Docks Tier 1 fallback clue quest."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksTideLedgerMarksSecured"] -Expected $true -Message "Tide-Ledger Marks should secure its paper-trail clue flag."
+    Assert-Equal -Actual $game.Hero.XP -Expected 180 -Message "Tide-Ledger Marks should grant its listed story XP."
     $global:RollDiceOverride = $null
 }
 
@@ -817,7 +841,7 @@ function Test-DebtHooksCompletesAsDocksTierTwoQuest {
     $game.Town.StoryQuestDoneToday = $false
 
     Accept-TownQuest -Game $game -QuestId "docks_debt_hooks" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_debt_hooks"
@@ -827,6 +851,32 @@ function Test-DebtHooksCompletesAsDocksTierTwoQuest {
     Assert-Equal -Actual $quest.Completed -Expected $true -Message "Debt Hooks should complete as a Docks Tier 2 quest."
     Assert-Equal -Actual $game.Town.StoryFlags["DocksDebtLedgerSecured"] -Expected $true -Message "Debt Hooks should secure proof of the debt/protection scheme."
     Assert-Equal -Actual $game.Hero.XP -Expected 250 -Message "Debt Hooks should grant its listed story XP."
+    $global:RollDiceOverride = $null
+}
+
+function Test-BlackmailBookCompletesAsDocksTierTwoFallbackQuest {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    (Find-TownQuest -Game $game -QuestId "docks_black_contract").Completed = $true
+    (Find-TownQuest -Game $game -QuestId "docks_salvage_witness").Completed = $true
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $game.Town.StoryQuestDoneToday = $false
+
+    Accept-TownQuest -Game $game -QuestId "docks_blackmail_book" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_blackmail_book"
+
+    $quest = Find-TownQuest -Game $game -QuestId "docks_blackmail_book"
+
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The Blackmail Book should complete as a Docks Tier 2 fallback organization quest."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksBlackmailBookRecovered"] -Expected $true -Message "The Blackmail Book should recover proof of the blackmail system."
+    Assert-Equal -Actual $game.Hero.XP -Expected 230 -Message "The Blackmail Book should grant its listed story XP."
     $global:RollDiceOverride = $null
 }
 
@@ -2016,9 +2066,11 @@ Test-SilentKnifeRevealsTheMysteriousBenefactor
 Test-DocksBlackContractStaysHiddenUntilLadyVeyraReveal
 Test-DocksBlackContractOpensDockDistrictWithoutHigherPatron
 Test-SalvageWitnessCompletesAsDocksTierOneQuest
+Test-TideLedgerMarksCompletesAsDocksTierOneFallbackQuest
 Test-BrokersWakeUnlocksAfterEnoughDocksTierOneWork
 Test-BrokersWakeProfilesOrganizationWithoutNobleReveal
 Test-DebtHooksCompletesAsDocksTierTwoQuest
+Test-BlackmailBookCompletesAsDocksTierTwoFallbackQuest
 Test-CharterScribeUnlocksAfterEnoughDocksTierTwoWork
 Test-DocksProgressionUsesSeparateQuestTiers
 Test-DocksWeakTierOneNeedsFallbackQuest

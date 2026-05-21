@@ -89,7 +89,7 @@ Story quests now also remember successful class-specific solutions as a small pe
 - Bard successes can add soft-power marks when Gariand solves trouble through performance, social reading, contradiction, or controlled rumor.
 - Fighter successes can add civic-trust marks when Lubert solves trouble through discipline, formal inquiry, patrol sense, or protection under authority.
 
-The current quest-check model is starting to move from fixed stat choices into explicit approach menus. `Missing Herb Satchel`, `Ledger of Ash`, `Night Courier Intercept`, and `Warehouse Ledger Recovery` are the first pass: each approach has its own flavor text, skill pairing, DC, success text, and failure text. A player can also `Read the scene` first, usually with `Insight`, to learn which approaches look promising without solving the quest outright.
+The current quest-check model is moving from fixed stat choices into explicit approach menus. `Missing Herb Satchel`, `Ledger of Ash`, `Night Courier Intercept`, `Warehouse Ledger Recovery`, `Salvage Witness`, `Tide-Ledger Marks`, `Debt Hooks on Warehouse Row`, and `The Blackmail Book` now use that structure: each approach has its own flavor text, skill pairing, DC, success text, and failure text. A player can also `Read the scene` first, usually with `Insight`, to learn which approaches look promising without solving the quest outright.
 
 ## Understreet finale
 

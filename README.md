@@ -16,7 +16,7 @@ The project currently includes:
 - level 4 Ability Score Increase support with derived-stat scaling for combat, HP, AC, skills, and Bard resources
 - full DnD 5e skill list support with skill-to-ability mapping, class starting skill proficiencies, Jack of All Trades, and Expertise
 - a Hero & Records skill tree submenu that shows every skill with proficiency and expertise markers
-- first-pass quest approach menus where selected quests list several skill-based methods, let the player read the scene for guidance, and keep distinct flavor text for each approach
+- quest approach menus where selected city and docks quests list several skill-based methods, let the player read the scene for guidance, and keep distinct flavor text for each approach
 - Bard spellcasting with level-gated known spells and slots, including free `Vicious Mockery`, combat spells like `Healing Word`, `Dissonant Whispers`, and `Faerie Fire` with 60 ft monster-zone spell range, social quest spells like `Charm Person` and first-pass `Suggestion`, plus level 2 utility tools like level 3 `Invisibility` and level 4 `Enhance Ability`
 - story notes that keep active clues visible during an arc, then condense completed arcs like Understreet into a summary based on what the player actually uncovered
 - expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
