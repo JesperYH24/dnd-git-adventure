@@ -50,7 +50,7 @@ If the hero is defeated during a city quest, the quest fails and the player choo
 
 ## Chapter Two
 
-Chapter Two is playable from opening clues through the finale.
+Chapter Two is playable from opening clues through the finale. While the arc is active, the quest log can still surface individual evidence notes. Once `The Understreet Complex` is cleared, the visible log condenses the Understreet evidence into one Chapter Two summary based on what the player actually found, while the raw flags remain available for progression and future detail views.
 
 Opening layer:
 

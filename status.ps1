@@ -97,7 +97,7 @@ function Get-HeroStatusSnapshot {
         DisplayXP = $displayXP
         NextLevelXP = $nextLevelXP
         UnarmedTrainingLevel = $unarmedTrainingLevel
-        StoryClueCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
+        StoryNoteCount = if ($null -ne $Game) { @(Get-StoryClueNotes -Game $Game).Count } else { 0 }
         BardicInspiration = $bardicInspirationStatus
         Spellcasting = $spellcastingStatus
         BarbarianResources = $barbarianStatus
@@ -143,8 +143,8 @@ function Write-HeroStatusDetails {
         Write-ColorLine "Time: $($Snapshot.TimeStatus)" "White"
     }
     Write-ColorLine "Currency: $($Snapshot.CurrencyText) | Story Quest Today: $($Snapshot.StoryQuestStatus) | Day Job Today: $($Snapshot.DayJobStatus)" "White"
-    if ($Snapshot.StoryClueCount -gt 0) {
-        Write-ColorLine "Story Clues Logged: $($Snapshot.StoryClueCount)" "DarkYellow"
+    if ($Snapshot.StoryNoteCount -gt 0) {
+        Write-ColorLine "Story Notes Logged: $($Snapshot.StoryNoteCount)" "DarkYellow"
     }
     if (-not [string]::IsNullOrWhiteSpace($Snapshot.MountStatus) -and $Snapshot.MountStatus -ne "No owned animals yet.") {
         Write-ColorLine "Stable: $($Snapshot.MountStatus)" "DarkCyan"

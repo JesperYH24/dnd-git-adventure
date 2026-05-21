@@ -123,7 +123,10 @@ function Test-OpeningGuardAndPatronLeadsComplete {
 }
 
 function Get-StoryClueNotes {
-    param($Game)
+    param(
+        $Game,
+        [switch]$Detailed
+    )
 
     if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Town.StoryFlags) {
         return @()
@@ -131,6 +134,19 @@ function Get-StoryClueNotes {
 
     $storyFlags = $Game.Town.StoryFlags
     $notes = @()
+    $understreetArcFlags = @(
+        "FoundTunnelAccess"
+        "FoundSmugglingLink"
+        "FoundStreetCourierMark"
+        "FoundCourierRoute"
+        "FoundEconomicIrregularity"
+        "NamedUnderstreetLeader"
+        "BentNailBrokerConfirmed"
+        "ConfirmedUndergroundRoute"
+        "SecuredLedgerEvidence"
+        "HelpedLocalVictim"
+        "UnderstreetComplexCleared"
+    )
     $definitions = @(
         @{ Flag = "FoundTunnelAccess"; Category = "Access"; Text = "The old city tunnels are active again, and the broken seal was opened from below." }
         @{ Flag = "FoundSmugglingLink"; Category = "Smuggling"; Text = "Missing goods and hidden cargo routes are tied to the same understreet traffic." }
@@ -155,7 +171,45 @@ function Get-StoryClueNotes {
         @{ Flag = "LordHalewickEscaped"; Category = "Dragon"; Text = "Lord Varric Halewick was publicly exposed in the Civic Keep, revealed a smaller draconic form, and escaped over the frightened city." }
     )
 
+    if (-not $Detailed -and [bool]$storyFlags["UnderstreetComplexCleared"]) {
+        $evidenceDetails = @()
+
+        if ([bool]$storyFlags["NamedUnderstreetLeader"]) {
+            $evidenceDetails += "Serik was identified as the hand coordinating the route"
+        }
+        else {
+            $evidenceDetails += "the complex was cleared before every command name was pinned down"
+        }
+
+        if ([bool]$storyFlags["SecuredLedgerEvidence"] -or [bool]$storyFlags["FoundEconomicIrregularity"]) {
+            $evidenceDetails += "ledger evidence tied missing stock and coin to protected movement below the city"
+        }
+        else {
+            $evidenceDetails += "some of the money trail stayed incomplete"
+        }
+
+        if ([bool]$storyFlags["BentNailBrokerConfirmed"] -or [bool]$storyFlags["FoundSmugglingLink"]) {
+            $evidenceDetails += "broker and cargo leads proved the route had help above ground"
+        }
+        elseif ([bool]$storyFlags["FoundCourierRoute"] -or [bool]$storyFlags["FoundStreetCourierMark"]) {
+            $evidenceDetails += "courier signs showed the route was still active above ground"
+        }
+        else {
+            $evidenceDetails += "the above-ground contacts remain partly obscured"
+        }
+
+        $notes += [PSCustomObject]@{
+            Flag = "UnderstreetArcSummary"
+            Category = "Chapter Two"
+            Text = "The Understreet Complex was broken. $($evidenceDetails -join '; ')."
+        }
+    }
+
     foreach ($definition in $definitions) {
+        if (-not $Detailed -and [bool]$storyFlags["UnderstreetComplexCleared"] -and $understreetArcFlags -contains $definition.Flag) {
+            continue
+        }
+
         if ([bool]$storyFlags[$definition.Flag]) {
             $notes += [PSCustomObject]@{
                 Flag = $definition.Flag
@@ -1234,7 +1288,7 @@ function Show-QuestLogSummary {
         $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
         $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
 
-        Write-ColorLine "Story Tier: $currentTier | Accepted: $acceptedCount | Completed: $completedCount | Story Clues: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
+        Write-ColorLine "Story Tier: $currentTier | Accepted: $acceptedCount | Completed: $completedCount | Story Notes: $($storyNotes.Count) | Failed: $failedCount" "DarkYellow"
         Write-ColorLine "Story Quest Today: $storyQuestStatus | Day Job Today: $dayJobStatus" "DarkYellow"
     }
 
@@ -1245,7 +1299,7 @@ function Show-StoryClueLog {
     param($Game)
 
     Write-ColorLine ""
-    Write-ColorLine "===== STORY CLUES =====" "Yellow"
+    Write-ColorLine "===== STORY NOTES =====" "Yellow"
 
     $storyNotes = @(Get-StoryClueNotes -Game $Game)
 

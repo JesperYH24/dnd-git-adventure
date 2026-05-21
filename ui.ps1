@@ -652,8 +652,8 @@ function Get-TownHeroResourceHudText {
         $parts += "Work $($snapshot.DayJobStatus)"
     }
 
-    if ($snapshot.StoryClueCount -gt 0) {
-        $parts += "Clues $($snapshot.StoryClueCount)"
+    if ($snapshot.StoryNoteCount -gt 0) {
+        $parts += "Notes $($snapshot.StoryNoteCount)"
     }
 
     if ($null -ne $snapshot.BardicInspiration) {

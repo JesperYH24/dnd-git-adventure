@@ -1419,6 +1419,25 @@ function Test-StoryClueNotesReflectKnownEvidence {
     Assert-True -Condition ($notes[2].Text -like "*Serik*") -Message "Leader notes should mention the named understreet contact."
 }
 
+function Test-StoryClueNotesCondenseCompletedUnderstreetArc {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["FoundSmugglingLink"] = $true
+    $game.Town.StoryFlags["FoundCourierRoute"] = $true
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+    $game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
+    $game.Town.StoryFlags["SecuredLedgerEvidence"] = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+
+    $notes = @(Get-StoryClueNotes -Game $game)
+    $detailedNotes = @(Get-StoryClueNotes -Game $game -Detailed)
+
+    Assert-Equal -Actual $notes.Count -Expected 1 -Message "Completed Understreet arcs should collapse their raw clue list into one readable summary."
+    Assert-Equal -Actual $notes[0].Flag -Expected "UnderstreetArcSummary" -Message "The visible note should identify itself as the Understreet arc summary."
+    Assert-True -Condition ($notes[0].Text -like "*Serik*" -and $notes[0].Text -like "*ledger*" -and $notes[0].Text -like "*above ground*") -Message "The Understreet summary should reflect the evidence the player actually found."
+    Assert-True -Condition ($detailedNotes.Count -gt $notes.Count) -Message "Detailed story notes should still expose raw evidence for future submenu/detail views."
+}
+
 function Test-StoryClueProgressSummaryTracksTierAndEvidence {
     $game = Initialize-Game
     Set-StoryTier -Game $game -Tier 3
@@ -1966,6 +1985,7 @@ Test-BardUnderstreetFinaleUsesClassAwareText
 Test-TierTwoKeepsRequiredOpeningLeadsAndAddsCurrentWork
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
+Test-StoryClueNotesCondenseCompletedUnderstreetArc
 Test-StoryClueProgressSummaryTracksTierAndEvidence
 Test-StoryClueProgressSummaryExplainsTierOneUnlockPath
 Test-StoryClueProgressSummaryUsesBrokenSealAsRealLead
