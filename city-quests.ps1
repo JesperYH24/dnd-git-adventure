@@ -746,7 +746,11 @@ function Start-NonCombatQuestCheck {
     $resolvedSkill = Resolve-NonCombatQuestCheckSkill -Ability $Ability -CheckTag $CheckTag -Skill $Skill
     $effectiveAbility = Normalize-HeroAbilityName -Ability $Ability
 
-    if (-not [string]::IsNullOrWhiteSpace($resolvedSkill)) {
+    $explicitSkill = Normalize-HeroSkillName -Skill $Skill
+    $explicitTagSkill = Normalize-HeroSkillName -Skill $CheckTag
+    $preserveRequestedAbility = -not [string]::IsNullOrWhiteSpace($explicitSkill) -or -not [string]::IsNullOrWhiteSpace($explicitTagSkill)
+
+    if (-not [string]::IsNullOrWhiteSpace($resolvedSkill) -and -not $preserveRequestedAbility) {
         $skillAbility = Get-HeroSkillAbility -Skill $resolvedSkill
         if (-not [string]::IsNullOrWhiteSpace($skillAbility)) {
             $effectiveAbility = $skillAbility
@@ -1917,7 +1921,7 @@ function Start-MissingHerbSatchelQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps in close and lets brute presence do the talking."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps in close and lets brute presence do the talking." -Skill "Intimidation"
 
                 if ($success) {
                     Write-Scene "The scavengers surrender the satchel and blurt out that marked runners have been using the old road at night."
@@ -1947,7 +1951,7 @@ function Start-MissingHerbSatchelQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} crouches by the broken road and follows the little signs most people walk past."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} crouches by the broken road and follows the little signs most people walk past." -Skill "Survival"
 
                 if ($success) {
                     Write-Scene "He spots the courier mark, the satchel, and a fresh heelprint pointing back toward the city."
@@ -2122,7 +2126,7 @@ function Start-LedgerOfAshQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} corners the named clerk in a back office and lets silence do most of the work."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} corners the named clerk in a back office and lets silence do most of the work." -Skill "Intimidation"
                 if ($success) {
                     Write-Scene "The clerk folds quickly and gives up a chain of payments tied to an under-street handler called Serik."
                     $Game.Town.StoryFlags["NamedUnderstreetLeader"] = $true
@@ -2408,7 +2412,7 @@ function Start-NightCourierInterceptQuest {
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} hangs back and follows the courier by echoes, reflections, and the moments when a runner forgets to be invisible." -Skill "Perception"
 
                 if ($success) {
                     Write-Scene "The trail leads to a hurried exchange beneath a shuttered stair. {hero} does not get the man, but he gets the route and the signal mark."
@@ -2424,7 +2428,7 @@ function Start-NightCourierInterceptQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} steps out under the lantern light and barks a challenge sharp enough to turn speed into panic."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} steps out under the lantern light and barks a challenge sharp enough to turn speed into panic." -Skill "Intimidation"
 
                 if ($success) {
                     Write-Scene "The courier bolts the wrong way, collides with a closed gate, and leaves his message case in {hero}'s hands."
@@ -2615,7 +2619,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} slows down and reads the office by what has been moved, scrubbed, or disturbed too recently."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} slows down and reads the office by what has been moved, scrubbed, or disturbed too recently." -Skill "Investigation"
 
                 if ($success) {
                     Write-Scene "A dragged stool and fresh dust line lead {hero} straight to the ledger's hiding place. The names inside tie warehouse stock to the same understreet chain."
@@ -2631,7 +2635,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} corners the night clerk with the kind of flat certainty that makes lies feel expensive."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} corners the night clerk with the kind of flat certainty that makes lies feel expensive." -Skill "Intimidation"
 
                 if ($success) {
                     Write-Scene "The clerk breaks and points {hero} to the hidden compartment. The ledger inside names the warehouse route and the hand above it."
@@ -2682,7 +2686,7 @@ function Start-WarehouseLedgerRecoveryQuest {
                     break
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the disturbed office like a patrol scene, then makes the clerk explain every shelf that moved for the wrong reason."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the disturbed office like a patrol scene, then makes the clerk explain every shelf that moved for the wrong reason." -Skill "Investigation"
 
                     if ($success) {
                         Write-Scene "The clerk runs out of harmless answers. A false backing opens under careful pressure, and the real ledger comes out with its names intact."
@@ -2809,7 +2813,7 @@ function Start-UnderstreetComplexQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudyAction")
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText (Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudyAction") -Skill "Survival"
 
                 if ($success) {
                     $approachText = Get-UnderstreetFinalClassText -Hero $Game.Hero -Key "ApproachStudySuccess"
@@ -2995,7 +2999,7 @@ function Start-DocksBlackContractQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 12 -ActionText "{hero} plants one hand on the wharf desk hard enough to rattle ink, rope hooks, and the boss's last bit of nerve."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 12 -ActionText "{hero} plants one hand on the wharf desk hard enough to rattle ink, rope hooks, and the boss's last bit of nerve." -Skill "Intimidation"
                 if ($success) {
                     Write-Scene "The wharf boss folds and names a contract runner called Marris Vane, a knife-broker who keeps changing berths and clients to stay ahead of the watch."
                     $cleanLead = $true
@@ -3019,7 +3023,7 @@ function Start-DocksBlackContractQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} walks the piers, trading half-truths, sharp questions, and just enough confidence to make the right dockhand answer the wrong one."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} walks the piers, trading half-truths, sharp questions, and just enough confidence to make the right dockhand answer the wrong one." -Skill "Deception"
                 if ($success) {
                     Write-Scene "Three overlapping stories finally point to the same man: Marris Vane, who brokers private knives for clients too polished to get blood on their own gloves."
                     $cleanLead = $true
@@ -3198,7 +3202,7 @@ function Start-DocksBrokersWakeQuest {
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} watches who leaves Warehouse Row empty-handed, who returns frightened, and who suddenly pays debts they claimed they did not owe."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} watches who leaves Warehouse Row empty-handed, who returns frightened, and who suddenly pays debts they claimed they did not owe." -Skill "Insight"
                 if ($success) {
                     Write-Scene "The pattern sharpens: debt collectors, false freight, and dockside guards are all parts of the same business."
                     $cleanProfile = $true
@@ -3340,8 +3344,8 @@ function Start-DocksSalvageWitnessQuest {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 11 -ActionText "{hero} lays each scrap out by seal, stain, and river grit until the trail starts behaving like evidence." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} stops trying to make Auntie's shelves normal and follows the odd logic underneath them." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 11 -ActionText "{hero} lays each scrap out by seal, stain, and river grit until the trail starts behaving like evidence." -Skill "Investigation" }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} stops trying to make Auntie's shelves normal and follows the odd logic underneath them." -Skill "Investigation" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} lets Auntie talk sideways until the name hidden in the story finally comes out straight." }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
@@ -3432,14 +3436,14 @@ function Start-DocksDebtHooksQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares debt marks, cargo losses, and service fees until the numbers start confessing." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} follows the collectors by the spaces they leave behind: shut doors, sudden quiet, and paid fear." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} follows the collectors by the spaces they leave behind: shut doors, sudden quiet, and paid fear." -Skill "Survival" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} earns enough trust for a dock family to reveal the slips they were told to burn." }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the row into a listening room and lets the collectors perform their own guilt." -CheckTag "Performance"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) steps into the collector's path and makes the next threat physically impossible." -Skill "Intimidation"
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) organizes the frightened workers behind him and makes the collectors state their business where everyone can hear it."
@@ -3523,7 +3527,7 @@ function Start-DocksTideLedgerMarksQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares tide marks, copied initials, and berth numbers until the fake freight code opens." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} names the wrong mark first and watches the right clerk flinch at the right lie." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} names the wrong mark first and watches the right clerk flinch at the right lie." -Skill "Insight" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives a runner enough room to pretend this is advice instead of confession." -CheckTag "Social" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
@@ -3615,14 +3619,14 @@ function Start-DocksBlackmailBookQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} reads names, symbols, and old favors until the book's cruelty becomes a ledger." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} searches the berth by what the book refuses to say and finds the missing cipher scrap." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} searches the berth by what the book refuses to say and finds the missing cipher scrap." -Skill "Investigation" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} gives one frightened worker a way to tell the truth without being alone in it." -CheckTag "Social" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns confession into something less lonely, and the book loses some of its power." -CheckTag "Performance"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) tears the dry box out from under the planks before fear can hide it again." -Skill "Athletics"
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) secures the berth, keeps the exits honest, and handles the dry box like evidence no one gets to threaten back into hiding."
@@ -3737,7 +3741,7 @@ function Start-DocksCharterScribeQuest {
                 break
             }
             "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} ignores the desk and follows the runners who leave it with papers held too carefully."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} ignores the desk and follows the runners who leave it with papers held too carefully." -Skill "Perception"
                 if ($success) {
                     Write-Scene "The runners reveal the route: clean charters leave the scribe's room and return to warehouses already marked by the organization."
                     $cleanProof = $true
@@ -3901,14 +3905,14 @@ function Start-DocksShellCharterQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} lines up filings, cargo weights, and missing crews until the shell charter starts to look hollow." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." -Skill "Perception" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) lets the shell owner boast in rhythm until the lie trips over its own rhyme." -CheckTag "Performance"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing." -Skill "Intimidation"
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) lays the false manifest down like a formal charge and waits for the owner-of-record to decide whether he wants the lie sworn aloud."
@@ -4000,7 +4004,7 @@ function Start-DocksCountingHousePressureQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} turns neat fees into a map of dirty money moving through lawful desks." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." -Skill "Investigation" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
@@ -4099,7 +4103,7 @@ function Start-DocksCustomsStampQuest {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares ink, pressure, and exemption clauses until the stamp reveals its desk." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." -Skill "Perception" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." -CheckTag "Suggestion" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
@@ -4299,7 +4303,7 @@ function Start-WhispersBeneathBentNailQuest {
 
         switch ($choice) {
             "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} leans over the table and makes it clear this is the last soft chance Brin gets."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} leans over the table and makes it clear this is the last soft chance Brin gets." -Skill "Intimidation"
 
                 if ($success) {
                     Write-Scene "Brin folds fast and names a smugglers' route running beneath the river stairs, along with the warning that the work is organized."
@@ -4333,7 +4337,7 @@ function Start-WhispersBeneathBentNailQuest {
                 break
             }
             "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over."
+                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over." -Skill "Stealth"
 
                 if ($success) {
                     Write-Scene "{hero} shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
@@ -4441,7 +4445,7 @@ function Start-MissingDeliveryDayJob {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps into the alley and makes it clear the crate is moving now." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps into the alley and makes it clear the crate is moving now." -Skill "Intimidation" }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} gets both hands under the crate and muscles the job back on schedule." }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." -CheckTag "Social" }
             "4" {
@@ -4552,7 +4556,7 @@ function Start-GateDutyOverflowDayJob {
         $success = $false
 
         switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." }
+            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." -Skill "Intimidation" }
             "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "{hero} leans in against wood and iron until the worst wagon finally shudders free." }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} tries the harder route and talks the hottest temper back down before the guards have to draw batons." -CheckTag "Social" }
             "4" {
@@ -4753,17 +4757,17 @@ function Start-ScribeWorkDayJob {
 
         switch ($choice) {
             "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 10 -ActionText "$($Game.Hero.Name) slows down, matches each line, and refuses to let the ink hurry him into mistakes." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "$($Game.Hero.Name) reads the work like a problem waiting to reveal itself." }
+            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "$($Game.Hero.Name) reads the work like a problem waiting to reveal itself." -Skill "Insight" }
             "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) steadies the clerk, smooths the pressure, and keeps the desk from turning frantic." -CheckTag "Social" }
             "4" {
                 if ($Game.Hero.Class -eq "Bard") {
                     $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) shapes the wording until the contract sounds cleaner, sharper, and no less binding." -CheckTag "Performance"
                 }
                 elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth." -Skill "Investigation"
                 }
                 elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the draft like a sworn duty, catches the obligation that would shame an honest signer, and marks it before the seal lands."
+                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the draft like a sworn duty, catches the obligation that would shame an honest signer, and marks it before the seal lands." -Skill "Investigation"
                 }
                 else {
                     Write-ColorLine "Choose a listed option." "DarkYellow"

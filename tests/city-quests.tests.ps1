@@ -1769,6 +1769,7 @@ function Test-DndSkillChecksUseMappedAbilitiesAndProficiencies {
 
     $athletics = Get-HeroSkillCheckModifier -Hero $hero -Skill "athletics"
     $sleight = Get-HeroSkillCheckModifier -Hero $hero -Skill "sleight-of-hand"
+    $insight = Get-HeroSkillCheckModifier -Hero $hero -Skill "Insight"
 
     Assert-Equal -Actual $athletics.Ability -Expected "STR" -Message "Athletics should map to STR."
     Assert-Equal -Actual $athletics.IsProficient -Expected $true -Message "Fighter should start proficient in Athletics."
@@ -1776,6 +1777,22 @@ function Test-DndSkillChecksUseMappedAbilitiesAndProficiencies {
     Assert-Equal -Actual $sleight.Ability -Expected "DEX" -Message "Sleight of Hand should map to DEX."
     Assert-Equal -Actual $sleight.IsProficient -Expected $false -Message "Fighter should not start proficient in Sleight of Hand."
     Assert-Equal -Actual $sleight.TotalModifier -Expected 1 -Message "Unproficient Sleight of Hand should use only DEX at level 1."
+    Assert-Equal -Actual $insight.IsProficient -Expected $false -Message "A broad WIS save/check proficiency should not make every WIS skill proficient."
+}
+
+function Test-RawAbilityProficiencyDoesNotLeakIntoSkillTree {
+    $bard = Get-Hero -Class "Bard"
+    $fighter = Get-Hero -Class "Fighter"
+
+    $bardDeception = Get-HeroSkillCheckModifier -Hero $bard -Skill "Deception"
+    $fighterMedicine = Get-HeroSkillCheckModifier -Hero $fighter -Skill "Medicine"
+    $rawBardCharisma = Get-HeroAbilityCheckModifier -Hero $bard -Ability "CHA"
+    $rawFighterWisdom = Get-HeroAbilityCheckModifier -Hero $fighter -Ability "WIS"
+
+    Assert-Equal -Actual $bardDeception.IsProficient -Expected $false -Message "Bard CHA proficiency should not mark untrained Deception as proficient."
+    Assert-Equal -Actual $fighterMedicine.IsProficient -Expected $false -Message "Fighter WIS proficiency should not mark untrained Medicine as proficient."
+    Assert-Equal -Actual $rawBardCharisma.IsProficient -Expected $true -Message "Raw Bard CHA checks should keep the legacy ability proficiency."
+    Assert-Equal -Actual $rawFighterWisdom.IsProficient -Expected $true -Message "Raw Fighter WIS checks should keep the legacy ability proficiency."
 }
 
 function Test-QuestChecksResolveDefaultAbilitiesToSkills {
@@ -1792,6 +1809,30 @@ function Test-QuestCheckTagsOverrideDefaultSkills {
     Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CHA" -CheckTag "Social") -Expected "Persuasion" -Message "Social quest tags should resolve to Persuasion."
     Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "CHA" -CheckTag "Suggestion") -Expected "Persuasion" -Message "Suggestion quest tags should resolve to Persuasion while keeping the spell hook."
     Assert-Equal -Actual (Resolve-NonCombatQuestCheckSkill -Ability "DEX" -Skill "Stealth") -Expected "Stealth" -Message "Explicit skill parameters should override the ability default."
+}
+
+function Test-QuestChecksCanUseAlternateSkillAbilities {
+    $hero = Get-Hero -Class "Fighter"
+    $script:AlternateAbilityRolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:AlternateAbilityRolls.Enqueue(1)
+
+    $global:RollDiceOverride = {
+        param([int]$Sides)
+        if ($Sides -eq 20 -and $script:AlternateAbilityRolls.Count -gt 0) {
+            return $script:AlternateAbilityRolls.Dequeue()
+        }
+
+        return 1
+    }
+
+    try {
+        $success = Start-NonCombatQuestCheck -Hero $hero -Ability "STR" -Skill "Intimidation" -DC 5 -ActionText "Lubert uses muscle and presence instead of courtly charm."
+    }
+    finally {
+        $global:RollDiceOverride = $null
+    }
+
+    Assert-Equal -Actual $success -Expected $true -Message "Explicit STR Intimidation checks should preserve STR as the ability instead of forcing CHA."
 }
 
 function Test-BardJackOfAllTradesAppliesToUntrainedDndSkills {
@@ -2014,8 +2055,10 @@ Test-BardCharismaChecksUseAbilityAndProficiency
 Test-BardPerformanceChecksUsePerformanceProficiency
 Test-FullDndSkillListIsAvailable
 Test-DndSkillChecksUseMappedAbilitiesAndProficiencies
+Test-RawAbilityProficiencyDoesNotLeakIntoSkillTree
 Test-QuestChecksResolveDefaultAbilitiesToSkills
 Test-QuestCheckTagsOverrideDefaultSkills
+Test-QuestChecksCanUseAlternateSkillAbilities
 Test-BardJackOfAllTradesAppliesToUntrainedDndSkills
 Test-BardJackOfAllTradesStartsAtLevelTwo
 Test-InvisibilityBoostsBardStealthChecks

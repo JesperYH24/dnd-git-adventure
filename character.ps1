@@ -1246,14 +1246,22 @@ function Get-HeroAbilityCheckModifier {
     $checkProficiencies = @(Get-HeroCheckProficiencies -Hero $Hero)
     $isProficient = $false
     $isExpertise = $false
+    $isSkillCheck = -not [string]::IsNullOrWhiteSpace($normalizedSkill)
 
     foreach ($entry in $checkProficiencies) {
         $entrySkill = Normalize-HeroSkillName -Skill ([string]$entry)
-        if ([string]::Equals([string]$entry, $normalizedAbility, [System.StringComparison]::OrdinalIgnoreCase) -or
-            (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase)) -or
-            (-not [string]::IsNullOrWhiteSpace($normalizedSkill) -and [string]::Equals($entrySkill, $normalizedSkill, [System.StringComparison]::OrdinalIgnoreCase))) {
-            $isProficient = $true
-            break
+        if ($isSkillCheck) {
+            if ([string]::Equals($entrySkill, $normalizedSkill, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $isProficient = $true
+                break
+            }
+        }
+        else {
+            if ([string]::Equals([string]$entry, $normalizedAbility, [System.StringComparison]::OrdinalIgnoreCase) -or
+                (-not [string]::IsNullOrWhiteSpace($normalizedTag) -and [string]::Equals([string]$entry, $normalizedTag, [System.StringComparison]::OrdinalIgnoreCase))) {
+                $isProficient = $true
+                break
+            }
         }
     }
 

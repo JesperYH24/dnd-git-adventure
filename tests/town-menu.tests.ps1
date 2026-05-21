@@ -95,6 +95,7 @@ function Test-HeroSkillTreeRowsShowProficiencyAndExpertise {
     $performance = $rows | Where-Object { $_.Name -eq "Performance" } | Select-Object -First 1
     $persuasion = $rows | Where-Object { $_.Name -eq "Persuasion" } | Select-Object -First 1
     $athletics = $rows | Where-Object { $_.Name -eq "Athletics" } | Select-Object -First 1
+    $deception = $rows | Where-Object { $_.Name -eq "Deception" } | Select-Object -First 1
 
     Assert-Equal -Actual $rows.Count -Expected 18 -Message "The skill tree submenu should list every DnD skill."
     Assert-Equal -Actual $performance.Marker -Expected "E" -Message "Bard Performance should be marked as expertise at level 3."
@@ -102,6 +103,7 @@ function Test-HeroSkillTreeRowsShowProficiencyAndExpertise {
     Assert-Equal -Actual $persuasion.Marker -Expected "P" -Message "Bard Persuasion should be marked as proficient."
     Assert-Equal -Actual $persuasion.State -Expected "Proficient" -Message "Bard Persuasion should label proficiency clearly."
     Assert-Equal -Actual $athletics.Marker -Expected "-" -Message "Untrained skills should be marked as untrained."
+    Assert-Equal -Actual $deception.Marker -Expected "-" -Message "Bard CHA proficiency should not make untrained CHA skills appear proficient."
 }
 
 function Test-TownCharacterMenuCanOpenSkillTree {
