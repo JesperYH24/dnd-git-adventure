@@ -2704,114 +2704,23 @@ function Start-DocksBlackContractQuest {
     }
 
     Write-ColorLine ""
-    Write-ColorLine "1. Lean on the wharf boss until he gives up the runner's name (STR)" "White"
-    Write-ColorLine "2. Read the damp ledger and tide marks for the hidden hand-off (INT)" "White"
-    Write-ColorLine "3. Work the crews and bait the right liar into talking (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn dockside gossip into a performance and pull the contract trail into the open (CHA)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Stare the whole pier down until the weakest nerve finally breaks (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Treat the wharf like a checkpoint and demand a clean account (CON)" "White"
-    }
-    Write-ColorLine ""
+    $approaches = @(
+        (New-QuestApproachOption -Key "wharf-boss" -Label "Lean on the wharf boss until he gives up the runner's name" -Ability "STR" -Skill "Intimidation" -DC 12 -ActionText "{hero} plants one hand on the wharf desk hard enough to rattle ink, rope hooks, and the boss's last bit of nerve." -SuccessText "The wharf boss folds and names a contract runner called Marris Vane, a knife-broker who keeps changing berths and clients to stay ahead of the watch." -FailureText "The boss will not give the name cleanly, but he does point {hero} toward a tide ledger, a black-sealed berth mark, and a runner who left in too much haste." -HintText "The wharf boss knows the name, but fear has made him stubborn.")
+        (New-QuestApproachOption -Key "tide-ledger" -Label "Read the damp ledger and tide marks for the hidden hand-off" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} studies the damp tally sheets, tide chalk, and berth marks until the fake freight line gives itself away." -SuccessText "A false cargo entry ties the black wax mark to Marris Vane, a dockside broker who handled contract money under cover of ordinary freight." -FailureText "{hero} still proves the hand-off used dock ledgers as cover, even if the broker's name stays just out of reach." -HintText "The ledger can prove whether the assassin's route was freight cover.")
+        (New-QuestApproachOption -Key "bait-liar" -Label "Work the crews and bait the right liar into talking" -Ability "CHA" -Skill "Deception" -DC 11 -ActionText "{hero} walks the piers, trading half-truths, sharp questions, and just enough confidence to make the right dockhand answer the wrong one." -SuccessText "Three overlapping stories finally point to the same man: Marris Vane, who brokers private knives for clients too polished to get blood on their own gloves." -FailureText "The crews close ranks, but not before {hero} proves the killing contract passed through the docks and not some random alley grudge." -HintText "The crews may reveal the name if the lie is aimed at the right person.")
+        (New-QuestApproachOption -Key "gossip-performance" -Label "Turn dockside gossip into a performance and pull the contract trail into the open" -Ability "CHA" -CheckTag "Social" -DC 10 -ActionText "$($Game.Hero.Name) turns rumor into rhythm, letting dockside vanity, wounded pride, and loose tongues do the dangerous work for him." -SuccessText "The gossip turns against itself. By the time the laughter dies, Marris Vane's name is hanging over the pier like a bell nobody can unring." -FailureText "Even without a clean name, the performance shakes loose one solid truth: the docks were only the middle of the chain, not the beginning." -Class "Bard" -ApproachKey "SoftPowerDocksideGossip" -HintText "A Bard can let dockside vanity expose the contract route.")
+        (New-QuestApproachOption -Key "pier-nerve" -Label "Stare the whole pier down until the weakest nerve finally breaks" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the middle of the pier and waits out every bluff in the place until somebody finally decides lying is harder than telling the truth." -SuccessText "One of the younger hands cracks first and spits out Marris Vane's name like he is trying to get poison out of his mouth." -FailureText "No one breaks cleanly, but the whole pier gives away enough to prove the contract moved through dockside hands." -Class "Barbarian" -ApproachKey "HardProofPierNerve" -HintText "A Barbarian can make the pier run out of nerve.")
+        (New-QuestApproachOption -Key "wharf-checkpoint" -Label "Treat the wharf like a checkpoint and demand a clean account" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the wharf into an orderly checkpoint, letting each dockhand understand that false answers will be remembered." -SuccessText "The careful pressure works. A tally hand gives up Marris Vane's name because the lie suddenly feels like evidence against him." -FailureText "No one risks a full name, but the forced accounting proves the contract moved through dockside hands." -Class "Fighter" -ApproachKey "CivicTrustWharfCheckpoint" -HintText "A Fighter can turn dock chaos into a controlled account.")
+    )
 
-    $cleanLead = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The strongest openings are the wharf boss, the false freight ledger, and the crewman whose story has too many rehearsed pauses." `
+        -ReadFailureText "The pier is tense and rehearsed, but the black wax mark and the vanishing crewman both point toward a contract runner." `
+        -QuestId "docks_black_contract"
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 12 -ActionText "{hero} plants one hand on the wharf desk hard enough to rattle ink, rope hooks, and the boss's last bit of nerve." -Skill "Intimidation"
-                if ($success) {
-                    Write-Scene "The wharf boss folds and names a contract runner called Marris Vane, a knife-broker who keeps changing berths and clients to stay ahead of the watch."
-                    $cleanLead = $true
-                }
-                else {
-                    Write-Scene "The boss will not give the name cleanly, but he does point {hero} toward a tide ledger, a black-sealed berth mark, and a runner who left in too much haste."
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} studies the damp tally sheets, tide chalk, and berth marks until the fake freight line gives itself away."
-                if ($success) {
-                    Write-Scene "A false cargo entry ties the black wax mark to Marris Vane, a dockside broker who handled contract money under cover of ordinary freight."
-                    $cleanLead = $true
-                }
-                else {
-                    Write-Scene "{hero} still proves the hand-off used dock ledgers as cover, even if the broker's name stays just out of reach."
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} walks the piers, trading half-truths, sharp questions, and just enough confidence to make the right dockhand answer the wrong one." -Skill "Deception"
-                if ($success) {
-                    Write-Scene "Three overlapping stories finally point to the same man: Marris Vane, who brokers private knives for clients too polished to get blood on their own gloves."
-                    $cleanLead = $true
-                }
-                else {
-                    Write-Scene "The crews close ranks, but not before {hero} proves the killing contract passed through the docks and not some random alley grudge."
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns rumor into rhythm, letting dockside vanity, wounded pride, and loose tongues do the dangerous work for him." -CheckTag "Social"
-                    if ($success) {
-                        Write-Scene "The gossip turns against itself. By the time the laughter dies, Marris Vane's name is hanging over the pier like a bell nobody can unring."
-                        $cleanLead = $true
-                    }
-                    else {
-                        Write-Scene "Even without a clean name, the performance shakes loose one solid truth: the docks were only the middle of the chain, not the beginning."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the middle of the pier and waits out every bluff in the place until somebody finally decides lying is harder than telling the truth."
-                    if ($success) {
-                        Write-Scene "One of the younger hands cracks first and spits out Marris Vane's name like he is trying to get poison out of his mouth."
-                        $cleanLead = $true
-                    }
-                    else {
-                        Write-Scene "No one breaks cleanly, but the whole pier gives away enough to prove the contract moved through dockside hands."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the wharf into an orderly checkpoint, letting each dockhand understand that false answers will be remembered."
-                    if ($success) {
-                        Write-Scene "The careful pressure works. A tally hand gives up Marris Vane's name because the lie suddenly feels like evidence against him."
-                        $cleanLead = $true
-                    }
-                    else {
-                        Write-Scene "No one risks a full name, but the forced accounting proves the contract moved through dockside hands."
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $cleanLead = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["NamedVeyraContractBroker"] = $true
 
@@ -2895,114 +2804,23 @@ function Start-DocksBrokersWakeQuest {
     Write-Scene "$($Game.Hero.Name) moves between Auntie Brindle's salvage stairs, the tide-ledger shack, Warehouse Row, and the old knife berth, looking for the pattern underneath the contract."
     Write-Scene "It is not just murder-for-hire. The organization used the docks to make ordinary cargo look lawful, turn debt into obedience, move blackmail quietly, and hire blades only when paperwork failed."
     Write-ColorLine ""
-    Write-ColorLine "1. Trace forged freight through the tide ledgers (INT)" "White"
-    Write-ColorLine "2. Follow debt collectors from Warehouse Row (WIS)" "White"
-    Write-ColorLine "3. Work dock gossip until the protection scheme shows itself (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the docks into a listening room and make the rumors harmonize (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Walk the old knife berth like a warning and make the cowards name the business (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Organize dock testimony until the business has nowhere to hide (CON)" "White"
-    }
-    Write-ColorLine ""
+    $approaches = @(
+        (New-QuestApproachOption -Key "forged-freight" -Label "Trace forged freight through the tide ledgers" -Ability "INT" -Skill "Investigation" -DC 12 -ActionText "{hero} compares tide marks, copied manifests, and dock stamps until the honest freight stops looking honest." -SuccessText "The ledgers reveal a tidy machine: forged cargo lines hide payments, debt notes, and names marked for pressure." -FailureText "The ledgers stay slippery, but even the missing pages show the same truth: cargo is cover for something organized." -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -HintText "Forged freight is the cleanest way to see the whole machine.")
+        (New-QuestApproachOption -Key "debt-collectors" -Label "Follow debt collectors from Warehouse Row" -Ability "WIS" -Skill "Insight" -DC 11 -ActionText "{hero} watches who leaves Warehouse Row empty-handed, who returns frightened, and who suddenly pays debts they claimed they did not owe." -SuccessText "The pattern sharpens: debt collectors, false freight, and dockside guards are all parts of the same business." -FailureText "The collectors notice the attention and scatter, but not before {hero} sees how debt keeps the docks obedient." -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -HintText "The debt collectors reveal how the organization keeps people useful.")
+        (New-QuestApproachOption -Key "dock-gossip" -Label "Work dock gossip until the protection scheme shows itself" -Ability "CHA" -CheckTag "Social" -DC 11 -ActionText "{hero} trades stories, drinks in bad places, and lets frightened workers correct each other's lies." -SuccessText "The gossip lines up: the organization sells protection, hides cargo, lends cruel money, and hires knives when someone important needs silence." -FailureText "The talk comes in broken pieces, but every piece points to the same machine wearing different masks." -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -HintText "Dock gossip can name the business when no single ledger will.")
+        (New-QuestApproachOption -Key "listening-room" -Label "Turn the docks into a listening room and make the rumors harmonize" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) plays just enough, jokes just enough, and leaves enough silence for people to fill it with truth." -SuccessText "By the end of the set, half the room has told on the other half. The organization is not a gang. It is a service: freight, debt, blackmail, and murder priced by need." -FailureText "The room enjoys the performance too much to confess cleanly, but the nervous laughter still points toward the same business." -Class "Bard" -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -ApproachKey "SoftPowerDockListeningRoom" -HintText "A Bard can make separate rumors harmonize into one profile.")
+        (New-QuestApproachOption -Key "knife-berth-warning" -Label "Walk the old knife berth like a warning and make the cowards name the business" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the old knife berth until the men who used to feel safe there start remembering urgent appointments elsewhere." -SuccessText "One runner breaks before anyone touches him. He names the business plainly: freight laundering, debt hooks, blackmail books, and paid violence." -FailureText "No one gives a full confession, but fear draws the map well enough. The berth served a larger machine." -Class "Barbarian" -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -ApproachKey "HardProofKnifeBerthWarning" -HintText "A Barbarian can make the old safe place feel unsafe for liars.")
+        (New-QuestApproachOption -Key "dock-testimony" -Label "Organize dock testimony until the business has nowhere to hide" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) separates crews, fixes each story in order, and lets discipline do what shouting cannot." -SuccessText "The testimonies stop contradicting each other and start forming a machine: freight laundering, debt hooks, blackmail books, and paid violence." -FailureText "The accounts stay partial, but the gaps line up well enough to show a larger business wearing different masks." -Class "Fighter" -SuccessFlag "DocksOrganizationProfiled" -FailureFlag "DocksOrganizationProfiled" -ApproachKey "CivicTrustDockTestimony" -HintText "A Fighter can organize partial testimony into a usable profile.")
+    )
 
-    $cleanProfile = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The strongest read is that freight, debt, gossip, and the old knife berth are all different faces of the same business." `
+        -ReadFailureText "The organization is still blurry, but forged freight and Warehouse Row debt look like the clearest ways into the pattern." `
+        -QuestId "docks_brokers_wake"
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 12 -ActionText "{hero} compares tide marks, copied manifests, and dock stamps until the honest freight stops looking honest."
-                if ($success) {
-                    Write-Scene "The ledgers reveal a tidy machine: forged cargo lines hide payments, debt notes, and names marked for pressure."
-                    $cleanProfile = $true
-                }
-                else {
-                    Write-Scene "The ledgers stay slippery, but even the missing pages show the same truth: cargo is cover for something organized."
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} watches who leaves Warehouse Row empty-handed, who returns frightened, and who suddenly pays debts they claimed they did not owe." -Skill "Insight"
-                if ($success) {
-                    Write-Scene "The pattern sharpens: debt collectors, false freight, and dockside guards are all parts of the same business."
-                    $cleanProfile = $true
-                }
-                else {
-                    Write-Scene "The collectors notice the attention and scatter, but not before {hero} sees how debt keeps the docks obedient."
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} trades stories, drinks in bad places, and lets frightened workers correct each other's lies."
-                if ($success) {
-                    Write-Scene "The gossip lines up: the organization sells protection, hides cargo, lends cruel money, and hires knives when someone important needs silence."
-                    $cleanProfile = $true
-                }
-                else {
-                    Write-Scene "The talk comes in broken pieces, but every piece points to the same machine wearing different masks."
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) plays just enough, jokes just enough, and leaves enough silence for people to fill it with truth." -CheckTag "Performance"
-                    if ($success) {
-                        Write-Scene "By the end of the set, half the room has told on the other half. The organization is not a gang. It is a service: freight, debt, blackmail, and murder priced by need."
-                        $cleanProfile = $true
-                    }
-                    else {
-                        Write-Scene "The room enjoys the performance too much to confess cleanly, but the nervous laughter still points toward the same business."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) stands in the old knife berth until the men who used to feel safe there start remembering urgent appointments elsewhere."
-                    if ($success) {
-                        Write-Scene "One runner breaks before anyone touches him. He names the business plainly: freight laundering, debt hooks, blackmail books, and paid violence."
-                        $cleanProfile = $true
-                    }
-                    else {
-                        Write-Scene "No one gives a full confession, but fear draws the map well enough. The berth served a larger machine."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) separates crews, fixes each story in order, and lets discipline do what shouting cannot."
-                    if ($success) {
-                        Write-Scene "The testimonies stop contradicting each other and start forming a machine: freight laundering, debt hooks, blackmail books, and paid violence."
-                        $cleanProfile = $true
-                    }
-                    else {
-                        Write-Scene "The accounts stay partial, but the gaps line up well enough to show a larger business wearing different masks."
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $cleanProfile = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
     $Game.Town.StoryFlags["DocksCharterScribeLead"] = $true
