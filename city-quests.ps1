@@ -3551,6 +3551,18 @@ function Start-MissingDeliveryDayJob {
             Write-Scene "By now the market runners know {hero}'s face. This time the package is sealed, valuable, and expected across the square before a rival buyer realizes it moved."
             Write-Scene "The work is still honest enough, but the coin is better because everyone involved knows a known hand is worth paying for."
         }
+        "dayjob_market_delivery_4" {
+            Write-Scene "Outer-wall rumors have changed the market's rhythm. A runner needs lamp oil, bandages, and salted food moved toward the wall-watch wagons without letting half the square decide the city is falling."
+            Write-Scene "This is still runner work, but it brushes close to the wall now, and people watch {hero} for signs of whether they should be afraid."
+        }
+        "dayjob_market_delivery_5" {
+            Write-Scene "Dorr's monster proof has made the market curious in the worst possible way. Sealed samples need moving before buyers, gawkers, and nervous guards all decide they deserve a look."
+            Write-Scene "The runner pays better because this handoff is part delivery, part crowd control, and part pretending monster teeth are ordinary freight."
+        }
+        "dayjob_market_delivery_6" {
+            Write-Scene "The market runners are issuing evacuation tokens, ration marks, and wall-shelter passes with the kind of speed that makes mistakes dangerous."
+            Write-Scene "The coin is good because the work has become civic survival: the right token to the right hand before the next alarm bell."
+        }
         default {
             if ($Game.Hero.Level -ge 3) {
                 Write-Scene "A market runner needs one missing crate found before the market eats the loss. With {hero} taking the job, the man sounds more hopeful than frightened."
@@ -3582,6 +3594,9 @@ function Start-MissingDeliveryDayJob {
     $completionText = switch ($QuestId) {
         "dayjob_market_delivery_2" { "The runner checks the corrected ledger twice, pays {hero}, and looks relieved that the market will be arguing about prices instead of blame by sunset." }
         "dayjob_market_delivery_3" { "The sealed package reaches the right hands. The runner pays without haggling this time, which says more than thanks would." }
+        "dayjob_market_delivery_4" { "The wall supplies reach the watch wagons without panic spreading through the square. The runner pays {hero} like someone who knows calm is now worth coin." }
+        "dayjob_market_delivery_5" { "The sealed samples reach the right buyer's table with their seals intact and the crowd still guessing. The runner pays the monster-zone rate without a word of complaint." }
+        "dayjob_market_delivery_6" { "The evacuation tokens reach the right stalls, shelters, and watch hands before the market can turn fear into a stampede. The runner pays like the city just bought itself another orderly hour." }
         default { "The runner presses the agreed coin into {hero}'s hand and hurries back to the market before the loss becomes permanent." }
     }
 
@@ -3621,6 +3636,18 @@ function Start-GateDutyOverflowDayJob {
             Write-Scene "A noble convoy has locked the gate with polished guards, proud horses, and the kind of impatience that makes ordinary drivers furious."
             Write-Scene "The sergeant offers better coin because this is less about muscle now and more about keeping status, traffic, and temper from colliding."
         }
+        "dayjob_gate_labor_4" {
+            Write-Scene "The gate detail has a wall-watch lane now, marked in chalk and guarded by men who keep glancing past the road."
+            Write-Scene "Incoming wagons still need sorting, but the real job is keeping monster-zone reports, repair crews, and ordinary traffic from choking the same arch."
+        }
+        "dayjob_gate_labor_5" {
+            Write-Scene "Refugee wagons from outer farms crowd the gate with frightened families, tied-down furniture, and stories that may or may not be monster signs."
+            Write-Scene "The sergeant needs {hero} because this line must be humane without becoming helpless."
+        }
+        "dayjob_gate_labor_6" {
+            Write-Scene "After the first organized attacks, the gate detail drills like the next alarm is already ringing."
+            Write-Scene "The sergeant wants evacuation lanes, reinforcement lanes, and supply lanes cleared in practice before they have to work under claws and smoke."
+        }
         default {
             if ($Game.Hero.Level -ge 3) {
                 Write-Scene "At the east gate, even the loudest drivers quiet a little when they realize the fighter who broke the understreet has been sent to straighten out the line."
@@ -3649,6 +3676,9 @@ function Start-GateDutyOverflowDayJob {
     $completionText = switch ($QuestId) {
         "dayjob_gate_labor_2" { "The toll dispute ends with the line moving and the sergeant's paperwork still clean. He pays {hero} like a man who hates needing help but respects useful results." }
         "dayjob_gate_labor_3" { "The noble convoy finally clears the gate without a street brawl. The sergeant counts out better coin and admits, very grudgingly, that {hero} saved the watch a long afternoon." }
+        "dayjob_gate_labor_4" { "The wall-watch lane stays clear, the wagons keep moving, and the sergeant pays with a look that says this kind of order may soon matter more than tolls." }
+        "dayjob_gate_labor_5" { "The refugee wagons pass through counted, calmer, and without blocking the watch route. The sergeant pays {hero} like someone who knows mercy can still be disciplined." }
+        "dayjob_gate_labor_6" { "The breach drill finishes with lanes marked, guards breathing hard, and civilians moving where they should. The sergeant pays the defense rate and immediately starts planning the next drill." }
         default { "The gate sergeant counts out {hero}'s pay and tells him to come back if he wants honest work again." }
     }
 
@@ -3688,6 +3718,18 @@ function Start-DockWorkDayJob {
             Write-Scene "Heavy tide lifts the barge against the pilings while expensive cargo waits under tarps. The dock boss has stopped asking for volunteers and started naming people he trusts."
             Write-Scene "This shift pays well because one bad hour can cost the river crews more than a week's wages."
         }
+        "dayjob_dock_loading_4" {
+            Write-Scene "Emergency wall timber and iron braces wait under wet canvas while wagon crews argue over which gate gets loaded first."
+            Write-Scene "The dock boss pays better now because this freight will be holding stone together by nightfall."
+        }
+        "dayjob_dock_loading_5" {
+            Write-Scene "Monster oddity crates sit roped and sealed along the dock, each one labeled with more warnings than any normal freight deserves."
+            Write-Scene "Dorr's buyers want them intact, the watch wants them counted, and the dock boss wants them gone before curiosity ruins the shift."
+        }
+        "dayjob_dock_loading_6" {
+            Write-Scene "Defense barges wait with timber, healing supplies, spare weapons, and enough tension to make every rope creak louder."
+            Write-Scene "If the gate pressure reaches the river, these barges need to move before anyone has time to argue about whose district matters most."
+        }
         default {
             Write-Scene "The morning dock is all rope, wet planks, shouting crewmen, and freight that needs to move before the tide turns inconvenient."
             Write-Scene "The work is honest, heavy, and paid in cash at the end of the shift."
@@ -3715,6 +3757,9 @@ function Start-DockWorkDayJob {
     $completionText = switch ($QuestId) {
         "dayjob_dock_loading_2" { "The cargo dispute settles before fists come out. The dock boss pays {hero} and marks him down as someone worth calling when freight turns political." }
         "dayjob_dock_loading_3" { "The heavy-tide job clears just before the river makes it impossible. The dock boss pays the higher rate without pretending it was easy." }
+        "dayjob_dock_loading_4" { "The wall timber and braces roll toward the gate before the tide can steal the schedule. The dock boss pays with fewer curses than usual." }
+        "dayjob_dock_loading_5" { "The oddity crates leave sealed, counted, and mostly unbroken. Dorr's buyers will have fewer reasons to shout, and the dock boss pays accordingly." }
+        "dayjob_dock_loading_6" { "The defense barges load in time to catch the river current. The dock boss pays the defense rate and looks toward the wall before he looks back to the tide." }
         default { "The dock boss counts out {hero}'s pay with wet fingers and points him toward the city before the next crew tries to hire him again." }
     }
 
@@ -3754,6 +3799,18 @@ function Start-ScribeWorkDayJob {
             Write-Scene "The office lowers its voice for this one. A sealed abstract needs preparing, and the patron wants accuracy, discretion, and no curious questions."
             Write-Scene "The pay is high for desk work because quiet mistakes at this level become expensive."
         }
+        "dayjob_scribe_copy_4" {
+            Write-Scene "Wall-watch reports have started arriving in three kinds of handwriting and four kinds of fear."
+            Write-Scene "The clerk needs clean summaries that can move through the city without turning every scratch mark into a panic."
+        }
+        "dayjob_scribe_copy_5" {
+            Write-Scene "Creature ledgers cover the desk: teeth, scales, track casts, witness claims, and Dorr's blunt notes about what should be paid for."
+            Write-Scene "This is better-paid work because the watch, buyers, and clerks all need the same truth in different words."
+        }
+        "dayjob_scribe_copy_6" {
+            Write-Scene "After the gate defense, the office has become a storm of orders, casualty notes, temple supply lists, and wall-repair claims."
+            Write-Scene "The clerk needs clean copies before the city forgets who held the line and who still needs help."
+        }
         default {
             Write-Scene "The clerk's office smells of ink, dust, and hot wax. A stack of contracts waits beside a clean copybook."
             Write-Scene "It is not glorious work, but the coin is honest and the chair is better than a wet dock plank."
@@ -3781,6 +3838,9 @@ function Start-ScribeWorkDayJob {
     $completionText = switch ($QuestId) {
         "dayjob_scribe_copy_2" { "The corrected drafts leave the office under fresh sand and a grateful seal. The clerk pays {hero} with the air of someone who will remember reliable help." }
         "dayjob_scribe_copy_3" { "The sealed abstract is finished cleanly and tucked away before the wrong ears can notice. The clerk pays the higher rate in quiet coin." }
+        "dayjob_scribe_copy_4" { "The wall reports leave the desk clear enough for the watch to act and calm enough for the city not to panic. The clerk pays the wall-watch rate." }
+        "dayjob_scribe_copy_5" { "The creature ledgers finally agree with themselves. Dorr, the watch, and the buyers can argue from the same page, and the clerk pays for the relief." }
+        "dayjob_scribe_copy_6" { "The defense orders, casualty notes, and supply lists leave in clean bundles. The clerk pays quietly, then adds one name back into a margin so it is not lost." }
         default { "The clerk counts out {hero}'s copy wage and slides the finished contracts into the outgoing stack." }
     }
 
@@ -3819,15 +3879,27 @@ function Start-TownQuest {
         "dayjob_market_delivery" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_market_delivery_2" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_market_delivery_3" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_market_delivery_4" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_market_delivery_5" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_market_delivery_6" { Start-MissingDeliveryDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_gate_labor" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_gate_labor_2" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_gate_labor_3" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor_4" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor_5" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_gate_labor_6" { Start-GateDutyOverflowDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_dock_loading" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_dock_loading_2" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_dock_loading_3" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading_4" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading_5" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_dock_loading_6" { Start-DockWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_scribe_copy" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_scribe_copy_2" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         "dayjob_scribe_copy_3" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy_4" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy_5" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
+        "dayjob_scribe_copy_6" { Start-ScribeWorkDayJob -Game $Game -HeroHP $HeroHP -QuestId $QuestId }
         default {
             Write-Scene "That quest is not playable yet."
             Write-ColorLine ""

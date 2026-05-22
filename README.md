@@ -22,7 +22,7 @@ The project currently includes:
 - expanded town HUD status lines that surface HP, AC, XP or level-up readiness, coin, daily story/work availability, and class resources without opening the full status submenu
 - Fighter tourney ground foot duels with coin purses, open guest-list sparring/duels for Bard and Barbarian, plus first-pass mounted jousting at level 4 once Lubert has a riding horse and splint or plate armor
 - first-pass monster zone beyond the outer wall built to carry progression from level 4 toward level 6, with visible objectives, tracked landmarks that become easier to find across different visit days and eventually unlock direct travel from the gate, milestone XP for discoveries/proof/reports/contracts, level-cap-filtered threat escalation, a scripted level 6 gate-defense event with city allies and wave pressure, Perception/Stealth awareness checks, abstract encounter distance, camp safety, pack-animal monster oddity hauling, Wall Watch/Guard Station reactions, and Barbarian defeated-creature reports that let Dorr book delayed captured-monster ring contracts
-- repeatable level-based day jobs
+- level-based day-job follow-up chains that now continue through level 6 alongside the wall and monster-zone pressure
 - split visual docs for game flow, code structure, story progression, dungeon maps, combat, and leveling
 
 ## Start the game

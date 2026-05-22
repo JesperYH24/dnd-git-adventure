@@ -219,8 +219,9 @@ Docks is intentionally more linear at first than the main town hub.
 ## Day jobs
 
 - day jobs pay coin but no XP
-- repeatable level-based day-job tracks
+- repeatable level-based day-job tracks now run from level 1 through level 6
 - higher-level heroes can catch up on missed earlier steps one day at a time
+- level 4-6 follow-ups connect ordinary work to the wall and monster-zone arc: market wall supplies and evacuation tokens, gate wall-watch shifts and breach drills, dock wall timber and oddity crates, and scribe wall reports and defense orders
 - current tracks:
   - `Market Runner`
   - `Gate Duty`

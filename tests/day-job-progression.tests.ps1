@@ -120,11 +120,68 @@ function Test-DockAndScribeJobsArePlayable {
     Assert-Equal -Actual $scribeGame.Hero.XP -Expected 0 -Message "Scribe work should not grant XP."
 }
 
+function Test-DayJobTracksExtendThroughLevelSix {
+    $game = Initialize-Game
+    $tracks = @("market_runner", "gate_labor", "dock_work", "scribe_work")
+
+    foreach ($track in $tracks) {
+        $steps = @($game.Town.Quests | Where-Object {
+            $_.QuestType -eq "DayJob" -and (Get-DayJobTrackId -Quest $_) -eq $track
+        } | Sort-Object @{ Expression = { Get-DayJobStep -Quest $_ }; Ascending = $true })
+
+        Assert-Equal -Actual $steps.Count -Expected 6 -Message "Day-job track '$track' should continue through six steps."
+        Assert-Equal -Actual (Get-DayJobStep -Quest $steps[-1]) -Expected 6 -Message "Day-job track '$track' should end on step 6."
+        Assert-Equal -Actual (Get-DayJobRequiredHeroLevel -Quest $steps[-1]) -Expected 6 -Message "Day-job track '$track' step 6 should require level 6."
+    }
+}
+
+function Test-DayJobLevelSixContinuationWaitsBehindEarlierSteps {
+    $game = Initialize-Game
+    $game.Hero.Level = 6
+    $game.Hero.LevelCap = 6
+
+    $marketStepOne = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+    $marketStepSix = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery_6"
+
+    Assert-Equal -Actual (Test-DayJobStepAvailable -Game $game -Quest $marketStepOne) -Expected $true -Message "A level 6 hero should still start an unfinished day-job track at step 1."
+    Assert-Equal -Actual (Test-DayJobStepAvailable -Game $game -Quest $marketStepSix) -Expected $false -Message "Step 6 should wait behind the earlier market runner steps."
+
+    foreach ($step in 1..5) {
+        (Find-TownQuest -Game $game -QuestId "dayjob_market_delivery$(if ($step -eq 1) { '' } else { "_$step" })").Completed = $true
+    }
+
+    Assert-Equal -Actual (Test-DayJobStepAvailable -Game $game -Quest $marketStepSix) -Expected $true -Message "Step 6 should become available after the previous five steps are complete at level 6."
+}
+
+function Test-LevelSixDayJobStepsArePlayable {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Hero.Level = 6
+    $game.Hero.LevelCap = 6
+
+    foreach ($id in @("dayjob_gate_labor", "dayjob_gate_labor_2", "dayjob_gate_labor_3", "dayjob_gate_labor_4", "dayjob_gate_labor_5")) {
+        (Find-TownQuest -Game $game -QuestId $id).Completed = $true
+    }
+
+    Accept-TownQuest -Game $game -QuestId "dayjob_gate_labor_6" | Out-Null
+    Use-DayJobReadHostSequence -Values @("2")
+    $global:RollDiceOverride = { param([int]$Sides) return 15 }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_gate_labor_6"
+
+    Assert-Equal -Actual (Find-TownQuest -Game $game -QuestId "dayjob_gate_labor_6").Completed -Expected $true -Message "The level 6 gate day-job continuation should be playable."
+    Assert-True -Condition ($game.Hero.CurrencyCopper -gt 0) -Message "The level 6 gate day job should pay coin."
+    Assert-Equal -Actual $game.Hero.XP -Expected 0 -Message "Level 6 day jobs should still not grant XP."
+}
+
 Test-LevelThreeBacklogStartsAtFirstMarketStep
 Test-MarketDayJobProgressesOneStepPerRest
 Test-LevelTwoGateJobUnlocksSecondStepOnlyAfterFirstCompletes
 Test-NewDayJobTracksStartAtFirstStep
 Test-DockAndScribeJobsArePlayable
+Test-DayJobTracksExtendThroughLevelSix
+Test-DayJobLevelSixContinuationWaitsBehindEarlierSteps
+Test-LevelSixDayJobStepsArePlayable
 
 $global:RollDiceOverride = $null
 

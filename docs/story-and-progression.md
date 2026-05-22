@@ -113,6 +113,8 @@ After the finale, the city shifts into a stronger level 3 state with:
 - tougher ring progression
 - better-paying veteran day jobs without granting XP
 
+Day-job tracks now continue beyond the original level 1-3 errands into level 4-6 follow-ups. They stay non-XP economy work, but their fiction keeps pace with the city: market runners move wall supplies and evacuation tokens, gate labor becomes Wall Watch support and breach drills, dock work handles wall timber and monster oddity crates, and scribe work turns wall reports, creature ledgers, and defense orders into usable records.
+
 ## Lady Veyra and The Silent Knife
 
 After `The Understreet Complex`, the `Quest Giver` path now continues through:
