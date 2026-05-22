@@ -63,6 +63,8 @@ function Initialize-TownQuests {
         (New-TownQuest -Id "patron_warehouse_ledger" -Name "Warehouse Ledger Recovery" -Source "Quest Giver" -Description "A hidden warehouse ledger may tie the smugglers' route, false payments, and missing stock to a single hand." -Objective "Secure the warehouse ledger before it disappears into the understreet network." -QuestType "Story" -Tier 3 -RewardCopper 170 -RewardXP 180)
         (New-TownQuest -Id "guard_understreet_complex" -Name "The Understreet Complex" -Source "Guard Station" -Description "With enough clues in hand, the watch is finally ready to move on the hidden complex beneath the city." -Objective "Gather the final evidence, then descend into the understreet complex." -QuestType "Story" -Tier 4 -RewardCopper 230 -RewardXP 240)
         (New-TownQuest -Id "patron_silent_knife" -Name "The Silent Knife" -Source "Quest Giver" -Description "Someone is trying to cut the patron's clerk out of the story before he can reveal who has been directing the private investigation." -Objective "Protect the clerk, stop the assassins, and learn who the mysterious patron really is." -QuestType "Story" -Tier 4 -RewardCopper 220 -RewardXP 220)
+        (New-TownQuest -Id "quest_board_sealed_grate" -Name "Sealed Grate Petition" -Source "Quest Board" -Description "A row of tenants near the old ward has pooled coin for someone willing to check a newly sealed grate that started rattling after the understreet raid." -Objective "Inspect the sealed grate, calm the tenants, and learn whether anything from below is still moving." -QuestType "Story" -Tier 4 -RewardCopper 150 -RewardXP 120 -RequiredHeroLevel 3)
+        (New-TownQuest -Id "quest_board_missing_masons" -Name "Missing Mason Crew" -Source "Quest Board" -Description "A repair crew sent to patch cracked streetwork near the old tunnel route has missed its call-in, and the notice asks for someone who understands what the city just survived." -Objective "Find the missing masons, secure their repair notes, and make sure the damaged street route is safe." -QuestType "Story" -Tier 4 -RewardCopper 170 -RewardXP 140 -RequiredHeroLevel 3)
         (New-TownQuest -Id "docks_black_contract" -Name "Black Contract on the Tide" -Source "Docks" -Description "Lady Veyra's enemies hired the killing hand through the docks. The river quarter may know who took the contract, and who stood behind it." -Objective "Go to the docks, find the contract trail, and learn who truly wanted Lady Veyra dead." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 250 -RewardXP 300)
         (New-TownQuest -Id "docks_salvage_witness" -Name "Salvage Witness" -Source "Docks" -Description "Auntie Brindle has found a thrown-away thing that remembers more about Lady Veyra's contract than its owner intended." -Objective "Work Auntie's salvage clue into usable witness proof before the docks bury it again." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 160 -RewardXP 220)
         (New-TownQuest -Id "docks_tide_ledger_marks" -Name "Tide-Ledger Marks" -Source "Docks" -Description "The tide-ledger shack has copied marks that do not belong to honest freight. Even a weak contract trail may be strengthened by the paper it left behind." -Objective "Audit the tide-ledger marks and turn dockside paperwork into another contract clue." -QuestType "Story" -Tier 4 -DocksTier 1 -RewardCopper 140 -RewardXP 180)
@@ -730,6 +732,10 @@ function Test-TownQuestBaseUnlock {
     }
 
     if ($Quest.Id -eq "patron_silent_knife") {
+        return [bool]$Game.Town.ChapterTwoComplete -or [bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]
+    }
+
+    if ($Quest.Id -eq "quest_board_sealed_grate" -or $Quest.Id -eq "quest_board_missing_masons") {
         return [bool]$Game.Town.ChapterTwoComplete -or [bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]
     }
 

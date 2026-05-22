@@ -1455,6 +1455,47 @@ function Test-TierTwoKeepsRequiredOpeningLeadsAndAddsCurrentWork {
     Assert-Equal -Actual (@($board | Where-Object { $_.QuestType -eq "Story" }).Count) -Expected 0 -Message "Tier 1 board story jobs should disappear from work once tier 2 opens."
 }
 
+function Test-QuestBoardGetsNewStoryQuestsAfterUnderstreet {
+    $game = Initialize-Game
+    $game.Hero.Level = 3
+    Set-StoryTier -Game $game -Tier 4
+
+    $beforeBoard = @(Get-TownQuestList -Game $game -Source "Quest Board" | Where-Object { $_.QuestType -eq "Story" -and $_.Id -like "quest_board_*" })
+
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+    $afterBoard = @(Get-TownQuestList -Game $game -Source "Quest Board" | Where-Object { $_.QuestType -eq "Story" -and $_.Id -like "quest_board_*" })
+
+    Assert-Equal -Actual (@($beforeBoard | Where-Object { $_.Id -eq "quest_board_sealed_grate" }).Count) -Expected 0 -Message "The post-understreet sealed-grate notice should stay hidden before the Understreet Complex is cleared."
+    Assert-Equal -Actual (@($beforeBoard | Where-Object { $_.Id -eq "quest_board_missing_masons" }).Count) -Expected 0 -Message "The post-understreet mason notice should stay hidden before the Understreet Complex is cleared."
+    Assert-Equal -Actual (@($afterBoard | Where-Object { $_.Id -eq "quest_board_sealed_grate" }).Count) -Expected 1 -Message "The quest board should gain the sealed-grate story quest after Understreet."
+    Assert-Equal -Actual (@($afterBoard | Where-Object { $_.Id -eq "quest_board_missing_masons" }).Count) -Expected 1 -Message "The quest board should gain the missing-mason story quest after Understreet."
+}
+
+function Test-PostUnderstreetQuestBoardQuestIsPlayable {
+    $game = Initialize-Game
+    $game.Hero.Level = 3
+    Set-StoryTier -Game $game -Tier 4
+    $game.Town.ChapterTwoComplete = $true
+    $game.Town.StoryFlags["UnderstreetComplexCleared"] = $true
+    $heroHP = $game.Hero.HP
+
+    Accept-TownQuest -Game $game -QuestId "quest_board_sealed_grate" | Out-Null
+    Use-ReadHostSequence -Values @("2")
+    function global:Roll-Dice {
+        param([int]$Sides)
+        return $Sides
+    }
+
+    Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "quest_board_sealed_grate"
+
+    $quest = Find-TownQuest -Game $game -QuestId "quest_board_sealed_grate"
+    Assert-Equal -Actual $quest.Completed -Expected $true -Message "The new sealed-grate board quest should complete through its playable handler."
+    Assert-Equal -Actual $game.Town.StoryFlags["BoardSealedGrateSolved"] -Expected $true -Message "The sealed-grate quest should set its success flag when the skill approach succeeds."
+
+    Remove-Item Function:\global:Roll-Dice -ErrorAction SilentlyContinue
+}
+
 function Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -2095,6 +2136,8 @@ Test-UnderstreetComplexIncludesExtendedMazeLayout
 Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
 Test-BardUnderstreetFinaleUsesClassAwareText
 Test-TierTwoKeepsRequiredOpeningLeadsAndAddsCurrentWork
+Test-QuestBoardGetsNewStoryQuestsAfterUnderstreet
+Test-PostUnderstreetQuestBoardQuestIsPlayable
 Test-QuestLogCanOpenAcceptedQuestWithoutQuestgiverVisit
 Test-StoryClueNotesReflectKnownEvidence
 Test-StoryClueNotesCondenseCompletedUnderstreetArc

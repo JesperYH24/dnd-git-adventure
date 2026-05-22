@@ -1302,13 +1302,13 @@ function Complete-StoryQuestAndReport {
     if ($newTier -gt $oldTier) {
         switch ($newTier) {
             2 {
-                Write-EmphasisLine -Text "Chapter Two Progress: Tier 1 is complete. Tier 2 story quests are now available." -Color "Yellow"
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 1 is complete. New Tier 2 story quests are now available from their actual sources." -Color "Yellow"
             }
             3 {
-                Write-EmphasisLine -Text "Chapter Two Progress: Tier 2 is complete. Tier 3 story quests are now available." -Color "Yellow"
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 2 is complete. New Tier 3 story quests are now available from their actual sources." -Color "Yellow"
             }
             4 {
-                Write-EmphasisLine -Text "Chapter Two Progress: Tier 3 is complete. Tier 4 story quests are now available." -Color "Yellow"
+                Write-EmphasisLine -Text "Chapter Two Progress: Tier 3 is complete. New Tier 4 story quests are now available from their actual sources." -Color "Yellow"
             }
         }
     }
@@ -2748,7 +2748,7 @@ function Start-DocksBlackContractQuest {
 
     Write-Scene "Questioned under steel and river rain, the surviving dock hands map the first layer of the river quarter for $($Game.Hero.Name): Auntie Brindle's salvage stairs, the tide-ledger shack, Warehouse Row, and the old knife berth where Marris Vane's killers take work."
     Write-Scene "The deeper buyer is still hidden. For now, the victory is practical and important: $($Game.Hero.Name) knows how the docks move secrets, where the assassin came from, and which doors are worth opening next."
-    Write-EmphasisLine -Text "New District Open: the docks can now be visited from town for deeper leads and future quests." -Color "Yellow"
+    Write-EmphasisLine -Text "New District Open: the docks can now be visited from town for deeper leads and new dockside quests." -Color "Yellow"
 
     $Game.Town.StoryFlags["DocksFirstChainComplete"] = $true
     $Game.Town.Relationships["LadyVeyra"] = "Warned"
@@ -3847,6 +3847,116 @@ function Start-ScribeWorkDayJob {
     Complete-StoryQuestAndReport -Game $Game -QuestId $QuestId -CompletionText $completionText
 }
 
+function Start-SealedGratePetitionQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "quest_board_sealed_grate"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "That sealed-grate petition is not available right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Sealed Grate Petition" -Color "Yellow"
+    Write-Scene "The notice leads to a narrow row of rooms built over an old drainage run. New mortar seals the grate below, but something behind it keeps knocking in slow, patient sets of three."
+    Write-Scene "Tenants crowd the stairwell with candles, rent worries, and the raw fear of people who know the city has teeth under its stones."
+    Write-ColorLine ""
+
+    $approaches = @(
+        (New-QuestApproachOption -Key "investigate" -Label "Inspect the seal, scrape marks, and fresh mortar" -Ability "INT" -Skill "Investigation" -DC 13 -ActionText "{hero} kneels at the grate and works through mortar lines, scrape angles, and the rhythm of the knocking." -SuccessText "The pattern proves it is a trapped maintenance weight, not a creature. Better still, the scrape marks show which repair crew sealed the wrong side in a hurry." -FailureText "The grate gives up only part of the answer. The knocking is probably mechanical, but the tenants will not sleep easier until the watch checks it too." -SuccessFlag "BoardSealedGrateSolved" -FailureFlag "BoardSealedGrateCalmed" -HintText "The grate is a puzzle before it is a threat.")
+        (New-QuestApproachOption -Key "perceive" -Label "Listen past the tenants and map the sound" -Ability "WIS" -Skill "Perception" -DC 12 -ActionText "{hero} gets the stairwell quiet and listens until stone, pipe, and frightened breathing separate from one another." -SuccessText "The knocking echoes from a loose counterweight behind the seal. No claws, no breath, no movement answering from below." -FailureText "The sound stays hard to place, but {hero} can at least prove it is not moving closer." -SuccessFlag "BoardSealedGrateSolved" -FailureFlag "BoardSealedGrateCalmed" -HintText "A careful ear can tell danger from aftermath.")
+        (New-QuestApproachOption -Key "calm" -Label "Turn panic into an orderly witness account" -Ability "CHA" -Skill "Persuasion" -DC 12 -ActionText "{hero} separates the witnesses, asks for one detail at a time, and makes the stairwell feel less like a trap." -SuccessText "The tenants settle enough to reveal the knocking started after a mason crew left early, and one child saw a pulley rope vanish behind the wet mortar." -FailureText "The tenants calm, but their stories remain tangled. The city gets a useful warning, if not a clean answer." -SuccessFlag "BoardSealedGrateSolved" -FailureFlag "BoardSealedGrateCalmed" -HintText "The witnesses know more once fear stops speaking over them.")
+        (New-QuestApproachOption -Key "song" -Label "Give the stairwell a steadier rhythm than fear" -Ability "CHA" -Skill "Performance" -DC 11 -ActionText "$($Game.Hero.Name) lets a low refrain settle over the stairwell until the knocking sounds less like an omen and more like a thing with timing." -SuccessText "The tenants breathe with the tune, the knocking pattern becomes obvious, and the false monster becomes a trapped weight behind bad mortar." -FailureText "The song steadies the room, but the answer stays half-hidden behind stone." -Class "Bard" -SuccessFlag "BoardSealedGrateSolved" -FailureFlag "BoardSealedGrateCalmed" -HintText "A Bard can make panic quiet enough to measure.")
+    )
+
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The knocking is too regular for claws and too hollow for a living thing. The best answer is in the seal, not in the dark below." `
+        -ReadFailureText "Fear makes the stairwell noisy. The grate, the witnesses, and the fresh mortar all still matter." `
+        -QuestId "quest_board_sealed_grate"
+
+    $strongOutcome = [bool]$result.StrongOutcome
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardCopper = if ($strongOutcome) { $null } else { 110 }
+    $rewardXP = if ($strongOutcome) { $null } else { 90 }
+    $completionText = if ($strongOutcome) {
+        "The tenants pay with visible relief. By dusk the watch has the mason mark, the grate has a repair order, and the board has one less panic pretending to be a monster."
+    }
+    else {
+        "The tenants pay for the help and send the warning to the watch. The grate is calmer now, even if the answer is not clean enough to make anyone proud."
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "quest_board_sealed_grate" -CompletionText $completionText -ProgressText "Quest Board Progress: $($Game.Hero.Name) has handled one of the new public notices left in the understreet's wake." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
+function Start-MissingMasonCrewQuest {
+    param(
+        $Game,
+        [ref]$HeroHP
+    )
+
+    $quest = Find-TownQuest -Game $Game -QuestId "quest_board_missing_masons"
+
+    if ($null -eq $quest -or -not $quest.Accepted -or $quest.Completed) {
+        Write-Scene "That missing-mason notice is not available right now."
+        Write-ColorLine ""
+        return
+    }
+
+    $startResult = Start-TownQuestAttempt -Game $Game -QuestId $quest.Id
+
+    if (-not $startResult.Success) {
+        Write-Scene $startResult.Message
+        Write-ColorLine ""
+        return
+    }
+
+    Write-SectionTitle -Text "Missing Mason Crew" -Color "Yellow"
+    Write-Scene "The repair map points to a cracked lane where fresh brick dust lies in bootprints and a dropped mallet has been set carefully on a windowsill, as if someone meant to come right back."
+    Write-Scene "Below the street, a service hollow coughs cold air through the split stone. Somewhere inside, a man calls once, then thinks better of making more noise."
+    Write-ColorLine ""
+
+    $approaches = @(
+        (New-QuestApproachOption -Key "track" -Label "Follow dust, boot drag, and tool marks" -Ability "WIS" -Skill "Survival" -DC 13 -ActionText "{hero} follows brick dust, scuffed boot heels, and the small trail made by tools carried too quickly." -SuccessText "The trail finds the crew trapped in a service hollow before the cracked arch can sag further. Their notes name three weak points the city must shore up next." -FailureText "The trail takes too long. The crew is found shaken and bruised, but one set of repair notes is lost in the wet dark." -SuccessFlag "BoardMasonsRecovered" -FailureFlag "BoardMasonsRecoveredWeak" -HintText "The street still shows where the crew went.")
+        (New-QuestApproachOption -Key "athletics" -Label "Force the service hollow open before it settles" -Ability "STR" -Skill "Athletics" -DC 14 -ActionText "{hero} wedges shoulder and tool against the cracked service cover, forcing a way through before the old stone settles." -SuccessText "The cover gives before the hollow collapses. The masons scramble out with their map tube intact and a new respect for fast hands." -FailureText "The stone opens late and ugly. The crew survives, but the map tube is crushed under falling brick." -SuccessFlag "BoardMasonsRecovered" -FailureFlag "BoardMasonsRecoveredWeak" -HintText "Speed and strength can turn this into a rescue instead of a recovery.")
+        (New-QuestApproachOption -Key "organize" -Label "Organize neighbors into a safe rescue line" -Ability "CHA" -Skill "Persuasion" -DC 13 -ActionText "{hero} turns bystanders into lamp holders, rope hands, and runners before fear can scatter them." -SuccessText "The rescue line holds. The masons come out one by one, and the foreman keeps enough calm to hand over every repair note." -FailureText "The line forms, but too slowly. The masons survive while part of the paperwork tears away in the dark." -SuccessFlag "BoardMasonsRecovered" -FailureFlag "BoardMasonsRecoveredWeak" -HintText "The crowd is raw material if someone gives it shape.")
+        (New-QuestApproachOption -Key "history" -Label "Remember old ward construction patterns" -Ability "INT" -Skill "History" -DC 12 -ActionText "$($Game.Hero.Name) studies the cracked lane as old civic design instead of random damage, recalling where service hollows were usually braced." -SuccessText "The old pattern points to the safer access slit. The crew is reached without shaking the cracked arch loose." -FailureText "The memory is close but imperfect. The safer path is found late, after the crew has lost part of its repair record." -Class "Fighter" -SuccessFlag "BoardMasonsRecovered" -FailureFlag "BoardMasonsRecoveredWeak" -HintText "A Fighter's formal training can make old city defenses readable.")
+    )
+
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The missing crew did not flee. Their marks bend toward the service hollow, and the street damage is still moving under its own weight." `
+        -ReadFailureText "The lane offers too many marks at once. The hollow, the mallet, and the split stone are the only clear pieces." `
+        -QuestId "quest_board_missing_masons"
+
+    $strongOutcome = [bool]$result.StrongOutcome
+    $advanceOutcome = if ($strongOutcome) { "Strong" } else { "Weak" }
+    $rewardCopper = if ($strongOutcome) { $null } else { 125 }
+    $rewardXP = if ($strongOutcome) { $null } else { 105 }
+    $completionText = if ($strongOutcome) {
+        "The foreman pays from a dust-stained purse and leaves the board with a public thanks. More importantly, the city now has the crew's repair notes before another lane gives way."
+    }
+    else {
+        "The masons live, and that matters most. Their foreman pays with shaking hands, though the lost notes mean the city will need to relearn some of the damage the hard way."
+    }
+
+    Complete-StoryQuestAndReport -Game $Game -QuestId "quest_board_missing_masons" -CompletionText $completionText -ProgressText "Quest Board Progress: $($Game.Hero.Name) has answered one of the new repair notices left after the understreet collapse." -RewardCopperOverride $rewardCopper -RewardXPOverride $rewardXP -AdvanceOutcome $advanceOutcome
+}
+
 function Start-TownQuest {
     param(
         $Game,
@@ -3872,6 +3982,8 @@ function Start-TownQuest {
         "docks_civic_vault" { Start-DocksCivicVaultQuest -Game $Game -HeroHP $HeroHP }
         "patron_storehouse_rats" { Start-StorehouseTroubleQuest -Game $Game -HeroHP $HeroHP }
         "quest_board_missing_herbs" { Start-MissingHerbSatchelQuest -Game $Game -HeroHP $HeroHP }
+        "quest_board_sealed_grate" { Start-SealedGratePetitionQuest -Game $Game -HeroHP $HeroHP }
+        "quest_board_missing_masons" { Start-MissingMasonCrewQuest -Game $Game -HeroHP $HeroHP }
         "patron_ledger_of_ash" { Start-LedgerOfAshQuest -Game $Game -HeroHP $HeroHP }
         "patron_warehouse_ledger" { Start-WarehouseLedgerRecoveryQuest -Game $Game -HeroHP $HeroHP }
         "guard_broken_seal" { Start-BrokenSealPatrolQuest -Game $Game -HeroHP $HeroHP }
