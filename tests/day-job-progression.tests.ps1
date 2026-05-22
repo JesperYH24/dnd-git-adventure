@@ -42,7 +42,7 @@ function Test-MarketDayJobProgressesOneStepPerRest {
     $game.Hero.LevelCap = 3
 
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
-    Use-DayJobReadHostSequence -Values @("1")
+    Use-DayJobReadHostSequence -Values @("2")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery"
@@ -57,7 +57,7 @@ function Test-MarketDayJobProgressesOneStepPerRest {
 
     Advance-TownToNextDay -Game $game
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery_2" | Out-Null
-    Use-DayJobReadHostSequence -Values @("3")
+    Use-DayJobReadHostSequence -Values @("4")
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "dayjob_market_delivery_2"
 
     Assert-Equal -Actual $secondStep.Completed -Expected $true -Message "After a rest, the second market runner continuation should be playable."
@@ -99,7 +99,7 @@ function Test-DockAndScribeJobsArePlayable {
     $dockGame = Initialize-Game
     $dockHP = $dockGame.Hero.HP
     Accept-TownQuest -Game $dockGame -QuestId "dayjob_dock_loading" | Out-Null
-    Use-DayJobReadHostSequence -Values @("2")
+    Use-DayJobReadHostSequence -Values @("3")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $dockGame -HeroHP ([ref]$dockHP) -QuestId "dayjob_dock_loading"
@@ -111,7 +111,7 @@ function Test-DockAndScribeJobsArePlayable {
     $scribeGame = Initialize-Game
     $scribeHP = $scribeGame.Hero.HP
     Accept-TownQuest -Game $scribeGame -QuestId "dayjob_scribe_copy" | Out-Null
-    Use-DayJobReadHostSequence -Values @("1")
+    Use-DayJobReadHostSequence -Values @("2")
 
     Start-TownQuest -Game $scribeGame -HeroHP ([ref]$scribeHP) -QuestId "dayjob_scribe_copy"
 

@@ -441,7 +441,7 @@ function Test-BardCanResolveMissingDeliveryWithPublicShowmanship {
     $heroHP = $game.Hero.HP
 
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 
@@ -536,7 +536,7 @@ function Test-BarbarianCanResolveMissingDeliveryByBruteCarry {
     $heroHP = $game.Hero.HP
 
     Accept-TownQuest -Game $game -QuestId "dayjob_market_delivery" | Out-Null
-    Use-ReadHostSequence -Values @("4")
+    Use-ReadHostSequence -Values @("5")
 
     $global:RollDiceOverride = { param([int]$Sides) return 12 }
 

@@ -3474,73 +3474,27 @@ function Start-WhispersBeneathBentNailQuest {
     Write-Scene "The man calls himself Brin and talks like every sentence costs him something. 'You didn't hear this from me,' he mutters. 'But plenty of folk are moving cargo that never sees a legal ledger.'"
     Write-Scene "'Funny thing,' Brin adds. 'The watch asks about tunnels, the merchants ask about missing goods, and they're both really asking about the same people.'"
     Write-ColorLine ""
-    Write-ColorLine "1. Press Brin hard and demand the route names (STR)" "White"
-    Write-ColorLine "2. Buy him a drink and let him talk on his own terms (CHA)" "White"
-    Write-ColorLine "3. Leave the booth and shadow the next handoff yourself (WIS)" "White"
-    Write-ColorLine ""
+    $approaches = @(
+        (New-QuestApproachOption -Key "press-brin" -Label "Press Brin hard and demand the route names" -Ability "STR" -Skill "Intimidation" -DC 11 -ActionText "{hero} leans over the table and makes it clear this is the last soft chance Brin gets." -SuccessText "Brin folds fast and names a smugglers' route running beneath the river stairs, along with the warning that the work is organized." -FailureText "Brin gives up less than {hero} wants. {hero} leaves knowing the Bent Nail matters, but without the clean confirmation needed to lock the broker into the case." -SuccessFlag "BentNailBrokerConfirmed" -HintText "Brin can be forced, but pressure may make him give only fragments.")
+        (New-QuestApproachOption -Key "buy-drink" -Label "Buy him a drink and let him talk on his own terms" -Ability "CHA" -CheckTag "Social" -DC 10 -ActionText "{hero} pays for the next round, lowers his tone, and lets the broker believe the conversation is still his idea." -SuccessText "Brin loosens up enough to name the handlers moving cargo off-book and to admit the Bent Nail has been hearing their footsteps for weeks." -FailureText "The coin buys patience more than honesty. {hero} gets a smell of the route, but not the broker's clean confession." -SuccessFlag "BentNailBrokerConfirmed" -HintText "A softer social path is the cleanest way to make Brin feel in control.")
+        (New-QuestApproachOption -Key "shadow-handoff" -Label "Leave the booth and shadow the next handoff yourself" -Ability "WIS" -Skill "Stealth" -DC 11 -ActionText "{hero} slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over." -SuccessText "{hero} shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage." -FailureText "The tail is clumsy. {hero} confirms the room is nervous for a reason, but he loses the handoff before it becomes proof." -SuccessFlag "BentNailBrokerConfirmed" -HintText "If Brin will not confess, the handoff after the meeting may do it for him.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "Brin wants to talk without looking like he talked. Buying time or shadowing the next handoff may be cleaner than forcing him." `
+        -ReadFailureText "The booth is all smoke and guarded eyes, but Brin's next contact may reveal what his words will not." `
+        -QuestId "bent_nail_whispers"
 
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} leans over the table and makes it clear this is the last soft chance Brin gets." -Skill "Intimidation"
+    $strongOutcome = [bool]$result.StrongOutcome
 
-                if ($success) {
-                    Write-Scene "Brin folds fast and names a smugglers' route running beneath the river stairs, along with the warning that the work is organized."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
-                    $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "Brin gives up less than {hero} wants. {hero} leaves knowing the Bent Nail matters, but without the clean confirmation needed to lock the broker into the case."
-                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "{hero} pays for the next round, lowers his tone, and lets the broker believe the conversation is still his idea." -CheckTag "Social"
-
-                if ($success) {
-                    Write-Scene "Brin loosens up enough to name the handlers moving cargo off-book and to admit the Bent Nail has been hearing their footsteps for weeks."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
-                    $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The coin buys patience more than honesty. {hero} gets a smell of the route, but not the broker's clean confession."
-                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "{hero} slips away from the booth, keeps to the wall, and watches who Brin speaks to once he thinks the meeting is over." -Skill "Stealth"
-
-                if ($success) {
-                    Write-Scene "{hero} shadows the handoff long enough to catch marked crates and a runner heading toward a hidden lower passage."
-                    $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
-                    $Game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
-                    $strongOutcome = $true
-                }
-                else {
-                    Write-Scene "The tail is clumsy. {hero} confirms the room is nervous for a reason, but he loses the handoff before it becomes proof."
-                    $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
-                }
-
-                break
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
+    if ($strongOutcome) {
+        $Game.Town.StoryFlags["FoundSmugglingLink"] = $true
+        $Game.Town.Relationships["UnderstreetBroker"] = "Useful"
+    }
+    else {
+        $Game.Town.Relationships["UnderstreetBroker"] = "Wary"
     }
 
     $progressText = if ($strongOutcome) {
@@ -3607,71 +3561,23 @@ function Start-MissingDeliveryDayJob {
         }
     }
     Write-Scene "{hero} only needs to get the goods moving again and avoid turning day work into a street fight."
-    Write-ColorLine "1. Clear the alley by force (STR)" "White"
-    Write-ColorLine "2. Haul the crate back yourself (STR)" "White"
-    Write-ColorLine "3. Talk the locals into helping (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the delay into a public bit and shame everyone into helping (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Shoulder the whole mess yourself and dare anyone to block the lane (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Form a quick work line and make the delivery feel official (CON)" "White"
-    }
     Write-ColorLine ""
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "clear-alley" -Label "Clear the alley by force" -Ability "STR" -Skill "Intimidation" -DC 10 -ActionText "{hero} steps into the alley and makes it clear the crate is moving now." -SuccessText "The runner gets the crate back in one piece and pays quickly before anyone changes their mind." -FailureText "The solution is messy, but the crate still gets home in the end." -HintText "Force can clear the argument fast if the alley respects it.")
+        (New-QuestApproachOption -Key "haul-crate" -Label "Haul the crate back yourself" -Ability "STR" -Skill "Athletics" -DC 10 -ActionText "{hero} gets both hands under the crate and muscles the job back on schedule." -SuccessText "The runner gets the crate back in one piece and pays quickly before anyone changes their mind." -FailureText "The solution is messy, but the crate still gets home in the end." -HintText "A direct Athletics approach skips the argument and solves the crate.")
+        (New-QuestApproachOption -Key "local-help" -Label "Talk the locals into helping" -Ability "CHA" -CheckTag "Social" -DC 11 -ActionText "{hero} slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." -SuccessText "The runner gets the crate back in one piece and pays quickly before anyone changes their mind." -FailureText "The solution is messy, but the crate still gets home in the end." -HintText "A social route can make the market solve its own jam.")
+        (New-QuestApproachOption -Key "public-bit" -Label "Turn the delay into a public bit and shame everyone into helping" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate." -SuccessText "By the time the bit is over, three bystanders are already rolling the crate forward and the runner is grinning through his panic." -FailureText "The solution is messy, but the crate still gets home in the end." -Class "Bard" -HintText "A Bard can make helping feel easier than being laughed at.")
+        (New-QuestApproachOption -Key "shoulder-mess" -Label "Shoulder the whole mess yourself and dare anyone to block the lane" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) heaves the crate up, takes the whole lane with him, and makes daring him to stop look like a poor plan." -SuccessText "By the time the shouting catches up, the crate is already moving and nobody in the lane wants to be the one foolish enough to stand in front of it." -FailureText "The solution is messy, but the crate still gets home in the end." -Class "Barbarian" -HintText "A Barbarian can make the job move by refusing to slow down.")
+        (New-QuestApproachOption -Key "work-line" -Label "Form a quick work line and make the delivery feel official" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the bystanders into a short work line, keeps his shield visible, and makes the crate's movement feel like city business." -SuccessText "The lane sorts itself around the shield and the steady orders. The crate moves, the runner exhales, and even the merchants argue more quietly." -FailureText "The solution is messy, but the crate still gets home in the end." -Class "Fighter" -HintText "A Fighter can turn bystanders into an orderly work line.")
+    )
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} steps into the alley and makes it clear the crate is moving now." -Skill "Intimidation" }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "{hero} gets both hands under the crate and muscles the job back on schedule." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "{hero} slows the shouting, sorts out the mix-up, and gets people pulling in the same direction." -CheckTag "Social" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the argument into a laughing public spectacle until no one wants to be the fool still blocking the crate." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) heaves the crate up, takes the whole lane with him, and makes daring him to stop look like a poor plan."
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) turns the bystanders into a short work line, keeps his shield visible, and makes the crate's movement feel like city business."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            if ($choice -eq "4" -and $Game.Hero.Class -eq "Bard") {
-                Write-Scene "By the time the bit is over, three bystanders are already rolling the crate forward and the runner is grinning through his panic."
-            }
-            elseif ($choice -eq "4" -and $Game.Hero.Class -eq "Barbarian") {
-                Write-Scene "By the time the shouting catches up, the crate is already moving and nobody in the lane wants to be the one foolish enough to stand in front of it."
-            }
-            elseif ($choice -eq "4" -and $Game.Hero.Class -eq "Fighter") {
-                Write-Scene "The lane sorts itself around the shield and the steady orders. The crate moves, the runner exhales, and even the merchants argue more quietly."
-            }
-            else {
-                Write-Scene "The runner gets the crate back in one piece and pays quickly before anyone changes their mind."
-            }
-        }
-        else {
-            Write-Scene "The solution is messy, but the crate still gets home in the end."
-        }
-
-        break
-    }
+    Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The crate matters more than the argument. Force, hauling, or getting the market to help can all finish the job." `
+        -ReadFailureText "The market is noisy, but the blocked alley and bystanders are the useful pieces." `
+        -QuestId $QuestId | Out-Null
 
     $completionText = switch ($QuestId) {
         "dayjob_market_delivery_2" { "The runner checks the corrected ledger twice, pays {hero}, and looks relieved that the market will be arguing about prices instead of blame by sunset." }
@@ -3724,48 +3630,21 @@ function Start-GateDutyOverflowDayJob {
             }
         }
     }
-    Write-ColorLine "1. Bark the line straight with sheer force of presence (STR)" "White"
-    Write-ColorLine "2. Shoulder the worst wagon clear yourself (CON)" "White"
-    Write-ColorLine "3. Calm the loudest driver before it spreads (CHA)" "White"
-    if ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Run the gate like a shield drill and clear one lane at a time (CON)" "White"
-    }
     Write-ColorLine ""
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "bark-line" -Label "Bark the line straight with sheer force of presence" -Ability "STR" -Skill "Intimidation" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." -SuccessText "The gate sergeant nods once when the line begins moving again. That is as close to praise as the man gets." -FailureText "It takes longer than anyone likes, but the line clears before sunrise and no blood gets spilled." -HintText "A hard Intimidation approach can stop the line arguing.")
+        (New-QuestApproachOption -Key "shoulder-wagon" -Label "Shoulder the worst wagon clear yourself" -Ability "CON" -DC 11 -ActionText "{hero} leans in against wood and iron until the worst wagon finally shudders free." -SuccessText "The gate sergeant nods once when the line begins moving again. That is as close to praise as the man gets." -FailureText "It takes longer than anyone likes, but the line clears before sunrise and no blood gets spilled." -HintText "Raw endurance can solve the worst physical blockage.")
+        (New-QuestApproachOption -Key "calm-driver" -Label "Calm the loudest driver before it spreads" -Ability "CHA" -CheckTag "Social" -DC 12 -ActionText "{hero} tries the harder route and talks the hottest temper back down before the guards have to draw batons." -SuccessText "The gate sergeant nods once when the line begins moving again. That is as close to praise as the man gets." -FailureText "It takes longer than anyone likes, but the line clears before sunrise and no blood gets spilled." -HintText "Talking down the hottest driver can keep the whole gate from boiling over.")
+        (New-QuestApproachOption -Key "shield-drill" -Label "Run the gate like a shield drill and clear one lane at a time" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) breaks the jam into ranks, signals the guards like a drill line, and clears the gate without letting pride become a fight." -SuccessText "The gate sergeant nods once when the line begins moving again. That is as close to praise as the man gets." -FailureText "It takes longer than anyone likes, but the line clears before sunrise and no blood gets spilled." -Class "Fighter" -HintText "A Fighter can use drill order to make the gate behave.")
+    )
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "{hero} steps into the middle of the jam and makes his presence the new center of the argument." -Skill "Intimidation" }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "{hero} leans in against wood and iron until the worst wagon finally shudders free." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} tries the harder route and talks the hottest temper back down before the guards have to draw batons." -CheckTag "Social" }
-            "4" {
-                if ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) breaks the jam into ranks, signals the guards like a drill line, and clears the gate without letting pride become a fight."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The gate sergeant nods once when the line begins moving again. That is as close to praise as the man gets."
-        }
-        else {
-            Write-Scene "It takes longer than anyone likes, but the line clears before sunrise and no blood gets spilled."
-        }
-
-        break
-    }
+    Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The jam has two pressure points: the loudest driver and the wagon physically blocking the arch." `
+        -ReadFailureText "The gate is crowded and angry, but the worst wagon is still the practical problem." `
+        -QuestId $QuestId | Out-Null
 
     $completionText = switch ($QuestId) {
         "dayjob_gate_labor_2" { "The toll dispute ends with the line moving and the sergeant's paperwork still clean. He pays {hero} like a man who hates needing help but respects useful results." }
@@ -3815,60 +3694,23 @@ function Start-DockWorkDayJob {
         }
     }
 
-    Write-ColorLine "1. Haul the heaviest cargo yourself (STR)" "White"
-    Write-ColorLine "2. Work the full shift without slowing (CON)" "White"
-    Write-ColorLine "3. Organize the crews before they waste the tide (CHA)" "White"
-    if ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Make the whole dock move at your pace (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the work rhythm into a call-and-response chant (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Split the crews into stations and hold the line through the tide (CON)" "White"
-    }
     Write-ColorLine ""
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "heavy-cargo" -Label "Haul the heaviest cargo yourself" -Ability "STR" -Skill "Athletics" -DC 10 -ActionText "$($Game.Hero.Name) gets under the worst of the load and makes the crew believe it can move." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -HintText "Athletics is the direct route when the problem is weight and tide.")
+        (New-QuestApproachOption -Key "full-shift" -Label "Work the full shift without slowing" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) keeps working after the easy breath is gone, one crate and one soaked plank at a time." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -HintText "Endurance can win a dock shift even when nothing goes smoothly.")
+        (New-QuestApproachOption -Key "organize-crews" -Label "Organize the crews before they waste the tide" -Ability "CHA" -CheckTag "Social" -DC 11 -ActionText "$($Game.Hero.Name) cuts through the shouting and gets the crews pulling in the same order." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -HintText "A social approach can save time before the tide does the damage.")
+        (New-QuestApproachOption -Key "dock-pace" -Label "Make the whole dock move at your pace" -Ability "STR" -Skill "Athletics" -DC 10 -ActionText "$($Game.Hero.Name) takes the front line, sets the pace, and dares the dock to fall behind." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -Class "Barbarian" -HintText "A Barbarian can make strength contagious.")
+        (New-QuestApproachOption -Key "work-chant" -Label "Turn the work rhythm into a call-and-response chant" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) turns the crew's rhythm into a chant that keeps hands moving and tempers low." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -Class "Bard" -HintText "A Bard can keep the work moving by giving it rhythm.")
+        (New-QuestApproachOption -Key "crew-stations" -Label "Split the crews into stations and hold the line through the tide" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) divides the crews into stations, anchors the dangerous lift himself, and keeps the line steady until the tide stops winning." -SuccessText "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument." -FailureText "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage." -Class "Fighter" -HintText "A Fighter can turn a dock shift into stations and lines.")
+    )
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) gets under the worst of the load and makes the crew believe it can move." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) keeps working after the easy breath is gone, one crate and one soaked plank at a time." }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) cuts through the shouting and gets the crews pulling in the same order." }
-            "4" {
-                if ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 10 -ActionText "$($Game.Hero.Name) takes the front line, sets the pace, and dares the dock to fall behind."
-                }
-                elseif ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) turns the crew's rhythm into a chant that keeps hands moving and tempers low." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) divides the crews into stations, anchors the dangerous lift himself, and keeps the line steady until the tide stops winning."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "By the end of the shift, the cargo is moving, the dock boss is less furious, and the coin is counted without argument."
-        }
-        else {
-            Write-Scene "The shift turns ugly and slow, but enough freight moves that the dock boss still pays the agreed wage."
-        }
-
-        break
-    }
+    Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The tide is the real enemy. Moving the heaviest cargo or organizing the crews early looks best." `
+        -ReadFailureText "The dock is too loud to read cleanly, but the heaviest stack and wasted crew motion both stand out." `
+        -QuestId $QuestId | Out-Null
 
     $completionText = switch ($QuestId) {
         "dayjob_dock_loading_2" { "The cargo dispute settles before fists come out. The dock boss pays {hero} and marks him down as someone worth calling when freight turns political." }
@@ -3918,60 +3760,23 @@ function Start-ScribeWorkDayJob {
         }
     }
 
-    Write-ColorLine "1. Copy the documents with careful focus (INT)" "White"
-    Write-ColorLine "2. Spot the practical mistake before it leaves the desk (WIS)" "White"
-    Write-ColorLine "3. Keep the clerk calm and the work moving (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Make the language cleaner without changing the meaning (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Catch the suspicious clause by treating it like a trap (WIS)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Read the contract like an oath and flag the duty that does not fit (WIS)" "White"
-    }
     Write-ColorLine ""
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "careful-copy" -Label "Copy the documents with careful focus" -Ability "INT" -Skill "Investigation" -DC 10 -ActionText "$($Game.Hero.Name) slows down, matches each line, and refuses to let the ink hurry him into mistakes." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -HintText "Careful Investigation keeps the copy clean.")
+        (New-QuestApproachOption -Key "practical-mistake" -Label "Spot the practical mistake before it leaves the desk" -Ability "WIS" -Skill "Insight" -DC 11 -ActionText "$($Game.Hero.Name) reads the work like a problem waiting to reveal itself." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -HintText "Insight can spot what the desk is really nervous about.")
+        (New-QuestApproachOption -Key "steady-clerk" -Label "Keep the clerk calm and the work moving" -Ability "CHA" -CheckTag "Social" -DC 11 -ActionText "$($Game.Hero.Name) steadies the clerk, smooths the pressure, and keeps the desk from turning frantic." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -HintText "A social route can keep haste from causing errors.")
+        (New-QuestApproachOption -Key "clean-language" -Label "Make the language cleaner without changing the meaning" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) shapes the wording until the contract sounds cleaner, sharper, and no less binding." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -Class "Bard" -HintText "A Bard can make language cleaner without loosening it.")
+        (New-QuestApproachOption -Key "trap-clause" -Label "Catch the suspicious clause by treating it like a trap" -Ability "WIS" -Skill "Investigation" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -Class "Barbarian" -HintText "A Barbarian can treat a pretty clause like a waiting snare.")
+        (New-QuestApproachOption -Key "oath-reading" -Label "Read the contract like an oath and flag the duty that does not fit" -Ability "WIS" -Skill "Investigation" -DC 10 -ActionText "$($Game.Hero.Name) reads the draft like a sworn duty, catches the obligation that would shame an honest signer, and marks it before the seal lands." -SuccessText "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon." -FailureText "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage." -Class "Fighter" -HintText "A Fighter can read obligation as duty, not ornament.")
+    )
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 10 -ActionText "$($Game.Hero.Name) slows down, matches each line, and refuses to let the ink hurry him into mistakes." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 11 -ActionText "$($Game.Hero.Name) reads the work like a problem waiting to reveal itself." -Skill "Insight" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) steadies the clerk, smooths the pressure, and keeps the desk from turning frantic." -CheckTag "Social" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) shapes the wording until the contract sounds cleaner, sharper, and no less binding." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) distrusts the neatest sentence on the page and finds the clause that was hiding its teeth." -Skill "Investigation"
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 10 -ActionText "$($Game.Hero.Name) reads the draft like a sworn duty, catches the obligation that would shame an honest signer, and marks it before the seal lands." -Skill "Investigation"
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The clerk checks the finished pages, blinks at the clean work, and pays like someone who just avoided a worse afternoon."
-        }
-        else {
-            Write-Scene "The work takes longer and earns a few corrections, but the copies are usable and the clerk honors the wage."
-        }
-
-        break
-    }
+    Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The risk is not the ink; it is haste. Careful copying, spotting the practical mistake, or calming the clerk can all protect the work." `
+        -ReadFailureText "The desk is hurried, but the clean copybook and nervous clerk are the obvious pressure points." `
+        -QuestId $QuestId | Out-Null
 
     $completionText = switch ($QuestId) {
         "dayjob_scribe_copy_2" { "The corrected drafts leave the office under fresh sand and a grateful seal. The clerk pays {hero} with the air of someone who will remember reliable help." }
