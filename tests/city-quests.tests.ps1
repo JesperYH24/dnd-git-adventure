@@ -248,7 +248,7 @@ function Test-BentNailWhispersCompletesAndSetsBrokerFlag {
     $game.Town.InnFlags["BentNailBrokerInfo"] = $true
 
     Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
@@ -270,7 +270,7 @@ function Test-BentNailWhispersWeakOutcomeNeedsMoreTierTwoWork {
     $game.Town.InnFlags["BentNailBrokerInfo"] = $true
 
     Accept-TownQuest -Game $game -QuestId "bent_nail_whispers" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
 
     $global:RollDiceOverride = { param([int]$Sides) return 1 }
 
@@ -741,7 +741,7 @@ function Test-SalvageWitnessCompletesAsDocksTierOneQuest {
     $game.Town.StoryQuestDoneToday = $false
 
     Accept-TownQuest -Game $game -QuestId "docks_salvage_witness" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_salvage_witness"
@@ -1013,7 +1013,7 @@ function Test-CharterScribeSetsLevelFourReadiness {
     $game.Town.StoryQuestDoneToday = $false
 
     Accept-TownQuest -Game $game -QuestId "docks_charter_scribe" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
 
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_charter_scribe"
@@ -1130,13 +1130,13 @@ function Test-DocksTierFourQuestsExposeHigherCityTrail {
     $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
 
     Accept-TownQuest -Game $game -QuestId "docks_shell_charter" | Out-Null
-    Use-ReadHostSequence -Values @("1")
+    Use-ReadHostSequence -Values @("2")
     $global:RollDiceOverride = { param([int]$Sides) return 15 }
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_shell_charter"
 
     $game.Town.StoryQuestDoneToday = $false
     Accept-TownQuest -Game $game -QuestId "docks_counting_house_pressure" | Out-Null
-    Use-ReadHostSequence -Values @("2")
+    Use-ReadHostSequence -Values @("3")
     Start-TownQuest -Game $game -HeroHP ([ref]$heroHP) -QuestId "docks_counting_house_pressure"
 
     $shellCharter = Find-TownQuest -Game $game -QuestId "docks_shell_charter"
@@ -1973,7 +1973,7 @@ function Test-QuestOutcomeTextStaysBlankForDayJobs {
 
 function Test-FighterHasClassSpecificCityQuestOptions {
     $questScript = Get-Content -Path "$PSScriptRoot\..\city-quests.ps1" -Raw
-    $fighterOptionCount = ([regex]::Matches($questScript, 'elseif \(\$Game\.Hero\.Class -eq "Fighter"\)')).Count
+    $fighterOptionCount = ([regex]::Matches($questScript, '-Class "Fighter"|elseif \(\$Game\.Hero\.Class -eq "Fighter"\)')).Count
 
     Assert-True -Condition ($fighterOptionCount -ge 18) -Message "Fighter should have its own city quest option branches across day jobs and docks quests."
     Assert-True -Condition ($questScript.Contains("Read the handoff pattern and close the lane without spooking it")) -Message "Fighter should have a Night Courier special option."

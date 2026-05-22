@@ -3278,114 +3278,24 @@ function Start-DocksCharterScribeQuest {
     Write-Scene "The charter scribe works out of a counting room above the tide ledgers, where dock claims become lawful cargo, debt hooks become service fees, and stolen freight learns to wear a clean seal."
     Write-Scene "This is the step before the next real strike: break the paperwork shield, and the organization loses the respectable mask that lets it survive."
     Write-ColorLine ""
-    Write-ColorLine "1. Audit the false charters until the same hand appears twice (INT)" "White"
-    Write-ColorLine "2. Watch who carries clean papers back to dirty warehouses (WIS)" "White"
-    Write-ColorLine "3. Pressure the clerks into naming the scribe's private seal (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Turn the counting room into a salon and let vanity confess (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Stand between the clerks and the door until paper courage fails (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Treat the counting room like a formal inquiry and hold every exit (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $cleanProof = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "audit-charters" -Label "Audit the false charters until the same hand appears twice" -Ability "INT" -Skill "Investigation" -DC 13 -ActionText "{hero} compares seal pressure, copied clauses, and cargo exemptions until the same careful fraud shows through." -SuccessText "The charters line up too neatly. One private seal has cleaned three dirty shipments and two debt transfers." -FailureText "The records are built to blur, but even blurred ink shows a repeating pattern around the same private seal." -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -HintText "The false charters can expose the same legal hand behind dirty cargo.")
+        (New-QuestApproachOption -Key "paper-runners" -Label "Watch who carries clean papers back to dirty warehouses" -Ability "WIS" -Skill "Perception" -DC 12 -ActionText "{hero} ignores the desk and follows the runners who leave it with papers held too carefully." -SuccessText "The runners reveal the route: clean charters leave the scribe's room and return to warehouses already marked by the organization." -FailureText "The runners scatter before the full route is clear, but they still lead back to the scribe's private seal." -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -HintText "The runner route can connect lawful paper to dirty warehouses.")
+        (New-QuestApproachOption -Key "pressure-clerks" -Label "Pressure the clerks into naming the scribe's private seal" -Ability "CHA" -CheckTag "Suggestion" -DC 12 -ActionText "{hero} turns fear, patience, and a little pressure into a question the clerks cannot keep dodging." -SuccessText "One clerk finally says the name behind the seal: Master Odran Pell, charter scribe to clean hands and dirty cargo alike." -FailureText "The clerks never give the name cleanly, but their panic gives Lady Veyra enough to identify the seal." -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -HintText "A social push may get the name directly, but the clerks are trained to blur blame.")
+        (New-QuestApproachOption -Key "counting-salon" -Label "Turn the counting room into a salon and let vanity confess" -Ability "CHA" -CheckTag "Performance" -DC 10 -ActionText "$($Game.Hero.Name) flatters the room, lets clerks compete to sound important, and listens for the name they admire too much." -SuccessText "Pride does what fear would not. The room hands over Odran Pell's name while trying to sound clever." -FailureText "The clerks enjoy the attention enough to loosen the seal trail, even if the name has to be pulled from the margins later." -Class "Bard" -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -ApproachKey "SoftPowerCountingSalon" -HintText "A Bard can make vanity confess what fear keeps hidden.")
+        (New-QuestApproachOption -Key "paper-courage" -Label "Stand between the clerks and the door until paper courage fails" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) says little, blocks the exit, and lets silence become heavier than the ledgers." -SuccessText "The youngest clerk breaks first and names Odran Pell before the room can stop him." -FailureText "Nobody breaks cleanly, but the clerks expose the private seal by trying too hard not to look at it." -Class "Barbarian" -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -ApproachKey "HardProofPaperCourageFails" -HintText "A Barbarian can make the room's silence heavier than its paperwork.")
+        (New-QuestApproachOption -Key "formal-inquiry" -Label "Treat the counting room like a formal inquiry and hold every exit" -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) makes the inquiry feel official: one door, one table, one account, and no clerk leaving before the seal has a name." -SuccessText "The room chooses order over panic. A senior clerk gives up Odran Pell's name before the younger ones can make the mistake messier." -FailureText "Nobody gives the name cleanly, but the formal pressure exposes the private seal by making every clerk avoid it at once." -Class "Fighter" -SuccessFlag "DocksCharterScribeExposed" -FailureFlag "DocksCharterScribeExposed" -ApproachKey "CivicTrustFormalInquiry" -HintText "A Fighter can turn the room into a controlled inquiry.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The strongest paths are to audit the seal trail or pressure the counting room until Odran Pell's name surfaces." `
+        -ReadFailureText "The paper trail is deliberately blurred, but the copied clauses and careful runners both point toward the private seal." `
+        -QuestId "docks_charter_scribe"
 
-        switch ($choice) {
-            "1" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares seal pressure, copied clauses, and cargo exemptions until the same careful fraud shows through."
-                if ($success) {
-                    Write-Scene "The charters line up too neatly. One private seal has cleaned three dirty shipments and two debt transfers."
-                    $cleanProof = $true
-                }
-                else {
-                    Write-Scene "The records are built to blur, but even blurred ink shows a repeating pattern around the same private seal."
-                }
-
-                break
-            }
-            "2" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} ignores the desk and follows the runners who leave it with papers held too carefully." -Skill "Perception"
-                if ($success) {
-                    Write-Scene "The runners reveal the route: clean charters leave the scribe's room and return to warehouses already marked by the organization."
-                    $cleanProof = $true
-                }
-                else {
-                    Write-Scene "The runners scatter before the full route is clear, but they still lead back to the scribe's private seal."
-                }
-
-                break
-            }
-            "3" {
-                $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 12 -ActionText "{hero} turns fear, patience, and a little pressure into a question the clerks cannot keep dodging." -CheckTag "Suggestion"
-                if ($success) {
-                    Write-Scene "One clerk finally says the name behind the seal: Master Odran Pell, charter scribe to clean hands and dirty cargo alike."
-                    $cleanProof = $true
-                }
-                else {
-                    Write-Scene "The clerks never give the name cleanly, but their panic gives Lady Veyra enough to identify the seal."
-                }
-
-                break
-            }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 10 -ActionText "$($Game.Hero.Name) flatters the room, lets clerks compete to sound important, and listens for the name they admire too much." -CheckTag "Performance"
-                    if ($success) {
-                        Write-Scene "Pride does what fear would not. The room hands over Odran Pell's name while trying to sound clever."
-                        $cleanProof = $true
-                    }
-                    else {
-                        Write-Scene "The clerks enjoy the attention enough to loosen the seal trail, even if the name has to be pulled from the margins later."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) says little, blocks the exit, and lets silence become heavier than the ledgers."
-                    if ($success) {
-                        Write-Scene "The youngest clerk breaks first and names Odran Pell before the room can stop him."
-                        $cleanProof = $true
-                    }
-                    else {
-                        Write-Scene "Nobody breaks cleanly, but the clerks expose the private seal by trying too hard not to look at it."
-                    }
-
-                    break
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 10 -ActionText "$($Game.Hero.Name) makes the inquiry feel official: one door, one table, one account, and no clerk leaving before the seal has a name."
-                    if ($success) {
-                        Write-Scene "The room chooses order over panic. A senior clerk gives up Odran Pell's name before the younger ones can make the mistake messier."
-                        $cleanProof = $true
-                    }
-                    else {
-                        Write-Scene "Nobody gives the name cleanly, but the formal pressure exposes the private seal by making every clerk avoid it at once."
-                    }
-
-                    break
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        break
-    }
+    $cleanProof = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
     $Game.Town.StoryFlags["DocksLevelFourReady"] = $true
@@ -3453,63 +3363,24 @@ function Start-DocksShellCharterQuest {
     Write-Scene "Odran Pell's private seal does not point to a person at first. It points to a company with a clean name, no workers, and cargo claims that always seem to survive inspection."
     Write-Scene "Lady Veyra calls it a shell charter: a respectable paper skin wrapped around dockside crime."
     Write-ColorLine ""
-    Write-ColorLine "1. Compare the charter filings against real cargo movement (INT)" "White"
-    Write-ColorLine "2. Follow the clerk who renews the empty company's seal (WIS)" "White"
-    Write-ColorLine "3. Lean on a nervous owner-of-record until the name above him cracks (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Make the shell owner's dinner-story collapse in public (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Carry the false cargo manifest straight through their front door (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Present the false manifest like a charge and demand a sworn answer (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "cargo-filings" -Label "Compare the charter filings against real cargo movement" -Ability "INT" -Skill "Investigation" -DC 13 -ActionText "{hero} lines up filings, cargo weights, and missing crews until the shell charter starts to look hollow." -SuccessText "The shell charter gives up a clean thread: a respectable holding name tied to cargo that should never have cleared the docks." -FailureText "The shell owner wriggles free of the cleanest proof, but not before leaving enough marks for Lady Veyra to follow upward." -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -HintText "The filings can prove the company has clean paper and impossible cargo.")
+        (New-QuestApproachOption -Key "renewal-clerk" -Label "Follow the clerk who renews the empty company's seal" -Ability "WIS" -Skill "Perception" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." -SuccessText "The renewal clerk makes the lie physical: clean seals leave a respectable desk and return to cargo that should never clear inspection." -FailureText "The clerk shakes the tail before the whole route is clean, but the seal still points upward from Odran Pell's office." -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -HintText "The renewal route may show who keeps the empty company alive.")
+        (New-QuestApproachOption -Key "owner-record" -Label "Lean on a nervous owner-of-record until the name above him cracks" -Ability "CHA" -CheckTag "Suggestion" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." -SuccessText "The owner-of-record cracks and names the holding structure above him, tying the shell charter to higher city hands." -FailureText "The owner keeps the cleanest name back, but his panic leaves enough marks for Lady Veyra to follow upward." -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -HintText "The owner is weak, but fear makes him slippery.")
+        (New-QuestApproachOption -Key "dinner-story" -Label "Make the shell owner's dinner-story collapse in public" -Ability "CHA" -CheckTag "Performance" -DC 11 -ActionText "$($Game.Hero.Name) lets the shell owner boast in rhythm until the lie trips over its own rhyme." -SuccessText "The dinner-story collapses with an audience. The shell owner contradicts himself straight into the holding name above him." -FailureText "The public collapse is messy rather than clean, but it leaves enough marks for Lady Veyra to follow upward." -Class "Bard" -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -ApproachKey "SoftPowerCollapsedDinnerStory" -HintText "A Bard can make a polished lie fail in front of witnesses.")
+        (New-QuestApproachOption -Key "front-door-manifest" -Label "Carry the false cargo manifest straight through their front door" -Ability "STR" -Skill "Intimidation" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing." -SuccessText "The front office breaks under the manifest's weight. Clerks point upward before the owner can rebuild the lie." -FailureText "The clerks recover just enough to hide the cleanest name, but not enough to keep the shell charter from pointing upward." -Class "Barbarian" -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -ApproachKey "HardProofManifestAtDoor" -HintText "A Barbarian can make the false manifest impossible to politely ignore.")
+        (New-QuestApproachOption -Key "sworn-manifest" -Label "Present the false manifest like a charge and demand a sworn answer" -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) lays the false manifest down like a formal charge and waits for the owner-of-record to decide whether he wants the lie sworn aloud." -SuccessText "The owner refuses to swear the lie. That refusal is enough to expose the holding name above the shell charter." -FailureText "The owner avoids swearing anything useful, but the formal pressure still leaves enough marks for Lady Veyra to follow upward." -Class "Fighter" -SuccessFlag "DocksShellCharterSecured" -FailureFlag "DocksShellCharterSecured" -ApproachKey "CivicTrustSwornManifest" -HintText "A Fighter can make silence behave like testimony.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The filings are the safest proof, but the renewal clerk and owner-of-record can expose who keeps the shell alive." `
+        -ReadFailureText "The charter is polished almost too cleanly. The renewal seal and impossible cargo weights are the best openings." `
+        -QuestId "docks_shell_charter"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} lines up filings, cargo weights, and missing crews until the shell charter starts to look hollow." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the renewal clerk by habit, not haste, and watches him carry clean seals into dirty hands." -Skill "Perception" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} gives the owner-of-record a choice between a small confession now and a large ruin later." -CheckTag "Suggestion" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) lets the shell owner boast in rhythm until the lie trips over its own rhyme." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) drops the false manifest on the polished desk hard enough that every clerk stops breathing." -Skill "Intimidation"
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) lays the false manifest down like a formal charge and waits for the owner-of-record to decide whether he wants the lie sworn aloud."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The shell charter gives up a clean thread: a respectable holding name tied to cargo that should never have cleared the docks."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The shell owner wriggles free of the cleanest proof, but not before leaving enough marks for Lady Veyra to follow upward."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksShellCharterSecured"] = $true
     $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
@@ -3552,63 +3423,24 @@ function Start-DocksCountingHousePressureQuest {
     Write-Scene "The counting house beside the tide-ledgers smells of ink, tea, and fear hidden under good manners."
     Write-Scene "Its books should show losses from the docks. Instead they show tidy service fees, adjustment marks, and transfers that make protection money look like lawful expense."
     Write-ColorLine ""
-    Write-ColorLine "1. Break the laundering pattern out of the ledgers (INT)" "White"
-    Write-ColorLine "2. Watch which payments leave after the official desk closes (WIS)" "White"
-    Write-ColorLine "3. Turn one junior accountant before the seniors bury the books (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Make the clerks correct each other's lies out loud (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Lock the room down with presence before the ledgers walk away (CON)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Hold the counting room in order until the clean transfers surface (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "laundering-ledgers" -Label "Break the laundering pattern out of the ledgers" -Ability "INT" -Skill "Investigation" -DC 13 -ActionText "{hero} turns neat fees into a map of dirty money moving through lawful desks." -SuccessText "The counting-house pattern breaks open: dockside threats become service fees, service fees become clean transfers, and clean transfers climb toward names the clerks will not say." -FailureText "The seniors bury part of the trail, but not all of it. Enough clean transfers remain to prove the docks are feeding someone above them." -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -HintText "The ledgers can show how threat money becomes lawful transfer.")
+        (New-QuestApproachOption -Key "after-hours-payments" -Label "Watch which payments leave after the official desk closes" -Ability "WIS" -Skill "Investigation" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." -SuccessText "The after-hours transfers expose the laundering route: dockside pressure money moving through legal desks toward higher city hands." -FailureText "Some payments vanish before they can be traced, but enough clean transfers remain to prove the docks are feeding someone above them." -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -HintText "The after-hours books may show which money was never meant to be public.")
+        (New-QuestApproachOption -Key "junior-accountant" -Label "Turn one junior accountant before the seniors bury the books" -Ability "CHA" -CheckTag "Suggestion" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." -SuccessText "The junior accountant chooses survival over loyalty and points out the transfers the seniors were preparing to bury." -FailureText "The accountant only gives fragments before fear catches him, but those fragments still prove the docks are feeding someone above them." -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -HintText "The junior accountant knows the trail and has the most to lose.")
+        (New-QuestApproachOption -Key "nervous-chorus" -Label "Make the clerks correct each other's lies out loud" -Ability "CHA" -CheckTag "Performance" -DC 11 -ActionText "$($Game.Hero.Name) conducts the room like a nervous chorus until each clerk corrects the wrong lie." -SuccessText "The clerks correct one another into a confession. The laundering pattern lands in the open before the seniors can stop it." -FailureText "The chorus breaks before the full confession, but enough corrections survive to prove the docks are feeding someone above them." -Class "Bard" -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -ApproachKey "SoftPowerNervousChorus" -HintText "A Bard can make each lie depend on a clerk who wants to sound smarter.")
+        (New-QuestApproachOption -Key "ledger-lockdown" -Label "Lock the room down with presence before the ledgers walk away" -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) plants himself by the only door and lets the ledgers become heavier than the clerks can carry." -SuccessText "Nobody gets the books out. Under that pressure, the transfer trail surfaces before it can be carried away." -FailureText "One ledger slips out, but enough clean transfers remain to prove the docks are feeding someone above them." -Class "Barbarian" -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -ApproachKey "HardProofLedgerLockdown" -HintText "A Barbarian can make moving the books feel impossible.")
+        (New-QuestApproachOption -Key "orderly-room" -Label "Hold the counting room in order until the clean transfers surface" -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) keeps the room seated, keeps the books on the table, and turns every attempted delay into another clean transfer found." -SuccessText "The room stays orderly long enough for the transfer trail to surface: dockside pressure money moving cleanly upward." -FailureText "The order frays before every book is copied, but enough clean transfers remain to prove the docks are feeding someone above them." -Class "Fighter" -SuccessFlag "DocksCountingHouseExposed" -FailureFlag "DocksCountingHouseExposed" -ApproachKey "CivicTrustOrderlyCountingRoom" -HintText "A Fighter can keep the room controlled until the books answer.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The ledgers are the cleanest route, but the junior accountant and after-hours payments both look vulnerable." `
+        -ReadFailureText "The room hides fear under manners. Watch the payments after closing or keep the ledgers from walking away." `
+        -QuestId "docks_counting_house_pressure"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} turns neat fees into a map of dirty money moving through lawful desks." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} waits past closing and follows the payments that only move when respectable eyes are gone." -Skill "Investigation" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the junior accountant one honest exit before the seniors make him the scapegoat." -CheckTag "Suggestion" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) conducts the room like a nervous chorus until each clerk corrects the wrong lie." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) plants himself by the only door and lets the ledgers become heavier than the clerks can carry."
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) keeps the room seated, keeps the books on the table, and turns every attempted delay into another clean transfer found."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The counting-house pattern breaks open: dockside threats become service fees, service fees become clean transfers, and clean transfers climb toward names the clerks will not say."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The seniors bury part of the trail, but not all of it. Enough clean transfers remain to prove the docks are feeding someone above them."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksCountingHouseExposed"] = $true
     $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
@@ -3651,63 +3483,24 @@ function Start-DocksCustomsStampQuest {
     Write-Scene "A stamped cargo slip should be boring. This one is too perfect: same pressure, same ink, same authority on three shipments that should never have passed."
     Write-Scene "The mark does not name the higher patron, but it may name the official desk willing to clean the way upward."
     Write-ColorLine ""
-    Write-ColorLine "1. Compare stamp pressure and cargo exemptions (INT)" "White"
-    Write-ColorLine "2. Follow the night clerk who carries the stamp key (WIS)" "White"
-    Write-ColorLine "3. Make a customs runner admit which desk signs first (CHA)" "White"
-    if ($Game.Hero.Class -eq "Bard") {
-        Write-ColorLine "4. Stage a harmless paperwork argument until the real clerk corrects it (Performance)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Barbarian") {
-        Write-ColorLine "4. Put the stamped crate where every official has to look at it (STR)" "White"
-    }
-    elseif ($Game.Hero.Class -eq "Fighter") {
-        Write-ColorLine "4. Guard the stamped crate as evidence until the right desk claims it (CON)" "White"
-    }
-    Write-ColorLine ""
 
-    $strongOutcome = $false
+    $approaches = @(
+        (New-QuestApproachOption -Key "stamp-pressure" -Label "Compare stamp pressure and cargo exemptions" -Ability "INT" -Skill "Investigation" -DC 13 -ActionText "{hero} compares ink, pressure, and exemption clauses until the stamp reveals its desk." -SuccessText "The customs stamp points upward: not to the patron's name yet, but to the official desk that keeps dirty cargo clean." -FailureText "The official desk stays unnamed, but the repeated stamp proves someone with lawful authority has been opening the way." -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -HintText "The stamp itself can reveal which desk cleared impossible cargo.")
+        (New-QuestApproachOption -Key "night-clerk" -Label "Follow the night clerk who carries the stamp key" -Ability "WIS" -Skill "Perception" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." -SuccessText "The night clerk leads the trail to the desk that keeps dirty cargo clean under official pressure." -FailureText "The clerk hides the final desk, but the repeated stamp proves someone with lawful authority has been opening the way." -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -HintText "The stamp key may matter more than the clerk carrying it.")
+        (New-QuestApproachOption -Key "customs-runner" -Label "Make a customs runner admit which desk signs first" -Ability "CHA" -CheckTag "Suggestion" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." -SuccessText "The runner gives up the signing desk, not the higher patron, but enough to prove official protection above the docks." -FailureText "The runner keeps the desk unnamed, but the repeated stamp proves someone with lawful authority has been opening the way." -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -HintText "The runner knows which desk signs first, but fear will make him bargain.")
+        (New-QuestApproachOption -Key "paperwork-argument" -Label "Stage a harmless paperwork argument until the real clerk corrects it" -Ability "CHA" -CheckTag "Performance" -DC 11 -ActionText "$($Game.Hero.Name) starts a ridiculous paperwork quarrel and lets the guilty expert correct him too quickly." -SuccessText "The guilty clerk corrects the fake mistake so quickly he reveals the desk that owns the real stamp." -FailureText "The argument exposes only part of the process, but the repeated stamp still proves lawful authority is opening the way." -Class "Bard" -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -ApproachKey "SoftPowerPaperworkArgument" -HintText "A Bard can make the expert correct the lie before remembering to hide.")
+        (New-QuestApproachOption -Key "stamped-crate" -Label "Put the stamped crate where every official has to look at it" -Ability "STR" -Skill "Athletics" -DC 11 -ActionText "$($Game.Hero.Name) carries the stamped crate into the open and makes moving it quietly impossible." -SuccessText "The crate becomes too public to bury. The desk that owns the stamp has to claim the problem before witnesses do." -FailureText "Officials keep the desk unnamed, but the repeated stamp still proves lawful authority is opening the way." -Class "Barbarian" -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -ApproachKey "HardProofStampedCrate" -HintText "A Barbarian can make the evidence physically impossible to hide.")
+        (New-QuestApproachOption -Key "guard-crate" -Label "Guard the stamped crate as evidence until the right desk claims it" -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) posts himself beside the stamped crate and treats it as seized evidence until the desk that owns the mark has to answer." -SuccessText "The crate stays protected long enough for the right desk to claim the stamp, and the official trail points upward." -FailureText "The claim comes indirectly, but the repeated stamp still proves lawful authority is opening the way." -Class "Fighter" -SuccessFlag "DocksCustomsStampTraced" -FailureFlag "DocksCustomsStampTraced" -ApproachKey "CivicTrustGuardedStamp" -HintText "A Fighter can keep the evidence public and protected until the desk reacts.")
+    )
 
-    while ($true) {
-        $choice = Read-Host "Choose"
-        $success = $false
+    $result = Invoke-QuestApproachMenu `
+        -Game $Game `
+        -Approaches $approaches `
+        -ReadSuccessText "The stamp pressure can identify the desk, but the night clerk and customs runner may expose the human route faster." `
+        -ReadFailureText "The cargo slip is too perfect. The repeated ink pressure and the stamp key are the clearest cracks." `
+        -QuestId "docks_customs_stamp"
 
-        switch ($choice) {
-            "1" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "INT" -DC 13 -ActionText "{hero} compares ink, pressure, and exemption clauses until the stamp reveals its desk." }
-            "2" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "WIS" -DC 12 -ActionText "{hero} follows the night clerk by keys, not footsteps, and sees where the clean authority sleeps." -Skill "Perception" }
-            "3" { $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 13 -ActionText "{hero} offers the runner one clean version of events before Lady Veyra writes a worse one." -CheckTag "Suggestion" }
-            "4" {
-                if ($Game.Hero.Class -eq "Bard") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CHA" -DC 11 -ActionText "$($Game.Hero.Name) starts a ridiculous paperwork quarrel and lets the guilty expert correct him too quickly." -CheckTag "Performance"
-                }
-                elseif ($Game.Hero.Class -eq "Barbarian") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "STR" -DC 11 -ActionText "$($Game.Hero.Name) carries the stamped crate into the open and makes moving it quietly impossible."
-                }
-                elseif ($Game.Hero.Class -eq "Fighter") {
-                    $success = Start-NonCombatQuestCheck -Hero $Game.Hero -Ability "CON" -DC 11 -ActionText "$($Game.Hero.Name) posts himself beside the stamped crate and treats it as seized evidence until the desk that owns the mark has to answer."
-                }
-                else {
-                    Write-ColorLine "Choose a listed option." "DarkYellow"
-                    Write-ColorLine ""
-                    continue
-                }
-            }
-            default {
-                Write-ColorLine "Choose a listed option." "DarkYellow"
-                Write-ColorLine ""
-                continue
-            }
-        }
-
-        if ($success) {
-            Write-Scene "The customs stamp points upward: not to the patron's name yet, but to the official desk that keeps dirty cargo clean."
-            $strongOutcome = $true
-        }
-        else {
-            Write-Scene "The official desk stays unnamed, but the repeated stamp proves someone with lawful authority has been opening the way."
-        }
-
-        break
-    }
+    $strongOutcome = [bool]$result.StrongOutcome
 
     $Game.Town.StoryFlags["DocksCustomsStampTraced"] = $true
     $patronNowSuspected = Update-DocksTierFourPatronSuspicion -Game $Game
