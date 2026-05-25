@@ -1472,11 +1472,16 @@ function Get-InnkeeperLocalRumorTalk {
     $inn = $Game.Town.ActiveInn
     $flag = "InnkeeperLocalRumorTalk_$($inn.Id)"
     $monsterWallRumors = [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]
+    $halewickEscaped = [bool]$Game.Town.StoryFlags["LordHalewickEscaped"]
 
     switch ($inn.Id) {
         "bent_nail" {
             if ($monsterWallRumors) {
                 return "Marta keeps her voice low. 'Gate crews are drinking like men who heard claws on stone and got told to call it wind. If work opens outside the walls, it will pay ugly.'"
+            }
+
+            if ($halewickEscaped) {
+                return "Marta keeps her voice low. 'Civic Keep folk are paying for private rooms and bad alibis. Halewick grew wings in front of the kind of witnesses who usually buy silence, and now nobody agrees what silence costs.'"
             }
 
             if ($Game.Hero.Level -ge 3) {
@@ -1500,6 +1505,10 @@ function Get-InnkeeperLocalRumorTalk {
                 return "Oren folds a towel without looking down. 'Road captains are comparing wall attacks now, not prices. Something beyond the gates is getting bolder, and the city will start buying answers soon.'"
             }
 
+            if ($halewickEscaped) {
+                return "Oren folds a towel without looking down. 'Travelers came in from the Civic Keep road white-faced. They are not arguing whether Halewick changed shape. They are arguing which gate a frightened city forgets first.'"
+            }
+
             if ($Game.Hero.Level -ge 3) {
                 if (-not $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"]) {
                     $Game.Town.InnFlags["InnkeeperLocalRumorTalk_Post_$($inn.Id)"] = $true
@@ -1519,6 +1528,10 @@ function Get-InnkeeperLocalRumorTalk {
         "silver_kettle" {
             if ($monsterWallRumors) {
                 return "Madam Seraphine's smile thins. 'The refined phrasing is border instability. The truthful phrasing is monsters at the wall and wealthy people preparing to hire deniable courage.'"
+            }
+
+            if ($halewickEscaped) {
+                return "Madam Seraphine's smile thins. 'By supper the court will call it an incident. By midnight the patrons will call it a succession concern. The honest phrasing is simpler: they saw a dragon wearing office.'"
             }
 
             if ($Game.Hero.Level -ge 3) {

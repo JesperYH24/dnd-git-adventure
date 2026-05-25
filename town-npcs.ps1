@@ -626,6 +626,24 @@ function Get-BelorWatchTalk {
         return (Get-BelorWallWatchTalk -Game $Game)
     }
 
+    if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        if (-not $Game.Town.StreetFlags["BelorWatchTalk_CivicVaultAftermath"]) {
+            $Game.Town.StreetFlags["BelorWatchTalk_CivicVaultAftermath"] = $true
+
+            if ($persona.IsKnightLike) {
+                return "Belor looks toward the Civic Keep instead of the gate. 'Halewick turned draconic in front of witnesses and left through a hole the court will call an architectural incident by breakfast. Remember this, Lubert: discipline matters most when important people are inventing softer names for failure.'"
+            }
+
+            if ($persona.IsBardLike -or $persona.IsCharming) {
+                return "Belor looks toward the Civic Keep instead of the gate. 'Every witness will remember Halewick differently by morning. That is how panic gets edited. If you can keep the true version alive, the city may still act before fear becomes policy.'"
+            }
+
+            return "Belor looks toward the Civic Keep instead of the gate. 'Halewick showed teeth in a room full of officials and still flew out over their heads. Good. Now no one gets to call this street rumor.'"
+        }
+
+        return "Belor's jaw stays tight. 'The Keep is counting witnesses. The streets are counting lies. I am counting which gates everyone forgot to watch while they stared upward.'"
+    }
+
     if (Test-FighterHasWatchTourneyLead -Game $Game) {
         if (-not $Game.Town.StreetFlags["BelorWatchTalk_TourneyNotice"]) {
             $Game.Town.StreetFlags["BelorWatchTalk_TourneyNotice"] = $true
@@ -677,6 +695,10 @@ function Get-BelorDistrictRumorTalk {
 
     if (Test-WallWatchReportsActive -Game $Game) {
         return "Belor's voice drops. 'Halewick made the city look up. The wall trouble is what happens when everyone looks the wrong way for too long. Gates, roads, Dorr's monster talk, dock salvage, Veyra's ledgers: sooner or later those reports are going to describe the same pressure.'"
+    }
+
+    if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return "Belor's voice drops. 'The official story is not ready because too many officials saw the real one. Civic Keep glass, wing shadow, witnesses with titles, and a city pretending repair crews can hammer fear back into stone.'"
     }
 
     if (Test-FighterHasTourneyPatronNotice -Game $Game) {

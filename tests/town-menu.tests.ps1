@@ -294,10 +294,26 @@ function Test-PostCivicVaultTownTextReactsToHalewickEscape {
     $docksProgress = Get-DocksDistrictProgressText -Game $game
     $ledgerIntro = Get-TownQuestSourceIntroText -Source "Quest Giver" -DefaultIntroText "unused" -Game $game
     $docksIntro = Get-TownQuestSourceIntroText -Source "Docks" -DefaultIntroText "unused" -Game $game
+    $guardIntro = Get-TownQuestSourceIntroText -Source "Guard Station" -DefaultIntroText "unused" -Game $game
+    $aftermathReminder = Get-PostCivicVaultAftermathReminderText -Game $game
 
     Assert-True -Condition ($docksProgress -like "*Halewick*escaped*") -Message "Docks progress should react once Halewick has escaped after the Civic Vault."
     Assert-True -Condition ($ledgerIntro -like "*High Ledger*Halewick*") -Message "The High Ledger intro should acknowledge the post-Civic-Vault alarm state."
     Assert-True -Condition ($docksIntro -like "*Halewick*dragon*escape route*") -Message "The Docks intro should turn dragon panic into a new lead direction."
+    Assert-True -Condition ($guardIntro -like "*Civic Keep witnesses*" -and $guardIntro -like "*draconic*") -Message "The Guard Station intro should react to the public Civic Keep witnesses before wall rumors start."
+    Assert-True -Condition ($aftermathReminder -like "*Aftermath:*" -and $aftermathReminder -like "*Rest*") -Message "The town menu should give a clear post-Civic-Vault next step before wall rumors start."
+}
+
+function Test-PostCivicVaultAftermathReminderClearsAfterWallRumors {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+
+    $beforeRumors = Get-PostCivicVaultAftermathReminderText -Game $game
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $afterRumors = Get-PostCivicVaultAftermathReminderText -Game $game
+
+    Assert-True -Condition ($beforeRumors -like "*Halewick*escaped*") -Message "Post-Civic-Vault reminder should appear before wall rumors start."
+    Assert-Equal -Actual $afterRumors -Expected "" -Message "Post-Civic-Vault reminder should clear once wall rumors take over the next step."
 }
 
 function Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape {
@@ -368,6 +384,7 @@ Test-DocksProgressCallsOutMonsterZoneOddityHaul
 Test-DocksCanCashOutMonsterZoneOddities
 Test-DocksMenuCanDeliverMonsterZoneOddities
 Test-PostCivicVaultTownTextReactsToHalewickEscape
+Test-PostCivicVaultAftermathReminderClearsAfterWallRumors
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest
 Test-TownMenuCanEnterUnlockedMonsterZone

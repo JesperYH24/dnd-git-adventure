@@ -202,6 +202,7 @@ This is the current Chapter Three climax dungeon:
 - after the hidden-court fight, Halewick is forced up into the Civic Keep's public court room before magistrates and other high officials
 - Halewick curses the hero, threatens Lady Veyra and the city, reveals a smaller draconic form that echoes the great dragon presence from the tutorial cave, then bursts through the court windows and escapes into the sky
 - mechanically, the quest still completes and grants its rewards; narratively, Halewick remains alive as an exposed draconic threat
+- before the next inn rest turns the panic toward the outer wall, town aftermath text now surfaces Civic Keep repairs, witness sorting, Guard Station alarm, Belor's immediate reaction, Docks escape-route rumors, High Ledger proof work, and innkeeper talk about officials trying to rename what they saw
 - after the next inn rest, city rumors shift from palace repair aftershock into reports of creatures growing bolder against the outer wall, establishing the playable monster zone beyond the city
 
 ## Monster zone

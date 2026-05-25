@@ -112,6 +112,19 @@ function Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick {
     Assert-Equal -Actual $game.Town.StoryFlags["OuterMonsterZonePremiseUnlocked"] -Expected $null -Message "The monster-zone premise should stay locked before the draconic escape."
 }
 
+function Test-InnkeepersReactToHalewickBeforeWallRumors {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+    $game.Town.ActiveInn = Get-TownInns | Where-Object { $_.Id -eq "silver_kettle" } | Select-Object -First 1
+
+    $aftermathRumor = Get-InnkeeperLocalRumorTalk -Game $game
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $wallRumor = Get-InnkeeperLocalRumorTalk -Game $game
+
+    Assert-True -Condition ($aftermathRumor -like "*dragon wearing office*" -or $aftermathRumor -like "*Halewick*") -Message "Innkeeper rumor should react to Halewick's public escape before wall rumors start."
+    Assert-True -Condition ($wallRumor -like "*monsters at the wall*" -or $wallRumor -like "*border instability*") -Message "Wall-rumor innkeeper text should still take over after the inn-rest transition."
+}
+
 function Test-BookedInnNightRestTriggersLevelUp {
     $game = Initialize-Game
     $heroHP = 5
@@ -412,6 +425,7 @@ Test-BookedInnNightRestResetsDailySystems
 Test-BookedInnNightRestDoesNotAutoPrepareBardicInspiration
 Test-BookedInnRestAfterHalewickStartsMonsterWallRumors
 Test-InnRestDoesNotStartMonsterWallRumorsBeforeHalewick
+Test-InnkeepersReactToHalewickBeforeWallRumors
 Test-BookedInnNightRestTriggersLevelUp
 Test-LevelFourLongRestAppliesAbilityScoreIncrease
 Test-LevelSixInnRestTriggersGateDefense

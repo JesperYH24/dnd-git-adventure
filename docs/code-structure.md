@@ -409,6 +409,15 @@ Ansvar:
 - street scenes
 - named NPC interactions
 - små rewards, hooks och flavor
+- Belor and street NPC reactions, including post-Civic-Vault aftermath before wall-watch rumors start
+
+### `town-inns.ps1`
+
+Ansvar:
+
+- inn stays, booked rooms, storage, common rooms, innkeeper talk, and long-rest handling
+- post-Halewick inn-rest transition into wall rumors
+- innkeeper rumor lines for the Civic Vault aftermath before monster-zone rumors take over
 
 ---
 

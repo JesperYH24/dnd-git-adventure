@@ -218,6 +218,20 @@ function Test-BelorWallWatchTalkStartsAfterWallRumors {
     Assert-True -Condition ($guardIntro -like "*wall-watch reports*" -and $guardIntro -like "*beyond the wall*") -Message "The Guard Station should connect monster-zone work to attacks against the walls and gates."
 }
 
+function Test-BelorReactsToCivicVaultAftermathBeforeWallRumors {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
+    $game.Town.StoryFlags["LordHalewickEscaped"] = $true
+
+    $first = Get-BelorWatchTalk -Game $game
+    $repeat = Get-BelorWatchTalk -Game $game
+    $rumor = Get-BelorDistrictRumorTalk -Game $game
+
+    Assert-True -Condition ($first -like "*Civic Keep*" -and $first -like "*Halewick*") -Message "Belor should react to Halewick's public escape before wall rumors start."
+    Assert-True -Condition ($repeat -like "*Keep*" -or $repeat -like "*gates*") -Message "Belor should keep a shorter Civic Vault aftermath line after the first reaction."
+    Assert-True -Condition ($rumor -like "*official story*" -and $rumor -like "*witnesses*") -Message "Belor's district rumor should frame the public witnesses and official spin."
+}
+
 function Test-BelorWallWatchTalkUsesMonsterZoneProof {
     $game = Initialize-Game
     $game.Hero.Level = 4
@@ -698,6 +712,7 @@ Test-StreetNpcIntrosRecognizeFighterAsKnightLike
 Test-InnkeeperSmallTalkChangesAfterFirstAsk
 Test-StreetNpcFlavorTalkIsRemembered
 Test-BelorWallWatchTalkStartsAfterWallRumors
+Test-BelorReactsToCivicVaultAftermathBeforeWallRumors
 Test-BelorWallWatchTalkUsesMonsterZoneProof
 Test-StreetNpcExtraFlavorTalksExist
 Test-RingMasterHasExtendedConversationHooks

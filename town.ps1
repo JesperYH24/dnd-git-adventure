@@ -143,6 +143,27 @@ function Get-TownAmbientText {
     return "From the Civic Keep, hammers and block-and-tackle creak over the rooftops. Palace masons repair stone no one in the street is ready to name out loud."
 }
 
+function Get-PostCivicVaultAftermathReminderText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or -not [bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return ""
+    }
+
+    if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
+        return ""
+    }
+
+    $innText = if ($null -ne $Game.Town.ActiveInn -and -not [string]::IsNullOrWhiteSpace([string]$Game.Town.ActiveInn.Name)) {
+        "Rest at $($Game.Town.ActiveInn.Name)"
+    }
+    else {
+        "Find an inn and rest"
+    }
+
+    return "Aftermath: Halewick has been exposed and escaped. $innText so the city can gather witness reports and reveal what fear reaches the gates next."
+}
+
 function Test-DocksDistrictUnlocked {
     param($Game)
 
@@ -835,6 +856,13 @@ function Get-TownQuestSourceIntroText {
                         -FighterText "The watch hall has a new board beside the old patrol ledgers: outer-gate scratches, weak sightlines, and wall-watch reports from guards trying to hold a line they cannot fully see. Lubert Stryer's work beyond the wall can turn those reports into a defensible pattern.")
                 }
 
+                if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+                    return (Get-ClassAwareTownText -Hero $Game.Hero `
+                        -BarbarianText "The watch hall is crowded with Civic Keep witnesses, repair orders, and guards angry enough to stop whispering. Halewick was exposed in public, became something draconic, and escaped over stone the watch was sworn to hold." `
+                        -BardText "The watch hall is crowded with Civic Keep witnesses, repair orders, and guards trying to make one official truth out of a dozen terrified versions. Halewick was exposed in public, became something draconic, and escaped over a city that still has to name what it saw." `
+                        -FighterText "The watch hall is crowded with Civic Keep witnesses, repair orders, and sightline sketches. Halewick was exposed in public, became something draconic, and escaped through a defense failure no disciplined guard can ignore.")
+                }
+
                 if ($isNight) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "The watch hall runs sharper at night. Runners come faster, tired guards speak lower, and the jobs left on the table feel closer to real trouble." `
@@ -849,7 +877,8 @@ function Get-TownQuestSourceIntroText {
                 if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Borzig's part in the exposure is no longer deniable." `
-                        -BardText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Gariand can hear a terrified city trying to decide which version of the truth survives.")
+                        -BardText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Gariand can hear a terrified city trying to decide which version of the truth survives." `
+                        -FighterText "Lady Veyra's High Ledger office feels like the still point inside a city-wide alarm. Clerks sort witness names, sealed proof, and Halewick's vanished flight path while Lubert Stryer can feel every noble eye measuring who held discipline when the court broke.")
                 }
 
                 if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
@@ -878,7 +907,8 @@ function Get-TownQuestSourceIntroText {
                 if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "The docks have become a rumor engine. Crews swear they saw Halewick's small dragon shape over the Civic Keep, and $docksContactName is already turning frightened sailor-talk into possible escape routes." `
-                        -BardText "The docks have become a rumor engine. Every crew has a different song for Halewick's small dragon shape over the Civic Keep, and $docksContactName is already listening for the verse that names his escape route.")
+                        -BardText "The docks have become a rumor engine. Every crew has a different song for Halewick's small dragon shape over the Civic Keep, and $docksContactName is already listening for the verse that names his escape route." `
+                        -FighterText "The docks have become a rumor engine. Crews swear they saw Halewick's small dragon shape over the Civic Keep, and $docksContactName is sorting sailor panic into routes, witnesses, and defensible pursuit lines.")
                 }
 
                 if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
@@ -2347,6 +2377,10 @@ function Start-TownMenu {
         $ambientText = Get-TownAmbientText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($ambientText)) {
             Write-Scene $ambientText
+        }
+        $aftermathReminder = Get-PostCivicVaultAftermathReminderText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($aftermathReminder)) {
+            Write-EmphasisLine -Text $aftermathReminder -Color "DarkYellow"
         }
         $monsterZoneReminder = Get-MonsterZoneTownReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($monsterZoneReminder)) {
