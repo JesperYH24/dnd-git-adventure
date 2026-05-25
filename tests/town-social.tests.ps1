@@ -91,6 +91,22 @@ function Test-OpeningQuestSourcesClarifySeparateLeadsBeforeTierTwo {
     Assert-True -Condition ($clerkText -like "*has not seen enough of the watch's tunnel trouble*") -Message "The clerk source should explain that its Tier 1 storehouse lead is not yet joined to the watch lead."
 }
 
+function Test-FighterQuestSourceTextFramesCivicTrust {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.StoryFlags["FoundEconomicIrregularity"] = $true
+    $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+
+    $guardText = Get-ChapterTwoAllianceStatusText -Source "Guard Station" -Game $game
+
+    $game.Town.StoryFlags.Clear()
+    $game.Town.StoryFlags["FoundTunnelAccess"] = $true
+    $game.Town.StoryFlags["BentNailBrokerConfirmed"] = $true
+    $clerkText = Get-ChapterTwoAllianceStatusText -Source "Quest Giver" -Game $game
+
+    Assert-True -Condition ($guardText -like "*Lubert Stryer*" -and $guardText -like "*orderly proof*") -Message "Guard alliance text should frame Fighter as turning clues into orderly proof."
+    Assert-True -Condition ($clerkText -like "*Lubert Stryer*" -and $clerkText -like "*civic case*") -Message "Clerk alliance text should frame Fighter through civic trust instead of hired muscle."
+}
+
 function Test-BardTownShopsUseDifferentIntroTone {
     $game = Initialize-Game -Class "Bard"
 
@@ -105,6 +121,19 @@ function Test-BardTownShopsUseDifferentIntroTone {
     Assert-True -Condition ($apothecaryText -like "*performer*" -or $apothecaryText -like "*steady nerves*") -Message "Apothecary intro should feel more bard-aware than simple battle-tonic flavor."
     Assert-True -Condition ($instrumentText -like "*Gariand*" -or $instrumentText -like "*measured first by ear*") -Message "Instrument shop intro should treat the bard like a real performer walking into a specialist's room."
     Assert-True -Condition ($armorerText -like "*performer*" -or $armorerText -like "*mobility*") -Message "Armorer intro should still frame armor through the bard's movement and presentation."
+}
+
+function Test-FighterTownShopsUseKnightlyIntroTone {
+    $game = Initialize-Game -Class "Fighter"
+
+    $marketText = Get-TownShopIntroText -Shop "Market" -Hero $game.Hero
+    $apothecaryText = Get-TownShopIntroText -Shop "Apothecary" -Hero $game.Hero
+    $instrumentText = Get-TownShopIntroText -Shop "Instrument Shop" -Hero $game.Hero
+
+    Assert-True -Condition ($marketText -like "*Lubert Stryer*" -and $marketText -like "*shield arm*") -Message "Market intro should frame Fighter through practical, reliable kit."
+    Assert-True -Condition ($apothecaryText -like "*Lubert Stryer*" -and $apothecaryText -like "*mail*") -Message "Apothecary intro should recognize Fighter's armored durability identity."
+    Assert-True -Condition ($instrumentText -like "*Lubert Stryer*" -and ($instrumentText -like "*marching drums*" -or $instrumentText -like "*reputations*")) -Message "Instrument shop intro should give Fighter a civic/public reputation angle instead of barbarian outsider text."
+    Assert-True -Condition ($marketText -notlike "*Borzig*" -and $apothecaryText -notlike "*Borzig*" -and $instrumentText -notlike "*Borzig*") -Message "Fighter shop intros should not fall back to Barbarian text."
 }
 
 function Test-TownTextUsesCurrentHeroName {
@@ -703,7 +732,9 @@ Test-LanternRestMerchantsFavorBardToolsForBards
 Test-SilverKettleUpperTablesAdvanceBardSocialStanding
 Test-BardQuestSourceTextReflectsSocialAllianceRole
 Test-OpeningQuestSourcesClarifySeparateLeadsBeforeTierTwo
+Test-FighterQuestSourceTextFramesCivicTrust
 Test-BardTownShopsUseDifferentIntroTone
+Test-FighterTownShopsUseKnightlyIntroTone
 Test-TownTextUsesCurrentHeroName
 Test-BarbarianSpecialtyShopToneFitsBorzig
 Test-InnkeeperGreetingChangesWithHeroStyle

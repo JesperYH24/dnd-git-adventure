@@ -88,6 +88,7 @@ Story quests now also remember successful class-specific solutions as a small pe
 - Barbarian successes can add hard-proof marks when Borzig solves trouble through protection, pressure, endurance, or visible force.
 - Bard successes can add soft-power marks when Gariand solves trouble through performance, social reading, contradiction, or controlled rumor.
 - Fighter successes can add civic-trust marks when Lubert solves trouble through discipline, formal inquiry, patrol sense, or protection under authority.
+- The broader town layer also reinforces those roles outside quest resolution: shop intros, public notices, Guard Station alliance text, and clerk/ledger reactions now keep Fighter separate from Barbarian by emphasizing orderly proof, shield reliability, duty, and knightly credibility.
 
 The current quest-check model has moved from fixed stat choices into explicit approach menus for non-combat story quests and day jobs. Each approach has its own flavor text, skill pairing, DC, success text, and failure text. A player can also `Read the scene` first, usually with `Insight`, to learn which approaches look promising without solving the quest outright. Dungeon navigation, combat entries, recovery prompts, and locked-cache interactions remain separate utility flows rather than quest-approach menus.
 

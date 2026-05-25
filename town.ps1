@@ -675,12 +675,14 @@ function Get-TownShopIntroText {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
                     -BarbarianText "Most of the market has shuttered for the night. A few stubborn traders still work by lantern light, selling travel gear and necessities to anyone desperate enough to pay after dusk." `
-                    -BardText "Most of the market has gone dark, but a few lantern-lit stalls still linger for late coin, hurried repairs, and performers who know night crowds buy differently than day ones.")
+                    -BardText "Most of the market has gone dark, but a few lantern-lit stalls still linger for late coin, hurried repairs, and performers who know night crowds buy differently than day ones." `
+                    -FighterText "Most of the market has shuttered for the night, but a few lantern-lit traders still recognize Lubert Stryer as the sort of armed customer who buys rope, polish, and practical kit before a formal morning.")
             }
 
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Canvas stalls crowd the square. Traders wave Borzig over with travel gear, blades, and battered adventuring stock. More than one set of eyes lingers on the weathered state of Borzig's older kit." `
-                -BardText "Canvas stalls crowd the square. Traders call Gariand over with travel gear, strings, ribbons, lamp oil, and opportunistic smiles. The market reads him as the sort of traveler who can turn polish and timing into coin if his kit is worthy of the room.")
+                -BardText "Canvas stalls crowd the square. Traders call Gariand over with travel gear, strings, ribbons, lamp oil, and opportunistic smiles. The market reads him as the sort of traveler who can turn polish and timing into coin if his kit is worthy of the room." `
+                -FighterText "Canvas stalls crowd the square. Traders point Lubert Stryer toward oilcloth, straps, whetstones, and the sort of careful kit that makes a shield arm look reliable before anyone sees it tested.")
         }
         "Smithy" {
             if ($isNight) {
@@ -699,23 +701,27 @@ function Get-TownShopIntroText {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
                     -BarbarianText "The apothecary keeps a quieter night counter for travelers, watchmen, and anyone trying to look less injured than they are. The room smells stronger of tonic, clove, and clean linen after dark." `
-                    -BardText "The apothecary speaks softer at night, serving bruised guards, late travelers, and performers trying to keep a long evening from showing too clearly on the face.")
+                    -BardText "The apothecary speaks softer at night, serving bruised guards, late travelers, and performers trying to keep a long evening from showing too clearly on the face." `
+                    -FighterText "The apothecary keeps a quieter night counter for travelers, watchmen, and duelists who know discipline still needs clean bandages by morning.")
             }
 
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "Glass vials glimmer behind the counter as the apothecary speaks in a low voice about wounds, nerves, and battle tonic. Even here, Borzig's cave-worn gear draws a faintly disapproving glance whenever old blood and rust get too close to the glass." `
-                -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice.")
+                -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice." `
+                -FighterText "Glass vials glimmer behind the counter as the apothecary speaks about bruises, clean stitching, and steady hands. Lubert Stryer's mail earns the practical look usually saved for people expected to stand upright after impact.")
         }
         "Instrument Shop" {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
                     -BarbarianText "The instrument shop is half-closed for the night, but warm workshop light still spills across polished wood and hanging strings. Someone here clearly trusts evening repairs more than morning promises." `
-                    -BardText "The instrument maker works by lamplight now, listening to wood and strings in the hush after the city's louder rooms have filled. It feels less like a shop and more like a backstage confession.")
+                    -BardText "The instrument maker works by lamplight now, listening to wood and strings in the hush after the city's louder rooms have filled. It feels less like a shop and more like a backstage confession." `
+                    -FighterText "The instrument shop is half-closed for the night, but the old marching drums and courtly horns still catch Lubert Stryer's eye like reminders that public courage often needs a sound to march behind.")
             }
 
             return (Get-ClassAwareTownText -Hero $Hero `
                 -BarbarianText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Borzig gets a wary craftsman's look, the sort usually reserved for men who might carry a lute by the neck instead of the case." `
-                -BardText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Gariand is measured first by ear, then by posture, then by the condition of the instrument already at his side.")
+                -BardText "The instrument maker's walls are hung with lutes, fiddles, reeds, and half-finished bodies of polished wood. Gariand is measured first by ear, then by posture, then by the condition of the instrument already at his side." `
+                -FighterText "The instrument maker's walls are hung with lutes, horns, and old marching drums. Lubert Stryer is not the usual customer, but the shopkeeper still understands that banners, ballads, and battlefield rhythm all make reputations travel.")
         }
         "Armorer" {
             if ($isNight) {
@@ -773,19 +779,22 @@ function Get-ChapterTwoAllianceStatusText {
             if ($hasClerkLead -and $hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Borzig keeps bringing in." `
-                    -BardText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Gariand has been carrying between rooms that normally never speak to one another.")
+                    -BardText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Gariand has been carrying between rooms that normally never speak to one another." `
+                    -FighterText "The watch is no longer working blind. Halden's people are comparing patrol reports against the clerk's ledger trail and the river-quarter whispers Lubert Stryer keeps turning into orderly proof.")
             }
 
             if ($hasClerkLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, even if no one says so loudly." `
-                    -BardText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, and Gariand can hear how carefully the guards choose their words around it.")
+                    -BardText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, and Gariand can hear how carefully the guards choose their words around it." `
+                    -FighterText "The watch hall feels tighter now. Someone inside has started taking the merchant clerk's paper trail seriously, and Lubert Stryer can see which reports are becoming orders.")
             }
 
             if ($hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The guards pretend they are only following patrol work, but Borzig can tell the river-quarter whispers have reached this hall already." `
-                    -BardText "The guards pretend they are only following patrol work, but Gariand can tell the river-quarter whispers have reached this hall already. Even here, the city's rumor-song is changing key.")
+                    -BardText "The guards pretend they are only following patrol work, but Gariand can tell the river-quarter whispers have reached this hall already. Even here, the city's rumor-song is changing key." `
+                    -FighterText "The guards pretend they are only following patrol work, but Lubert Stryer can tell the river-quarter whispers have reached the watch desk and started looking like a route map.")
             }
         }
         "Quest Giver" {
@@ -796,19 +805,22 @@ function Get-ChapterTwoAllianceStatusText {
             if ($hasGuardLead -and $hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are all starting to describe the same hidden network." `
-                    -BardText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers Gariand keeps drawing together are all starting to describe the same hidden network.")
+                    -BardText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers Gariand keeps drawing together are all starting to describe the same hidden network." `
+                    -FighterText "The clerk no longer treats this like a private merchant problem. His books, the watch's tunnel reports, and the Bent Nail whispers are becoming the sort of civic case Lubert Stryer can carry without looking like hired muscle.")
             }
 
             if ($hasGuardLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The clerk keeps one eye on his papers and one on the watch. Whatever Borzig brought back from the patrols has made these ledgers feel more dangerous." `
-                    -BardText "The clerk keeps one eye on his papers and one on the watch. Whatever Gariand has coaxed out of patrol routes and tense conversations has made these ledgers feel more dangerous.")
+                    -BardText "The clerk keeps one eye on his papers and one on the watch. Whatever Gariand has coaxed out of patrol routes and tense conversations has made these ledgers feel more dangerous." `
+                    -FighterText "The clerk keeps one eye on his papers and one on the watch. Whatever Lubert Stryer brought back from patrol routes has made these ledgers read less like commerce and more like duty.")
             }
 
             if ($hasBrokerLead) {
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Borzig hears in rougher rooms." `
-                    -BardText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Gariand hears in rougher rooms and better salons alike.")
+                    -BardText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Gariand hears in rougher rooms and better salons alike." `
+                    -FighterText "The clerk speaks like a careful man who has realized his ledgers are brushing up against the same river-quarter names Lubert Stryer has started treating like formal charges.")
             }
         }
         "Quest Board" {
@@ -895,12 +907,14 @@ function Get-TownQuestSourceIntroText {
                 if ($isNight) {
                     return (Get-ClassAwareTownText -Hero $Game.Hero `
                         -BarbarianText "Fresh notices rustle under lantern light now that Borzig's name carries more weight. Night jobs, private coin, and uglier requests seem to surface after dark." `
-                        -BardText "Fresh notices rustle under lantern light now that Gariand's name carries more weight. By night, the board reads less like public work and more like whispered opportunities pinned in plain sight.")
+                        -BardText "Fresh notices rustle under lantern light now that Gariand's name carries more weight. By night, the board reads less like public work and more like whispered opportunities pinned in plain sight." `
+                        -FighterText "Fresh notices rustle under lantern light now that Lubert Stryer's name carries more weight. By night, even small jobs read like chances to prove discipline where the city can see it.")
                 }
 
                 return (Get-ClassAwareTownText -Hero $Game.Hero `
                     -BarbarianText "Fresh notices have started appearing now that Borzig's name carries more weight. Some want coin-work. Some want the man who broke the understreet to look into worse things." `
-                    -BardText "Fresh notices have started appearing now that Gariand's name carries more weight. Some want coin-work. Some want the man who sang his way through closed rooms and walked back out of the understreet to look into worse things.")
+                    -BardText "Fresh notices have started appearing now that Gariand's name carries more weight. Some want coin-work. Some want the man who sang his way through closed rooms and walked back out of the understreet to look into worse things." `
+                    -FighterText "Fresh notices have started appearing now that Lubert Stryer's name carries more weight. Some want coin-work. Some want disciplined steel that can make civic trouble look orderly again.")
             }
             "Guard Station" {
                 if ([bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"]) {
