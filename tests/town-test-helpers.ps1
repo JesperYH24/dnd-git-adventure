@@ -27,4 +27,24 @@ function Assert-True {
 function Set-TestOutputStubs {
     $global:SuppressUiOutput = $true
     $global:FastTextEnabled = $true
+    $global:TransientTextSkipUntil = $null
+}
+
+function Set-TestReadHostSequence {
+    param([string[]]$Values)
+
+    $script:ReadHostSequence = @($Values)
+    $script:ReadHostIndex = 0
+
+    function global:Read-Host {
+        param([string]$Prompt)
+
+        if ($script:ReadHostIndex -ge $script:ReadHostSequence.Count) {
+            throw "Read-Host was called more times than the test expected."
+        }
+
+        $value = $script:ReadHostSequence[$script:ReadHostIndex]
+        $script:ReadHostIndex += 1
+        return $value
+    }
 }

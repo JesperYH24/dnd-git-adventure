@@ -94,6 +94,12 @@ powershell -ExecutionPolicy Bypass -File .\tests\day-job-progression.tests.ps1
 powershell -ExecutionPolicy Bypass -File .\tests\town-inn.tests.ps1
 ```
 
+Run every test file in an isolated PowerShell process:
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\run-all-tests.ps1
+```
+
 ## Project layout
 
 Core scripts include:
