@@ -194,6 +194,62 @@ function Test-MonsterZoneCreaturePoolScalesWithLevelCap {
     Assert-True -Condition ($levelSix.id -contains "gate_sunder_brute") -Message "Level 6-cap monster-zone work should unlock the stronger gate-breaker threat."
 }
 
+function Test-MonsterZoneWeatherPersistsForCurrentDay {
+    $game = Initialize-Game
+
+    $first = Get-MonsterZoneWeatherState -Game $game -WeatherRoll 96
+    $sameDay = Get-MonsterZoneWeatherState -Game $game -WeatherRoll 1
+    Advance-TownToNextDay -Game $game | Out-Null
+    $nextDay = Get-MonsterZoneWeatherState -Game $game -WeatherRoll 1
+
+    Assert-Equal -Actual $first.Id -Expected "ash_haze" -Message "High weather rolls should produce ash haze."
+    Assert-Equal -Actual $sameDay.Id -Expected "ash_haze" -Message "Monster-zone weather should stay stable during the same town day."
+    Assert-Equal -Actual $nextDay.Id -Expected "clear" -Message "A new town day should allow fresh monster-zone weather."
+}
+
+function Test-MonsterZoneWeatherModifiesAwareness {
+    $hero = Get-Hero -Class "Fighter"
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+    $weather = Get-MonsterZoneWeatherProfile -WeatherId "cold_fog"
+
+    $clear = Resolve-WildernessAwareness -Hero $hero -Creature $creature -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+    $fog = Resolve-WildernessAwareness -Hero $hero -Creature $creature -Weather $weather -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+
+    Assert-Equal -Actual $fog.WeatherId -Expected "cold_fog" -Message "Awareness results should record the weather that modified the contest."
+    Assert-Equal -Actual ($fog.HeroPerceptionTotal - $clear.HeroPerceptionTotal) -Expected -3 -Message "Cold fog should lower hero perception."
+    Assert-Equal -Actual ($fog.HeroStealthTotal - $clear.HeroStealthTotal) -Expected 2 -Message "Cold fog should help hero stealth."
+    Assert-Equal -Actual ($fog.CreaturePerceptionTotal - $clear.CreaturePerceptionTotal) -Expected -2 -Message "Cold fog should lower creature perception."
+    Assert-Equal -Actual ($fog.CreatureStealthTotal - $clear.CreatureStealthTotal) -Expected 2 -Message "Cold fog should help creature stealth."
+}
+
+function Test-MonsterZoneWeatherChangesCampRisk {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    Set-MonsterZoneWeather -Game $game -WeatherId "rain" | Out-Null
+
+    $openSky = Resolve-MonsterZoneCampAction -Game $game -HeroHP ([ref]$heroHP) -Action "OpenSky" -NightRoll 100
+
+    Assert-Equal -Actual $openSky.Weather.Id -Expected "rain" -Message "Camp risk should use the current monster-zone weather."
+    Assert-Equal -Actual $openSky.WeatherCampRiskModifier -Expected 10 -Message "Cold rain should add its camp risk modifier."
+    Assert-Equal -Actual $openSky.NightRisk -Expected 65 -Message "Cold rain should make open-sky rest riskier."
+}
+
+function Test-MonsterZoneAddsMoreCreatureTypes {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+
+    $levelFive = @(Get-MonsterZoneAvailableCreatures -Game $game)
+    $game.Hero.LevelCap = 6
+    $levelSix = @(Get-MonsterZoneAvailableCreatures -Game $game)
+
+    foreach ($id in @("glass_carrion_crow", "marsh_venom_adder", "iron_root_stag")) {
+        Assert-True -Condition ($levelFive.id -contains $id) -Message "$id should broaden the level 5 monster-zone creature pool."
+    }
+
+    Assert-True -Condition ($levelFive.id -notcontains "hollow_scale_wyrmling") -Message "The hollow-scale wyrmling should stay out of the level 5 pool."
+    Assert-True -Condition ($levelSix.id -contains "hollow_scale_wyrmling") -Message "The hollow-scale wyrmling should unlock for level 6 monster-zone play."
+}
+
 function Test-MonsterZoneClassReadsAreDistinct {
     $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "dry_creek_bed" } | Select-Object -First 1
     $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
@@ -437,9 +493,100 @@ function Test-MonsterZoneObjectiveSummaryIncludesNextStep {
     Assert-True -Condition ($summary -like "*Next:*") -Message "Objective summary should include a next-step label."
 }
 
+function Test-MonsterZoneLandmarkDiscoveryCreatesFieldLead {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "dry_creek_bed" } | Select-Object -First 1
+
+    $discovery = Discover-MonsterZoneLandmark -Game $game -Landmark $landmark
+    $lead = Get-MonsterZoneLastFieldLead -Game $game
+
+    Assert-Equal -Actual $lead["Type"] -Expected "Landmark" -Message "First landmark discovery should become the latest field lead."
+    Assert-True -Condition ($discovery.Text -like "*Field lead:*") -Message "Landmark discovery text should include the concrete follow-up lead."
+    Assert-True -Condition ($lead["NextStep"] -like "*creature trail*" -or $lead["NextStep"] -like "*tracking*") -Message "Dry Creek Bed should point the player toward tracking a creature trail."
+}
+
+function Test-MonsterZoneObjectiveFollowsLatestLandmarkLead {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "collapsed_watchtower" } | Select-Object -First 1
+
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    $objective = Get-MonsterZoneObjectiveState -Game $game
+
+    Assert-Equal -Actual $objective.Type -Expected "FollowFieldLead" -Message "After a landmark discovery, the monster-zone objective should follow the latest field lead."
+    Assert-True -Condition ($objective.Detail -like "*watched the wall*") -Message "The landmark lead objective should carry the specific landmark payoff."
+    Assert-True -Condition ($objective.NextStep -like "*Search*tracks*") -Message "The landmark lead objective should tell the player the next concrete action."
+}
+
+function Test-MonsterZoneCreatureProofUpdatesFieldLead {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    $lead = Get-MonsterZoneLastFieldLead -Game $game
+
+    Assert-Equal -Actual $lead["Type"] -Expected "CreatureProof" -Message "Creature proof should become the latest field lead."
+    Assert-True -Condition ($lead["NextStep"] -like "*Return*report*") -Message "Creature proof lead should push the player back toward reporting."
+}
+
+function Test-MonsterZoneOddityUpdatesFieldLead {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "razor_boar" } | Select-Object -First 1
+
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+    $lead = Get-MonsterZoneLastFieldLead -Game $game
+
+    Assert-Equal -Actual $lead["Type"] -Expected "Oddity" -Message "Securing an oddity should become the latest field lead."
+    Assert-True -Condition ($lead["TownLead"] -like "*Razor Boar Tusk*") -Message "Oddity field lead should remember the actual part secured."
+}
+
+function Test-MonsterZoneFieldLeadActionCreatesCreatureTrail {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "burned_orchard" } | Select-Object -First 1
+
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    $result = Resolve-MonsterZoneFieldLeadAction -Game $game
+    $objective = Get-MonsterZoneObjectiveState -Game $game
+
+    Assert-Equal -Actual $result.Success -Expected $true -Message "A fresh landmark field lead should be followable."
+    Assert-Equal -Actual $result.Repeated -Expected $false -Message "The first field lead action should not be marked as repeated."
+    Assert-Equal -Actual $result.NewLead["Type"] -Expected "CreatureTrail" -Message "Following a landmark field lead should turn it into a creature-trail lead."
+    Assert-True -Condition ($result.XPMessage -like "*80 XP*") -Message "Following a new field lead should award a small one-time XP payoff."
+    Assert-Equal -Actual $objective.Type -Expected "FollowFieldLead" -Message "The current objective should continue following the new creature-trail lead."
+    Assert-True -Condition ($objective.NextStep -like "*Travel*search*creature*") -Message "The creature-trail objective should point the player toward finding the encounter."
+}
+
+function Test-MonsterZoneFieldLeadActionDoesNotFarmXp {
+    $game = Initialize-Game
+    $landmark = Get-MonsterZoneLandmarks | Where-Object { $_.Id -eq "survey_camp" } | Select-Object -First 1
+
+    Discover-MonsterZoneLandmark -Game $game -Landmark $landmark | Out-Null
+    $firstXp = [int]$game.Hero.XP
+    Resolve-MonsterZoneFieldLeadAction -Game $game | Out-Null
+    $afterFirst = [int]$game.Hero.XP
+    $repeat = Resolve-MonsterZoneFieldLeadAction -Game $game
+
+    Assert-Equal -Actual ($afterFirst - $firstXp) -Expected 80 -Message "The first field lead follow-up should grant exactly its small XP payoff."
+    Assert-Equal -Actual $repeat.XPMessage -Expected "" -Message "Repeating a field lead follow-up should not award XP again."
+    Assert-Equal -Actual $game.Hero.XP -Expected $afterFirst -Message "Repeated field lead follow-up should not change hero XP."
+}
+
+function Test-MonsterZoneFieldLeadActionOnlyForLandmarks {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    $available = Test-MonsterZoneFieldLeadActionAvailable -Game $game
+    $result = Resolve-MonsterZoneFieldLeadAction -Game $game
+
+    Assert-Equal -Actual $available -Expected $false -Message "Town-report leads should not show as field-followable."
+    Assert-Equal -Actual $result.Success -Expected $false -Message "Creature proof leads should point back to town rather than resolving in the field."
+    Assert-True -Condition ($result.Message -like "*back to town*") -Message "Non-field leads should explain that they point back to town."
+}
+
 function Test-CampImprovementLowersNightRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
 
     $openSky = Resolve-MonsterZoneCampAction -Game $game -HeroHP ([ref]$heroHP) -Action "OpenSky" -NightRoll 100
     $basic = Resolve-MonsterZoneCampAction -Game $game -HeroHP ([ref]$heroHP) -Action "Build" -NightRoll 100
@@ -464,6 +611,10 @@ Test-MonsterZoneKeenSensesHelpAgainstStealth
 Test-MonsterZoneBlindsightCountersInvisibilityBonus
 Test-MonsterZoneCreaturesHaveObservationFlavor
 Test-MonsterZoneCreaturePoolScalesWithLevelCap
+Test-MonsterZoneWeatherPersistsForCurrentDay
+Test-MonsterZoneWeatherModifiesAwareness
+Test-MonsterZoneWeatherChangesCampRisk
+Test-MonsterZoneAddsMoreCreatureTypes
 Test-MonsterZoneClassReadsAreDistinct
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
@@ -478,6 +629,13 @@ Test-MonsterZoneObjectivePrioritizesDorrProof
 Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull
 Test-MonsterZoneTownReminderOnlyAppearsWhenUnlocked
 Test-MonsterZoneObjectiveSummaryIncludesNextStep
+Test-MonsterZoneLandmarkDiscoveryCreatesFieldLead
+Test-MonsterZoneObjectiveFollowsLatestLandmarkLead
+Test-MonsterZoneCreatureProofUpdatesFieldLead
+Test-MonsterZoneOddityUpdatesFieldLead
+Test-MonsterZoneFieldLeadActionCreatesCreatureTrail
+Test-MonsterZoneFieldLeadActionDoesNotFarmXp
+Test-MonsterZoneFieldLeadActionOnlyForLandmarks
 Test-CampImprovementLowersNightRisk
 
 Write-Host "Monster zone tests passed." -ForegroundColor Green

@@ -15,6 +15,11 @@ function Get-MonsterZoneDefaultState {
         ReportedCreaturesToDorr = @{}
         PendingRingMonsterContracts = @{}
         CompletedRingMonsterContracts = @{}
+        LandmarkLeads = @{}
+        FieldLeadFollowUps = @{}
+        LastFieldLead = $null
+        CurrentWeatherDay = 0
+        CurrentWeatherId = ""
         LastTravelText = ""
     }
 }
@@ -43,6 +48,11 @@ function Initialize-MonsterZoneState {
         @{ Key = "ReportedCreaturesToDorr"; Value = @{} },
         @{ Key = "PendingRingMonsterContracts"; Value = @{} },
         @{ Key = "CompletedRingMonsterContracts"; Value = @{} },
+        @{ Key = "LandmarkLeads"; Value = @{} },
+        @{ Key = "FieldLeadFollowUps"; Value = @{} },
+        @{ Key = "LastFieldLead"; Value = $null },
+        @{ Key = "CurrentWeatherDay"; Value = 0 },
+        @{ Key = "CurrentWeatherId"; Value = "" },
         @{ Key = "LastTravelText"; Value = "" }
     )) {
         if (-not $Game.Town.MonsterZone.ContainsKey($entry.Key) -or $null -eq $Game.Town.MonsterZone[$entry.Key]) {
@@ -58,6 +68,111 @@ function Test-MonsterZoneUnlocked {
         $null -ne $Game.Town -and
         $null -ne $Game.Town.StoryFlags -and
         [bool]$Game.Town.StoryFlags["MonsterWallRumorsStarted"])
+}
+
+function New-MonsterZoneWeatherProfile {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [string]$Description,
+        [string]$TravelText,
+        [int]$EncounterChanceModifier = 0,
+        [int]$CampRiskModifier = 0,
+        [int]$HeroPerceptionModifier = 0,
+        [int]$HeroStealthModifier = 0,
+        [int]$CreaturePerceptionModifier = 0,
+        [int]$CreatureStealthModifier = 0
+    )
+
+    return [PSCustomObject]@{
+        Id = $Id
+        Name = $Name
+        Description = $Description
+        TravelText = $TravelText
+        EncounterChanceModifier = $EncounterChanceModifier
+        CampRiskModifier = $CampRiskModifier
+        HeroPerceptionModifier = $HeroPerceptionModifier
+        HeroStealthModifier = $HeroStealthModifier
+        CreaturePerceptionModifier = $CreaturePerceptionModifier
+        CreatureStealthModifier = $CreatureStealthModifier
+    }
+}
+
+function Get-MonsterZoneWeatherProfiles {
+    return @(
+        (New-MonsterZoneWeatherProfile -Id "clear" -Name "Clear Watch" -Description "The air is clear enough for wall horns and distant movement to carry cleanly." -TravelText "Clear air leaves the road markers sharp against the grass.")
+        (New-MonsterZoneWeatherProfile -Id "rain" -Name "Cold Rain" -Description "Cold rain presses the scrub flat and turns tracks into dark, temporary script." -TravelText "Rain ticks against armor, leaves, and old stones." -EncounterChanceModifier -5 -CampRiskModifier 10 -HeroPerceptionModifier -1 -HeroStealthModifier 1 -CreaturePerceptionModifier -1)
+        (New-MonsterZoneWeatherProfile -Id "high_wind" -Name "High Wind" -Description "Hard wind shoves sound sideways and makes every grass movement look deliberate." -TravelText "The wind keeps trying to erase footprints before they can become proof." -EncounterChanceModifier 5 -CampRiskModifier 5 -HeroPerceptionModifier -2 -CreaturePerceptionModifier -2 -HeroStealthModifier 1 -CreatureStealthModifier 1)
+        (New-MonsterZoneWeatherProfile -Id "cold_fog" -Name "Cold Fog" -Description "Fog gathers in the low cuts of ground, shrinking the world to breath, boots, and silhouettes." -TravelText "Fog turns the wall behind the hero into a pale smear." -EncounterChanceModifier 10 -CampRiskModifier 5 -HeroPerceptionModifier -3 -CreaturePerceptionModifier -2 -HeroStealthModifier 2 -CreatureStealthModifier 2)
+        (New-MonsterZoneWeatherProfile -Id "ash_haze" -Name "Ash Haze" -Description "A bitter haze hangs beyond the wall, carrying the memory of burned orchards and draconic heat." -TravelText "Ash grit catches in the throat and makes the sunlight look bruised." -EncounterChanceModifier 15 -CampRiskModifier 10 -HeroPerceptionModifier -1 -CreatureStealthModifier 1)
+    )
+}
+
+function Get-MonsterZoneWeatherProfile {
+    param([string]$WeatherId)
+
+    $profile = Get-MonsterZoneWeatherProfiles | Where-Object { $_.Id -eq $WeatherId } | Select-Object -First 1
+
+    if ($null -ne $profile) {
+        return $profile
+    }
+
+    return (Get-MonsterZoneWeatherProfiles | Where-Object { $_.Id -eq "clear" } | Select-Object -First 1)
+}
+
+function Resolve-MonsterZoneWeatherByRoll {
+    param([int]$Roll)
+
+    if ($Roll -le 45) { return (Get-MonsterZoneWeatherProfile -WeatherId "clear") }
+    if ($Roll -le 65) { return (Get-MonsterZoneWeatherProfile -WeatherId "rain") }
+    if ($Roll -le 82) { return (Get-MonsterZoneWeatherProfile -WeatherId "high_wind") }
+    if ($Roll -le 94) { return (Get-MonsterZoneWeatherProfile -WeatherId "cold_fog") }
+    return (Get-MonsterZoneWeatherProfile -WeatherId "ash_haze")
+}
+
+function Set-MonsterZoneWeather {
+    param(
+        $Game,
+        [string]$WeatherId,
+        [int]$DayNumber = 0
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($DayNumber -le 0) {
+        $DayNumber = Get-TownDayNumber -Game $Game
+    }
+
+    $profile = Get-MonsterZoneWeatherProfile -WeatherId $WeatherId
+    $Game.Town.MonsterZone.CurrentWeatherDay = $DayNumber
+    $Game.Town.MonsterZone.CurrentWeatherId = [string]$profile.Id
+
+    return $profile
+}
+
+function Get-MonsterZoneWeatherState {
+    param(
+        $Game,
+        [int]$WeatherRoll = 0
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $day = Get-TownDayNumber -Game $Game
+
+    if ([int]$Game.Town.MonsterZone.CurrentWeatherDay -eq $day -and -not [string]::IsNullOrWhiteSpace([string]$Game.Town.MonsterZone.CurrentWeatherId)) {
+        return (Get-MonsterZoneWeatherProfile -WeatherId ([string]$Game.Town.MonsterZone.CurrentWeatherId))
+    }
+
+    if ($WeatherRoll -le 0) {
+        $WeatherRoll = Roll-Dice -Sides 100
+    }
+
+    $profile = Resolve-MonsterZoneWeatherByRoll -Roll $WeatherRoll
+    $Game.Town.MonsterZone.CurrentWeatherDay = $day
+    $Game.Town.MonsterZone.CurrentWeatherId = [string]$profile.Id
+
+    return $profile
 }
 
 function Grant-MonsterZoneMilestoneXP {
@@ -291,6 +406,247 @@ function Get-MonsterZoneLandmarks {
             DangerLevel = 3
         }
     )
+}
+
+function New-MonsterZoneFieldLead {
+    param(
+        [string]$Type,
+        [string]$Title,
+        [string]$Detail,
+        [string]$NextStep,
+        [string]$TownLead = "",
+        [string]$SourceId = ""
+    )
+
+    return @{
+        Type = $Type
+        Title = $Title
+        Detail = $Detail
+        NextStep = $NextStep
+        TownLead = $TownLead
+        SourceId = $SourceId
+    }
+}
+
+function Set-MonsterZoneFieldLead {
+    param(
+        $Game,
+        [hashtable]$Lead
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Lead) {
+        return
+    }
+
+    $Game.Town.MonsterZone.LastFieldLead = $Lead
+}
+
+function Get-MonsterZoneLastFieldLead {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($null -eq $Game.Town.MonsterZone.LastFieldLead) {
+        return $null
+    }
+
+    return $Game.Town.MonsterZone.LastFieldLead
+}
+
+function Get-MonsterZoneFieldLeadKey {
+    param([hashtable]$Lead)
+
+    if ($null -eq $Lead) {
+        return ""
+    }
+
+    $type = [string]$Lead["Type"]
+    $sourceId = [string]$Lead["SourceId"]
+
+    if ([string]::IsNullOrWhiteSpace($sourceId)) {
+        $sourceId = [string]$Lead["Title"]
+    }
+
+    return "$type`:$sourceId"
+}
+
+function Test-MonsterZoneFieldLeadActionAvailable {
+    param($Game)
+
+    $lead = Get-MonsterZoneLastFieldLead -Game $Game
+
+    if ($null -eq $lead) {
+        return $false
+    }
+
+    return ([string]$lead["Type"] -eq "Landmark")
+}
+
+function Resolve-MonsterZoneFieldLeadAction {
+    param($Game)
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $lead = Get-MonsterZoneLastFieldLead -Game $Game
+
+    if ($null -eq $lead) {
+        return [PSCustomObject]@{
+            Success = $false
+            Repeated = $false
+            Message = "There is no current field lead to follow."
+            XPMessage = ""
+            NewLead = $null
+        }
+    }
+
+    if ([string]$lead["Type"] -ne "Landmark") {
+        return [PSCustomObject]@{
+            Success = $false
+            Repeated = $false
+            Message = "This lead points back to town rather than deeper into the field: $($lead["NextStep"])"
+            XPMessage = ""
+            NewLead = $lead
+        }
+    }
+
+    $key = Get-MonsterZoneFieldLeadKey -Lead $lead
+
+    if ([bool]$Game.Town.MonsterZone.FieldLeadFollowUps[$key]) {
+        return [PSCustomObject]@{
+            Success = $true
+            Repeated = $true
+            Message = "$($Game.Hero.Name) has already worked this lead as far as it will go today. $($lead["NextStep"])"
+            XPMessage = ""
+            NewLead = $lead
+        }
+    }
+
+    $sourceId = [string]$lead["SourceId"]
+    $followDetail = switch ($sourceId) {
+        "old_mile_shrine" { "The shrine's road stones line up with scratched patrol markers. The path is worth checking on a later pass from the gate." }
+        "collapsed_watchtower" { "Broken sightlines around the tower show where a creature watched the wall without entering crossbow range." }
+        "burned_orchard" { "Ash under the orchard rows carries clawed prints in a clean line, as if something crossed by instruction rather than hunger." }
+        "dry_creek_bed" { "The creek bed gives up a readable trail: fresh drag marks, paw pressure, and one place where something stopped to listen toward the wall." }
+        "hunters_cairn" { "The cairn stones were not scattered by weather. Something nosed through the old offerings, then left toward rougher ground." }
+        "blackened_scale_hollow" { "The black flakes are not ordinary soot. They cling to boot leather like scale dust and point toward a hotter, meaner trail." }
+        "survey_camp" { "A torn strip from the missing map board names two old range marks. Someone mapped this pressure before running." }
+        "boundary_stones" { "The cracked runes carry fresh grit inside the breaks. Whatever struck them came from beyond the patrol line and turned back toward the city." }
+        default { "The lead gives $($Game.Hero.Name) enough of a pattern to stop wandering blindly and start reading the ground for a creature trail." }
+    }
+
+    $newLead = New-MonsterZoneFieldLead `
+        -Type "CreatureTrail" `
+        -Title "Fresh outer-wall trail" `
+        -Detail $followDetail `
+        -NextStep "Travel or search nearby until a creature commits, then return with proof if the fight is won." `
+        -TownLead "$($lead["Title"]) has produced a readable creature trail." `
+        -SourceId $sourceId
+
+    $Game.Town.MonsterZone.FieldLeadFollowUps[$key] = $true
+    Set-MonsterZoneFieldLead -Game $Game -Lead $newLead
+
+    $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "field_lead_$key" -XP 80 -Reason "$($lead["Title"]) followed into a usable trail"
+
+    return [PSCustomObject]@{
+        Success = $true
+        Repeated = $false
+        Message = "$($Game.Hero.Name) follows the field lead. $followDetail"
+        XPMessage = if ($xp.Awarded) { $xp.Message } else { "" }
+        NewLead = $newLead
+    }
+}
+
+function Get-MonsterZoneLandmarkLead {
+    param($Landmark)
+
+    if ($null -eq $Landmark) {
+        return $null
+    }
+
+    switch ([string]$Landmark.Id) {
+        "old_mile_shrine" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Shrine road marker" `
+                -Detail "The Old Mile Shrine gives the wall-watch a fixed point for missing travelers and patrol timings." `
+                -NextStep "Build route familiarity here or travel north to look for tracks along the old road." `
+                -TownLead "Belor can use the Old Mile Shrine as a patrol marker." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "collapsed_watchtower" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Broken sightline" `
+                -Detail "The Collapsed Watchtower shows where something watched the wall from beyond spear range." `
+                -NextStep "Search the tower ground for tracks, or return later until the route is reliable." `
+                -TownLead "The watchtower sightline is useful Wall Watch proof." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "burned_orchard" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Chosen fire pattern" `
+                -Detail "The Burned Orchard looks burned by intent, not weather or ordinary raiders." `
+                -NextStep "Search the rows for ash signs, then hunt for the creature trail that crossed them." `
+                -TownLead "The Burned Orchard suggests organized pressure outside the wall." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "dry_creek_bed" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Track crossing" `
+                -Detail "The Dry Creek Bed gathers paw, boot, hoof, and dragging marks in one readable cut." `
+                -NextStep "Search here when the objective needs a creature trail; the creek bed is made for tracking." `
+                -TownLead "The Dry Creek Bed can tie different creature trails to one route." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "hunters_cairn" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Disturbed cairn" `
+                -Detail "The overturned cairn stones point to something bold enough to disturb old hunter signs." `
+                -NextStep "Use the cairn as a camp or return point before pressing toward rougher ground." `
+                -TownLead "Hunter signs at the cairn have been disturbed." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "blackened_scale_hollow" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Scale-shed hollow" `
+                -Detail "Black flakes in the hollow hint at draconic pressure rather than ordinary beasts." `
+                -NextStep "Treat this as dangerous ground: observe before closing, and bring any proof back cleanly." `
+                -TownLead "The hollow's black scale signs should matter to Veyra and the Wall Watch." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "survey_camp" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Missing survey map" `
+                -Detail "The Abandoned Survey Camp suggests someone had a map of the pressure line and lost it fast." `
+                -NextStep "Search the camp when safe; a reliable route here could become valuable." `
+                -TownLead "The missing survey board hints that someone mapped the outer pressure first." `
+                -SourceId ([string]$Landmark.Id))
+        }
+        "boundary_stones" {
+            return (New-MonsterZoneFieldLead `
+                -Type "Landmark" `
+                -Title "Cracked old boundary" `
+                -Detail "The Ancient Boundary Stones show fresh damage on something older than the city charter." `
+                -NextStep "Do not push past this edge lightly; search, record, and return with context." `
+                -TownLead "The boundary stones connect the wall trouble to older ground than the city admits." `
+                -SourceId ([string]$Landmark.Id))
+        }
+    }
+
+    return (New-MonsterZoneFieldLead `
+        -Type "Landmark" `
+        -Title "Recorded landmark" `
+        -Detail "$($Landmark.Name) gives the outer-wall work a fixed point." `
+        -NextStep "Search the area, then decide whether to build route familiarity or hunt nearby tracks." `
+        -TownLead "$($Landmark.Name) is useful outer-wall context." `
+        -SourceId ([string]$Landmark.Id))
 }
 
 function Get-MonsterZoneLandmarkAtPosition {
@@ -539,11 +895,13 @@ function Move-MonsterZonePosition {
     $Game.Town.MonsterZone.CurrentX = $newX
     $Game.Town.MonsterZone.CurrentY = $newY
     $Game.Town.MonsterZone.Visits = [int]$Game.Town.MonsterZone.Visits + 1
+    $weather = Get-MonsterZoneWeatherState -Game $Game
+    $weatherText = if ($null -ne $weather -and -not [string]::IsNullOrWhiteSpace([string]$weather.TravelText)) { " $($weather.TravelText)" } else { "" }
 
     return [PSCustomObject]@{
         Success = $true
         Edge = $false
-        Message = "The city wall falls farther behind as $($Game.Hero.Name) travels $Direction."
+        Message = "The city wall falls farther behind as $($Game.Hero.Name) travels $Direction.$weatherText"
         X = $newX
         Y = $newY
         Landmark = Get-MonsterZoneLandmarkAtPosition -X $newX -Y $newY
@@ -579,6 +937,13 @@ function Discover-MonsterZoneLandmark {
         if ($xp.Awarded) {
             $text = "$text $($xp.Message)"
         }
+
+        $lead = Get-MonsterZoneLandmarkLead -Landmark $Landmark
+        if ($null -ne $lead) {
+            $Game.Town.MonsterZone.LandmarkLeads[[string]$Landmark.Id] = $lead
+            Set-MonsterZoneFieldLead -Game $Game -Lead $lead
+            $text = "$text Field lead: $($lead.Detail) Next: $($lead.NextStep)"
+        }
     }
 
     if ($memory.DirectTravelJustUnlocked) {
@@ -593,6 +958,12 @@ function Discover-MonsterZoneLandmark {
         $text = "$text $message"
     }
 
+    $fieldLead = $null
+
+    if ($null -ne $Landmark -and $Game.Town.MonsterZone.LandmarkLeads.ContainsKey([string]$Landmark.Id)) {
+        $fieldLead = $Game.Town.MonsterZone.LandmarkLeads[[string]$Landmark.Id]
+    }
+
     return [PSCustomObject]@{
         Discovered = (-not $alreadyDiscovered)
         Landmark = $Landmark
@@ -600,6 +971,7 @@ function Discover-MonsterZoneLandmark {
         FamiliarityGained = $memory.FamiliarityGained
         DirectTravelUnlocked = $memory.DirectTravelUnlocked
         DirectTravelJustUnlocked = $memory.DirectTravelJustUnlocked
+        FieldLead = $fieldLead
         Text = $text
     }
 }
@@ -743,7 +1115,11 @@ function Get-MonsterZoneCreatures {
         (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true)
         (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure")
         (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "glass_carrion_crow" -Name "glass carrion crow" -Article "A" -Definite "The Glass Carrion Crow" -HP 12 -XP 95 -ArmorClass 14 -AttackBonus 4 -InitiativeBonus 4 -DamageDiceSides 4 -DamageBonus 1 -PerceptionBonus 5 -StealthBonus 3 -OddityName "Glassy Crow Eye" -OddityValue 60 -IntroText "A crow with shard-bright eyes picks at something in the grass, then goes perfectly still as if it has been waiting for a signal." -MinLevelCap 5 -ThreatTier "Level 4-5 scout pressure" -SenseTraits @("Keen Sight") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "marsh_venom_adder" -Name "marsh venom adder" -Article "A" -Definite "The Marsh Venom Adder" -HP 16 -XP 130 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 5 -OddityName "Intact Venom Sac" -OddityValue 85 -IntroText "A dark adder slides through grass damp enough to remember marshland, fangs flashing green-black when it tastes the air." -MinLevelCap 5 -ThreatTier "Level 4-5 ambush pressure")
+        (New-MonsterZoneCreature -Id "iron_root_stag" -Name "iron-root stag" -Article "An" -Definite "The Iron-Root Stag" -HP 28 -XP 155 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 1 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Iron-Root Antler Splinter" -OddityValue 100 -IntroText "An antlered shape steps from the scrub, roots and old wire tangled through its crown like the land has grown angry around bone." -MinLevelCap 5 -ThreatTier "Level 4-5 route-blocker pressure" -SenseTraits @("Keen Hearing") -SenseBonus 1)
         (New-MonsterZoneCreature -Id "ash_horn_drakelet" -Name "ash-horn drakelet" -Article "An" -Definite "The Ash-Horn Drakelet" -HP 32 -XP 240 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Ash-Horn Spur" -OddityValue 145 -IntroText "A low drake-shape drags itself over broken ground, horn nubs smoking as if the skull beneath them remembers fire." -MinLevelCap 5 -ThreatTier "Level 5 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2)
+        (New-MonsterZoneCreature -Id "hollow_scale_wyrmling" -Name "hollow-scale wyrmling" -Article "A" -Definite "The Hollow-Scale Wyrmling" -HP 36 -XP 280 -ArmorClass 15 -AttackBonus 5 -InitiativeBonus 3 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 4 -StealthBonus 2 -OddityName "Hollow Black Scale" -OddityValue 175 -IntroText "A small dragon-shaped thing pulls itself over the stones, scales black at the edges and pale in the seams like something unfinished but already cruel." -MinLevelCap 6 -ThreatTier "Level 6 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2)
         (New-MonsterZoneCreature -Id "gate_sunder_brute" -Name "gate-sunder brute" -Article "A" -Definite "The Gate-Sunder Brute" -HP 46 -XP 390 -ArmorClass 13 -AttackBonus 6 -InitiativeBonus -1 -DamageDiceSides 10 -DamageBonus 4 -PerceptionBonus 2 -StealthBonus -1 -OddityName "Cracked Gate-Bone" -OddityValue 210 -IntroText "A huge crooked figure lumbers through the dust carrying a gate hinge like a club, its arms marked by black scale scars that have split and healed badly." -MinLevelCap 6 -ThreatTier "Level 6 gate-breaker threat" -SenseTraits @("Blood Scent") -SenseBonus 1)
     )
 }
@@ -1025,11 +1401,39 @@ function Get-MonsterZoneCreatureObservationLines {
                 "This is not a peaceful stray. It has a trained shape to its aggression, and the scale growth makes it feel touched by the same wrongness spreading beyond the wall."
             )
         }
+        "glass_carrion_crow" {
+            return @(
+                "$($Creature.definite) hops between broken stones with a head too still for an ordinary carrion bird, glassy eyes catching movement before sound reaches it.",
+                "It does not look strong, but it watches like a signal animal. If it screams, the danger may be what hears the scream rather than the beak itself.",
+                "Shard-bright feathers along its neck make it difficult to tell whether it is scavenging after the wall trouble or scouting ahead of it."
+            )
+        }
+        "marsh_venom_adder" {
+            return @(
+                "$($Creature.definite) leaves a wet line through grass that should be dry, its body low enough to vanish whenever the ground dips.",
+                "Its head lifts only when breath or bootfall comes too close. This is a patient threat, better at punishing careless movement than forcing a fair fight.",
+                "The venom shine along its fangs looks dark green under the light, useful proof for buyers if the hero can survive taking it."
+            )
+        }
+        "iron_root_stag" {
+            return @(
+                "$($Creature.definite) stands half-hidden near the scrubline, antlers tangled with dark root and old wire as if the land itself tried to hold it back.",
+                "It is not hunting in the ordinary sense. It blocks routes, lowers its head, and waits for anything bold enough to cross the line it has chosen.",
+                "A charge from this thing would be all weight and splintered antler, but its real danger may be how well it knows the paths around the wall."
+            )
+        }
         "ash_horn_drakelet" {
             return @(
                 "$($Creature.definite) keeps its head low and sideways, protecting the smoking horn nubs while it tests the air for heat and movement.",
                 "It does not rush like a simple beast. It waits for a line, then coils its whole body into a short violent lunge that could punish anyone standing too close.",
                 "This feels closer to Halewick's shadow than the wall beasts do: draconic, young or stunted, and dangerous because it is learning the ground."
+            )
+        }
+        "hollow_scale_wyrmling" {
+            return @(
+                "$($Creature.definite) moves with the wrong confidence of something young but already used to fear making room for it.",
+                "Its scales look incomplete, black around the edges and pale beneath, as though the body is still deciding what kind of dragon-shaped threat it means to become.",
+                "It pauses before attacking lanes, learning angles the way a clever fighter learns an opponent. This is not just a beast wandering near the wall."
             )
         }
         "gate_sunder_brute" {
@@ -1076,6 +1480,7 @@ function Resolve-WildernessAwareness {
     param(
         $Hero,
         $Creature,
+        $Weather = $null,
         [int]$HeroPerceptionRoll = 0,
         [int]$HeroStealthRoll = 0,
         [int]$CreaturePerceptionRoll = 0,
@@ -1095,10 +1500,14 @@ function Resolve-WildernessAwareness {
     $invisibilityCountered = ((Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0 -and (Test-MonsterZoneCreatureCountersInvisibility -Creature $Creature))
     $counteredInvisibilityBonus = if ($invisibilityCountered) { Get-HeroInvisibilityStealthBonus -Hero $Hero } else { 0 }
     $dangerSenseBonus = if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "DangerSense") { 2 } else { 0 }
-    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus
-    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier - $counteredInvisibilityBonus
-    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus + $creatureSenseBonus
-    $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus
+    $weatherHeroPerceptionModifier = if ($null -ne $Weather -and $null -ne $Weather.HeroPerceptionModifier) { [int]$Weather.HeroPerceptionModifier } else { 0 }
+    $weatherHeroStealthModifier = if ($null -ne $Weather -and $null -ne $Weather.HeroStealthModifier) { [int]$Weather.HeroStealthModifier } else { 0 }
+    $weatherCreaturePerceptionModifier = if ($null -ne $Weather -and $null -ne $Weather.CreaturePerceptionModifier) { [int]$Weather.CreaturePerceptionModifier } else { 0 }
+    $weatherCreatureStealthModifier = if ($null -ne $Weather -and $null -ne $Weather.CreatureStealthModifier) { [int]$Weather.CreatureStealthModifier } else { 0 }
+    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus + $weatherHeroPerceptionModifier
+    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier - $counteredInvisibilityBonus + $weatherHeroStealthModifier
+    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus + $creatureSenseBonus + $weatherCreaturePerceptionModifier
+    $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus + $weatherCreatureStealthModifier
     $heroDetects = $heroPerceptionTotal -ge $creatureStealthTotal
     $creatureDetects = $creaturePerceptionTotal -ge $heroStealthTotal
 
@@ -1128,6 +1537,11 @@ function Resolve-WildernessAwareness {
         CreatureStealthRoll = $CreatureStealthRoll
         DangerSenseBonus = $dangerSenseBonus
         CreatureSenseBonus = $creatureSenseBonus
+        WeatherId = if ($null -ne $Weather) { [string]$Weather.Id } else { "" }
+        WeatherHeroPerceptionModifier = $weatherHeroPerceptionModifier
+        WeatherHeroStealthModifier = $weatherHeroStealthModifier
+        WeatherCreaturePerceptionModifier = $weatherCreaturePerceptionModifier
+        WeatherCreatureStealthModifier = $weatherCreatureStealthModifier
         InvisibilityCountered = $invisibilityCountered
     }
 }
@@ -1183,6 +1597,13 @@ function Add-MonsterZoneCreatureDefeat {
         [PSCustomObject]@{ Awarded = $false; XP = 0; Message = "" }
     }
     $record["MilestoneXPMessage"] = if ($xp.Awarded) { $xp.Message } else { "" }
+    Set-MonsterZoneFieldLead -Game $Game -Lead (New-MonsterZoneFieldLead `
+        -Type "CreatureProof" `
+        -Title "Creature trail secured" `
+        -Detail "$recordName proof is strong enough for Dorr and the wall-watch rumor network." `
+        -NextStep "Return to town and report the trail before chasing more signs." `
+        -TownLead "Unreported monster proof is ready: $recordName." `
+        -SourceId $creatureId)
     Update-MonsterZoneLevelProgression -Game $Game | Out-Null
 
     return [PSCustomObject]$record
@@ -1213,6 +1634,13 @@ function Add-MonsterZoneOddity {
     }
 
     $Game.Town.MonsterZone.Oddities += $oddity
+    Set-MonsterZoneFieldLead -Game $Game -Lead (New-MonsterZoneFieldLead `
+        -Type "Oddity" `
+        -Title "Oddity secured" `
+        -Detail "$($oddity.Name) is packed for the Docks buyers." `
+        -NextStep "Return if the haul is full, or keep hunting only while safe hauling room remains." `
+        -TownLead "Monster oddity ready for buyers: $($oddity.Name)." `
+        -SourceId ([string]$Creature.id))
 
     return [PSCustomObject]@{
         Success = $true
@@ -1247,6 +1675,7 @@ function Get-MonsterZoneObjectiveState {
     $unreported = @(Get-MonsterZoneUnreportedCreatureRecords -Game $Game)
     $discoveredCount = @($Game.Town.MonsterZone.DiscoveredLandmarks.Keys).Count
     $currentLandmark = Get-MonsterZoneLandmarkAtPosition -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
+    $lastLead = Get-MonsterZoneLastFieldLead -Game $Game
 
     if ($unreported.Count -gt 0) {
         $names = @($unreported | ForEach-Object { $_["Name"] }) -join ", "
@@ -1295,13 +1724,31 @@ function Get-MonsterZoneObjectiveState {
     }
 
     if ($oddityCount -gt 0) {
+        $detail = "Haul: $oddityCount/$oddityCapacity oddities."
+        $nextStep = "Return for safe value, or keep hunting only if HP and camp safety can carry the risk."
+
+        if ($null -ne $lastLead -and -not [string]::IsNullOrWhiteSpace([string]$lastLead["Detail"])) {
+            $detail = "$detail Latest lead: $($lastLead["Detail"])"
+        }
+
         return [PSCustomObject]@{
             Type = "KeepOrReturnOddities"
             Title = "Choose the next risk"
-            Detail = "Haul: $oddityCount/$oddityCapacity oddities."
+            Detail = $detail
             Hint = "Return safely for value, or keep hunting while there is still hauling room."
-            NextStep = "Return for safe value, or keep hunting only if HP and camp safety can carry the risk."
+            NextStep = $nextStep
             TownReminder = "Carrying monster oddities: $oddityCount/$oddityCapacity."
+        }
+    }
+
+    if ($null -ne $lastLead -and [string]$lastLead["Type"] -in @("Landmark", "CreatureTrail")) {
+        return [PSCustomObject]@{
+            Type = "FollowFieldLead"
+            Title = [string]$lastLead["Title"]
+            Detail = [string]$lastLead["Detail"]
+            Hint = "The latest landmark gives this trip a more specific direction than wandering blind."
+            NextStep = [string]$lastLead["NextStep"]
+            TownReminder = if ([string]::IsNullOrWhiteSpace([string]$lastLead["TownLead"])) { "Outer-wall landmark lead available." } else { [string]$lastLead["TownLead"] }
         }
     }
 
@@ -1466,13 +1913,17 @@ function Resolve-MonsterZoneCampAction {
         $campLevel = 0
     }
 
-    $risk = [Math]::Max(10, 55 - ($campLevel * 15))
+    $weather = Get-MonsterZoneWeatherState -Game $Game
+    $weatherCampRiskModifier = if ($null -ne $weather -and $null -ne $weather.CampRiskModifier) { [int]$weather.CampRiskModifier } else { 0 }
+    $risk = [Math]::Max(10, 55 - ($campLevel * 15) + $weatherCampRiskModifier)
     $interrupted = $NightRoll -le $risk
     $restResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP -HPMode $HPMode
 
     return [PSCustomObject]@{
         CampLevel = $campLevel
         CampName = Get-MonsterZoneCampLevelName -Level $campLevel
+        Weather = $weather
+        WeatherCampRiskModifier = $weatherCampRiskModifier
         NightRoll = $NightRoll
         NightRisk = $risk
         Interrupted = $interrupted
@@ -1496,11 +1947,13 @@ function Start-MonsterZoneEncounter {
     $heroStarts = $false
     $monsterStarts = $false
     $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
+    $weather = Get-MonsterZoneWeatherState -Game $Game
 
     Write-SectionTitle -Text "Wilderness Encounter" -Color "Red"
     Write-Scene $creature.introText
+    Write-Scene "Weather: $($weather.Name). $($weather.Description)"
 
-    $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature
+    $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature -Weather $weather
     Write-Scene "$($Game.Hero.Name)'s Perception total $($awareness.HeroPerceptionTotal) contests $($creature.definite)'s Stealth total $($awareness.CreatureStealthTotal)."
     Write-Scene "$($creature.definite)'s Perception total $($awareness.CreaturePerceptionTotal) contests $($Game.Hero.Name)'s Stealth total $($awareness.HeroStealthTotal)."
     if ($awareness.CreatureSenseBonus -gt 0) {
@@ -1620,8 +2073,10 @@ function Start-MonsterZoneMenu {
     while ($true) {
         Write-SectionTitle -Text "Beyond the Wall" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Monster Zone" -HeroHP $HeroHP.Value
+        $weather = Get-MonsterZoneWeatherState -Game $Game
         Write-Scene "Past the outer gate, the road loosens into scrubland, old markers, ruined work sites, and too much quiet. The city is still visible, but it no longer feels close."
-        Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Weather: $($weather.Name) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-Scene $weather.Description
         Write-MonsterZoneProgressionStatus -Game $Game
         Write-MonsterZoneObjectiveStatus -Game $Game
         Write-ColorLine ""
@@ -1634,6 +2089,7 @@ function Start-MonsterZoneMenu {
         Write-ColorLine "7. Sleep under the open sky" "White"
         Write-ColorLine "8. Return to the city gate" "White"
         Write-ColorLine "9. Travel to a known landmark" $(if (@(Get-MonsterZoneDirectTravelLandmarks -Game $Game).Count -gt 0) { "White" } else { "DarkGray" })
+        Write-ColorLine "10. Follow current field lead" $(if (Test-MonsterZoneFieldLeadActionAvailable -Game $Game) { "White" } else { "DarkGray" })
         Write-ColorLine "S. Status" "White"
         if (Test-HeroInvisibilityOutOfCombatOptionVisible -Hero $Game.Hero) {
             Write-ColorLine (Get-HeroInvisibilityOutOfCombatOptionText -Hero $Game.Hero) "White"
@@ -1665,7 +2121,8 @@ function Start-MonsterZoneMenu {
                     $encounterRoll = Roll-Dice -Sides 100
                     $danger = if ($null -ne $move.Landmark) { [int]$move.Landmark.DangerLevel } else { 1 }
                     $familiarity = if ($null -ne $move.Landmark) { Get-MonsterZoneLandmarkFamiliarity -Game $Game -LandmarkId ([string]$move.Landmark.Id) } else { 0 }
-                    $encounterChance = [Math]::Max(10, (20 + ($danger * 10)) - ([Math]::Max(0, $familiarity - 1) * 5))
+                    $weatherEncounterModifier = if ($null -ne $weather -and $null -ne $weather.EncounterChanceModifier) { [int]$weather.EncounterChanceModifier } else { 0 }
+                    $encounterChance = [Math]::Max(10, (20 + ($danger * 10)) - ([Math]::Max(0, $familiarity - 1) * 5) + $weatherEncounterModifier)
 
                     if ($encounterRoll -le $encounterChance) {
                         $encounterResult = Start-MonsterZoneEncounter -Game $Game -HeroHP $HeroHP
@@ -1725,6 +2182,17 @@ function Start-MonsterZoneMenu {
 
                     Write-ColorLine ""
                 }
+            }
+            "10" {
+                $leadResult = Resolve-MonsterZoneFieldLeadAction -Game $Game
+                Write-Scene $leadResult.Message
+                if (-not [string]::IsNullOrWhiteSpace([string]$leadResult.XPMessage)) {
+                    Write-Scene $leadResult.XPMessage
+                }
+                if ($leadResult.Success -and -not $leadResult.Repeated) {
+                    Write-MonsterZoneObjectiveProgress -Game $Game -Reason "field lead followed"
+                }
+                Write-ColorLine ""
             }
             "S" {
                 Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value
