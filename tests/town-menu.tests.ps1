@@ -237,6 +237,52 @@ function Test-DocksOpenLeadsComeFromVeyraContact {
     Assert-True -Condition ($introText -like "*Mira Kest*") -Message "Docks quest-source text should present later leads through Lady Veyra's dock contact."
 }
 
+function Test-DocksProgressCallsOutMonsterZoneOddityHaul {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "scale_touched_mastiff" } | Select-Object -First 1
+
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+    $progressText = Get-DocksDistrictProgressText -Game $game
+
+    Assert-True -Condition ($progressText -like "*Auntie Brindle*" -and $progressText -like "*monster-zone oddity*") -Message "Docks progress should point carried monster-zone oddities toward Auntie Brindle."
+    Assert-True -Condition ($progressText -like "*Veyra*wall ledger*") -Message "Docks progress should tie draconic oddities back to Veyra's city ledger."
+}
+
+function Test-DocksCanCashOutMonsterZoneOddities {
+    $game = Initialize-Game
+    $game.Town.Mounts.MonsterOddityCapacity = 2
+    $first = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+    $second = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "scale_touched_mastiff" } | Select-Object -First 1
+    $startingCopper = [int]$game.Hero.CurrencyCopper
+
+    Add-MonsterZoneOddity -Game $game -Creature $first | Out-Null
+    Add-MonsterZoneOddity -Game $game -Creature $second | Out-Null
+    $sale = Resolve-DocksMonsterOdditySale -Game $game
+
+    Assert-Equal -Actual $sale.Success -Expected $true -Message "The docks should accept carried monster-zone oddities as a city payout."
+    Assert-Equal -Actual $sale.Count -Expected 2 -Message "The docks sale should include the whole carried oddity haul."
+    Assert-Equal -Actual $sale.TotalCopper -Expected 135 -Message "The docks payout should use the carried oddity values."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected ($startingCopper + 135) -Message "Selling monster-zone oddities should add coin to the hero."
+    Assert-Equal -Actual @($game.Town.MonsterZone.Oddities).Count -Expected 0 -Message "Selling the haul should clear carried monster-zone oddities."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksMonsterOdditiesDelivered"] -Expected $true -Message "The city should remember that monster-zone oddities reached the docks."
+    Assert-Equal -Actual $game.Town.StoryFlags["DocksDraconicOddityNoted"] -Expected $true -Message "Draconic monster-zone salvage should leave a Veyra ledger note."
+}
+
+function Test-DocksMenuCanDeliverMonsterZoneOddities {
+    $game = Initialize-Game
+    $heroHP = $game.Hero.HP
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "razor_boar" } | Select-Object -First 1
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+    Set-TestReadHostSequence -Values @("7", "0")
+
+    Start-DocksDistrictMenu -Game $game -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual @($game.Town.MonsterZone.Oddities).Count -Expected 0 -Message "The docks menu should let the player deliver carried monster-zone oddities."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 55 -Message "Delivering the razor boar oddity should pay its value."
+    Assert-Equal -Actual $script:ReadHostIndex -Expected 2 -Message "The docks delivery path should consume the delivery choice and the exit choice."
+}
+
 function Test-PostCivicVaultTownTextReactsToHalewickEscape {
     $game = Initialize-Game
     $game.Town.ChapterTwoComplete = $true
@@ -318,6 +364,9 @@ Test-DocksDistrictRequiresOddityShopBeforeTallyShack
 Test-DocksDistrictOddityShopUnlocksTallyShackLead
 Test-DocksDistrictOpensFromTownAfterBlackContractChain
 Test-DocksOpenLeadsComeFromVeyraContact
+Test-DocksProgressCallsOutMonsterZoneOddityHaul
+Test-DocksCanCashOutMonsterZoneOddities
+Test-DocksMenuCanDeliverMonsterZoneOddities
 Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest

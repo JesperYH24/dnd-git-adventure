@@ -79,6 +79,11 @@ function New-DefaultTownState {
             ReportedCreaturesToDorr = @{}
             PendingRingMonsterContracts = @{}
             CompletedRingMonsterContracts = @{}
+            LandmarkLeads = @{}
+            FieldLeadFollowUps = @{}
+            LastFieldLead = $null
+            CurrentWeatherDay = 0
+            CurrentWeatherId = ""
             LastTravelText = ""
         }
         Ring = @{

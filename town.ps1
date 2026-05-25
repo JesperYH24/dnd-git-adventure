@@ -202,6 +202,15 @@ function Get-DocksDistrictProgressText {
     param($Game)
 
     $docksContactName = Get-DocksContactName
+    $monsterOddityHaul = Get-DocksMonsterOddityHaul -Game $Game
+
+    if ($monsterOddityHaul.Count -gt 0) {
+        return "Docks Salvage: Auntie Brindle can turn $($monsterOddityHaul.Count) monster-zone oddity bundle(s) into coin, and $docksContactName can keep anything draconic tied to Veyra's wall ledger."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksDraconicOddityNoted"]) {
+        return "Docks Ledger: $docksContactName has a draconic oddity note from Auntie Brindle's table, tying monster-zone salvage back toward Lady Veyra's wall records."
+    }
 
     if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
         return "Docks Aftershock: $docksContactName says every tide-runner has heard the bells. Halewick was exposed in the Civic Keep, became something draconic, and escaped into the city's frightened sky."
@@ -265,6 +274,106 @@ function Open-DocksOddityShop {
     Show-DocksOddityShopDiscovery -Game $Game
     $Game.Town.StoryFlags["DocksOddityShopVisited"] = $true
     Open-TownSellMenu -Game $Game -Hero $Game.Hero -BuyerType "DocksideOddities" -ExitLabel "Back to the docks"
+}
+
+function Get-DocksMonsterOddityHaul {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return [PSCustomObject]@{
+            Count = 0
+            TotalValue = 0
+            Names = @()
+            HasDraconicOddity = $false
+        }
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $oddities = @($Game.Town.MonsterZone.Oddities)
+    $totalValue = 0
+    $names = @()
+    $hasDraconicOddity = $false
+
+    foreach ($oddity in $oddities) {
+        $name = [string]$oddity.Name
+        $value = if ($null -ne $oddity.Value) { [int]$oddity.Value } else { 0 }
+        $totalValue += $value
+
+        if (-not [string]::IsNullOrWhiteSpace($name)) {
+            $names += $name
+        }
+
+        if ($name -like "*Scale*" -or $name -like "*Ash-Horn*" -or $name -like "*Gate-Bone*") {
+            $hasDraconicOddity = $true
+        }
+    }
+
+    return [PSCustomObject]@{
+        Count = $oddities.Count
+        TotalValue = $totalValue
+        Names = $names
+        HasDraconicOddity = $hasDraconicOddity
+    }
+}
+
+function Resolve-DocksMonsterOdditySale {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Hero) {
+        return [PSCustomObject]@{
+            Success = $false
+            Count = 0
+            TotalCopper = 0
+            Message = "There is no monster oddity haul to settle."
+        }
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+    $haul = Get-DocksMonsterOddityHaul -Game $Game
+
+    if ($haul.Count -le 0) {
+        return [PSCustomObject]@{
+            Success = $false
+            Count = 0
+            TotalCopper = 0
+            Message = "Auntie Brindle pats an empty crate. 'Bring me something with teeth, dear, then we will talk coin.'"
+        }
+    }
+
+    $totalCopper = [Math]::Max(1, [int]$haul.TotalValue)
+    Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $totalCopper | Out-Null
+
+    $Game.Town.MonsterZone.Oddities = @()
+    $Game.Town.StoryFlags["DocksMonsterOdditiesDelivered"] = $true
+    $Game.Town.Relationships["AuntieBrindle"] = "Monster Oddity Buyer"
+
+    if ($null -eq $Game.Town.StreetFlags["DocksMonsterOddityDeliveries"]) {
+        $Game.Town.StreetFlags["DocksMonsterOddityDeliveries"] = 0
+    }
+
+    if ($null -eq $Game.Town.StreetFlags["DocksMonsterOddityCopperTotal"]) {
+        $Game.Town.StreetFlags["DocksMonsterOddityCopperTotal"] = 0
+    }
+
+    $Game.Town.StreetFlags["DocksMonsterOddityDeliveries"] = [int]$Game.Town.StreetFlags["DocksMonsterOddityDeliveries"] + 1
+    $Game.Town.StreetFlags["DocksMonsterOddityCopperTotal"] = [int]$Game.Town.StreetFlags["DocksMonsterOddityCopperTotal"] + $totalCopper
+
+    if ($haul.HasDraconicOddity) {
+        $Game.Town.StoryFlags["DocksDraconicOddityNoted"] = $true
+    }
+
+    $sampleText = if (@($haul.Names).Count -gt 0) { @($haul.Names)[0] } else { "monster salvage" }
+    $draconicText = if ($haul.HasDraconicOddity) { " Mira Kest asks for a note in Veyra's ledger before the crate leaves the table." } else { "" }
+
+    return [PSCustomObject]@{
+        Success = $true
+        Count = [int]$haul.Count
+        TotalCopper = $totalCopper
+        Names = @($haul.Names)
+        HasDraconicOddity = [bool]$haul.HasDraconicOddity
+        Message = "Auntie Brindle sorts $($haul.Count) monster oddity bundle(s), starting with $sampleText, and pays $(Convert-CopperToCurrencyText -Copper $totalCopper).$draconicText"
+    }
 }
 
 function Discover-DocksTallyShack {
@@ -364,6 +473,10 @@ function Start-DocksDistrictMenu {
         if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
             Write-ColorLine "6. Study the shell-charter trail above the docks" "White"
         }
+        $monsterOddityHaul = Get-DocksMonsterOddityHaul -Game $Game
+        if ($monsterOddityHaul.Count -gt 0) {
+            Write-ColorLine "7. Deliver monster-zone oddities to Auntie Brindle" "White"
+        }
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. $ReturnLabel" "DarkGray"
         Write-ColorLine ""
@@ -428,6 +541,11 @@ function Start-DocksDistrictMenu {
                 }
 
                 Write-Scene "The shell-charter marks point away from rope, tar, and warehouse ledgers toward cleaner hands higher in the city."
+                Write-ColorLine ""
+            }
+            "7" {
+                $sale = Resolve-DocksMonsterOdditySale -Game $Game
+                Write-Scene $sale.Message
                 Write-ColorLine ""
             }
             "S" {

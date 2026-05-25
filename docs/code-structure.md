@@ -396,8 +396,9 @@ Ansvar:
 - class-flavored wilderness reads for search and 60 ft observation
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
+- Docks monster-oddity cashout through Auntie Brindle, with draconic oddities marked for Veyra/Mira ledger follow-up
 - Guard Station/Watchman Belor wall-watch reactions to monster-zone landmarks, creature proof, and Dorr-reported trails
-- next implementation focus is deeper level 5-6 objective follow-ups, stronger threats, Wall Watch/Dorr board actions, and class-flavored wilderness reads; ranged weapons should wait
+- next implementation focus is deeper Wall Watch/Dorr board actions, more city consequences for reported patterns, and class-flavored wilderness reads; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

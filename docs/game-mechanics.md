@@ -68,7 +68,7 @@
 - the zone supports soft boundaries near the edge of the city's patrol reach rather than a detailed hard map
 - camping is a meaningful rest choice: open-sky sleep is fast but riskier, while building or improving camp lowers night attack risk
 - stable-yard pack animals feed monster salvage capacity, especially for oddities requested by Docks buyers
-- monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot
+- monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot; carried oddity hauls can now be delivered in the Docks to Auntie Brindle for coin, and draconic salvage leaves a Veyra/Mira ledger note
 - defeated monster-zone creature types are tracked as proof for future city systems
 - monster-zone milestone XP is one-time per discovery/proof/report/contract: first landmark discoveries, direct-route unlocks, first defeated creature types, Dorr reports, and completed captured-monster ring contracts all move the hero along without repeat farming
 - the level cap can rise to `6` once the hero has enough outer-wall proof: at least `3` defeated creature types, `2` reported creature trails, `4` discovered landmarks, and either `1` direct landmark route or `1` completed monster contract
@@ -77,7 +77,7 @@
 - the Guard Station and Watchman Belor now connect post-Halewick wall attacks to monster-zone work: wall-watch reports react to discovered landmarks, unreported creature proof, and trails already reported through Dorr
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
-- current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, `scale_touched_mastiff`, the level 5 draconic-pressure `ash_horn_drakelet`, and the level 6 `gate_sunder_brute`
+- current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, `scale_touched_mastiff`, `glass_carrion_crow`, `marsh_venom_adder`, `iron_root_stag`, the level 5 draconic-pressure `ash_horn_drakelet`, the level 6 `hollow_scale_wyrmling`, and the level 6 `gate_sunder_brute`
 - random monster-zone encounters now filter by hero level cap, keeping the gate-breaker threat out of the pool until level 6 progression has opened
 - all three current classes have `Perception` proficiency, so the Bard is not automatically worse in the wilderness awareness phase; Fighter is currently slightly weaker at raw `Stealth` because of lower `DEX`, and armor stealth penalties are not implemented yet
 - creature flavor differs mechanically through HP, AC, attack, `PerceptionBonus`, `StealthBonus`, and senses; keen senses add extra Perception, while blindsight can counter the Invisibility stealth bonus
