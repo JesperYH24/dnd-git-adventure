@@ -204,6 +204,38 @@ function Test-RingMonsterContractsStayBarbarianOnly {
     Assert-Equal -Actual @(Get-RingMonsterChallengePreview -Hero $fighter.Hero).Count -Expected 0 -Message "Fighter should not see the monster contract ladder."
 }
 
+function Test-FighterCanDiscussMonsterProofWithDorrWithoutContracts {
+    $fighter = Initialize-Game -Class "Fighter"
+    $barbarian = Initialize-Game -Class "Barbarian"
+
+    $fighter.Hero.Level = 4
+    $barbarian.Hero.Level = 4
+
+    $fighterTalk = Get-RingMonsterChallengeTalk -Hero $fighter.Hero -Game $fighter
+
+    Assert-Equal -Actual (Test-HeroCanDiscussMonsterZoneWithDorr -Game $fighter) -Expected $true -Message "Level 4 Fighter should be able to ask Dorr about wall proof."
+    Assert-Equal -Actual (Test-HeroCanDiscussMonsterZoneWithDorr -Game $barbarian) -Expected $true -Message "Level 4 Barbarian should still be able to access Dorr's contract talk."
+    Assert-Equal -Actual (Test-HeroReadyForRingMonsterChallenges -Hero $fighter.Hero) -Expected $false -Message "Fighter discussion should not unlock monster contracts."
+    Assert-True -Condition ($fighterTalk -like "*patrol sense*" -and $fighterTalk -like "*tourney talk*") -Message "Fighter Dorr talk should frame wall proof through patrol and tourney value."
+}
+
+function Test-FighterCanReportMonsterProofToDorr {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+
+    $canDiscuss = Test-HeroCanDiscussMonsterZoneWithDorr -Game $game
+    Start-RingMonsterChallengeMenu -Game $game
+    $contracts = @(Get-AvailableRingMonsterChallengeContracts -Game $game)
+
+    Assert-Equal -Actual $canDiscuss -Expected $true -Message "Unreported proof should make Dorr's monster-zone conversation available to Fighter."
+    Assert-Equal -Actual @($game.Town.MonsterZone.ReportedCreaturesToDorr.Keys).Count -Expected 1 -Message "Fighter should be able to report defeated monster proof to Dorr."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 57 -Message "Fighter Dorr reports should still pay the wall-bounty purse."
+    Assert-Equal -Actual $contracts.Count -Expected 0 -Message "Reporting as Fighter should not create bookable monster contracts."
+}
+
 function Test-RingMonsterContractsRequireReportedZoneDefeat {
     $game = Initialize-Game
     $game.Hero.Level = 4
@@ -894,6 +926,8 @@ Test-RingMonsterChallengesUnlockAtLevelFour
 Test-RingMonsterChallengePreviewRequiresLevelFour
 Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
 Test-RingMonsterContractsStayBarbarianOnly
+Test-FighterCanDiscussMonsterProofWithDorrWithoutContracts
+Test-FighterCanReportMonsterProofToDorr
 Test-RingMonsterContractsRequireReportedZoneDefeat
 Test-RingMonsterReportsPayBountyAndSupplyFavor
 Test-RingMonsterContractsKeepExtraGates

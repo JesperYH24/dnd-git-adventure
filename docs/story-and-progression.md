@@ -227,6 +227,7 @@ Current first-pass implementation:
 - monster oddities are tracked separately from normal inventory, and Docks buyers now cash out carried hauls through Auntie Brindle; draconic salvage also gives Mira Kest and Lady Veyra's office a ledger-facing clue back into the wall pressure
 - the Guard Station and Watchman Belor now treat wall attacks as a Wall Watch problem, reacting to discovered landmarks, creature proof, and Dorr-reported trails so the city watch has a visible stake in gates and wall pressure
 - Dorr's monster board now makes proof reports pay in more than XP: unreported trails show wall-bounty coin, first reports pay the purse once, and Belor's watch turns the first serious report into practical supply discounts
+- Dorr proof reports are available even when the hero is not on the Barbarian monster-contract path; Fighter-specific Dorr talk turns wall proof toward patrol sense, gate-defense credibility, and tourney-facing reputation instead of captured-monster pit fights
 - the post-Halewick wall-rumor rest raises the hero's level cap to 5, making the monster zone the current level 4-to-5 pressure space
 - the zone now tracks one-time milestone XP for landmark discoveries, direct-route unlocks, first defeated creature proofs, Dorr reports, and completed captured-monster ring contracts
 - the level cap rises to 6 when the hero has built a real outer-wall case: at least 3 defeated creature types, 2 reported creature trails, 4 discovered landmarks, and either 1 reliable direct route or 1 completed monster contract

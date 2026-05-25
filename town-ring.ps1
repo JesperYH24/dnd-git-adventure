@@ -765,6 +765,26 @@ function Test-HeroReadyForRingMonsterChallenges {
     return ([int]$Hero.Level -ge 4)
 }
 
+function Test-HeroCanDiscussMonsterZoneWithDorr {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Hero) {
+        return $false
+    }
+
+    if (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero) {
+        return $true
+    }
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if (@(Get-MonsterZoneUnreportedCreatureRecords -Game $Game).Count -gt 0) {
+        return $true
+    }
+
+    return ([int]$Game.Hero.Level -ge 4 -and [string]$Game.Hero.Class -eq "Fighter")
+}
+
 function Get-RingMonsterChallengeTalk {
     param(
         $Hero,
@@ -772,6 +792,19 @@ function Get-RingMonsterChallengeTalk {
     )
 
     if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Hero)) {
+        if ($null -ne $Hero -and [string]$Hero.Class -eq "Fighter" -and [int]$Hero.Level -ge 4) {
+            if ($null -ne $Game) {
+                Initialize-MonsterZoneState -Game $Game
+                $unreportedCount = @(Get-MonsterZoneUnreportedCreatureRecords -Game $Game).Count
+
+                if ($unreportedCount -gt 0) {
+                    return "Dorr studies the wall proof like a fight card. 'Not a bare-hand monster contract for you, Lubert. Your value is cleaner: what it means for patrol routes, gate defense, and the sort of formal courage the tourney rail pretends not to respect.'"
+                }
+            }
+
+            return "Dorr glances from Lubert's shield hand to the upper rail. 'Monster contracts are Borzig-shaped madness. You, though? Bring me wall proof and I can turn it into patrol sense, tourney talk, and names the city will repeat for steadier reasons.'"
+        }
+
         return "Dorr's grin fades into a measuring look. 'Monster bouts are not tavern dares. When you have survived enough real trouble to stand at level four, we can talk about contracts beyond the wall.'"
     }
 
@@ -1545,6 +1578,28 @@ function Start-RingMonsterChallengeMenu {
     Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero -Game $Game)
 
     if (-not (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero)) {
+        $report = Report-MonsterZoneDiscoveriesToDorr -Game $Game
+
+        if (@($report.NewlyReported).Count -gt 0) {
+            $names = @($report.NewlyReported | ForEach-Object { $_["Name"] }) -join ", "
+            Write-Scene "Dorr listens to the report and marks the board: $names."
+            foreach ($reported in @($report.NewlyReported)) {
+                if (-not [string]::IsNullOrWhiteSpace([string]$reported["MilestoneXPMessage"])) {
+                    Write-Scene ([string]$reported["MilestoneXPMessage"])
+                }
+                if (-not [string]::IsNullOrWhiteSpace([string]$reported["BountyMessage"])) {
+                    Write-Scene ([string]$reported["BountyMessage"])
+                }
+            }
+            if (-not [string]::IsNullOrWhiteSpace([string]$report.SupplyFavorMessage)) {
+                Write-Scene ([string]$report.SupplyFavorMessage)
+            }
+            Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
+        }
+        elseif (@($Game.Town.MonsterZone.DefeatedCreatures.Keys).Count -gt 0) {
+            Write-Scene "Dorr has already written down every monster trail $($Game.Hero.Name) has brought him so far."
+        }
+
         Write-ColorLine ""
         return
     }
@@ -2510,7 +2565,7 @@ function Start-FightingRing {
     Write-ColorLine "1. Enter the ring" "White"
     Write-ColorLine "2. Ask Dorr about the pit" "White"
     Write-ColorLine "3. Ask Dorr what sort of challengers are waiting" "White"
-    Write-ColorLine "4. Ask about monster challenges" $(if (Test-HeroReadyForRingMonsterChallenges -Hero $Game.Hero) { "White" } else { "DarkGray" })
+    Write-ColorLine "4. Ask about monster challenges" $(if (Test-HeroCanDiscussMonsterZoneWithDorr -Game $Game) { "White" } else { "DarkGray" })
     Write-ColorLine "0. Back to town" "DarkGray"
     Write-ColorLine ""
 
@@ -2545,7 +2600,12 @@ function Start-FightingRing {
                 Write-ColorLine ""
             }
             "4" {
-                Start-RingMonsterChallengeMenu -Game $Game
+                if (Test-HeroCanDiscussMonsterZoneWithDorr -Game $Game) {
+                    Start-RingMonsterChallengeMenu -Game $Game
+                }
+                else {
+                    Write-Scene (Get-RingMonsterChallengeTalk -Hero $Game.Hero -Game $Game)
+                }
                 Write-ColorLine ""
 
                 if ($Game.Town.Ring.FoughtToday) {

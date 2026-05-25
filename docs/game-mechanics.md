@@ -206,7 +206,8 @@ Docks is intentionally more linear at first than the main town hub.
 - fight-style crowd taste for `Quick Finish`, `Technical`, `Grappler`, and `Brawler` wins, with small reputation bonuses and a saved dominant style
 - wager choices before entering the ring: safe purse, crowd bet, or double-or-nothing
 - post-fight ring rumors that react to Docks progress, Halewick aftershocks, level 4 monster-zone foreshadowing, and ring reputation
-- Bard and Fighter can enter the base fighting ring, build ordinary ring records, and take normal purses, but Dorr's monster-zone contract board is reserved for the Barbarian path
+- Bard and Fighter can enter the base fighting ring, build ordinary ring records, and take normal purses, but Dorr's captured-monster contract fights are reserved for the Barbarian path
+- any class carrying defeated monster-zone proof can report it to Dorr for the wall-bounty purse, report XP, and the first Wall Watch supply favor; Fighter gets separate Dorr dialogue that frames proof through patrol sense, gate defense, and tourney-facing credibility instead of bare-hand monster contracts
 - level 4 monster-challenge cards in the ring become real contracts only after a Barbarian defeats matching creatures in the monster zone and reports them to Dorr
 - Dorr's monster contract board now separates unreported proof, bookable contracts, capture crews still out, captured monsters ready in the pit, and completed contracts
 - taking a monster contract books Dorr's capture crew; the actual unarmed monster fight happens in the ring after the contract's return day

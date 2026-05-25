@@ -366,6 +366,7 @@ Ansvar:
 - brawls
 - ring progression
 - rivalries och prispengar
+- Dorr monster-zone proof reports for all classes, with Barbarian-only captured-monster contracts and Fighter-specific proof talk
 
 ### `town-jousting.ps1`
 
