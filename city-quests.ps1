@@ -1289,6 +1289,10 @@ function Complete-StoryQuestAndReport {
 
     if ($completionResult.RewardCopper -gt 0) {
         Write-Scene "$($Game.Hero.Name) receives $(Convert-CopperToCurrencyText -Copper $completionResult.RewardCopper)."
+
+        if ($completionResult.PSObject.Properties["PayoutBonusCopper"] -and [int]$completionResult.PayoutBonusCopper -gt 0) {
+            Write-Scene "Silver Kettle contract talk adds $(Convert-CopperToCurrencyText -Copper ([int]$completionResult.PayoutBonusCopper)) to the payout."
+        }
     }
 
     if ($null -ne $completionResult.RewardItem) {

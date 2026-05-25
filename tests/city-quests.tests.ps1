@@ -129,6 +129,21 @@ function Test-DayJobPaysCoinButNoXP {
     Assert-Equal -Actual $game.Town.DayJobDoneToday -Expected $true -Message "Finishing a day job should consume the daily side-job slot."
 }
 
+function Test-SilverKettlePayoutBonusAppliesOnce {
+    $game = Initialize-Game
+    $game.Town.QuestPayoutBonusCopper = 20
+
+    $firstResult = Complete-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+    $secondResult = Complete-TownQuest -Game $game -QuestId "dayjob_gate_labor"
+
+    Assert-Equal -Actual $firstResult.RewardCopper -Expected 110 -Message "Silver Kettle contract insight should add its bonus to the next paid quest."
+    Assert-Equal -Actual $firstResult.PayoutBonusCopper -Expected 20 -Message "Completion result should expose how much of the payout came from the relationship bonus."
+    Assert-Equal -Actual $game.Town.QuestPayoutBonusCopper -Expected 0 -Message "The Silver Kettle payout bonus should be spent after one paid quest."
+    Assert-Equal -Actual $secondResult.RewardCopper -Expected 100 -Message "The payout bonus should not keep applying to later quests."
+    Assert-Equal -Actual $secondResult.PayoutBonusCopper -Expected 0 -Message "Later quest completions should report no spent relationship bonus."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 210 -Message "Hero coin should include the one boosted payout and the normal follow-up payout."
+}
+
 function Test-DayJobVeteranRateImprovesPayAtLevelThree {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -2074,6 +2089,7 @@ Test-QuestSourcesListOpeningQuestsAndDayJobs
 Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
 Test-DayJobPaysCoinButNoXP
+Test-SilverKettlePayoutBonusAppliesOnce
 Test-DayJobVeteranRateImprovesPayAtLevelThree
 Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-TierTwoRequiresBothOpeningInvestigationLeads

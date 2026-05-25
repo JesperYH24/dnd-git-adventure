@@ -250,7 +250,7 @@ function Get-TownRelationshipHintText {
             return "Relationship: Lantern Rest mercenaries respect $heroName, and the market has practical travel steel leads."
         }
 
-        if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+        if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"] -and [int]$Game.Town.QuestPayoutBonusCopper -gt 0) {
             return "Relationship: Silver Kettle contract talk can improve $heroName's next city payout and recovery supply path."
         }
     }
@@ -259,7 +259,7 @@ function Get-TownRelationshipHintText {
         return "Relationship: The Bent Nail knows $heroName now; under-table leads may open there as the story deepens."
     }
 
-    if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+    if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"] -and [int]$Game.Town.QuestPayoutBonusCopper -gt 0) {
         return "Relationship: Silver Kettle contract talk can improve the next city payout."
     }
 

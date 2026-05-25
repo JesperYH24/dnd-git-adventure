@@ -381,6 +381,26 @@ function Test-TownRelationshipHintSurfacesBarbarianInnPayoff {
     Assert-True -Condition ($hint -like "*Lantern Rest mercenaries*" -and $hint -like "*travel steel*") -Message "Town relationship hint should point Barbarians from Lantern Rest standing toward practical gear leads."
 }
 
+function Test-TownRelationshipHintSurfacesActiveSilverKettlePayoutBonus {
+    $game = Initialize-Game
+    $game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
+    $game.Town.QuestPayoutBonusCopper = 20
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Silver Kettle contract talk*" -and $hint -like "*next city payout*") -Message "Town relationship hint should surface Silver Kettle economic insight while its payout bonus remains active."
+}
+
+function Test-TownRelationshipHintSkipsSpentSilverKettlePayoutBonus {
+    $game = Initialize-Game
+    $game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
+    $game.Town.QuestPayoutBonusCopper = 0
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-Equal -Actual $hint -Expected "" -Message "Town relationship hint should stop pointing at a Silver Kettle payout once that bonus has been spent."
+}
+
 function Test-TownRelationshipHintSurfacesBentNailFallback {
     $game = Initialize-Game -Class "Fighter"
     $game.Town.Relationships["BentNailRoom"] = "Grudging"
@@ -465,6 +485,8 @@ Test-TownNextStepReminderYieldsToMonsterZone
 Test-TownRelationshipHintSurfacesBardInnPayoff
 Test-TownRelationshipHintSurfacesFighterPatronPayoff
 Test-TownRelationshipHintSurfacesBarbarianInnPayoff
+Test-TownRelationshipHintSurfacesActiveSilverKettlePayoutBonus
+Test-TownRelationshipHintSkipsSpentSilverKettlePayoutBonus
 Test-TownRelationshipHintSurfacesBentNailFallback
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest

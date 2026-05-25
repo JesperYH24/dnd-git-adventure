@@ -1127,9 +1127,12 @@ function Complete-TownQuest {
     $quest.AdvanceOutcome = $AdvanceOutcome
 
     $rewardCopper = if ($null -ne $RewardCopperOverride) { [int]$RewardCopperOverride } else { Get-DayJobRewardCopper -Game $Game -Quest $quest }
+    $payoutBonusCopper = 0
 
     if ($rewardCopper -gt 0 -and $Game.Town.QuestPayoutBonusCopper -gt 0) {
-        $rewardCopper += [int]$Game.Town.QuestPayoutBonusCopper
+        $payoutBonusCopper = [int]$Game.Town.QuestPayoutBonusCopper
+        $rewardCopper += $payoutBonusCopper
+        $Game.Town.QuestPayoutBonusCopper = 0
     }
 
     $currencyResult = $null
@@ -1160,6 +1163,7 @@ function Complete-TownQuest {
         Success = $true
         Quest = $quest
         RewardCopper = $rewardCopper
+        PayoutBonusCopper = $payoutBonusCopper
         CurrencyResult = $currencyResult
         RewardXP = $rewardXP
         RewardItem = $rewardItem
