@@ -221,7 +221,8 @@ Current first-pass implementation:
 - discovery results can allow avoidance, closing to melee for surprise, shadowing at `30 ft`, holding at `60 ft` for observation, ambush pressure, unclear first beats, or normal initiative
 - the `60 ft` observation choice gives creature-specific tells about movement, attack style, senses, whether the threat seems beastlike, organized, trained, poisonous, or abomination-like
 - monster-zone combat now tracks abstract distance: `5 ft` melee, `30 ft` normal movement, dash as an action, and monster attempts to close open ground before attacking
-- the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights
+- the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights; the rest restores HP, but the camp result reports the weather-adjusted night risk and whether the rest was interrupted
+- the zone menu shows a compact risk/recovery line so low HP, full oddity hauls, unreported proof, poor camp safety, and safer scouting windows are easier to read before choosing the next action
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers now cash out carried hauls through Auntie Brindle; draconic salvage also gives Mira Kest and Lady Veyra's office a ledger-facing clue back into the wall pressure
 - the Guard Station and Watchman Belor now treat wall attacks as a Wall Watch problem, reacting to discovered landmarks, creature proof, and Dorr-reported trails so the city watch has a visible stake in gates and wall pressure
@@ -232,7 +233,7 @@ Current first-pass implementation:
 - the encounter pool now begins adding stronger and more varied post-wall-rumor threats as the cap rises: level 5 adds scouts, ambushers, route blockers, and the `ash_horn_drakelet`, while level 6 opens the `hollow_scale_wyrmling` and `gate_sunder_brute`
 - after the hero actually reaches level 6 on a long rest, the first organized monster assault hits the gate in a scripted defense event
 - that defense runs as three waves with visible city help: Guard Station shield lines and Belor, higher city champions, temple healers, and mages all hold parts of the wall while the hero takes the center fight
-- the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr or the Wall Watch, get home safely, or face a stronger level 5-6 threat
+- the next monster-zone pass should add stronger follow-ups after the visible objective changes: track a creature, gather a requested oddity, investigate a landmark, return proof to Dorr or the Wall Watch, or face a stronger level 5-6 threat
 - ranged weapons are intentionally deferred until the objective and contract loop gives the distance system stronger purpose
 - the monster pressure should connect back to Halewick's escape and the larger draconic mystery through subtle signs before the full truth is revealed
 

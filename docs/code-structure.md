@@ -394,7 +394,7 @@ Ansvar:
 - level-cap-filtered encounter pool, including higher `ash_horn_drakelet` and `gate_sunder_brute` threats for the level 5-6 stretch
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
 - class-flavored wilderness reads for search, 60 ft observation, weather, field leads, camp, proof, and oddity hauling
-- camp building and camp safety levels
+- camp building, camp safety levels, weather-adjusted night-risk bands, and menu risk summaries for HP, haul, proof, and recovery advice
 - monster oddity hauling tied to stable-yard pack animal capacity
 - Docks monster-oddity cashout through Auntie Brindle, with draconic oddities marked for Veyra/Mira ledger follow-up
 - Dorr report bounties and one-time Wall Watch supply favor discounts for the first serious monster proof report

@@ -604,6 +604,46 @@ function Test-MonsterZoneFieldLeadActionOnlyForLandmarks {
     Assert-True -Condition ($result.Message -like "*back to town*") -Message "Non-field leads should explain that they point back to town."
 }
 
+function Test-MonsterZoneRiskSummaryWarnsAboutLowHpAndHaul {
+    $game = Initialize-Game
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "wall_wolf" } | Select-Object -First 1
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+    Add-MonsterZoneOddity -Game $game -Creature $creature | Out-Null
+
+    $summary = Get-MonsterZoneRiskSummaryText -Game $game -HeroHP 3
+
+    Assert-True -Condition ($summary -like "*Risk: Critical HP 3/*") -Message "Risk summary should show the low-HP state."
+    Assert-True -Condition ($summary -like "*Haul 1/1*") -Message "Risk summary should show when the oddity haul is full."
+    Assert-True -Condition ($summary -like "*Return or camp*") -Message "Critical HP should take priority in the risk advice."
+}
+
+function Test-MonsterZoneCampActionReportsRecoveryAndRiskBand {
+    $game = Initialize-Game
+    $heroHP = [Math]::Max(1, [Math]::Floor($game.Hero.HP / 2))
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+
+    $camp = Resolve-MonsterZoneCampAction -Game $game -HeroHP ([ref]$heroHP) -Action "Build" -NightRoll 100
+
+    Assert-Equal -Actual $camp.BeforeHP -Expected ([Math]::Floor($game.Hero.HP / 2)) -Message "Camp result should remember HP before the rest."
+    Assert-Equal -Actual $camp.AfterHP -Expected $game.Hero.HP -Message "Monster-zone long rest should restore the hero to full HP."
+    Assert-True -Condition ($camp.RecoveredHP -gt 0) -Message "Camp result should report actual HP recovery."
+    Assert-Equal -Actual $camp.RiskBand -Expected "Moderate" -Message "Basic clear-weather camp risk should be summarized as moderate."
+    Assert-True -Condition ($camp.Message -like "*Night risk: Moderate (40%)*" -and $camp.Message -like "*Recovery: +* HP*") -Message "Camp message should include both risk band and recovery."
+}
+
+function Test-MonsterZoneCampRiskBandsUseWeatherAndCamp {
+    $game = Initialize-Game
+    Set-MonsterZoneWeather -Game $game -WeatherId "ash_haze" | Out-Null
+
+    $openSkyRisk = Get-MonsterZoneCampNightRisk -Game $game -CampLevel 0
+    $fortifiedRisk = Get-MonsterZoneCampNightRisk -Game $game -CampLevel 3
+
+    Assert-Equal -Actual $openSkyRisk -Expected 65 -Message "Ash haze should push open-sky camp risk into severe territory."
+    Assert-Equal -Actual (Get-MonsterZoneRiskBand -NightRisk $openSkyRisk) -Expected "Severe" -Message "High open-sky risk should read as severe."
+    Assert-Equal -Actual $fortifiedRisk -Expected 20 -Message "Fortified camp should still materially lower weather-driven risk."
+    Assert-Equal -Actual (Get-MonsterZoneRiskBand -NightRisk $fortifiedRisk) -Expected "Low" -Message "Fortified camp risk should read as low even in bad weather."
+}
+
 function Test-CampImprovementLowersNightRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -658,6 +698,9 @@ Test-MonsterZoneOddityUpdatesFieldLead
 Test-MonsterZoneFieldLeadActionCreatesCreatureTrail
 Test-MonsterZoneFieldLeadActionDoesNotFarmXp
 Test-MonsterZoneFieldLeadActionOnlyForLandmarks
+Test-MonsterZoneRiskSummaryWarnsAboutLowHpAndHaul
+Test-MonsterZoneCampActionReportsRecoveryAndRiskBand
+Test-MonsterZoneCampRiskBandsUseWeatherAndCamp
 Test-CampImprovementLowersNightRisk
 
 Write-Host "Monster zone tests passed." -ForegroundColor Green

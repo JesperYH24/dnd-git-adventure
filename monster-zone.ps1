@@ -1950,6 +1950,113 @@ function Set-MonsterZoneCurrentCampLevel {
     $Game.Town.MonsterZone.Camps[$key] = [Math]::Max(0, [Math]::Min(3, $Level))
 }
 
+function Get-MonsterZoneCampNightRisk {
+    param(
+        $Game,
+        [int]$CampLevel = -1,
+        $Weather = $null
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($CampLevel -lt 0) {
+        $CampLevel = Get-MonsterZoneCurrentCampLevel -Game $Game
+    }
+
+    if ($null -eq $Weather) {
+        $Weather = Get-MonsterZoneWeatherState -Game $Game
+    }
+
+    $weatherCampRiskModifier = if ($null -ne $Weather -and $null -ne $Weather.CampRiskModifier) { [int]$Weather.CampRiskModifier } else { 0 }
+
+    return [Math]::Max(10, 55 - ($CampLevel * 15) + $weatherCampRiskModifier)
+}
+
+function Get-MonsterZoneRiskBand {
+    param([int]$NightRisk)
+
+    if ($NightRisk -ge 65) { return "Severe" }
+    if ($NightRisk -ge 50) { return "High" }
+    if ($NightRisk -ge 30) { return "Moderate" }
+    return "Low"
+}
+
+function Get-MonsterZoneHeroRiskState {
+    param(
+        $Game,
+        [int]$HeroHP
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $maxHP = [Math]::Max(1, [int]$Game.Hero.HP)
+    $currentHP = [Math]::Max(0, [Math]::Min($maxHP, $HeroHP))
+    $hpPercent = [Math]::Floor(($currentHP / $maxHP) * 100)
+    $hpBand = if ($currentHP -le 0) {
+        "Down"
+    }
+    elseif ($hpPercent -le 25) {
+        "Critical"
+    }
+    elseif ($hpPercent -le 50) {
+        "Wounded"
+    }
+    else {
+        "Steady"
+    }
+
+    $oddityCount = @($Game.Town.MonsterZone.Oddities).Count
+    $oddityCapacity = Get-MonsterZoneOddityCapacity -Game $Game
+    $unreportedProofCount = @(Get-MonsterZoneUnreportedCreatureRecords -Game $Game).Count
+    $campLevel = Get-MonsterZoneCurrentCampLevel -Game $Game
+    $weather = Get-MonsterZoneWeatherState -Game $Game
+    $nightRisk = Get-MonsterZoneCampNightRisk -Game $Game -CampLevel $campLevel -Weather $weather
+    $riskBand = Get-MonsterZoneRiskBand -NightRisk $nightRisk
+
+    $advice = if ($hpBand -in @("Down", "Critical")) {
+        "Return or camp before another fight."
+    }
+    elseif ($oddityCount -ge $oddityCapacity -and $oddityCount -gt 0) {
+        "Return before more kills waste parts."
+    }
+    elseif ($unreportedProofCount -gt 0) {
+        "Report proof before chasing a new trail."
+    }
+    elseif ($riskBand -in @("Severe", "High")) {
+        "Improve camp before trusting the night."
+    }
+    else {
+        "Good to keep scouting."
+    }
+
+    return [PSCustomObject]@{
+        CurrentHP = $currentHP
+        MaxHP = $maxHP
+        HPPercent = $hpPercent
+        HPBand = $hpBand
+        OddityCount = $oddityCount
+        OddityCapacity = $oddityCapacity
+        UnreportedProofCount = $unreportedProofCount
+        CampLevel = $campLevel
+        CampName = Get-MonsterZoneCampLevelName -Level $campLevel
+        Weather = $weather
+        NightRisk = $nightRisk
+        RiskBand = $riskBand
+        Advice = $advice
+    }
+}
+
+function Get-MonsterZoneRiskSummaryText {
+    param(
+        $Game,
+        [int]$HeroHP
+    )
+
+    $risk = Get-MonsterZoneHeroRiskState -Game $Game -HeroHP $HeroHP
+
+    return "Risk: $($risk.HPBand) HP $($risk.CurrentHP)/$($risk.MaxHP) | Haul $($risk.OddityCount)/$($risk.OddityCapacity) | Camp $($risk.CampName) ($($risk.RiskBand), $($risk.NightRisk)%) | $($risk.Advice)"
+}
+
 function Resolve-MonsterZoneCampAction {
     param(
         $Game,
@@ -1981,9 +2088,18 @@ function Resolve-MonsterZoneCampAction {
 
     $weather = Get-MonsterZoneWeatherState -Game $Game
     $weatherCampRiskModifier = if ($null -ne $weather -and $null -ne $weather.CampRiskModifier) { [int]$weather.CampRiskModifier } else { 0 }
-    $risk = [Math]::Max(10, 55 - ($campLevel * 15) + $weatherCampRiskModifier)
+    $risk = Get-MonsterZoneCampNightRisk -Game $Game -CampLevel $campLevel -Weather $weather
+    $riskBand = Get-MonsterZoneRiskBand -NightRisk $risk
     $interrupted = $NightRoll -le $risk
+    $beforeHP = [int]$HeroHP.Value
+    $HeroHP.Value = [int]$Game.Hero.HP
+    Restore-HeroRages -Hero $Game.Hero
+    Restore-HeroSecondWind -Hero $Game.Hero | Out-Null
     $restResult = Resolve-HeroLongRestLevelUp -Hero $Game.Hero -HeroHP $HeroHP -HPMode $HPMode
+    $afterHP = [int]$HeroHP.Value
+    $recoveredHP = [Math]::Max(0, $afterHP - $beforeHP)
+    $recoveryText = if ($recoveredHP -gt 0) { " Recovery: +$recoveredHP HP." } else { " Recovery: HP already steady." }
+    $riskText = "Night risk: $riskBand ($risk%)."
 
     return [PSCustomObject]@{
         CampLevel = $campLevel
@@ -1992,9 +2108,13 @@ function Resolve-MonsterZoneCampAction {
         WeatherCampRiskModifier = $weatherCampRiskModifier
         NightRoll = $NightRoll
         NightRisk = $risk
+        RiskBand = $riskBand
+        BeforeHP = $beforeHP
+        AfterHP = $afterHP
+        RecoveredHP = $recoveredHP
         Interrupted = $interrupted
         RestResult = $restResult
-        Message = if ($interrupted) { "The long rest completes, but something moves close enough in the dark to prove the camp is not truly safe." } else { "The long rest holds. Morning finds the camp quiet and the city wall still visible in the distance." }
+        Message = if ($interrupted) { "The long rest restores $($Game.Hero.Name), but something moves close enough in the dark to prove the camp is not truly safe. $riskText$recoveryText" } else { "The long rest restores $($Game.Hero.Name). Morning finds the camp quiet and the city wall still visible in the distance. $riskText$recoveryText" }
     }
 }
 
@@ -2145,6 +2265,7 @@ function Start-MonsterZoneMenu {
         $weather = Get-MonsterZoneWeatherState -Game $Game
         Write-Scene "Past the outer gate, the road loosens into scrubland, old markers, ruined work sites, and too much quiet. The city is still visible, but it no longer feels close."
         Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Weather: $($weather.Name) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-EmphasisLine -Text (Get-MonsterZoneRiskSummaryText -Game $Game -HeroHP $HeroHP.Value) -Color "DarkYellow"
         Write-Scene $weather.Description
         Write-MonsterZoneProgressionStatus -Game $Game
         Write-MonsterZoneObjectiveStatus -Game $Game
