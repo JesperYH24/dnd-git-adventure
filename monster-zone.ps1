@@ -1256,6 +1256,8 @@ function Get-MonsterZoneObjectiveState {
             Title = "Return proof to Dorr"
             Detail = "Report the defeated trail: $names."
             Hint = "Go back to town and visit the fighting ring so Dorr can turn proof into future monster contracts."
+            NextStep = "Return to town, enter the fighting ring, and report the trail to Dorr."
+            TownReminder = "Dorr can use unreported monster proof: $names."
         }
     }
 
@@ -1265,6 +1267,8 @@ function Get-MonsterZoneObjectiveState {
             Title = "Return with monster oddities"
             Detail = "Haul is full: $oddityCount/$oddityCapacity oddities."
             Hint = "Head back before another kill wastes valuable parts."
+            NextStep = "Return to the city gate before taking another fight."
+            TownReminder = "Monster oddity haul is full: $oddityCount/$oddityCapacity. Bring the parts back before hunting again."
         }
     }
 
@@ -1274,6 +1278,8 @@ function Get-MonsterZoneObjectiveState {
             Title = "Investigate the landmark"
             Detail = "Record what is strange about $($currentLandmark.Name)."
             Hint = "Search the area before pushing deeper."
+            NextStep = "Choose Search the area here before travelling on."
+            TownReminder = "$($currentLandmark.Name) is still unrecorded beyond the wall."
         }
     }
 
@@ -1283,6 +1289,8 @@ function Get-MonsterZoneObjectiveState {
             Title = "Find a landmark"
             Detail = "Leave the gate road and record the first reliable place beyond the wall."
             Hint = "Travel into the scrubland and search what you find."
+            NextStep = "Travel away from the gate, then search any landmark you reach."
+            TownReminder = "Outer-wall work needs its first reliable landmark."
         }
     }
 
@@ -1292,6 +1300,8 @@ function Get-MonsterZoneObjectiveState {
             Title = "Choose the next risk"
             Detail = "Haul: $oddityCount/$oddityCapacity oddities."
             Hint = "Return safely for value, or keep hunting while there is still hauling room."
+            NextStep = "Return for safe value, or keep hunting only if HP and camp safety can carry the risk."
+            TownReminder = "Carrying monster oddities: $oddityCount/$oddityCapacity."
         }
     }
 
@@ -1300,7 +1310,37 @@ function Get-MonsterZoneObjectiveState {
         Title = "Track a wall creature"
         Detail = "Find a beast or stranger threat, then bring back proof or an oddity."
         Hint = "Travel through landmarks, watch for tracks, and survive the first real trail."
+        NextStep = "Travel between landmarks or search for tracks until a creature commits."
+        TownReminder = "Outer-wall proof still needs a creature trail, more landmarks, or useful oddities."
     }
+}
+
+function Get-MonsterZoneObjectiveSummaryText {
+    param($Game)
+
+    $objective = Get-MonsterZoneObjectiveState -Game $Game
+
+    if ($null -eq $objective) {
+        return ""
+    }
+
+    return "$($objective.Title): $($objective.Detail) Next: $($objective.NextStep)"
+}
+
+function Get-MonsterZoneTownReminderText {
+    param($Game)
+
+    if (-not (Test-MonsterZoneUnlocked -Game $Game)) {
+        return ""
+    }
+
+    $objective = Get-MonsterZoneObjectiveState -Game $Game
+
+    if ($null -eq $objective -or [string]::IsNullOrWhiteSpace([string]$objective.TownReminder)) {
+        return ""
+    }
+
+    return "Beyond the wall: $($objective.TownReminder)"
 }
 
 function Write-MonsterZoneObjectiveStatus {
@@ -1309,6 +1349,7 @@ function Write-MonsterZoneObjectiveStatus {
     $objective = Get-MonsterZoneObjectiveState -Game $Game
     Write-EmphasisLine -Text "Objective: $($objective.Title) | $($objective.Detail)" -Color "Cyan"
     Write-Scene $objective.Hint
+    Write-Scene "Next step: $($objective.NextStep)"
 }
 
 function Write-MonsterZoneObjectiveProgress {

@@ -2230,6 +2230,10 @@ function Start-TownMenu {
         if (-not [string]::IsNullOrWhiteSpace($ambientText)) {
             Write-Scene $ambientText
         }
+        $monsterZoneReminder = Get-MonsterZoneTownReminderText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($monsterZoneReminder)) {
+            Write-EmphasisLine -Text $monsterZoneReminder -Color "DarkCyan"
+        }
         Write-ColorLine ""
         if ($isNight) {
             Write-ColorLine "How do you want to spend the night?" "Cyan"

@@ -388,6 +388,7 @@ function Test-MonsterZoneObjectiveStartsWithLandmarkSearch {
 
     Assert-Equal -Actual $objective.Type -Expected "FindLandmark" -Message "A fresh monster-zone trip should first point the player toward a reliable landmark."
     Assert-True -Condition ($objective.Detail -like "*first reliable place*") -Message "The first objective should explain why the player is leaving the gate road."
+    Assert-True -Condition ($objective.NextStep -like "*Travel*search*") -Message "The first objective should give a concrete next action."
 }
 
 function Test-MonsterZoneObjectivePrioritizesDorrProof {
@@ -400,6 +401,7 @@ function Test-MonsterZoneObjectivePrioritizesDorrProof {
 
     Assert-Equal -Actual $objective.Type -Expected "ReturnProofToDorr" -Message "Unreported defeated creatures should become the top monster-zone objective."
     Assert-True -Condition ($objective.Detail -like "*kobold wall scout*") -Message "The Dorr proof objective should name the defeated creature trail."
+    Assert-True -Condition ($objective.NextStep -like "*fighting ring*Dorr*") -Message "The Dorr proof objective should tell the player where to report it."
 }
 
 function Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull {
@@ -413,6 +415,26 @@ function Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull {
 
     Assert-Equal -Actual $objective.Type -Expected "ReturnOddities" -Message "A full oddity haul should tell the player to return before wasting parts."
     Assert-True -Condition ($objective.Detail -like "*1/1*") -Message "The full-haul objective should show current oddity capacity."
+    Assert-True -Condition ($objective.NextStep -like "*Return*city gate*") -Message "The full-haul objective should tell the player to head back."
+}
+
+function Test-MonsterZoneTownReminderOnlyAppearsWhenUnlocked {
+    $game = Initialize-Game
+
+    $locked = Get-MonsterZoneTownReminderText -Game $game
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+    $unlocked = Get-MonsterZoneTownReminderText -Game $game
+
+    Assert-Equal -Actual $locked -Expected "" -Message "Town should not show monster-zone reminders before the wall rumors unlock the area."
+    Assert-True -Condition ($unlocked -like "*Beyond the wall*first reliable landmark*") -Message "Town should show a short actionable monster-zone reminder once the area is open."
+}
+
+function Test-MonsterZoneObjectiveSummaryIncludesNextStep {
+    $game = Initialize-Game
+    $summary = Get-MonsterZoneObjectiveSummaryText -Game $game
+
+    Assert-True -Condition ($summary -like "*Find a landmark*") -Message "Objective summary should include the current objective title."
+    Assert-True -Condition ($summary -like "*Next:*") -Message "Objective summary should include a next-step label."
 }
 
 function Test-CampImprovementLowersNightRisk {
@@ -454,6 +476,8 @@ Test-LevelSixGateDefenseWaitsForActualLevelSix
 Test-MonsterZoneObjectiveStartsWithLandmarkSearch
 Test-MonsterZoneObjectivePrioritizesDorrProof
 Test-MonsterZoneObjectiveWarnsWhenOddityHaulIsFull
+Test-MonsterZoneTownReminderOnlyAppearsWhenUnlocked
+Test-MonsterZoneObjectiveSummaryIncludesNextStep
 Test-CampImprovementLowersNightRisk
 
 Write-Host "Monster zone tests passed." -ForegroundColor Green
