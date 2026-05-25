@@ -164,6 +164,60 @@ function Get-PostCivicVaultAftermathReminderText {
     return "Aftermath: Halewick has been exposed and escaped. $innText so the city can gather witness reports and reveal what fear reaches the gates next."
 }
 
+function Get-TownNextStepReminderText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Hero) {
+        return ""
+    }
+
+    if (Test-MonsterZoneUnlocked -Game $Game) {
+        return ""
+    }
+
+    if ((Get-HeroAvailableLevelUps -Hero $Game.Hero) -gt 0) {
+        return "Next step: Rest at an inn to take the pending level-up before the next major danger."
+    }
+
+    if ([bool]$Game.Town.StoryQuestDoneToday) {
+        return "Next step: Rest for the night before taking another real story lead."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["LordHalewickEscaped"]) {
+        return ""
+    }
+
+    if ([bool]$Game.Town.StoryFlags["HigherPatronSuspected"]) {
+        return "Next step: Meet Mira Kest in the Docks and follow the higher-city proof toward the Civic Vault."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksCharterScribeExposed"]) {
+        return "Next step: Rest at an inn, then return to Mira Kest for the higher-city paper trail."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksOrganizationProfiled"]) {
+        return "Next step: Keep working Mira Kest's Docks leads until the charter scribe can be exposed."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["DocksFirstChainComplete"]) {
+        return "Next step: Visit Mira Kest in the Docks for the organization leads behind Lady Veyra's contract."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["NamedVeyraContractBroker"]) {
+        return "Next step: Return to the Docks and press Warehouse Row or the old knife berth."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+        return "Next step: Follow Lady Veyra's lead to the Docks and start with Auntie Brindle's salvage shop."
+    }
+
+    if ([bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"]) {
+        return "Next step: Visit the High Ledger office. The city's hidden patron is ready to become a real lead."
+    }
+
+    return ""
+}
+
 function Test-DocksDistrictUnlocked {
     param($Game)
 
@@ -2381,6 +2435,10 @@ function Start-TownMenu {
         $aftermathReminder = Get-PostCivicVaultAftermathReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($aftermathReminder)) {
             Write-EmphasisLine -Text $aftermathReminder -Color "DarkYellow"
+        }
+        $nextStepReminder = Get-TownNextStepReminderText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($nextStepReminder)) {
+            Write-EmphasisLine -Text $nextStepReminder -Color "DarkCyan"
         }
         $monsterZoneReminder = Get-MonsterZoneTownReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($monsterZoneReminder)) {

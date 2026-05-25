@@ -410,6 +410,7 @@ Ansvar:
 - named NPC interactions
 - små rewards, hooks och flavor
 - Belor and street NPC reactions, including post-Civic-Vault aftermath before wall-watch rumors start
+- town next-step reminders for pre-monster-zone progression beats live in `town.ps1`
 
 ### `town-inns.ps1`
 

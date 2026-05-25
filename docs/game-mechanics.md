@@ -148,6 +148,7 @@ Current camp levels:
 - Bard town HUD resources include Bardic Inspiration dice, spell save DC, level 1/2 spell slots when unlocked, and daily performance count
 - Barbarian and Fighter town HUD resources include rage state or Second Wind/Action Surge uses when relevant
 - after the Civic Vault exposes Halewick, the town menu can show a short aftermath reminder that points the player toward an inn rest while the city gathers witness reports; this reminder clears once outer-wall monster rumors become the new next step
+- before monster zone opens, the town menu can also show a compact next-step reminder for major progression beats: pending level-up rests, daily story-lock rests, Veyra/Docks leads, charter-scribe breakthroughs, higher-city proof, and Civic Vault direction
 - post-Civic-Vault town reactions now appear before monster zone begins through Guard Station source text, Belor street talk, Docks/High Ledger intros, palace-repair ambience, and innkeeper rumor lines
 - post-Civic-Vault inn rest can start the outer-wall monster rumor state after Halewick's draconic escape
 - town hub now split into submenus:

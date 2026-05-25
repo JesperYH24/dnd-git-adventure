@@ -316,6 +316,44 @@ function Test-PostCivicVaultAftermathReminderClearsAfterWallRumors {
     Assert-Equal -Actual $afterRumors -Expected "" -Message "Post-Civic-Vault reminder should clear once wall rumors take over the next step."
 }
 
+function Test-TownNextStepReminderPrioritizesLevelUpRest {
+    $game = Initialize-Game
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 4
+    $game.Hero.XP = 2700
+    $game.Town.StoryFlags["DocksCharterScribeExposed"] = $true
+
+    $reminder = Get-TownNextStepReminderText -Game $game
+
+    Assert-True -Condition ($reminder -like "*Rest at an inn*" -and $reminder -like "*level-up*") -Message "Town next-step reminder should prioritize pending level-up rests."
+}
+
+function Test-TownNextStepReminderTracksDocksStoryBeats {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $veyrasLead = Get-TownNextStepReminderText -Game $game
+
+    $game.Town.StoryFlags["DocksFirstChainComplete"] = $true
+    $miraLead = Get-TownNextStepReminderText -Game $game
+
+    $game.Town.StoryFlags["DocksOrganizationProfiled"] = $true
+    $scribeLead = Get-TownNextStepReminderText -Game $game
+
+    Assert-True -Condition ($veyrasLead -like "*Docks*" -and $veyrasLead -like "*Auntie Brindle*") -Message "After Veyra reveal, next-step reminder should point to Auntie Brindle."
+    Assert-True -Condition ($miraLead -like "*Mira Kest*" -and $miraLead -like "*organization*") -Message "After the first Docks chain, next-step reminder should point to Mira's organization leads."
+    Assert-True -Condition ($scribeLead -like "*charter scribe*") -Message "After profiling the Docks organization, next-step reminder should point to the charter scribe."
+}
+
+function Test-TownNextStepReminderYieldsToMonsterZone {
+    $game = Initialize-Game
+    $game.Town.StoryFlags["BenefactorRevealed"] = $true
+    $game.Town.StoryFlags["MonsterWallRumorsStarted"] = $true
+
+    $reminder = Get-TownNextStepReminderText -Game $game
+
+    Assert-Equal -Actual $reminder -Expected "" -Message "Generic town next-step reminder should clear once monster-zone guidance is active."
+}
+
 function Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape {
     $game = Initialize-Game
 
@@ -385,6 +423,9 @@ Test-DocksCanCashOutMonsterZoneOddities
 Test-DocksMenuCanDeliverMonsterZoneOddities
 Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-PostCivicVaultAftermathReminderClearsAfterWallRumors
+Test-TownNextStepReminderPrioritizesLevelUpRest
+Test-TownNextStepReminderTracksDocksStoryBeats
+Test-TownNextStepReminderYieldsToMonsterZone
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest
 Test-TownMenuCanEnterUnlockedMonsterZone
