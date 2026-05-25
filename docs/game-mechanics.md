@@ -150,6 +150,7 @@ Current camp levels:
 - Barbarian and Fighter town HUD resources include rage state or Second Wind/Action Surge uses when relevant
 - after the Civic Vault exposes Halewick, the town menu can show a short aftermath reminder that points the player toward an inn rest while the city gathers witness reports; this reminder clears once outer-wall monster rumors become the new next step
 - before monster zone opens, the town menu can also show a compact next-step reminder for major progression beats: pending level-up rests, daily story-lock rests, Veyra/Docks leads, charter-scribe breakthroughs, higher-city proof, and Civic Vault direction
+- town relationship hints surface active inn and social payoffs beside the main progression reminder, such as Bard private-salon openings, Fighter tourney-patron attention, Barbarian mercenary gear leads, and Bent Nail under-table leads
 - post-Civic-Vault town reactions now appear before monster zone begins through Guard Station source text, Belor street talk, Docks/High Ledger intros, palace-repair ambience, and innkeeper rumor lines
 - post-Civic-Vault inn rest can start the outer-wall monster rumor state after Halewick's draconic escape
 - town hub now split into submenus:
@@ -177,6 +178,7 @@ Current camp levels:
 - inn-first navigation where the player enters the inn before choosing room or common-room activities
 - inn storage
 - inn-specific dining-room and common-room activities based on time of day, inn quality, and clientele
+- relationship payoffs from inns now feed back into town menu guidance, making unlocked discounts, patrons, venues, and under-table story leads easier to notice before the player leaves for the monster zone
 - first inn-room back-navigation now correctly returns to the inn wrapper instead of dropping straight to town
 
 ## Docks district flow

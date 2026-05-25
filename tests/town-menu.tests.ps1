@@ -354,6 +354,42 @@ function Test-TownNextStepReminderYieldsToMonsterZone {
     Assert-Equal -Actual $reminder -Expected "" -Message "Generic town next-step reminder should clear once monster-zone guidance is active."
 }
 
+function Test-TownRelationshipHintSurfacesBardInnPayoff {
+    $game = Initialize-Game -Class "Bard"
+    $game.Town.InnFlags["SilverKettlePrivateInvite"] = $true
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Silver Kettle private rooms*" -and $hint -like "*night performances*") -Message "Town relationship hint should point Bards toward the Silver Kettle private performance payoff."
+}
+
+function Test-TownRelationshipHintSurfacesFighterPatronPayoff {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.Relationships["TourneyPatrons"] = "Introduced"
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Silver Kettle patrons*" -and $hint -like "*tourney ground*" -and $hint -like "*backing*") -Message "Town relationship hint should point Fighters from inn patrons toward tourney backing."
+}
+
+function Test-TownRelationshipHintSurfacesBarbarianInnPayoff {
+    $game = Initialize-Game -Class "Barbarian"
+    $game.Town.Relationships["LanternMercenaries"] = "Warm"
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Lantern Rest mercenaries*" -and $hint -like "*travel steel*") -Message "Town relationship hint should point Barbarians from Lantern Rest standing toward practical gear leads."
+}
+
+function Test-TownRelationshipHintSurfacesBentNailFallback {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.Relationships["BentNailRoom"] = "Grudging"
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Bent Nail*" -and $hint -like "*under-table leads*") -Message "Town relationship hint should still surface a Bent Nail relationship when no class-specific higher payoff is active."
+}
+
 function Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape {
     $game = Initialize-Game
 
@@ -426,6 +462,10 @@ Test-PostCivicVaultAftermathReminderClearsAfterWallRumors
 Test-TownNextStepReminderPrioritizesLevelUpRest
 Test-TownNextStepReminderTracksDocksStoryBeats
 Test-TownNextStepReminderYieldsToMonsterZone
+Test-TownRelationshipHintSurfacesBardInnPayoff
+Test-TownRelationshipHintSurfacesFighterPatronPayoff
+Test-TownRelationshipHintSurfacesBarbarianInnPayoff
+Test-TownRelationshipHintSurfacesBentNailFallback
 Test-TownAmbienceHintsAtPalaceRepairsAfterHalewickEscape
 Test-TownAmbienceAddsWallMonsterRumorsAfterInnRest
 Test-TownMenuCanEnterUnlockedMonsterZone

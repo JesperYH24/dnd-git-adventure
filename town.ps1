@@ -218,6 +218,54 @@ function Get-TownNextStepReminderText {
     return ""
 }
 
+function Get-TownRelationshipHintText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Hero) {
+        return ""
+    }
+
+    $heroName = [string]$Game.Hero.Name
+
+    if ($Game.Hero.Class -eq "Bard") {
+        if ([bool]$Game.Town.InnFlags["SilverKettlePrivateInvite"]) {
+            return "Relationship: Silver Kettle private rooms are open to $heroName; night performances can earn better patron coin."
+        }
+
+        if ([string]$Game.Town.Relationships["LanternAudience"] -eq "Warm") {
+            return "Relationship: Lantern Rest has a warm audience for $heroName, and the instrument shop has a Stage Lute lead."
+        }
+    }
+    elseif ($Game.Hero.Class -eq "Fighter") {
+        if ($null -ne $Game.Town.Relationships["TourneyPatrons"]) {
+            return "Relationship: Silver Kettle patrons have noticed $heroName; the tourney ground can turn that attention into backing."
+        }
+
+        if ([string]$Game.Town.Relationships["LanternTourneyTalk"] -eq "Warm") {
+            return "Relationship: Lantern Rest tourney talk is warm, and the armorer has a Heater Shield lead."
+        }
+    }
+    elseif ($Game.Hero.Class -eq "Barbarian") {
+        if ([string]$Game.Town.Relationships["LanternMercenaries"] -eq "Warm") {
+            return "Relationship: Lantern Rest mercenaries respect $heroName, and the market has practical travel steel leads."
+        }
+
+        if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+            return "Relationship: Silver Kettle contract talk can improve $heroName's next city payout and recovery supply path."
+        }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string]$Game.Town.Relationships["BentNailRoom"])) {
+        return "Relationship: The Bent Nail knows $heroName now; under-table leads may open there as the story deepens."
+    }
+
+    if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"]) {
+        return "Relationship: Silver Kettle contract talk can improve the next city payout."
+    }
+
+    return ""
+}
+
 function Test-DocksDistrictUnlocked {
     param($Game)
 
@@ -2453,6 +2501,10 @@ function Start-TownMenu {
         $nextStepReminder = Get-TownNextStepReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($nextStepReminder)) {
             Write-EmphasisLine -Text $nextStepReminder -Color "DarkCyan"
+        }
+        $relationshipHint = Get-TownRelationshipHintText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($relationshipHint)) {
+            Write-EmphasisLine -Text $relationshipHint -Color "Magenta"
         }
         $monsterZoneReminder = Get-MonsterZoneTownReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($monsterZoneReminder)) {
