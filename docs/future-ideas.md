@@ -56,7 +56,7 @@ Next implementation priorities:
 - extend the new pre-combat distance choices so `Perception` and `Stealth` can lead to follow-ups after `avoid`, `close`, `shadow`, `hold range`, or `stand ground`
 - connect Docks buyers more directly to monster oddities, with requests for specific parts such as `Black-Wax Scout Token`, `Razor Boar Tusk`, `Pale Grave Claw`, or `Black Scale Shard`
 - expand Dorr's monster-contract board with stronger dialogue and board actions now that it separates unreported proof, bookable contracts, pending capture crews, ready fights, completed contracts, and the higher Ash-Horn/Gate-Sunder ladder
-- expand class-flavored monster-zone reads beyond the first search/observation pass, especially into ambush starts, objective follow-ups, landmark consequences, Wall Watch reports, and Dorr reports
+- expand class-flavored monster-zone reads beyond the current weather, field-lead, camp, proof, oddity, search, and observation pass, especially into ambush starts, landmark consequences, Wall Watch reports, and Dorr reports
 - later, after objectives and contracts feel good, add ranged weapon support on top of the monster-zone distance state so open ground can make bows, thrown weapons, and monster approach behavior matter
 
 Use a hidden coordinate-style zone rather than a visible dungeon map:

@@ -393,12 +393,12 @@ Ansvar:
 - first-pass abstract encounter distance for monster-zone fights: `5 ft` melee, `30 ft` movement, action-based dash, and monster closing behavior
 - level-cap-filtered encounter pool, including higher `ash_horn_drakelet` and `gate_sunder_brute` threats for the level 5-6 stretch
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
-- class-flavored wilderness reads for search and 60 ft observation
+- class-flavored wilderness reads for search, 60 ft observation, weather, field leads, camp, proof, and oddity hauling
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
 - Docks monster-oddity cashout through Auntie Brindle, with draconic oddities marked for Veyra/Mira ledger follow-up
 - Guard Station/Watchman Belor wall-watch reactions to monster-zone landmarks, creature proof, and Dorr-reported trails
-- next implementation focus is deeper Wall Watch/Dorr board actions, more city consequences for reported patterns, and class-flavored wilderness reads; ranged weapons should wait
+- next implementation focus is deeper Wall Watch/Dorr board actions, more city consequences for reported patterns, and class-flavored ambush/consequence reads; ranged weapons should wait
 
 ### `town-npcs.ps1`
 

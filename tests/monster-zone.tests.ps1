@@ -268,6 +268,27 @@ function Test-MonsterZoneClassReadsAreDistinct {
     Assert-True -Condition ($bardObservation -like "*rhythm*") -Message "Bard observation reads should add class flavor to monster watching."
 }
 
+function Test-MonsterZoneClassReadsCoverNewFieldContexts {
+    $weather = Get-MonsterZoneWeatherProfile -WeatherId "cold_fog"
+    $lead = New-MonsterZoneFieldLead -Type "Landmark" -Title "Track crossing" -Detail "Fresh tracks cross the creek." -NextStep "Follow the trail."
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "scale_touched_mastiff" } | Select-Object -First 1
+    $barbarian = Get-Hero -Class "Barbarian"
+    $bard = Get-Hero -Class "Bard"
+    $fighter = Get-Hero -Class "Fighter"
+
+    $barbarianWeather = @(Get-MonsterZoneClassReadLines -Hero $barbarian -Weather $weather -Context "Weather") -join " "
+    $bardLead = @(Get-MonsterZoneClassReadLines -Hero $bard -Lead $lead -Context "FieldLead") -join " "
+    $fighterCamp = @(Get-MonsterZoneClassReadLines -Hero $fighter -Weather $weather -Context "Camp") -join " "
+    $fighterProof = @(Get-MonsterZoneClassReadLines -Hero $fighter -Creature $creature -Context "Proof") -join " "
+    $bardOddity = @(Get-MonsterZoneClassReadLines -Hero $bard -Creature $creature -Context "Oddity") -join " "
+
+    Assert-True -Condition ($barbarianWeather -like "*bones*" -and $barbarianWeather -like "*Cold Fog*") -Message "Barbarian weather reads should feel physical and name the weather."
+    Assert-True -Condition ($bardLead -like "*recurring verse*" -and $bardLead -like "*Track crossing*") -Message "Bard field-lead reads should turn the lead into story/rhythm."
+    Assert-True -Condition ($fighterCamp -like "*watch point*" -and $fighterCamp -like "*weapon reach*") -Message "Fighter camp reads should focus on defensive lines."
+    Assert-True -Condition ($fighterProof -like "*testimony*" -and $fighterProof -like "*watch captain*") -Message "Fighter proof reads should frame monster proof as civic evidence."
+    Assert-True -Condition ($bardOddity -like "*Auntie Brindle*" -and $bardOddity -like "*coin*") -Message "Bard oddity reads should connect monster parts to dockside story value."
+}
+
 function Test-BardCanCastInvisibilityFromMonsterZoneMenu {
     $game = Initialize-Game -Class "Bard"
     $game.Hero.Level = 4
@@ -616,6 +637,7 @@ Test-MonsterZoneWeatherModifiesAwareness
 Test-MonsterZoneWeatherChangesCampRisk
 Test-MonsterZoneAddsMoreCreatureTypes
 Test-MonsterZoneClassReadsAreDistinct
+Test-MonsterZoneClassReadsCoverNewFieldContexts
 Test-BardCanCastInvisibilityFromMonsterZoneMenu
 Test-PackAnimalControlsMonsterOddityCapacity
 Test-MonsterZoneTracksDefeatedCreatureProof

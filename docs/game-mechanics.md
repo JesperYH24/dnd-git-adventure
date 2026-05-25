@@ -53,7 +53,7 @@
 - the menu also shows a compact monster-zone progression line, so the player can see level 6 proof requirements, XP-to-level after cap unlock, or gate-defense completion without opening documentation
 - travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
 - landmarks now track route familiarity by different visit days; repeat visits on later days make the place easier to find, and at `3` familiarity the hero can travel there directly from the outer gate
-- search and long-range observation include first-pass class wilderness reads: Barbarian reads body/ground/instinct, Bard reads rhythm/folklore/silence, and Fighter reads patrol logic/sightlines/attack lanes
+- monster-zone class reads now cover search, long-range observation, weather, field leads, camp choices, proof handling, and oddity hauling: Barbarian reads body/ground/instinct, Bard reads rhythm/story/social value, and Fighter reads patrol logic/sightlines/civic evidence
 - new wilderness skills: `Perception` and `Stealth`
 - before wilderness combat begins, hero and monster awareness is resolved with opposed discovery checks:
   - hero `Perception` against monster/beast `Stealth`

@@ -981,6 +981,8 @@ function Get-MonsterZoneClassReadLines {
         $Hero,
         $Landmark = $null,
         $Creature = $null,
+        $Weather = $null,
+        $Lead = $null,
         [string]$Context = "Search"
     )
 
@@ -991,9 +993,31 @@ function Get-MonsterZoneClassReadLines {
     $class = [string]$Hero.Class
     $placeName = if ($null -ne $Landmark) { [string]$Landmark.Name } else { "the scrubland" }
     $creatureName = if ($null -ne $Creature) { [string]$Creature.definite } else { "the threat" }
+    $weatherName = if ($null -ne $Weather) { [string]$Weather.Name } else { "the weather" }
+    $leadTitle = if ($null -ne $Lead -and -not [string]::IsNullOrWhiteSpace([string]$Lead["Title"])) { [string]$Lead["Title"] } else { "the field lead" }
 
     switch ($class) {
         "Barbarian" {
+            if ($Context -eq "Weather") {
+                return @("$($Hero.Name) feels $weatherName in his bones before he names it: pressure in the joints, scent on the wind, and whether the day wants blood close or far away.")
+            }
+
+            if ($Context -eq "FieldLead") {
+                return @("$($Hero.Name) follows $leadTitle by force of ground-truth: bent grass, fresh weight, and the simple refusal to let a trail pretend it is gone.")
+            }
+
+            if ($Context -eq "Camp") {
+                return @("$($Hero.Name) judges the camp by what his body can defend in the dark: back to cover, feet clear, and enough warning before something reaches his throat.")
+            }
+
+            if ($Context -eq "Proof") {
+                return @("$($Hero.Name) keeps the proof ugly and honest. Teeth, blood, broken hide, and the direction of the fight will tell Dorr and Belor more than polished words could.")
+            }
+
+            if ($Context -eq "Oddity") {
+                return @("$($Hero.Name) packs the strange part like a trophy that still might bite, useful because it is real enough for dock buyers to stop laughing.")
+            }
+
             if ($Context -eq "Observation") {
                 return @("$($Hero.Name) reads $creatureName in the body first: weight in the shoulders, hunger in the breath, and the ugly promise of where the charge will land.")
             }
@@ -1001,6 +1025,26 @@ function Get-MonsterZoneClassReadLines {
             return @("$($Hero.Name) reads $placeName through boot pressure, broken stems, and the old animal warning that lives below thought.")
         }
         "Bard" {
+            if ($Context -eq "Weather") {
+                return @("$($Hero.Name) hears $weatherName as a change in the whole outer-wall song: softer footfalls here, harsher echoes there, and one wrong silence where a witness should be.")
+            }
+
+            if ($Context -eq "FieldLead") {
+                return @("$($Hero.Name) follows $leadTitle like a recurring verse, letting repeated signs rhyme until the wilderness admits which line comes next.")
+            }
+
+            if ($Context -eq "Camp") {
+                return @("$($Hero.Name) makes the camp quiet in the social way: no loose buckle, no careless fire, no story told loudly enough for the dark to answer.")
+            }
+
+            if ($Context -eq "Proof") {
+                return @("$($Hero.Name) frames the proof before town ever sees it: what the creature wanted, who should hear it first, and which detail will make fear turn into action.")
+            }
+
+            if ($Context -eq "Oddity") {
+                return @("$($Hero.Name) treats the oddity as a dockside story with a price: the sort of strange little object Auntie Brindle can turn into rumor, coin, and leverage.")
+            }
+
             if ($Context -eq "Observation") {
                 return @("$($Hero.Name) listens for the rhythm around ${creatureName}: pauses too regular to be chance, breath too sharp for calm, and a story in the sounds it refuses to make.")
             }
@@ -1008,6 +1052,26 @@ function Get-MonsterZoneClassReadLines {
             return @("$($Hero.Name) reads $placeName like a half-remembered verse: odd silences, local superstition, and the places where a frightened witness would leave something unsaid.")
         }
         "Fighter" {
+            if ($Context -eq "Weather") {
+                return @("$($Hero.Name) reads $weatherName like a field condition: visibility, footing, sound carry, and which approach lane a disciplined patrol would abandon first.")
+            }
+
+            if ($Context -eq "FieldLead") {
+                return @("$($Hero.Name) works $leadTitle like a patrol report, turning scattered signs into route, timing, likely contact point, and safest withdrawal.")
+            }
+
+            if ($Context -eq "Camp") {
+                return @("$($Hero.Name) improves the camp by line and angle: watch point, fallback space, clean weapon reach, and no blind gap facing the wall road.")
+            }
+
+            if ($Context -eq "Proof") {
+                return @("$($Hero.Name) preserves the proof like testimony: what threatened the wall, where it moved, and how a watch captain could answer it next time.")
+            }
+
+            if ($Context -eq "Oddity") {
+                return @("$($Hero.Name) weighs the oddity as evidence, not loot: enough to pay for risk, and enough to show the city what kind of pressure is forming outside the gate.")
+            }
+
             if ($Context -eq "Observation") {
                 return @("$($Hero.Name) studies $creatureName like an opponent at the lists: first step, recovery angle, attack line, and how quickly it could threaten the wall road.")
             }
@@ -1029,10 +1093,12 @@ function Write-MonsterZoneClassRead {
         $Hero,
         $Landmark = $null,
         $Creature = $null,
+        $Weather = $null,
+        $Lead = $null,
         [string]$Context = "Search"
     )
 
-    foreach ($line in (Get-MonsterZoneClassReadLines -Hero $Hero -Landmark $Landmark -Creature $Creature -Context $Context)) {
+    foreach ($line in (Get-MonsterZoneClassReadLines -Hero $Hero -Landmark $Landmark -Creature $Creature -Weather $Weather -Lead $Lead -Context $Context)) {
         Write-Scene $line
     }
 }
@@ -1952,6 +2018,7 @@ function Start-MonsterZoneEncounter {
     Write-SectionTitle -Text "Wilderness Encounter" -Color "Red"
     Write-Scene $creature.introText
     Write-Scene "Weather: $($weather.Name). $($weather.Description)"
+    Write-MonsterZoneClassRead -Hero $Game.Hero -Weather $weather -Context "Weather"
 
     $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature -Weather $weather
     Write-Scene "$($Game.Hero.Name)'s Perception total $($awareness.HeroPerceptionTotal) contests $($creature.definite)'s Stealth total $($awareness.CreatureStealthTotal)."
@@ -2043,6 +2110,8 @@ function Start-MonsterZoneEncounter {
         }
         $oddityResult = Add-MonsterZoneOddity -Game $Game -Creature $creature
         Write-Scene $oddityResult.Message
+        Write-MonsterZoneClassRead -Hero $Game.Hero -Creature $creature -Context "Proof"
+        Write-MonsterZoneClassRead -Hero $Game.Hero -Creature $creature -Context "Oddity"
         Write-MonsterZoneObjectiveProgress -Game $Game -Reason "creature proof secured"
         Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
         return "Won"
@@ -2153,6 +2222,7 @@ function Start-MonsterZoneMenu {
                 $camp = Resolve-MonsterZoneCampAction -Game $Game -HeroHP $HeroHP -Action $campAction
                 Write-Scene "$($Game.Hero.Name) works the site into a $($camp.CampName)."
                 Write-Scene $camp.Message
+                Write-MonsterZoneClassRead -Hero $Game.Hero -Weather $weather -Context "Camp"
                 Invoke-LevelSixGateDefenseAfterLevelUp -Game $Game -HeroHP $HeroHP -LevelUpResult $camp.RestResult -ForceWin:(Get-UiOutputSuppressed) | Out-Null
                 Write-ColorLine ""
             }
@@ -2160,6 +2230,7 @@ function Start-MonsterZoneMenu {
                 $camp = Resolve-MonsterZoneCampAction -Game $Game -HeroHP $HeroHP -Action "OpenSky"
                 Write-Scene "$($Game.Hero.Name) sleeps under the open sky with the wall fires dim behind the grass."
                 Write-Scene $camp.Message
+                Write-MonsterZoneClassRead -Hero $Game.Hero -Weather $weather -Context "Camp"
                 Invoke-LevelSixGateDefenseAfterLevelUp -Game $Game -HeroHP $HeroHP -LevelUpResult $camp.RestResult -ForceWin:(Get-UiOutputSuppressed) | Out-Null
                 Write-ColorLine ""
             }
@@ -2184,8 +2255,12 @@ function Start-MonsterZoneMenu {
                 }
             }
             "10" {
+                $leadBefore = Get-MonsterZoneLastFieldLead -Game $Game
                 $leadResult = Resolve-MonsterZoneFieldLeadAction -Game $Game
                 Write-Scene $leadResult.Message
+                if ($null -ne $leadBefore) {
+                    Write-MonsterZoneClassRead -Hero $Game.Hero -Lead $leadBefore -Context "FieldLead"
+                }
                 if (-not [string]::IsNullOrWhiteSpace([string]$leadResult.XPMessage)) {
                     Write-Scene $leadResult.XPMessage
                 }
