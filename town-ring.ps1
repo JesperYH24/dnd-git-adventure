@@ -1086,21 +1086,96 @@ function Get-RingMonsterContractReadiness {
     }
 }
 
+function Get-MonsterZoneReportBountyCopper {
+    param(
+        [string]$CreatureId,
+        $Record = $null
+    )
+
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq $CreatureId } | Select-Object -First 1
+
+    if ($null -eq $creature) {
+        return 45
+    }
+
+    $xp = if ($null -ne $creature.xp) { [int]$creature.xp } else { 100 }
+    $minLevelCap = if ($null -ne $creature.minLevelCap) { [int]$creature.minLevelCap } else { 5 }
+    $threatTier = if ($null -ne $creature.threatTier) { [string]$creature.threatTier } else { "" }
+    $bounty = 35 + [Math]::Floor($xp / 5)
+
+    if ($minLevelCap -ge 6) {
+        $bounty += 35
+    }
+    elseif ($threatTier -like "*draconic*" -or $threatTier -like "*gate*") {
+        $bounty += 20
+    }
+
+    return [Math]::Max(45, [Math]::Min(130, [int]$bounty))
+}
+
+function Set-MonsterZoneSupplyFavorDiscount {
+    param(
+        $Game,
+        [string]$OfferId,
+        [int]$DiscountCopper
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return
+    }
+
+    $current = 0
+
+    if ($null -ne $Game.Town.Discounts[$OfferId]) {
+        $current = [int]$Game.Town.Discounts[$OfferId]
+    }
+
+    if ($DiscountCopper -gt $current) {
+        Set-TownOfferDiscount -Game $Game -OfferId $OfferId -DiscountCopper $DiscountCopper
+    }
+}
+
+function Grant-MonsterZoneSupplyFavor {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return $false
+    }
+
+    if ([bool]$Game.Town.StoryFlags["MonsterZoneSupplyFavorUnlocked"]) {
+        return $false
+    }
+
+    $Game.Town.StoryFlags["MonsterZoneSupplyFavorUnlocked"] = $true
+    Set-MonsterZoneSupplyFavorDiscount -Game $Game -OfferId "market_healing_potion" -DiscountCopper 10
+    Set-MonsterZoneSupplyFavorDiscount -Game $Game -OfferId "apothecary_healing_potion" -DiscountCopper 10
+    Set-MonsterZoneSupplyFavorDiscount -Game $Game -OfferId "apothecary_greater_healing_potion" -DiscountCopper 20
+    Set-MonsterZoneSupplyFavorDiscount -Game $Game -OfferId "stable_pack_goat" -DiscountCopper 40
+
+    return $true
+}
+
 function Report-MonsterZoneDiscoveriesToDorr {
     param($Game)
 
     Initialize-MonsterZoneState -Game $Game
 
     $newReports = @()
+    $totalBountyCopper = 0
+    $supplyFavorUnlocked = $false
 
     foreach ($creatureId in @($Game.Town.MonsterZone.DefeatedCreatures.Keys)) {
         if (-not [bool]$Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId]) {
             $record = $Game.Town.MonsterZone.DefeatedCreatures[$creatureId]
+            $bountyCopper = Get-MonsterZoneReportBountyCopper -CreatureId ([string]$creatureId) -Record $record
+            $totalBountyCopper += $bountyCopper
             $Game.Town.MonsterZone.ReportedCreaturesToDorr[[string]$creatureId] = @{
                 Id = [string]$creatureId
                 Name = [string]$record["Name"]
                 Count = [int]$record["Count"]
                 ReportedDay = if ($null -ne $Game.Town.DayNumber) { [int]$Game.Town.DayNumber } else { 1 }
+                BountyCopper = $bountyCopper
+                BountyMessage = "Dorr pays $(Convert-CopperToCurrencyText -Copper $bountyCopper) in wall-bounty coin for the $([string]$record["Name"]) trail."
             }
             $recordName = [string]$record["Name"]
             $xp = Grant-MonsterZoneMilestoneXP -Game $Game -Key "dorr_report_$creatureId" -XP 160 -Reason "$recordName trail reported to Dorr and the wall-watch rumor network"
@@ -1109,10 +1184,18 @@ function Report-MonsterZoneDiscoveriesToDorr {
         }
     }
 
+    if ($totalBountyCopper -gt 0) {
+        Add-HeroCurrency -Hero $Game.Hero -Denomination "CP" -Amount $totalBountyCopper | Out-Null
+        $supplyFavorUnlocked = Grant-MonsterZoneSupplyFavor -Game $Game
+    }
+
     Update-MonsterZoneLevelProgression -Game $Game | Out-Null
 
     return [PSCustomObject]@{
         NewlyReported = $newReports
+        TotalBountyCopper = $totalBountyCopper
+        SupplyFavorUnlocked = $supplyFavorUnlocked
+        SupplyFavorMessage = if ($supplyFavorUnlocked) { "Belor's wall-watch slate gets a new mark: basic monster-zone supplies are discounted in town." } else { "" }
         AvailableContracts = @(Get-AvailableRingMonsterChallengeContracts -Game $Game)
     }
 }
@@ -1167,6 +1250,7 @@ function Get-RingMonsterContractBoardState {
                 Name = [string]$record["Name"]
                 Count = [int]$record["Count"]
                 OddityName = [string]$record["OddityName"]
+                BountyCopper = Get-MonsterZoneReportBountyCopper -CreatureId ([string]$creatureId) -Record $record
             }
         }
     }
@@ -1232,7 +1316,8 @@ function Show-RingMonsterContractBoard {
         Write-ColorLine "Proof to report:" "Yellow"
         foreach ($proof in @($board.UnreportedProof)) {
             $oddityText = if ([string]::IsNullOrWhiteSpace([string]$proof.OddityName)) { "" } else { " | oddity: $($proof.OddityName)" }
-            Write-ColorLine "- $($proof.Name) x$($proof.Count)$oddityText" "White"
+            $bountyText = if ([int]$proof.BountyCopper -gt 0) { " | bounty: $(Convert-CopperToCurrencyText -Copper ([int]$proof.BountyCopper))" } else { "" }
+            Write-ColorLine "- $($proof.Name) x$($proof.Count)$oddityText$bountyText" "White"
         }
     }
     else {
@@ -1475,6 +1560,12 @@ function Start-RingMonsterChallengeMenu {
             if (-not [string]::IsNullOrWhiteSpace([string]$reported["MilestoneXPMessage"])) {
                 Write-Scene ([string]$reported["MilestoneXPMessage"])
             }
+            if (-not [string]::IsNullOrWhiteSpace([string]$reported["BountyMessage"])) {
+                Write-Scene ([string]$reported["BountyMessage"])
+            }
+        }
+        if (-not [string]::IsNullOrWhiteSpace([string]$report.SupplyFavorMessage)) {
+            Write-Scene ([string]$report.SupplyFavorMessage)
         }
         Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
         Show-RingMonsterContractBoard -Game $Game -Title "Dorr's Updated Monster Board"

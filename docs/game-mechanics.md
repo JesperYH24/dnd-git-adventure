@@ -76,6 +76,7 @@
 - gate-defense waves use allied opening damage and healer restoration between fights, then award wave XP plus a one-time city-defense milestone if the wall holds
 - the Guard Station and Watchman Belor now connect post-Halewick wall attacks to monster-zone work: wall-watch reports react to discovered landmarks, unreported creature proof, and trails already reported through Dorr
 - once a level 4 hero has defeated a matching outer-wall creature, they can report it to Dorr at the fighting ring to turn the trail into a unique unarmed monster contract
+- Dorr's monster board previews wall-bounty coin for unreported proof; reporting pays that bounty once and unlocks a first Wall Watch supply favor for basic healing and starter hauling support
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
 - current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, `scale_touched_mastiff`, `glass_carrion_crow`, `marsh_venom_adder`, `iron_root_stag`, the level 5 draconic-pressure `ash_horn_drakelet`, the level 6 `hollow_scale_wyrmling`, and the level 6 `gate_sunder_brute`
 - random monster-zone encounters now filter by hero level cap, keeping the gate-breaker threat out of the pool until level 6 progression has opened

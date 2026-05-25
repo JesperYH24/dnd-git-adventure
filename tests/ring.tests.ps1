@@ -219,6 +219,28 @@ function Test-RingMonsterContractsRequireReportedZoneDefeat {
     Assert-Equal -Actual $availableAfterReport[0].Id -Expected "wall_scraper_trial" -Message "A reported wall scout should unlock the Wall-Scraper Trial."
 }
 
+function Test-RingMonsterReportsPayBountyAndSupplyFavor {
+    $game = Initialize-Game
+    $game.Hero.Level = 4
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+    $marketPotion = Get-MarketOffers -Game $game | Where-Object { $_.Id -eq "market_healing_potion" } | Select-Object -First 1
+    $packGoat = Get-StableOffers -Game $game | Where-Object { $_.Id -eq "stable_pack_goat" } | Select-Object -First 1
+
+    Add-MonsterZoneCreatureDefeat -Game $game -Creature $creature | Out-Null
+    $report = Report-MonsterZoneDiscoveriesToDorr -Game $game
+    $repeat = Report-MonsterZoneDiscoveriesToDorr -Game $game
+
+    Assert-Equal -Actual $report.TotalBountyCopper -Expected 57 -Message "A reported kobold wall scout trail should pay a small wall-bounty purse."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 57 -Message "Reporting monster proof should add bounty coin to the hero."
+    Assert-Equal -Actual $report.NewlyReported[0]["BountyCopper"] -Expected 57 -Message "The reported trail should remember its bounty payout."
+    Assert-Equal -Actual $report.SupplyFavorUnlocked -Expected $true -Message "The first monster-zone report should unlock a town supply favor."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $marketPotion) -Expected 50 -Message "Supply favor should discount basic market healing."
+    Assert-Equal -Actual (Get-TownOfferPrice -Game $game -Offer $packGoat) -Expected 220 -Message "Supply favor should discount the starter pack animal for oddity hauling."
+    Assert-Equal -Actual $repeat.TotalBountyCopper -Expected 0 -Message "Already reported trails should not pay bounty twice."
+    Assert-Equal -Actual $repeat.SupplyFavorUnlocked -Expected $false -Message "Supply favor should only unlock once."
+    Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 57 -Message "Repeat reports should not add more bounty coin."
+}
+
 function Test-RingMonsterContractsKeepExtraGates {
     $game = Initialize-Game
     $game.Hero.Level = 4
@@ -325,6 +347,7 @@ function Test-RingMonsterContractBoardShowsProofAndBookableContracts {
     $afterReport = Get-RingMonsterContractBoardState -Game $game
 
     Assert-Equal -Actual @($beforeReport.UnreportedProof).Count -Expected 1 -Message "Dorr's board should show defeated monster proof before it is reported."
+    Assert-Equal -Actual $beforeReport.UnreportedProof[0].BountyCopper -Expected 57 -Message "Unreported proof should preview its wall-bounty payout."
     Assert-Equal -Actual @($beforeReport.BookableContracts).Count -Expected 0 -Message "Unreported proof should not appear as a bookable contract yet."
     Assert-Equal -Actual @($afterReport.UnreportedProof).Count -Expected 0 -Message "Reported proof should leave the unreported board section."
     Assert-Equal -Actual $afterReport.BookableContracts[0].Contract.Id -Expected "wall_scraper_trial" -Message "Reported wall proof should make Wall-Scraper bookable on the board."
@@ -872,6 +895,7 @@ Test-RingMonsterChallengePreviewRequiresLevelFour
 Test-RingMonsterChallengePreviewReflectsReputationAndChampionTitle
 Test-RingMonsterContractsStayBarbarianOnly
 Test-RingMonsterContractsRequireReportedZoneDefeat
+Test-RingMonsterReportsPayBountyAndSupplyFavor
 Test-RingMonsterContractsKeepExtraGates
 Test-RingMonsterContractsIncludeHigherZoneThreats
 Test-RingMonsterContractWinPaysAndLocksContract

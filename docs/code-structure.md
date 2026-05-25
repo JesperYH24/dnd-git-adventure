@@ -397,6 +397,7 @@ Ansvar:
 - camp building and camp safety levels
 - monster oddity hauling tied to stable-yard pack animal capacity
 - Docks monster-oddity cashout through Auntie Brindle, with draconic oddities marked for Veyra/Mira ledger follow-up
+- Dorr report bounties and one-time Wall Watch supply favor discounts for the first serious monster proof report
 - Guard Station/Watchman Belor wall-watch reactions to monster-zone landmarks, creature proof, and Dorr-reported trails
 - next implementation focus is deeper Wall Watch/Dorr board actions, more city consequences for reported patterns, and class-flavored ambush/consequence reads; ranged weapons should wait
 
