@@ -32,7 +32,7 @@
 - quest log with accepted, completed, failed, and story-note views; completed arcs such as Understreet collapse raw clues into a readable summary while detailed evidence remains available to the code
 - class story approach tracking for story quests: Barbarian builds hard-proof identity, Bard builds soft-power identity, and Fighter builds civic-trust identity only when the player chooses a class-specific solution and succeeds
 - town source and shop text now reinforces those identities more consistently: Barbarian reads as hard-proof force, Bard as social/performance leverage, and Fighter as civic trust, discipline, gear presentation, and knightly public credibility
-- class progression planning for level 1-4 is tracked in [Class Level 1-4 Progression](class-level-1-4-progression.md)
+- class and level-cap progression planning is tracked in [Level Progression](level-progression.md)
 
 ## Combat
 

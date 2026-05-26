@@ -50,13 +50,13 @@ powershell -ExecutionPolicy Bypass -File .\adventure.ps1
 ## Main docs
 
 - [Game Mechanics](docs/game-mechanics.md)
-- [Class Level 1-4 Progression](docs/class-level-1-4-progression.md)
+- [Level Progression](docs/level-progression.md)
 - [Story and Progression](docs/story-and-progression.md)
 - [Code Structure](docs/code-structure.md)
 - [Visualizations](docs/visualizations.md)
 - [Future Ideas](docs/future-ideas.md)
 
-The class progression doc tracks the current level cap, including class kits, Bard spell slots, level-gated utility spells, and the next non-Bard priorities.
+The level progression doc tracks the current level cap, including class kits, Bard spell slots, level-gated utility spells, and the next non-Bard priorities.
 
 ## Current next-work direction
 

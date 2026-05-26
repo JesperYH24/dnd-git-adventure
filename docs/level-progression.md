@@ -1,6 +1,6 @@
-# Class Level 1-4 Progression
+# Level Progression
 
-This document tracks the intended class feature shape through level 4, where the current class kits are meant to feel recognizable, complete, and distinct. The monster zone now starts the next progression spine from level 4 toward level 6, but class feature design beyond level 4 is still future work.
+This document tracks the intended class feature shape through level 4, where the current class kits are meant to feel recognizable, complete, and distinct. It also tracks the current level-cap spine from level 4 toward level 6 as monster-zone progression comes online.
 
 Legend:
 
