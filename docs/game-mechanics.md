@@ -146,6 +146,7 @@ Current camp levels:
 
 - explicit day/night state in town choice menus
 - expanded town HUD showing hero name, class level, HP, AC, XP progress or level-up readiness, coin, daily story/work availability, and relevant class resources
+- status details split core hero state and weapon math into separate rows so the player can scan HP, AC, inventory, hit bonus, and damage without one dense terminal line wrapping awkwardly
 - Bard town HUD resources include Bardic Inspiration dice, spell save DC, level 1/2 spell slots when unlocked, and daily performance count
 - Barbarian and Fighter town HUD resources include rage state or Second Wind/Action Surge uses when relevant
 - after the Civic Vault exposes Halewick, the town menu can show a short aftermath reminder that points the player toward an inn rest while the city gathers witness reports; this reminder clears once outer-wall monster rumors become the new next step

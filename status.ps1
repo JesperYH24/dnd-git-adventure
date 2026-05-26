@@ -126,6 +126,19 @@ function Get-CombatTargetLabel {
     return "Monster"
 }
 
+function Get-HeroStatusOverviewLines {
+    param(
+        $Hero,
+        [int]$HeroHP,
+        $Snapshot
+    )
+
+    return @(
+        "Level: $($Hero.Level) | AC: $($Snapshot.ArmorClass) | HP: $HeroHP/$($Hero.HP) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots"
+        "Weapon: $($Snapshot.Weapon.Name) | To Hit: +$($Snapshot.Weapon.TotalAttackBonus) | Damage: $(Get-WeaponDamageRollText -WeaponProfile $Snapshot.Weapon) + $($Snapshot.Weapon.DamageBonus) ($($Snapshot.Weapon.TotalDamageMin)-$($Snapshot.Weapon.TotalDamageMax))"
+    )
+}
+
 function Write-HeroStatusDetails {
     param(
         $Hero,
@@ -140,7 +153,9 @@ function Write-HeroStatusDetails {
         Write-ColorLine "$($Hero.Name): $HeroHP/$($Hero.HP) HP" $Snapshot.HPColor
     }
 
-    Write-ColorLine "Level: $($Hero.Level) | AC: $($Snapshot.ArmorClass) | Weapon: $($Snapshot.Weapon.Name) | To Hit: +$($Snapshot.Weapon.TotalAttackBonus) | Damage: $(Get-WeaponDamageRollText -WeaponProfile $Snapshot.Weapon) + $($Snapshot.Weapon.DamageBonus) ($($Snapshot.Weapon.TotalDamageMin)-$($Snapshot.Weapon.TotalDamageMax)) | Inventory: $(Get-InventoryUsedSlots -Hero $Hero)/$(Get-InventoryCapacity -Hero $Hero) slots" "White"
+    foreach ($overviewLine in (Get-HeroStatusOverviewLines -Hero $Hero -HeroHP $HeroHP -Snapshot $Snapshot)) {
+        Write-ColorLine $overviewLine "White"
+    }
     Write-ColorLine "XP: $($Snapshot.DisplayXP)/$($Snapshot.NextLevelXP)" "White"
     if (-not [string]::IsNullOrWhiteSpace($Snapshot.TimeStatus)) {
         Write-ColorLine "Time: $($Snapshot.TimeStatus)" "White"

@@ -77,6 +77,17 @@ function Test-HeroStatusSnapshotIncludesRelationshipHint {
     Assert-True -Condition ($snapshot.RelationshipHint -like "*Belor*" -and $snapshot.RelationshipHint -like "*armorer*") -Message "Hero status should carry the current town relationship hint so payoffs remain visible outside the town menu."
 }
 
+function Test-HeroStatusOverviewSplitsLongCombatLine {
+    $game = Initialize-Game -Class "Fighter"
+    $snapshot = Get-HeroStatusSnapshot -Hero $game.Hero -HeroHP $game.Hero.HP -Game $game
+
+    $lines = @(Get-HeroStatusOverviewLines -Hero $game.Hero -HeroHP $game.Hero.HP -Snapshot $snapshot)
+
+    Assert-Equal -Actual $lines.Count -Expected 2 -Message "Hero status overview should split the dense combat line into two readable rows."
+    Assert-True -Condition ($lines[0] -like "*Level:*" -and $lines[0] -like "*Inventory:*") -Message "The first status overview row should carry hero state and inventory."
+    Assert-True -Condition ($lines[1] -like "*Weapon:*" -and $lines[1] -like "*Damage:*") -Message "The second status overview row should carry weapon combat details."
+}
+
 function Test-HeroSkillTreeRowsShowProficiencyAndExpertise {
     $hero = Get-Hero -Class "Bard"
     $hero.Level = 3
@@ -500,6 +511,7 @@ Test-TownHeroHudFlagsLevelUpReady
 Test-TownHeroResourceHudShowsBardResources
 Test-TownHeroResourceHudShowsMartialResources
 Test-HeroStatusSnapshotIncludesRelationshipHint
+Test-HeroStatusOverviewSplitsLongCombatLine
 Test-HeroSkillTreeRowsShowProficiencyAndExpertise
 Test-TownCharacterMenuCanOpenSkillTree
 Test-BardCanCastInvisibilityFromQuestPreparation

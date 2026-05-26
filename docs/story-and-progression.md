@@ -19,6 +19,7 @@ From there the player can:
 - head to town
 - read the quest log
 - save the adventure
+- read status details with core hero state and weapon math split into separate scan-friendly rows
 
 The city remains blocked until the tutorial quest is completed.
 
