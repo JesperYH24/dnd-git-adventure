@@ -144,6 +144,29 @@ function Test-SilverKettlePayoutBonusAppliesOnce {
     Assert-Equal -Actual $game.Hero.CurrencyCopper -Expected 210 -Message "Hero coin should include the one boosted payout and the normal follow-up payout."
 }
 
+function Test-QuestRewardTextShowsDynamicDayJobPay {
+    $game = Initialize-Game
+    $quest = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+    $baseText = Get-QuestRewardText -Quest $quest -Game $game
+
+    $game.Hero.Level = 3
+    $game.Hero.LevelCap = 3
+    $veteranText = Get-QuestRewardText -Quest $quest -Game $game
+
+    Assert-True -Condition ($baseText -like "*0 GP, 9 SP, 0 CP*" -and $baseText -notlike "*1 GP, 1 SP, 0 CP*") -Message "Reward preview should show the level 1 day-job payout before veteran rate applies."
+    Assert-True -Condition ($veteranText -like "*1 GP, 1 SP, 0 CP*") -Message "Reward preview should show the level 3 veteran day-job payout."
+}
+
+function Test-QuestRewardTextShowsActiveSilverKettleBonus {
+    $game = Initialize-Game
+    $game.Town.QuestPayoutBonusCopper = 20
+    $quest = Find-TownQuest -Game $game -QuestId "dayjob_market_delivery"
+
+    $rewardText = Get-QuestRewardText -Quest $quest -Game $game
+
+    Assert-True -Condition ($rewardText -like "*0 GP, 9 SP, 0 CP*" -and $rewardText -like "*Silver Kettle*" -and $rewardText -like "*0 GP, 2 SP, 0 CP*") -Message "Reward preview should show the active Silver Kettle payout bonus before the quest is completed."
+}
+
 function Test-DayJobVeteranRateImprovesPayAtLevelThree {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -2090,6 +2113,8 @@ Test-NightWatchReliefCompletesAndSetsStoryFlag
 Test-StorehouseTroubleCompletesAndGrantsItemReward
 Test-DayJobPaysCoinButNoXP
 Test-SilverKettlePayoutBonusAppliesOnce
+Test-QuestRewardTextShowsDynamicDayJobPay
+Test-QuestRewardTextShowsActiveSilverKettleBonus
 Test-DayJobVeteranRateImprovesPayAtLevelThree
 Test-OnlyOneStoryQuestCanBeStartedPerDay
 Test-TierTwoRequiresBothOpeningInvestigationLeads

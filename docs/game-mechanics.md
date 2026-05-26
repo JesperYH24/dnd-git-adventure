@@ -151,6 +151,7 @@ Current camp levels:
 - after the Civic Vault exposes Halewick, the town menu can show a short aftermath reminder that points the player toward an inn rest while the city gathers witness reports; this reminder clears once outer-wall monster rumors become the new next step
 - before monster zone opens, the town menu can also show a compact next-step reminder for major progression beats: pending level-up rests, daily story-lock rests, Veyra/Docks leads, charter-scribe breakthroughs, higher-city proof, and Civic Vault direction
 - town relationship hints surface active inn and social payoffs beside the main progression reminder, such as Bard private-salon openings, Fighter tourney-patron attention, Barbarian mercenary gear leads, active Silver Kettle payout insight, and Bent Nail under-table leads
+- quest reward previews in town menus use current state for day-job veteran pay and active Silver Kettle payout bonuses, so the listed reward matches the payout logic before the player commits
 - post-Civic-Vault town reactions now appear before monster zone begins through Guard Station source text, Belor street talk, Docks/High Ledger intros, palace-repair ambience, and innkeeper rumor lines
 - post-Civic-Vault inn rest can start the outer-wall monster rumor state after Halewick's draconic escape
 - town hub now split into submenus:

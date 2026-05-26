@@ -41,6 +41,7 @@ After the warning is delivered, the game opens into a full town hub where the he
 - buy pack animals or a riding horse at the stable yard
 - see compact relationship hints when inn or social choices have opened a useful next payoff
 - turn Silver Kettle economic insight into one boosted quest payout rather than a permanent passive bonus
+- preview current reward changes from veteran day-job rates and active relationship payout bonuses before starting work
 - if playing `Bard`, perform for coin, build venue reputation, and later turn Silver Kettle/private salon standing into patron-paid upper-room work
 - if playing `Barbarian` or `Fighter`, test the public market crowd with a rough war-rhythm or old war-ballad, but not inn stages or private salons
 - any class can test the tourney ground's open guest lists, while `Fighter` gets the real squire, patron, armored-duel, and later mounted-jousting progression

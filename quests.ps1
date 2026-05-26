@@ -878,7 +878,10 @@ function Get-UnderstreetFinalEntryMessage {
 }
 
 function Get-QuestRewardText {
-    param($Quest)
+    param(
+        $Quest,
+        $Game = $null
+    )
 
     $parts = @()
 
@@ -890,8 +893,16 @@ function Get-QuestRewardText {
         $parts += "$($Quest.RewardXP) XP"
     }
 
-    if ($null -ne $Quest.PSObject.Properties["RewardCopper"] -and [int]$Quest.RewardCopper -gt 0) {
-        $parts += (Convert-CopperToCurrencyText -Copper ([int]$Quest.RewardCopper))
+    $rewardCopper = if ($null -ne $Game) { Get-DayJobRewardCopper -Game $Game -Quest $Quest } else { [int]$Quest.RewardCopper }
+
+    if ($rewardCopper -gt 0) {
+        $rewardText = Convert-CopperToCurrencyText -Copper $rewardCopper
+
+        if ($null -ne $Game -and $null -ne $Game.Town -and [int]$Game.Town.QuestPayoutBonusCopper -gt 0) {
+            $rewardText += " + Silver Kettle $(Convert-CopperToCurrencyText -Copper ([int]$Game.Town.QuestPayoutBonusCopper))"
+        }
+
+        $parts += $rewardText
     }
 
     if ($null -ne $Quest.PSObject.Properties["RewardItemName"] -and -not [string]::IsNullOrWhiteSpace($Quest.RewardItemName)) {
@@ -1253,7 +1264,7 @@ function Show-QuestLog {
                 $tierText = Get-TownQuestTierSuffix -Quest $townQuest
                 Write-ColorLine "  Type: $($townQuest.QuestType)$tierText" "DarkGray"
                 Write-ColorLine "  Objective: $($townQuest.Objective)" "DarkGray"
-                Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest)" "DarkGray"
+                Write-ColorLine "  Reward: $(Get-QuestRewardText -Quest $townQuest -Game $Game)" "DarkGray"
             }
         }
 
@@ -1438,7 +1449,7 @@ function Start-TownQuestLogMenu {
                         $tierText = Get-TownQuestTierSuffix -Quest $quest
                         Write-ColorLine "$($i + 1). $($quest.Name) [$($quest.Source)$tierText]" "White"
                         Write-ColorLine "   Objective: $($quest.Objective)" "DarkGray"
-                        Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
+                        Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest -Game $Game)" "DarkGray"
                     }
 
                     Write-ColorLine ""

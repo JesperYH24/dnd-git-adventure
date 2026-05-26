@@ -1169,7 +1169,7 @@ function Show-TownQuestSource {
                 Write-ColorLine "   Time: $timeText" "DarkGray"
             }
             Write-ColorLine "   $($quest.Description)" "DarkGray"
-            Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest)" "DarkGray"
+            Write-ColorLine "   Reward: $(Get-QuestRewardText -Quest $quest -Game $Game)" "DarkGray"
         }
 
         Write-ColorLine ""
@@ -1303,7 +1303,7 @@ function Start-TownQuestPreparationMenu {
             -BardText "$($Quest.Name) waits when Gariand is ready. He can make final adjustments, steady his nerves, and choose how he wants to carry himself before stepping out.")
         Write-ColorLine "Quest: $($Quest.Name)" "White"
         Write-ColorLine "Objective: $($Quest.Objective)" "DarkGray"
-        Write-ColorLine "Reward: $(Get-QuestRewardText -Quest $Quest)" "DarkGray"
+        Write-ColorLine "Reward: $(Get-QuestRewardText -Quest $Quest -Game $Game)" "DarkGray"
         Write-ColorLine ""
         Write-ColorLine "1. Start the quest now" "White"
         Write-ColorLine "2. Check inventory and gear" "White"
