@@ -591,12 +591,15 @@ function Invoke-StoryCombat {
         [ref]$HeroHP,
         $Monster,
         [string]$Title,
-        [string]$IntroText
+        [string]$IntroText,
+        [bool]$HeroStartsOverride = $false,
+        [bool]$HasHeroStartsOverride = $false,
+        [bool]$MonsterStartsOffBalance = $false
     )
 
     # Test hook so city quest coverage can drive story outcomes without dropping into the full combat input loop.
     if ($null -ne $global:StoryCombatOverride) {
-        return (& $global:StoryCombatOverride $Game $HeroHP $Monster $Title $IntroText)
+        return (& $global:StoryCombatOverride $Game $HeroHP $Monster $Title $IntroText $HeroStartsOverride $HasHeroStartsOverride $MonsterStartsOffBalance)
     }
 
     $monsterHP = $Monster.hp
@@ -610,11 +613,21 @@ function Invoke-StoryCombat {
     Write-Scene "$($Monster.article) $($Monster.name) steps out to stop $($Game.Hero.Name)."
     Write-ColorLine ""
 
-    Start-DetectionPhase `
-        -Hero $Game.Hero `
-        -Monster $Monster `
-        -HeroStarts ([ref]$heroStarts) `
-        -MonsterStarts ([ref]$monsterStarts)
+    if ($HasHeroStartsOverride) {
+        $heroStarts = $HeroStartsOverride
+        $monsterStarts = -not $HeroStartsOverride
+    }
+    else {
+        Start-DetectionPhase `
+            -Hero $Game.Hero `
+            -Monster $Monster `
+            -HeroStarts ([ref]$heroStarts) `
+            -MonsterStarts ([ref]$monsterStarts)
+    }
+
+    if ($MonsterStartsOffBalance) {
+        $monsterOffBalance = $true
+    }
 
     Start-CombatLoop `
         -Hero $Game.Hero `
@@ -1337,12 +1350,22 @@ function Resolve-UnderstreetRoomEncounter {
         return "None"
     }
 
+    $invisibilityEdge = Resolve-UnderstreetInvisibilityEncounterEdge -Game $Game -Room $Room
+
+    if ($invisibilityEdge.Outcome -eq "Avoided") {
+        $Room.EncounterResolved = $true
+        return "Avoided"
+    }
+
     $combatResult = Invoke-StoryCombat `
         -Game $Game `
         -HeroHP $HeroHP `
         -Monster (& $Room.EncounterFactory) `
         -Title $Room.EncounterTitle `
-        -IntroText $Room.EncounterIntro
+        -IntroText $Room.EncounterIntro `
+        -HeroStartsOverride $invisibilityEdge.HeroStarts `
+        -HasHeroStartsOverride $invisibilityEdge.HeroStartsOverride `
+        -MonsterStartsOffBalance $invisibilityEdge.MonsterOffBalance
 
     if ($combatResult.Defeated) {
         return "Defeated"
@@ -1385,6 +1408,107 @@ function Resolve-UnderstreetRoomEncounter {
     }
 
     return "None"
+}
+
+function Test-UnderstreetInvisibilityEncounterEdgeVisible {
+    param(
+        $Hero,
+        $Room
+    )
+
+    if ($null -eq $Hero -or $null -eq $Room) {
+        return $false
+    }
+
+    if ($Room.EncounterResolved -or [string]::IsNullOrWhiteSpace($Room.EncounterFactory)) {
+        return $false
+    }
+
+    return (Get-HeroInvisibilityStealthBonus -Hero $Hero) -gt 0
+}
+
+function Resolve-UnderstreetInvisibilityEncounterEdge {
+    param(
+        $Game,
+        $Room
+    )
+
+    $result = [PSCustomObject]@{
+        Outcome = "None"
+        HeroStarts = $false
+        HeroStartsOverride = $false
+        MonsterOffBalance = $false
+    }
+
+    if (-not (Test-UnderstreetInvisibilityEncounterEdgeVisible -Hero $Game.Hero -Room $Room)) {
+        return $result
+    }
+
+    Write-EmphasisLine -Text "Invisibility gives $($Game.Hero.Name) the first clean read on this room." -Color "DarkYellow"
+
+    while ($true) {
+        if (-not $Room.BossRoom) {
+            Write-ColorLine "1. Slip past the encounter and let the spell fade" "White"
+            Write-ColorLine "2. Break cover with the first strike" "White"
+            Write-ColorLine "3. Hold position and face the encounter normally" "White"
+        }
+        else {
+            Write-ColorLine "1. Break cover with the first strike" "White"
+            Write-ColorLine "2. Hold position and face the encounter normally" "White"
+        }
+
+        Write-ColorLine ""
+        $choice = Read-Host "Choose"
+
+        if (-not $Room.BossRoom) {
+            switch ($choice) {
+                "1" {
+                    Clear-HeroBuff -Hero $Game.Hero
+                    Write-Scene "$($Game.Hero.Name) uses the unseen angle to ghost past the danger. The cramped understreet dust catches the spell as he moves on, and the shimmer fades."
+                    Write-ColorLine ""
+                    $result.Outcome = "Avoided"
+                    return $result
+                }
+                "2" {
+                    Clear-HeroBuff -Hero $Game.Hero
+                    Write-Scene "$($Game.Hero.Name) breaks invisibility at the perfect moment. The room reacts late, already off balance."
+                    Write-ColorLine ""
+                    $result.Outcome = "Ambush"
+                    $result.HeroStarts = $true
+                    $result.HeroStartsOverride = $true
+                    $result.MonsterOffBalance = $true
+                    return $result
+                }
+                "3" {
+                    Write-Scene "$($Game.Hero.Name) lets the encounter develop without spending the spell's hidden angle."
+                    Write-ColorLine ""
+                    return $result
+                }
+            }
+        }
+        else {
+            switch ($choice) {
+                "1" {
+                    Clear-HeroBuff -Hero $Game.Hero
+                    Write-Scene "$($Game.Hero.Name) cannot slip past the heart of the job, but invisibility buys the first strike before the room can settle."
+                    Write-ColorLine ""
+                    $result.Outcome = "Ambush"
+                    $result.HeroStarts = $true
+                    $result.HeroStartsOverride = $true
+                    $result.MonsterOffBalance = $true
+                    return $result
+                }
+                "2" {
+                    Write-Scene "$($Game.Hero.Name) holds position and lets the final confrontation find its natural shape."
+                    Write-ColorLine ""
+                    return $result
+                }
+            }
+        }
+
+        Write-ColorLine "Choose one of the listed actions." "DarkYellow"
+        Write-ColorLine ""
+    }
 }
 
 function Show-UnderstreetRoomActions {

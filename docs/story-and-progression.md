@@ -109,6 +109,7 @@ The current quest-check model has moved from fixed stat choices into explicit ap
 - locked caches
 - safe-room short rests
 - simple encounter loot from defeated Understreet mobs, mostly small coin pouches and a few low-tier recovery finds that are collected through the normal room-loot action
+- Bard `Invisibility` encounter leverage: an active spell can be spent to slip past non-boss rooms without loot or to break cover for a first-strike, off-balance combat opener
 - stronger finale encounters that make potion use and pacing matter, with non-boss hound burst tuned down so the route stays tense without randomly deleting a healthy level 3 Bard before Serik
 
 ## Post-Chapter-Two state

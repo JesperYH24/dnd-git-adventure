@@ -112,7 +112,7 @@ Current camp levels:
 - `Healing Word` targets the hero and is not blocked by enemy distance
 - `Charm Person` can spend a level 1 slot on tagged social quest checks; the target rolls a Wisdom save with advantage, and a failed save grants advantage on the social check
 - `Suggestion` can spend a level 2 slot on tagged higher-pressure social quest checks; the target rolls a Wisdom save, and a failed save resolves the social opening without a further ability check
-- `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms as soon as Bard level 3 unlocks level 2 slots, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; creatures with blindsight can counter that invisibility bonus
+- `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms as soon as Bard level 3 unlocks level 2 slots, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; in Understreet-style dungeon encounters it can also be spent to bypass a non-boss room without loot or to open combat with the hero acting first and the enemy off balance, while creatures with blindsight can counter that invisibility bonus in the monster zone
 - `Enhance Ability` can be cast at Bard level 4 before non-combat quest checks, spends a level 2 slot, focuses the check's ability, and grants advantage on matching ability checks while active
 - `Cutting Words` works as a reaction and spends bardic inspiration
 - prepared bardic inspiration recovers on short rest, not automatically on an inn long rest

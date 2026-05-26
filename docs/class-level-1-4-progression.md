@@ -92,7 +92,7 @@ Suggested first spell list:
 | Level 1 spell | `Faerie Fire` | Accuracy/control support. Helps Bard solve fights through setup rather than raw damage. |
 | Level 1 spell | `Charm Person` | Social spell with quest and town use. |
 | Level 2 spell | `Suggestion` | Social/control spell for level 3+. |
-| Level 2 spell | `Invisibility` | Exploration and danger-avoidance spell available as soon as level 3 unlocks level 2 slots. |
+| Level 2 spell | `Invisibility` | Exploration and danger-avoidance spell available as soon as level 3 unlocks level 2 slots; it now also gives Understreet-style dungeon encounter leverage before monster-zone play. |
 | Level 2 spell | `Enhance Ability` | Level 4 broader skill support: spends a level 2 slot and gives advantage on the chosen ability checks while active. |
 
 Implementation order:

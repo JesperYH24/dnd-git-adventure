@@ -1439,6 +1439,74 @@ function Test-BardCanCastInvisibilityInCalmUnderstreetRoom {
     Assert-Equal -Actual $game.Hero.CurrentSpellSlots.Level2 -Expected 2 -Message "Dungeon-room Invisibility should spend one level 2 spell slot."
 }
 
+function Test-BardInvisibilityCanBypassUnderstreetEncounter {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $rooms = Get-UnderstreetComplexRooms
+    $room = $rooms["sentry_turn"]
+    $currentRoomId = "sentry_turn"
+
+    Apply-HeroBuff -Hero $game.Hero -BuffType "Invisibility" -BuffName "Invisibility"
+    Use-ReadHostSequence -Values @("1")
+
+    $result = Resolve-UnderstreetRoomEncounter -Game $game -Room $room -HeroHP ([ref]$heroHP) -PreviousRoomId "contraband_hall" -CurrentRoomId ([ref]$currentRoomId)
+
+    Assert-Equal -Actual $result -Expected "Avoided" -Message "Invisibility should let a bard slip past a normal Understreet encounter."
+    Assert-Equal -Actual $room.EncounterResolved -Expected $true -Message "Bypassing the encounter should mark the room resolved."
+    Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Using the hidden angle to bypass a room should spend the active Invisibility buff."
+    Assert-Equal -Actual $room.Loot.Count -Expected 0 -Message "Bypassing an encounter should not create defeated-enemy loot."
+}
+
+function Test-BardInvisibilityCanOpenUnderstreetEncounterOffBalance {
+    $game = Initialize-Game -Class "Bard"
+    $heroHP = $game.Hero.HP
+    $rooms = Get-UnderstreetComplexRooms
+    $room = $rooms["contraband_hall"]
+    $currentRoomId = "contraband_hall"
+    $script:StoryCombatHeroStartsOverride = $false
+    $script:StoryCombatHasHeroStartsOverride = $false
+    $script:StoryCombatMonsterStartsOffBalance = $false
+
+    Apply-HeroBuff -Hero $game.Hero -BuffType "Invisibility" -BuffName "Invisibility"
+    Use-ReadHostSequence -Values @("2")
+
+    $global:StoryCombatOverride = {
+        param(
+            $Game,
+            [ref]$HeroHP,
+            $Monster,
+            [string]$Title,
+            [string]$IntroText,
+            [bool]$HeroStartsOverride,
+            [bool]$HasHeroStartsOverride,
+            [bool]$MonsterStartsOffBalance
+        )
+
+        $script:StoryCombatHeroStartsOverride = $HeroStartsOverride
+        $script:StoryCombatHasHeroStartsOverride = $HasHeroStartsOverride
+        $script:StoryCombatMonsterStartsOffBalance = $MonsterStartsOffBalance
+
+        return [PSCustomObject]@{
+            Won = $true
+            Defeated = $false
+            Fled = $false
+        }
+    }
+
+    try {
+        $result = Resolve-UnderstreetRoomEncounter -Game $game -Room $room -HeroHP ([ref]$heroHP) -PreviousRoomId "sealed_descent" -CurrentRoomId ([ref]$currentRoomId)
+    }
+    finally {
+        $global:StoryCombatOverride = $null
+    }
+
+    Assert-Equal -Actual $result -Expected "Won" -Message "Choosing the ambush route should still resolve through combat."
+    Assert-Equal -Actual $script:StoryCombatHasHeroStartsOverride -Expected $true -Message "Invisibility ambush should override the normal detection opening."
+    Assert-Equal -Actual $script:StoryCombatHeroStartsOverride -Expected $true -Message "Invisibility ambush should make the hero act first."
+    Assert-Equal -Actual $script:StoryCombatMonsterStartsOffBalance -Expected $true -Message "Invisibility ambush should start the monster off balance."
+    Assert-Equal -Actual $game.Hero.ActiveBuff -Expected $null -Message "Breaking cover for the first strike should spend the active Invisibility buff."
+}
+
 function Test-UnderstreetComplexIncludesExtendedMazeLayout {
     $rooms = Get-UnderstreetComplexRooms
 
@@ -2173,6 +2241,8 @@ Test-UnderstreetHoundCritIsDangerousButNotBardErasing
 Test-UnderstreetEncountersAddSimpleLootAfterVictory
 Test-UnderstreetShortRestHealsAndClearsBuff
 Test-BardCanCastInvisibilityInCalmUnderstreetRoom
+Test-BardInvisibilityCanBypassUnderstreetEncounter
+Test-BardInvisibilityCanOpenUnderstreetEncounterOffBalance
 Test-UnderstreetComplexIncludesExtendedMazeLayout
 Test-UnderstreetSearchCanRevealKeyAndLockedCacheLoot
 Test-BardUnderstreetFinaleUsesClassAwareText
