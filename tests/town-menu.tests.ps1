@@ -68,6 +68,15 @@ function Test-TownHeroResourceHudShowsMartialResources {
     Assert-True -Condition ($fighterHud -like "*Action Surge 1/1*") -Message "The resource HUD should show fighter Action Surge once it is unlocked."
 }
 
+function Test-HeroStatusSnapshotIncludesRelationshipHint {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.StreetFlags["BelorTourneyStanding"] = $true
+
+    $snapshot = Get-HeroStatusSnapshot -Hero $game.Hero -HeroHP $game.Hero.HP -Game $game
+
+    Assert-True -Condition ($snapshot.RelationshipHint -like "*Belor*" -and $snapshot.RelationshipHint -like "*armorer*") -Message "Hero status should carry the current town relationship hint so payoffs remain visible outside the town menu."
+}
+
 function Test-HeroSkillTreeRowsShowProficiencyAndExpertise {
     $hero = Get-Hero -Class "Bard"
     $hero.Level = 3
@@ -490,6 +499,7 @@ Test-TownHeroHudShowsNameHpAndCoin
 Test-TownHeroHudFlagsLevelUpReady
 Test-TownHeroResourceHudShowsBardResources
 Test-TownHeroResourceHudShowsMartialResources
+Test-HeroStatusSnapshotIncludesRelationshipHint
 Test-HeroSkillTreeRowsShowProficiencyAndExpertise
 Test-TownCharacterMenuCanOpenSkillTree
 Test-BardCanCastInvisibilityFromQuestPreparation

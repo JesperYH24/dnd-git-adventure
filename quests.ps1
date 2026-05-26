@@ -1254,6 +1254,11 @@ function Show-QuestLog {
         $acceptedQuests = @($Game.Town.Quests | Where-Object { $_.Accepted -and -not $_.Completed })
         $completedQuests = @($Game.Town.Quests | Where-Object { $_.Completed })
         $storyNotes = @(Get-StoryClueNotes -Game $Game)
+        $relationshipHint = Get-TownRelationshipHintText -Game $Game
+
+        if (-not [string]::IsNullOrWhiteSpace($relationshipHint)) {
+            Write-ColorLine $relationshipHint "Magenta"
+        }
 
         if ($acceptedQuests.Count -gt 0) {
             Write-ColorLine ""

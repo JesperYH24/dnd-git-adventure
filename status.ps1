@@ -63,11 +63,13 @@ function Get-HeroStatusSnapshot {
     $performanceStatus = ""
     $mountStatus = ""
     $monsterZoneStatus = ""
+    $relationshipHint = ""
 
     if ($null -ne $Game -and $null -ne $Game.Town) {
         $storyQuestStatus = if ($Game.Town.StoryQuestDoneToday) { "Used" } else { "Ready" }
         $dayJobStatus = if ($Game.Town.DayJobDoneToday) { "Used" } else { "Ready" }
         $mountStatus = Get-TownMountSummaryText -Game $Game
+        $relationshipHint = Get-TownRelationshipHintText -Game $Game
 
         if (Get-Command Test-MonsterZoneUnlocked -ErrorAction SilentlyContinue) {
             if (Test-MonsterZoneUnlocked -Game $Game) {
@@ -110,6 +112,7 @@ function Get-HeroStatusSnapshot {
         PerformanceStatus = $performanceStatus
         MountStatus = $mountStatus
         MonsterZoneStatus = $monsterZoneStatus
+        RelationshipHint = $relationshipHint
     }
 }
 
@@ -145,6 +148,9 @@ function Write-HeroStatusDetails {
     Write-ColorLine "Currency: $($Snapshot.CurrencyText) | Story Quest Today: $($Snapshot.StoryQuestStatus) | Day Job Today: $($Snapshot.DayJobStatus)" "White"
     if ($Snapshot.StoryNoteCount -gt 0) {
         Write-ColorLine "Story Notes Logged: $($Snapshot.StoryNoteCount)" "DarkYellow"
+    }
+    if (-not [string]::IsNullOrWhiteSpace($Snapshot.RelationshipHint)) {
+        Write-ColorLine $Snapshot.RelationshipHint "Magenta"
     }
     if (-not [string]::IsNullOrWhiteSpace($Snapshot.MountStatus) -and $Snapshot.MountStatus -ne "No owned animals yet.") {
         Write-ColorLine "Stable: $($Snapshot.MountStatus)" "DarkCyan"
