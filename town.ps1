@@ -235,6 +235,14 @@ function Get-TownRelationshipHintText {
         if ([string]$Game.Town.Relationships["LanternAudience"] -eq "Warm") {
             return "Relationship: Lantern Rest has a warm audience for $heroName, and the instrument shop has a Stage Lute lead."
         }
+
+        if ([bool]$Game.Town.StreetFlags["BelorSquarePermit"]) {
+            return "Relationship: Belor cleared $heroName for market performance space; public square work pays better with the watch looking on."
+        }
+
+        if ([bool]$Game.Town.StreetFlags["HadrikRapierDiscountUnlocked"]) {
+            return "Relationship: Hadrik has a Slim Forge Rapier lead waiting at the smithy for $heroName."
+        }
     }
     elseif ($Game.Hero.Class -eq "Fighter") {
         if ($null -ne $Game.Town.Relationships["TourneyPatrons"]) {
@@ -244,6 +252,14 @@ function Get-TownRelationshipHintText {
         if ([string]$Game.Town.Relationships["LanternTourneyTalk"] -eq "Warm") {
             return "Relationship: Lantern Rest tourney talk is warm, and the armorer has a Heater Shield lead."
         }
+
+        if ([bool]$Game.Town.StreetFlags["BelorTourneyStanding"]) {
+            return "Relationship: Belor has given $heroName formal watch respect; the armorer has knightly shield and mail favors ready."
+        }
+
+        if ([bool]$Game.Town.StreetFlags["HadrikKnightlyLongswordDiscountUnlocked"]) {
+            return "Relationship: Hadrik has a Knightly Longsword lead waiting at the smithy for $heroName."
+        }
     }
     elseif ($Game.Hero.Class -eq "Barbarian") {
         if ([string]$Game.Town.Relationships["LanternMercenaries"] -eq "Warm") {
@@ -252,6 +268,14 @@ function Get-TownRelationshipHintText {
 
         if ([bool]$Game.Town.InnFlags["SilverKettleEconomicInsight"] -and [int]$Game.Town.QuestPayoutBonusCopper -gt 0) {
             return "Relationship: Silver Kettle contract talk can improve $heroName's next city payout and recovery supply path."
+        }
+
+        if ([bool]$Game.Town.StreetFlags["BelorWatchFavor"]) {
+            return "Relationship: Belor trusts $heroName for ugly watch work; the apothecary has healing supply favors ready."
+        }
+
+        if ([bool]$Game.Town.StreetFlags["SmithyDiscountUnlocked"]) {
+            return "Relationship: Hadrik has a Steel Great Axe lead waiting at the smithy for $heroName."
         }
     }
 

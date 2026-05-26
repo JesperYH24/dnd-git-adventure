@@ -381,6 +381,33 @@ function Test-TownRelationshipHintSurfacesBarbarianInnPayoff {
     Assert-True -Condition ($hint -like "*Lantern Rest mercenaries*" -and $hint -like "*travel steel*") -Message "Town relationship hint should point Barbarians from Lantern Rest standing toward practical gear leads."
 }
 
+function Test-TownRelationshipHintSurfacesBardStreetPayoff {
+    $game = Initialize-Game -Class "Bard"
+    $game.Town.StreetFlags["BelorSquarePermit"] = $true
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Belor*" -and $hint -like "*market performance*" -and $hint -like "*pays better*") -Message "Town relationship hint should surface Belor's bard market-performance permit."
+}
+
+function Test-TownRelationshipHintSurfacesFighterStreetPayoff {
+    $game = Initialize-Game -Class "Fighter"
+    $game.Town.StreetFlags["BelorTourneyStanding"] = $true
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Belor*" -and $hint -like "*formal watch respect*" -and $hint -like "*armorer*") -Message "Town relationship hint should surface Belor's fighter armorer favors."
+}
+
+function Test-TownRelationshipHintSurfacesBarbarianStreetPayoff {
+    $game = Initialize-Game -Class "Barbarian"
+    $game.Town.StreetFlags["BelorWatchFavor"] = $true
+
+    $hint = Get-TownRelationshipHintText -Game $game
+
+    Assert-True -Condition ($hint -like "*Belor trusts*" -and $hint -like "*apothecary*" -and $hint -like "*healing supply*") -Message "Town relationship hint should surface Belor's barbarian healing supply favor."
+}
+
 function Test-TownRelationshipHintSurfacesActiveSilverKettlePayoutBonus {
     $game = Initialize-Game
     $game.Town.InnFlags["SilverKettleEconomicInsight"] = $true
@@ -485,6 +512,9 @@ Test-TownNextStepReminderYieldsToMonsterZone
 Test-TownRelationshipHintSurfacesBardInnPayoff
 Test-TownRelationshipHintSurfacesFighterPatronPayoff
 Test-TownRelationshipHintSurfacesBarbarianInnPayoff
+Test-TownRelationshipHintSurfacesBardStreetPayoff
+Test-TownRelationshipHintSurfacesFighterStreetPayoff
+Test-TownRelationshipHintSurfacesBarbarianStreetPayoff
 Test-TownRelationshipHintSurfacesActiveSilverKettlePayoutBonus
 Test-TownRelationshipHintSkipsSpentSilverKettlePayoutBonus
 Test-TownRelationshipHintSurfacesBentNailFallback

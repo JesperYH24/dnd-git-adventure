@@ -40,6 +40,7 @@ After the warning is delivered, the game opens into a full town hub where the he
 - buy and sell gear
 - buy pack animals or a riding horse at the stable yard
 - see compact relationship hints when inn or social choices have opened a useful next payoff
+- keep street-contact rewards visible after Hadrik or Belor opens shop, performance, tourney, or supply favors
 - turn Silver Kettle economic insight into one boosted quest payout rather than a permanent passive bonus
 - preview current reward changes from veteran day-job rates and active relationship payout bonuses before starting work
 - if playing `Bard`, perform for coin, build venue reputation, and later turn Silver Kettle/private salon standing into patron-paid upper-room work
