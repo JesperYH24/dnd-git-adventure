@@ -76,6 +76,27 @@ function Test-NewSpecialtyShopsStockRealClassGear {
     Assert-Equal -Actual $chainShirt.DexBonusCap -Expected 2 -Message "The chain shirt should cap added dexterity as intended."
 }
 
+function Test-TownShopsStockNewPracticalPreparationItems {
+    $game = Initialize-Game
+    $market = @(Get-MarketOffers -Game $game)
+    $smithy = @(Get-SmithyOffers -Game $game)
+    $armorer = @(Get-ArmorerOffers -Game $game)
+    $apothecary = @(Get-ApothecaryOffers -Game $game)
+    $pack = New-TownItemFromOfferId -OfferId "market_travelers_pack"
+    $spear = New-TownItemFromOfferId -OfferId "smithy_guard_spear"
+    $buckler = New-TownItemFromOfferId -OfferId "armorer_buckler"
+    $salve = New-TownItemFromOfferId -OfferId "apothecary_ironroot_salve"
+
+    Assert-True -Condition ($market.Id -contains "market_travelers_pack") -Message "The market should stock a practical carrying upgrade."
+    Assert-True -Condition ($smithy.Id -contains "smithy_guard_spear") -Message "The smithy should stock a mid-price two-handed spear option."
+    Assert-True -Condition ($armorer.Id -contains "armorer_buckler") -Message "The armorer should stock a light shield option."
+    Assert-True -Condition ($apothecary.Id -contains "apothecary_ironroot_salve") -Message "The apothecary should stock a mid-tier recovery item."
+    Assert-Equal -Actual $pack.SlotBonus -Expected 3 -Message "Traveler's Pack should add carrying capacity."
+    Assert-Equal -Actual $spear.DamageDiceSides -Expected 10 -Message "Guard Spear should provide a real two-handed weapon profile."
+    Assert-Equal -Actual $buckler.ArmorBonus -Expected 1 -Message "Buckler should trade lower AC for lower slot cost."
+    Assert-Equal -Actual $salve.HealAmount -Expected 10 -Message "Ironroot Salve should sit between healing and greater healing potions."
+}
+
 function Test-FighterPatronStandingUnlocksHeraldicSurcoat {
     $game = Initialize-Game -Class "Fighter"
     $lockedOffers = @(Get-ArmorerOffers -Game $game)
@@ -93,16 +114,22 @@ function Test-ArcaneCuriosStockExpensiveMagicItems {
     $offers = @(Get-ArcaneCurioOffers -Game $game)
     $ring = New-TownItemFromOfferId -OfferId "arcane_warding_ring"
     $belt = New-TownItemFromOfferId -OfferId "arcane_ogre_knuckle_belt"
+    $pin = New-TownItemFromOfferId -OfferId "arcane_mothwing_pin"
+    $loop = New-TownItemFromOfferId -OfferId "arcane_candle_eye_loop"
     $charm = New-TownItemFromOfferId -OfferId "arcane_foxglass_charm"
     $brooch = New-TownItemFromOfferId -OfferId "arcane_gravesalt_brooch"
 
     Assert-True -Condition ($offers.Id -contains "arcane_warding_ring") -Message "The arcane curio shop should preview a magic AC item."
     Assert-True -Condition ($offers.Id -contains "arcane_ogre_knuckle_belt") -Message "The arcane curio shop should preview a magic stat item."
+    Assert-True -Condition ($offers.Id -contains "arcane_mothwing_pin") -Message "The arcane curio shop should preview a DEX stat item."
+    Assert-True -Condition ($offers.Id -contains "arcane_candle_eye_loop") -Message "The arcane curio shop should preview a WIS stat item."
     Assert-True -Condition ($offers.Id -contains "arcane_foxglass_charm") -Message "The arcane curio shop should preview a once-per-combat advantage item."
     Assert-True -Condition ($offers.Id -contains "arcane_gravesalt_brooch") -Message "The arcane curio shop should preview a once-per-combat defensive item."
     Assert-True -Condition (($offers | Measure-Object PriceCopper -Minimum).Minimum -ge 1800) -Message "Town magic items should be brutally expensive previews, not normal early upgrades."
     Assert-Equal -Actual $ring.ArmorClassBonus -Expected 1 -Message "The Warding Ring should carry an AC bonus."
     Assert-Equal -Actual $belt.AbilityBonusAbility -Expected "STR" -Message "The Ogre-Knuckle Belt should carry a STR bonus."
+    Assert-Equal -Actual $pin.AbilityBonusAbility -Expected "DEX" -Message "The Mothwing Pin should carry a DEX bonus."
+    Assert-Equal -Actual $loop.AbilityBonusAbility -Expected "WIS" -Message "The Candle-Eye Loop should carry a WIS bonus."
     Assert-Equal -Actual $charm.MagicCombatEffect -Expected "HeroAttackAdvantage" -Message "The Foxglass Charm should grant one attack advantage charge."
     Assert-Equal -Actual $brooch.MagicCombatEffect -Expected "MonsterAttackDisadvantage" -Message "The Grave-Salt Brooch should grant one defensive charge."
 }
@@ -307,6 +334,7 @@ Test-MarketStocksAnInstrumentUpgradeForBards
 Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
 Test-NewSpecialtyShopsStockRealClassGear
+Test-TownShopsStockNewPracticalPreparationItems
 Test-FighterPatronStandingUnlocksHeraldicSurcoat
 Test-ArcaneCuriosStockExpensiveMagicItems
 Test-EquippedMagicItemsAffectHeroStatsAndArmorClass

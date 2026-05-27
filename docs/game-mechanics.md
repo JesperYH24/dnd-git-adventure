@@ -129,7 +129,8 @@ Current camp levels:
 - `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
 - `Action Surge` and Champion `Improved Critical` now surface Fighter-specific combat narration, framing extra actions and 19-20 criticals as stance, shield-line discipline, timing, and trained precision rather than generic fury
 - smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
-- `Arcane Curios` previews high-price magic gear before monster-part crafting: persistent utility items can raise AC or ability scores, and combat-charge charms can grant one automatic advantage/disadvantage trigger per combat
+- town shops now include more practical preparation items before monster zone: `Traveler's Pack` carrying support, `Guard Spear`, `Buckler`, and `Ironroot Salve`
+- `Arcane Curios` previews high-price magic gear before monster-part crafting: persistent utility items can raise AC or ability scores (`STR`, `DEX`, `WIS`), and combat-charge charms can grant one automatic advantage/disadvantage trigger per combat
 - `Lantern Rest` and `Silver Kettle` now recognize Fighter differently, feeding shield/mail discounts, tourney patron attention, and upper-table introductions
 - patron standing can unlock the `Heraldic Surcoat` at the armorer as a presentation-focused tourney item
 - guard and patron quest acceptance text now frames Fighter as disciplined, reliable, and knight-aspirant rather than generic hired muscle

@@ -119,6 +119,7 @@ function Get-MarketOffers {
         (New-TownOffer -Id "market_dagger" -Name "Dagger" -Category "Weapon" -Description "A light backup blade with a sharp edge and a quick draw. Requires DEX 11." -PriceCopper 90)
         (New-TownOffer -Id "market_handaxe" -Name "Hand Axe" -Category "Weapon" -Description "A practical one-handed axe for close quarters. Requires STR 11." -PriceCopper 140)
         (New-TownOffer -Id "market_stage_lute" -Name "Stage Lute" -Category "Utility" -Description "A better-balanced lute with clean tuning pegs and a richer body. Adds +2 inspiration instead of the rough travel standard." -PriceCopper 220)
+        (New-TownOffer -Id "market_travelers_pack" -Name "Traveler's Pack" -Category "Utility" -Description "A reinforced pack frame with better straps and side loops. Adds +3 carrying slots for heroes preparing for longer work." -PriceCopper 180)
     )
 
     if ($null -ne $Game -and $Game.Hero.Level -ge 3) {
@@ -150,6 +151,7 @@ function Get-SmithyOffers {
         (New-TownOffer -Id "smithy_longsword" -Name "Longsword" -Category "Weapon" -Description "A balanced soldier's blade for dependable strikes. Requires STR 11." -PriceCopper 180)
         (New-TownOffer -Id "smithy_rapier" -Name "Slim Forge Rapier" -Category "Weapon" -Description "A quick, precise forge blade built for timing, nerve, and dexterous hands. Requires DEX 12." -PriceCopper 200)
         (New-TownOffer -Id "smithy_warhammer" -Name "Warhammer" -Category "Weapon" -Description "A brutal hammer built to crush armor and bone. Requires STR 13." -PriceCopper 220)
+        (New-TownOffer -Id "smithy_guard_spear" -Name "Guard Spear" -Category "Weapon" -Description "A city-watch spear with a clean ash haft and enough reach to make a doorway feel smaller. Two-Handed. Requires STR 12." -PriceCopper 210)
         (New-TownOffer -Id "smithy_greataxe" -Name "Steel Great Axe" -Category "Weapon" -Description "A heavier axe with a cleaner edge than Borzig's old camp weapon. Two-Handed. Requires STR 15." -PriceCopper 260)
     )
 
@@ -170,6 +172,7 @@ function Get-ArmorerOffers {
     $offers = @(
         (New-TownOffer -Id "armorer_studded_leather" -Name "Studded Leather Coat" -Category "Armor" -Description "A reinforced leather coat that still lets quick fighters and performers move cleanly. AC +2 and adds DEX." -PriceCopper 260)
         (New-TownOffer -Id "armorer_chain_shirt" -Name "Chain Shirt" -Category "Armor" -Description "A practical shirt of linked steel for adventurers who want more protection without turning into a wall. AC +3 and adds DEX up to +2." -PriceCopper 380)
+        (New-TownOffer -Id "armorer_buckler" -Name "Buckler" -Category "Shield" -Description "A small strapped shield for quick hands. AC +1, lighter to carry than a full shield." -PriceCopper 150)
         (New-TownOffer -Id "armorer_heater_shield" -Name "Heater Shield" -Category "Shield" -Description "A stronger shield with a proper heraldic face. AC +2, built for the road toward knightly work." -PriceCopper 240)
     )
 
@@ -198,6 +201,7 @@ function Get-ApothecaryOffers {
 
     $offers = @(
         (New-TownOffer -Id "apothecary_healing_potion" -Name "Healing Potion" -Category "Consumable" -Description "A standard restorative draught for injured adventurers." -PriceCopper 60)
+        (New-TownOffer -Id "apothecary_ironroot_salve" -Name "Ironroot Salve" -Category "Consumable" -Description "A thick field salve that closes 10 HP worth of ugly scrapes without the price of a full greater potion." -PriceCopper 110)
         (New-TownOffer -Id "apothecary_greater_healing_potion" -Name "Greater Healing Potion" -Category "Consumable" -Description "A stronger restorative blend that heals 12 HP." -PriceCopper 180)
         (New-TownOffer -Id "apothecary_haste_potion" -Name "Potion of Haste" -Category "Consumable" -Description "A silver-bright elixir that grants initiative advantage until rest or a new buff replaces it." -PriceCopper 300)
     )
@@ -215,6 +219,8 @@ function Get-ArcaneCurioOffers {
     return @(
         (New-TownOffer -Id "arcane_warding_ring" -Name "Warding Ring" -Category "Magic" -Description "A silver ring that hums when steel comes too close. Magic utility, AC +1 while equipped." -PriceCopper 2400)
         (New-TownOffer -Id "arcane_ogre_knuckle_belt" -Name "Ogre-Knuckle Belt" -Category "Magic" -Description "A scarred belt clasped with a fossilized knuckle. Magic utility, STR +1 while equipped." -PriceCopper 2600)
+        (New-TownOffer -Id "arcane_mothwing_pin" -Name "Mothwing Pin" -Category "Magic" -Description "A trembling bronze pin that moves before the wearer decides to. Magic utility, DEX +1 while equipped." -PriceCopper 2500)
+        (New-TownOffer -Id "arcane_candle_eye_loop" -Name "Candle-Eye Loop" -Category "Magic" -Description "A tiny lens that shows heat, nerves, and bad intentions in candle colors. Magic utility, WIS +1 while equipped." -PriceCopper 2500)
         (New-TownOffer -Id "arcane_foxglass_charm" -Name "Foxglass Charm" -Category "Magic" -Description "A sly amber lens that catches one perfect opening. Magic utility, advantage on the first hero attack each combat." -PriceCopper 1800)
         (New-TownOffer -Id "arcane_gravesalt_brooch" -Name "Grave-Salt Brooch" -Category "Magic" -Description "A cold brooch filled with pale warding salt. Magic utility, the first enemy attack each combat has disadvantage." -PriceCopper 2100)
     )
@@ -463,6 +469,7 @@ function New-TownItemFromOfferId {
         "market_dagger" { return (New-WeaponItem -Name "Dagger" -Value 90 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 4 -Handedness "One-Handed" -Light $true -RequiredDEX 11 -SlotCost 1) }
         "market_handaxe" { return (New-WeaponItem -Name "Hand Axe" -Value 140 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 11 -SlotCost 1) }
         "market_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
+        "market_travelers_pack" { return (New-UtilityItem -Name "Traveler's Pack" -Value 180 -SlotBonus 3 -SlotCost 1) }
         "market_throwing_axe" { return (New-WeaponItem -Name "Balanced Throwing Axe" -Value 190 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 6 -Handedness "One-Handed" -Light $true -RequiredSTR 12 -SlotCost 1) }
         "instrument_shop_stage_lute" { return (New-UtilityItem -Name "Stage Lute" -Value 220 -InspirationBonus 2 -SlotCost 1) }
         "instrument_shop_salon_lute" { return (New-UtilityItem -Name "Salon Lute" -Value 340 -InspirationBonus 3 -SlotCost 1) }
@@ -471,10 +478,12 @@ function New-TownItemFromOfferId {
         "smithy_knightly_longsword" { return (New-WeaponItem -Name "Knightly Longsword" -Value 320 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
         "smithy_rapier" { return (New-WeaponItem -Name "Slim Forge Rapier" -Value 200 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 8 -Handedness "One-Handed" -RequiredDEX 12 -SlotCost 1) }
         "smithy_warhammer" { return (New-WeaponItem -Name "Warhammer" -Value 220 -AttackBonus 0 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "One-Handed" -RequiredSTR 13 -SlotCost 2) }
+        "smithy_guard_spear" { return (New-WeaponItem -Name "Guard Spear" -Value 210 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 10 -Handedness "Two-Handed" -RequiredSTR 12 -SlotCost 2) }
         "smithy_greataxe" { return (New-WeaponItem -Name "Steel Great Axe" -Value 260 -AttackBonus 1 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 15 -SlotCost 2) }
         "smithy_executioner_axe" { return (New-WeaponItem -Name "Executioner Axe" -Value 420 -AttackBonus 2 -DamageDiceCount 1 -DamageDiceSides 12 -Handedness "Two-Handed" -RequiredSTR 16 -SlotCost 2) }
         "armorer_studded_leather" { return (New-ArmorItem -Name "Studded Leather Coat" -Value 260 -ArmorBonus 2 -AddsDexModifier $true -SlotCost 2) }
         "armorer_chain_shirt" { return (New-ArmorItem -Name "Chain Shirt" -Value 380 -ArmorBonus 3 -AddsDexModifier $true -DexBonusCap 2 -SlotCost 3) }
+        "armorer_buckler" { return (New-ShieldItem -Name "Buckler" -Value 150 -ArmorBonus 1 -SlotCost 1) }
         "armorer_heater_shield" { return (New-ShieldItem -Name "Heater Shield" -Value 240 -ArmorBonus 2 -SlotCost 2) }
         "armorer_squire_mail" { return (New-ArmorItem -Name "Squire Mail" -Value 620 -ArmorBonus 5 -AddsDexModifier $false -SlotCost 4) }
         "armorer_heraldic_surcoat" { return (New-UtilityItem -Name "Heraldic Surcoat" -Value 160 -SlotCost 1) }
@@ -482,11 +491,14 @@ function New-TownItemFromOfferId {
         "armorer_plate_armor" { return (New-ArmorItem -Name "Plate Armor" -Value 4500 -ArmorBonus 8 -AddsDexModifier $false -SlotCost 5) }
         "armorer_brigandine" { return (New-ArmorItem -Name "Brigandine Coat" -Value 560 -ArmorBonus 4 -AddsDexModifier $true -DexBonusCap 1 -SlotCost 3) }
         "apothecary_healing_potion" { return (New-ConsumableItem -Name "Healing Potion" -Value 60 -HealAmount 8 -SlotCost 1) }
+        "apothecary_ironroot_salve" { return (New-ConsumableItem -Name "Ironroot Salve" -Value 110 -HealAmount 10 -SlotCost 1) }
         "apothecary_greater_healing_potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }
         "apothecary_haste_potion" { return (New-ConsumableItem -Name "Potion of Haste" -Value 300 -HealAmount 0 -BuffType "Haste" -BuffName "Potion of Haste" -InitiativeAdvantage $true -SlotCost 1) }
         "apothecary_battle_tonic" { return (New-ConsumableItem -Name "Battle Tonic" -Value 420 -HealAmount 18 -SlotCost 1) }
         "arcane_warding_ring" { return (New-MagicUtilityItem -Name "Warding Ring" -Value 2400 -Description "A silver ring that hums when steel comes too close." -ArmorClassBonus 1 -MagicSlot "Ring" -SlotCost 1) }
         "arcane_ogre_knuckle_belt" { return (New-MagicUtilityItem -Name "Ogre-Knuckle Belt" -Value 2600 -Description "A scarred belt clasped with a fossilized knuckle." -AbilityBonusAbility "STR" -AbilityBonus 1 -MagicSlot "Belt" -SlotCost 1) }
+        "arcane_mothwing_pin" { return (New-MagicUtilityItem -Name "Mothwing Pin" -Value 2500 -Description "A trembling bronze pin that moves before the wearer decides to." -AbilityBonusAbility "DEX" -AbilityBonus 1 -MagicSlot "Pin" -SlotCost 1) }
+        "arcane_candle_eye_loop" { return (New-MagicUtilityItem -Name "Candle-Eye Loop" -Value 2500 -Description "A tiny lens that shows heat, nerves, and bad intentions in candle colors." -AbilityBonusAbility "WIS" -AbilityBonus 1 -MagicSlot "Loop" -SlotCost 1) }
         "arcane_foxglass_charm" { return (New-MagicUtilityItem -Name "Foxglass Charm" -Value 1800 -Description "A sly amber lens that catches one perfect opening." -CombatEffect "HeroAttackAdvantage" -CombatUsesPerCombat 1 -CombatFlavorText "The amber lens catches the enemy half a heartbeat early, turning the strike into advantage." -MagicSlot "Charm" -SlotCost 1) }
         "arcane_gravesalt_brooch" { return (New-MagicUtilityItem -Name "Grave-Salt Brooch" -Value 2100 -Description "A cold brooch filled with pale warding salt." -CombatEffect "MonsterAttackDisadvantage" -CombatUsesPerCombat 1 -CombatFlavorText "The pale salt chills the attack line, dragging the enemy's first strike into disadvantage." -MagicSlot "Brooch" -SlotCost 1) }
         default { return $null }
