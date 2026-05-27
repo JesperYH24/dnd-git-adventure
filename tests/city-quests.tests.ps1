@@ -1239,6 +1239,26 @@ function Test-CivicVaultIncludesDungeonRoomsRestAndLoot {
     Assert-Equal -Actual $rooms["hidden_court"].BossRoom -Expected $true -Message "The Civic Vault should end in a boss chamber."
 }
 
+function Test-BarbarianDangerSenseSurfacesDungeonHazards {
+    $understreetRooms = Get-UnderstreetComplexRooms
+    $civicRooms = Get-CivicVaultRooms
+    $barbarian = Get-Hero -Class "Barbarian"
+    $barbarian.Level = 2
+    $levelOneBarbarian = Get-Hero -Class "Barbarian"
+    $levelOneBarbarian.Level = 1
+    $fighter = Get-Hero -Class "Fighter"
+
+    $understreetText = Get-UnderstreetDangerSenseText -Room $understreetRooms["flooded_switchback"] -Hero $barbarian
+    $civicText = Get-UnderstreetDangerSenseText -Room $civicRooms["petition_gallery"] -Hero $barbarian
+    $lockedByLevel = Get-UnderstreetDangerSenseText -Room $understreetRooms["flooded_switchback"] -Hero $levelOneBarbarian
+    $fighterText = Get-UnderstreetDangerSenseText -Room $civicRooms["petition_gallery"] -Hero $fighter
+
+    Assert-True -Condition ($understreetText -like "Danger Sense:*water sounds wrong*") -Message "Level 2 Barbarian should get dungeon hazard instinct text in Understreet rooms."
+    Assert-True -Condition ($civicText -like "Danger Sense:*petitions*hidden blades*") -Message "Level 2 Barbarian should get dungeon hazard instinct text in Civic Vault rooms."
+    Assert-Equal -Actual $lockedByLevel -Expected "" -Message "Danger Sense dungeon text should stay locked at Barbarian level 1."
+    Assert-Equal -Actual $fighterText -Expected "" -Message "Danger Sense dungeon text should not show for non-Barbarians."
+}
+
 function Test-CivicVaultCompletesAndNamesHalewick {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -2236,6 +2256,7 @@ Test-DocksWeakTierFourNeedsFallbackQuest
 Test-DocksTierFourQuestsExposeHigherCityTrail
 Test-CivicVaultUnlocksAfterDocksHigherPatronTrail
 Test-CivicVaultIncludesDungeonRoomsRestAndLoot
+Test-BarbarianDangerSenseSurfacesDungeonHazards
 Test-CivicVaultCompletesAndNamesHalewick
 Test-StorySummaryTracksEscapedHalewick
 Test-UnderstreetComplexCanBeAcceptedAfterUnlock

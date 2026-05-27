@@ -103,7 +103,29 @@ function New-UnderstreetQuestRoom {
     $room | Add-Member -NotePropertyName EncounterRewardText -NotePropertyValue ""
     $room | Add-Member -NotePropertyName EncounterRewardLoot -NotePropertyValue @()
     $room | Add-Member -NotePropertyName DangerText -NotePropertyValue ""
+    $room | Add-Member -NotePropertyName DangerSenseText -NotePropertyValue ""
     return $room
+}
+
+function Get-UnderstreetDangerSenseText {
+    param(
+        $Room,
+        $Hero
+    )
+
+    if ($null -eq $Room -or $null -eq $Hero) {
+        return ""
+    }
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "DangerSense")) {
+        return ""
+    }
+
+    if ($null -eq $Room.PSObject.Properties["DangerSenseText"] -or [string]::IsNullOrWhiteSpace([string]$Room.DangerSenseText)) {
+        return ""
+    }
+
+    return "Danger Sense: $(Format-UnderstreetHeroText -Text $Room.DangerSenseText -Hero $Hero)"
 }
 
 function Format-UnderstreetHeroText {
@@ -258,6 +280,11 @@ function Get-UnderstreetComplexRooms {
     $rooms["command_vault"].EncounterRewardText = "Serik's command pouch spills contract coin across the table, mixed with the key-tagged scraps of a route account."
     $rooms["command_vault"].EncounterRewardLoot += (New-CurrencyItem -Name "Serik's Command Purse" -Denomination "SP" -Amount 15)
 
+    $rooms["sentry_turn"].DangerSenseText = "{hero}'s skin prickles at the chalked wall codes; this corner was built to catch anyone who trusts the obvious passage."
+    $rooms["flooded_switchback"].DangerSenseText = "The water sounds wrong before it moves. Something nearby knows how to hide its weight in the trench."
+    $rooms["whisper_cells"].DangerSenseText = "The shut cell feels too quiet, like a held breath around the candle niche and the loose stone."
+    $rooms["record_chamber"].DangerSenseText = "The displaced shelves make {hero}'s shoulders tighten; this room was searched in fear, not tidied."
+
     return $rooms
 }
 
@@ -341,6 +368,11 @@ function Get-CivicVaultRooms {
     $rooms["oath_gallery"].HiddenLoot += (New-ConsumableItem -Name "Battle Tonic" -Value 180 -HealAmount 18 -SlotCost 1)
     $rooms["oath_gallery"].SearchRewardFlag = "CivicVaultGuardOrdersFound"
     $rooms["oath_gallery"].SearchRewardText = "Lore: the guard orders prove Halewick cleared loyal watch routes before the hidden court closed ranks."
+
+    $rooms["seal_lift"].DangerSenseText = "The lift chain hangs too still. {hero}'s body expects a shield to come from the blind side before the mind names why."
+    $rooms["petition_gallery"].DangerSenseText = "The petitions do not sway evenly; someone has left routes through the wires for fast hands and hidden blades."
+    $rooms["witness_boxes"].DangerSenseText = "The booths smell of old fear and edited silence. One panel sits ready to give way under pressure."
+    $rooms["war_room"].DangerSenseText = "The map pins pull {hero}'s eye toward the kill lanes. This room was drawn by someone who expected bodies to move exactly where ordered."
 
     return $rooms
 }
@@ -1603,6 +1635,11 @@ function Show-UnderstreetRoom {
         }
         else {
             Write-Scene "The understreet air feels close and dangerous, as if the whole place is listening for one wrong step."
+        }
+
+        $dangerSenseText = Get-UnderstreetDangerSenseText -Room $Room -Hero $Hero
+        if (-not [string]::IsNullOrWhiteSpace($dangerSenseText)) {
+            Write-EmphasisLine -Text $dangerSenseText -Color "DarkYellow"
         }
     }
 

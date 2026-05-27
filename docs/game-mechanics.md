@@ -97,6 +97,7 @@ Current camp levels:
 - `Rage` as a bonus action with limited uses per long rest
 - rage adds weapon damage and reduces incoming weapon damage
 - `Reckless Attack` gives the barbarian advantage and also gives the next enemy attack against him advantage
+- `Danger Sense` surfaces as monster-zone awareness and now also appears in dungeon-style rooms as instinctive hazard text for Barbarian level 2+, especially around ambushes, traps, strange stillness, and rooms built to catch the obvious path
 - `Unarmored Defense` uses `10 + DEX modifier + CON modifier` while unarmored
 - status output shows rage uses, active rage state, and reckless exposure
 

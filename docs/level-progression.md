@@ -18,13 +18,13 @@ Borzig is the people's hard-proof hero: endurance, force, survival, and visible 
 | 1 | Rage | Implemented | Bonus action. Adds weapon damage and reduces incoming weapon damage. Limited uses restore on long rest. |
 | 1 | Unarmored Defense | Implemented | AC uses `10 + DEX modifier + CON modifier` while unarmored. |
 | 2 | Reckless Attack | Implemented | Level-gated. Gives advantage on the barbarian's attack, then exposes him to advantage on the next enemy attack. |
-| 2 | Danger Sense | Implemented | Adds a monster-zone awareness bonus before encounters, helping against ambushes and creature approach reads. |
+| 2 | Danger Sense | Implemented | Adds a monster-zone awareness bonus before encounters and now surfaces dungeon hazard instinct text in Understreet/Civic Vault rooms. |
 | 3 | Berserker: Frenzy | Implemented | Local version: while raging, the barbarian can spend one bonus action per rage for an extra weapon attack. |
 | 4 | Ability Score Increase | Implemented | Level 4 ASI supports `+2` or split `+1/+1`, capped at 20. Default class focus is `STR`. |
 
 Barbarian follow-ups:
 
-- extend `Danger Sense` beyond monster-zone awareness into traps, dragon signs, and strange hazards
+- keep extending `Danger Sense` into more strange hazards and dragon signs; the first dungeon-room hazard read pass now exists
 - tune `Frenzy` after more level 3-4 enemies exist so it stays exciting without erasing fights
 - make monster-zone class text lean into instinct, scent, tracks, muscle memory, and surviving bad starts
 
