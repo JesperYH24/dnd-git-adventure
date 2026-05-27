@@ -348,6 +348,34 @@ function Test-TownNextStepReminderPrioritizesLevelUpRest {
     Assert-True -Condition ($reminder -like "*Rest at an inn*" -and $reminder -like "*level-up*") -Message "Town next-step reminder should prioritize pending level-up rests."
 }
 
+function Test-TownOpeningFlowReminderGuidesFirstStoryPair {
+    $game = Initialize-Game
+    $initial = Get-TownOpeningFlowReminderText -Game $game
+
+    (Find-TownQuest -Game $game -QuestId "guard_night_watch").Completed = $true
+    $afterGuard = Get-TownOpeningFlowReminderText -Game $game
+
+    (Find-TownQuest -Game $game -QuestId "patron_storehouse_rats").Completed = $true
+    $afterPair = Get-TownOpeningFlowReminderText -Game $game
+
+    Assert-True -Condition ($initial -like "*Work & Trouble*" -and $initial -like "*Guard Station*" -and $initial -like "*Quest Giver*" -and $initial -like "*Quest Board*") -Message "The first town reminder should explain the main story pair and optional board work."
+    Assert-True -Condition ($afterGuard -like "*Quest Giver*") -Message "After the guard opener, the reminder should point to the remaining patron lead."
+    Assert-Equal -Actual $afterPair -Expected "" -Message "The opening reminder should clear once both opening story leads are complete."
+}
+
+function Test-TownWorkMenuGuidanceExplainsEarlySourceRoles {
+    $game = Initialize-Game
+    $initial = Get-TownWorkMenuGuidanceText -Game $game
+    $boardRole = Get-TownQuestSourceRoleHintText -Source "Quest Board" -Game $game
+    $guardRole = Get-TownQuestSourceRoleHintText -Source "Guard Station" -Game $game
+    $patronRole = Get-TownQuestSourceRoleHintText -Source "Quest Giver" -Game $game
+
+    Assert-True -Condition ($initial -like "*Recommended story start*" -and $initial -like "*Guard Station*" -and $initial -like "*Quest Giver*") -Message "The work menu should explicitly recommend the two opening story sources."
+    Assert-True -Condition ($boardRole -like "*day jobs*" -and $boardRole -like "*not the required first story pair*") -Message "The board source hint should frame board work as optional coin/practice."
+    Assert-True -Condition ($guardRole -like "*main investigation*" -and $guardRole -like "*watch*") -Message "The guard source hint should identify its story role."
+    Assert-True -Condition ($patronRole -like "*main investigation*" -and $patronRole -like "*ledger*") -Message "The quest-giver source hint should identify its story role."
+}
+
 function Test-TownNextStepReminderTracksDocksStoryBeats {
     $game = Initialize-Game
     $game.Town.StoryFlags["BenefactorRevealed"] = $true
@@ -529,6 +557,8 @@ Test-DocksMenuCanDeliverMonsterZoneOddities
 Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-PostCivicVaultAftermathReminderClearsAfterWallRumors
 Test-TownNextStepReminderPrioritizesLevelUpRest
+Test-TownOpeningFlowReminderGuidesFirstStoryPair
+Test-TownWorkMenuGuidanceExplainsEarlySourceRoles
 Test-TownNextStepReminderTracksDocksStoryBeats
 Test-TownNextStepReminderYieldsToMonsterZone
 Test-TownRelationshipHintSurfacesBardInnPayoff

@@ -98,6 +98,8 @@ Story quests now also remember successful class-specific solutions as a small pe
 
 The current quest-check model has moved from fixed stat choices into explicit approach menus for non-combat story quests and day jobs. Each approach has its own flavor text, skill pairing, DC, success text, and failure text. A player can also `Read the scene` first, usually with `Insight`, to learn which approaches look promising without solving the quest outright. Dungeon navigation, combat entries, recovery prompts, and locked-cache interactions remain separate utility flows rather than quest-approach menus.
 
+The first-time town flow now makes the opening structure more explicit in play: the town hub points new players toward `Work & Trouble`, the work menu names `Guard Station` and `Quest Giver` as the required opening story pair, and source-level hints explain that `Quest Board` and day jobs are mostly coin/practice rather than the first story gate.
+
 ## Understreet finale
 
 `The Understreet Complex` currently includes:

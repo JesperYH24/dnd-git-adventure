@@ -218,6 +218,93 @@ function Get-TownNextStepReminderText {
     return ""
 }
 
+function Get-TownOpeningFlowReminderText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town -or $null -eq $Game.Hero) {
+        return ""
+    }
+
+    if (Test-MonsterZoneUnlocked -Game $Game) {
+        return ""
+    }
+
+    if ([bool]$Game.Town.ChapterTwoComplete -or [bool]$Game.Town.StoryFlags["UnderstreetComplexCleared"] -or [bool]$Game.Town.StoryFlags["BenefactorRevealed"]) {
+        return ""
+    }
+
+    $guardDone = [bool](Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed
+    $patronDone = [bool](Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed
+
+    if (-not $guardDone -and -not $patronDone) {
+        return "First city steps: use Work & Trouble for the main investigation. Guard Station and the Quest Giver each hold one required story lead; the Quest Board and day jobs are safer coin and practice."
+    }
+
+    if ($guardDone -and -not $patronDone) {
+        return "Opening case: the Guard Station lead is done. Visit the Quest Giver next to complete the other half of the first investigation pair."
+    }
+
+    if ($patronDone -and -not $guardDone) {
+        return "Opening case: the Quest Giver lead is done. Visit the Guard Station next to complete the other half of the first investigation pair."
+    }
+
+    return ""
+}
+
+function Get-TownWorkMenuGuidanceText {
+    param($Game)
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        return ""
+    }
+
+    if ([bool]$Game.Town.StoryQuestDoneToday) {
+        return "Daily rhythm: the main story has moved today. Use day jobs, shops, streets, or rest at an inn before taking another story lead."
+    }
+
+    $guardDone = [bool](Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed
+    $patronDone = [bool](Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed
+
+    if (-not $guardDone -and -not $patronDone) {
+        return "Recommended story start: Guard Station and Quest Giver are the two opening investigation leads. Quest Board work is useful money, but not required for the first story gate."
+    }
+
+    if ($guardDone -and -not $patronDone) {
+        return "Recommended next lead: speak with the Quest Giver's clerk to pair the guard evidence with the private storehouse clue."
+    }
+
+    if ($patronDone -and -not $guardDone) {
+        return "Recommended next lead: visit the Guard Station to pair the storehouse clue with the watch patrol evidence."
+    }
+
+    return ""
+}
+
+function Get-TownQuestSourceRoleHintText {
+    param(
+        [string]$Source,
+        $Game
+    )
+
+    switch ($Source) {
+        "Quest Board" {
+            return "Role: public notices and day jobs. Good for coin, practice, and local texture; not the required first story pair."
+        }
+        "Guard Station" {
+            return "Role: main investigation lead. The watch follows patrol trouble, tunnel access, and street danger."
+        }
+        "Quest Giver" {
+            return "Role: main investigation lead. The clerk follows private ledgers, storehouse pressure, and awkward patron work."
+        }
+        "Docks" {
+            return "Role: focused story leads for Lady Veyra's contract trail and later higher-city proof."
+        }
+        default {
+            return ""
+        }
+    }
+}
+
 function Get-TownRelationshipHintText {
     param($Game)
 
@@ -1168,6 +1255,12 @@ function Show-TownQuestSource {
         }
 
         if ($Game.Town.StoryQuestDoneToday -or $Game.Town.DayJobDoneToday) {
+            Write-ColorLine ""
+        }
+
+        $sourceRoleHint = Get-TownQuestSourceRoleHintText -Source $Source -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($sourceRoleHint)) {
+            Write-EmphasisLine -Text $sourceRoleHint -Color "DarkCyan"
             Write-ColorLine ""
         }
 
@@ -2143,6 +2236,10 @@ function Start-QuestHubMenu {
             $showIntro = $false
         }
         Write-EmphasisLine -Text ((Get-StoryTierProgressStatus -Game $Game).StatusText) -Color "Yellow"
+        $workGuidance = Get-TownWorkMenuGuidanceText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($workGuidance)) {
+            Write-EmphasisLine -Text $workGuidance -Color "DarkCyan"
+        }
         Write-ColorLine ""
         Write-ColorLine "1. Check the quest board" "White"
         Write-ColorLine "2. Visit the guard station" "White"
@@ -2539,6 +2636,10 @@ function Start-TownMenu {
         $aftermathReminder = Get-PostCivicVaultAftermathReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($aftermathReminder)) {
             Write-EmphasisLine -Text $aftermathReminder -Color "DarkYellow"
+        }
+        $openingFlowReminder = Get-TownOpeningFlowReminderText -Game $Game
+        if (-not [string]::IsNullOrWhiteSpace($openingFlowReminder)) {
+            Write-EmphasisLine -Text $openingFlowReminder -Color "DarkCyan"
         }
         $nextStepReminder = Get-TownNextStepReminderText -Game $Game
         if (-not [string]::IsNullOrWhiteSpace($nextStepReminder)) {
