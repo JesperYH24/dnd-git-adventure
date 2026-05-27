@@ -17,6 +17,35 @@ function Get-BarbarianCriticalKillText {
     return "$($Hero.Name) tears through $($Monster.definite) in a savage finishing blow, driving the $weaponName clean through the kill!"
 }
 
+function Get-FighterActionSurgeFlavorText {
+    param($Hero)
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} resets {his} stance like a drill-yard bell just rang, finding one more clean action where panic should have been.",
+        "{Hero} breathes once, squares the shield line, and turns training into another immediate move.",
+        "No roar, no flourish: {hero} simply steps back into tempo and makes the fight give {him} another opening.",
+        "{Hero}'s shoulders settle under the armor, discipline replacing fatigue for one sharp heartbeat."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero)
+}
+
+function Get-FighterImprovedCriticalFlavorText {
+    param(
+        $Hero,
+        $Monster
+    )
+
+    $line = Get-RandomCombatFlavorText -Options @(
+        "{Hero} reads the guard a half-beat early and places the blade where the opening is about to exist.",
+        "{Hero}'s strike is not wild. It is exact, drilled through shield-line lessons until {target}'s defense arrives too late.",
+        "A small mistake in {target}'s stance becomes a decisive line, and {hero} takes it without hesitation.",
+        "{Hero} turns footwork, patience, and steel into one champion's cut."
+    )
+
+    return (Resolve-CombatFlavorText -Text $line -Hero $Hero -Monster $Monster)
+}
+
 function Get-RandomCombatFlavorText {
     param([string[]]$Options)
 
@@ -587,6 +616,9 @@ function Invoke-HeroAttack {
 
         $criticalLabel = if ($heroRoll -eq 20) { "CRITICAL HIT!" } else { "IMPROVED CRITICAL!" }
         Write-Action $criticalLabel "Red"
+        if ($Hero.Class -eq "Fighter" -and $heroRoll -eq 19 -and (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ImprovedCritical")) {
+            Write-Scene (Get-FighterImprovedCriticalFlavorText -Hero $Hero -Monster $Monster)
+        }
         Write-Action "$($Hero.Name) hits $($Monster.definite) with brutal force for $heroDamage damage! ($damageText)" "Yellow"
 
         if ($MonsterHP.Value -le 0 -and $Hero.Class -eq "Barbarian") {
@@ -1956,6 +1988,7 @@ function Resolve-HeroCombatTurn {
             Write-Scene $actionSurge.Message
 
             if ($actionSurge.Success) {
+                Write-Scene (Get-FighterActionSurgeFlavorText -Hero $Hero)
                 Write-Action "Action Surge: regain one action this turn." "Yellow"
                 $actionSpent = $false
             }

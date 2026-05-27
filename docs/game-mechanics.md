@@ -126,6 +126,7 @@ Current camp levels:
 - shields use their own equip slot and stack with armor instead of replacing it
 - `Fighting Style: Defense` adds `+1 AC` while armor is equipped
 - `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
+- `Action Surge` and Champion `Improved Critical` now surface Fighter-specific combat narration, framing extra actions and 19-20 criticals as stance, shield-line discipline, timing, and trained precision rather than generic fury
 - smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
 - `Arcane Curios` previews high-price magic gear before monster-part crafting: persistent utility items can raise AC or ability scores, and combat-charge charms can grant one automatic advantage/disadvantage trigger per combat
 - `Lantern Rest` and `Silver Kettle` now recognize Fighter differently, feeding shield/mail discounts, tourney patron attention, and upper-table introductions

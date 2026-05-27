@@ -1070,8 +1070,10 @@ function Test-FighterActionSurgeUnlocksAtLevelTwo {
 
     Start-CombatLoop -Hero $hero -Monster $monster -HeroHP ([ref]$heroHP) -MonsterHP ([ref]$monsterHP) -HeroDroppedWeapon ([ref]$heroDroppedWeapon) -MonsterOffBalance ([ref]$monsterOffBalance) -EncounterFled ([ref]$encounterFled)
 
+    $actionSurgeScene = ($global:CapturedScenes -join " ")
     Assert-Equal -Actual $hero.CurrentActionSurges -Expected 0 -Message "Action Surge should spend its level 2 resource."
     Assert-Equal -Actual $encounterFled -Expected $true -Message "Action Surge should give the Fighter a second action in the same turn."
+    Assert-True -Condition ($actionSurgeScene -like "*discipline*" -or $actionSurgeScene -like "*shield line*" -or $actionSurgeScene -like "*tempo*" -or $actionSurgeScene -like "*stance*") -Message "Action Surge should surface Fighter discipline flavor in combat."
 }
 
 function Test-FighterImprovedCriticalAtLevelThree {
@@ -1092,7 +1094,9 @@ function Test-FighterImprovedCriticalAtLevelThree {
 
     Invoke-HeroAttack -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
 
+    $criticalScene = ($global:CapturedScenes -join " ")
     Assert-Equal -Actual $monsterHP -Expected 8 -Message "Champion Improved Critical should crit on a natural 19 at level 3."
+    Assert-True -Condition ($criticalScene -like "*guard*" -or $criticalScene -like "*shield-line*" -or $criticalScene -like "*stance*" -or $criticalScene -like "*champion*") -Message "Improved Critical should read as trained Fighter precision, not generic brute force."
 }
 
 function Test-BarbarianFrenzyUnlocksAtLevelThree {

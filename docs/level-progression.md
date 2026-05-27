@@ -43,7 +43,7 @@ Lubert Stryer is the knight-aspirant: defense, discipline, civic trust, and form
 Fighter follow-ups:
 
 - tune the first mounted jousting pass beside ASI, stable-owned horse, and splint/plate requirements
-- add more combat text around `Action Surge` and `Improved Critical` so Lubert's discipline feels distinct from raw aggression
+- keep tuning combat text around Fighter timing and shield-line discipline; `Action Surge` and Champion `Improved Critical` now have first-pass class-specific narration
 - make monster-zone class text lean into patrol logic, shield discipline, wall defense, and reading organized threats
 
 ## Bard: College of Lore
