@@ -207,8 +207,9 @@ This is the current Chapter Three climax dungeon:
 
 - Mira Kest finds a hidden service route beneath the Civic Keep
 - the hero enters a dungeon-like secret base under the place where the city is ruled
-- rooms include the `Hidden Culvert`, `Seal Lift`, `Ledger Refuge`, `Petition Gallery`, `Mirror Cells`, `Servant Sluice`, `Charter Archive`, `Private War Room`, and `Hidden Court`
+- rooms include the `Hidden Culvert`, `Seal Lift`, `Ledger Refuge`, `Petition Gallery`, `Mirror Cells`, `Witness Boxes`, `Servant Sluice`, `Charter Archive`, `Private War Room`, `Oath Gallery`, and `Hidden Court`
 - the dungeon reuses the Understreet-style room system: navigation, encounters, searchable clues, room loot, a locked cache, and short rests in defensible rooms
+- the Civic Vault now has more route texture before monster zone: `Witness Boxes` creates a small optional loop from the petition hub back toward `Servant Sluice`, while `Oath Gallery` adds a late optional proof/supply side room before the final boss lane
 - the locked archive cache can reward a `Civic Guard Blade`, a `Potion of Haste`, and coin
 - the final boss is `Lord Varric Halewick`, the civic power behind Lady Veyra's death contract
 - after the hidden-court fight, Halewick is forced up into the Civic Keep's public court room before magistrates and other high officials

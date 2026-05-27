@@ -134,8 +134,8 @@ Design read:
                          [MC K]
                            |
 [HC S] --- [SL !] ------- [PG !] --- [SS R] --- [CA ? C] --- [WR !] --- [HCt B]
-             |
-           [LR R]
+             |              |          |                         |
+           [LR R]         [WB ?] ------+                       [OG ?]
 ```
 
 Legend:
@@ -145,9 +145,11 @@ Legend:
 - `[LR R]` Ledger Refuge: short rest and supplies below the lift.
 - `[PG !]` Petition Gallery: second hub and social-horror pressure room.
 - `[MC K]` Mirror Cells: archive key side room.
+- `[WB ?]` Witness Boxes: optional testimony/evidence room that loops back toward Servant Sluice.
 - `[SS R]` Servant Sluice: short rest before the final pressure lane.
 - `[CA ? C]` Charter Archive: Halewick proof plus locked coffer.
 - `[WR !]` Private War Room: knight encounter before the boss.
+- `[OG ?]` Oath Gallery: late optional guard-order proof and recovery supply room.
 - `[HCt B]` Hidden Court: boss room with Lord Varric Halewick.
 - Court Above: post-boss public reveal where Halewick becomes a smaller dragon and escapes the Civic Keep.
 
@@ -155,6 +157,7 @@ Primary route:
 
 ```text
 [HC S] -> [SL !] -> [PG !] -> [SS R] -> [CA ? C] -> [WR !] -> [HCt B]
+[PG !] -> [WB ?] -> [SS R]
 ```
 
 Side-room rhythm:
@@ -162,11 +165,13 @@ Side-room rhythm:
 ```text
 [SL !] -> [LR R]
 [PG !] -> [MC K]
+[PG !] -> [WB ?] -> [SS R]
+[WR !] -> [OG ?]
 ```
 
 Design read:
 
-- Civic Vault is much more linear than Understreet, which fits the feeling of a hidden service route under a seat of power.
-- The side rooms are cleanly placed: one rest room at the first hub, one key room at the second hub.
+- Civic Vault is still more linear than Understreet, which fits the feeling of a hidden service route under a seat of power, but it now has a small mid-dungeon loop and a late optional evidence room.
+- The side rooms are cleanly placed: one rest room at the first hub, one key room at the second hub, one testimony loop beside Petition Gallery, and one guard-order room beside the War Room.
 - `Servant Sluice` creates a good calm-before-the-storm beat before archive, war room, and boss.
 - The post-boss lift into the public court gives the linear route a bigger theatrical release instead of ending quietly underground.

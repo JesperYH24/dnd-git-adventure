@@ -266,11 +266,13 @@ function Get-CivicVaultRooms {
         hidden_culvert = (New-UnderstreetQuestRoom -Id "hidden_culvert" -Name "Hidden Culvert" -Description "Mira Kest's last dock lead ends beneath a rain-slick service arch below the Civic Keep. A sealed culvert runs behind the public walls, narrow enough that no honor guard would ever admit it exists." -Exits @{ east = "seal_lift" })
         seal_lift = (New-UnderstreetQuestRoom -Id "seal_lift" -Name "Seal Lift" -Description "A brass lift cage rises through old stone. City seals have been hammered over older symbols, as if the keep swallowed a private stronghold and called it government." -Exits @{ west = "hidden_culvert"; east = "petition_gallery"; south = "ledger_refuge" } -EncounterFactory "Get-CivicVaultWardenEnemy" -EncounterTitle "Seal Lift" -EncounterIntro "A seal warden steps from behind the lift chain with a city-stamped shield and a private killer's stance.")
         ledger_refuge = (New-UnderstreetQuestRoom -Id "ledger_refuge" -Name "Ledger Refuge" -Description "A cramped audit room hides behind the lift wall. The desk has been stripped in haste, but the door bars from the inside and the shelves still hold bandage cloth, old wine, and emergency ink." -Exits @{ north = "seal_lift" } -CanShortRest $true)
-        petition_gallery = (New-UnderstreetQuestRoom -Id "petition_gallery" -Name "Petition Gallery" -Description "Rows of rejected petitions hang from wires like dried leaves. Each carries a civic stamp, a denial mark, and a second private notation deciding whether the petitioner was useful, dangerous, or disposable." -Exits @{ west = "seal_lift"; east = "servant_sluice"; north = "mirror_cells" } -EncounterFactory "Get-CivicVaultAdvocateEnemy" -EncounterTitle "Petition Gallery" -EncounterIntro "A whisper advocate folds a petition knife out of his sleeve and attacks before the hanging names can be read.")
+        petition_gallery = (New-UnderstreetQuestRoom -Id "petition_gallery" -Name "Petition Gallery" -Description "Rows of rejected petitions hang from wires like dried leaves. Each carries a civic stamp, a denial mark, and a second private notation deciding whether the petitioner was useful, dangerous, or disposable." -Exits @{ west = "seal_lift"; east = "servant_sluice"; north = "mirror_cells"; south = "witness_boxes" } -EncounterFactory "Get-CivicVaultAdvocateEnemy" -EncounterTitle "Petition Gallery" -EncounterIntro "A whisper advocate folds a petition knife out of his sleeve and attacks before the hanging names can be read.")
         mirror_cells = (New-UnderstreetQuestRoom -Id "mirror_cells" -Name "Mirror Cells" -Description "Small interview cells line a mirrored hall. The glass is not for prisoners. It lets unseen listeners watch clerks turn fear into signatures." -Exits @{ south = "petition_gallery" })
-        servant_sluice = (New-UnderstreetQuestRoom -Id "servant_sluice" -Name "Servant Sluice" -Description "A laundry sluice crosses the hidden route, carrying clean linen above and dirty water below. Footprints show servants use this place to avoid noble eyes, and conspirators use it to avoid servants." -Exits @{ west = "petition_gallery"; east = "charter_archive" } -CanShortRest $true)
+        witness_boxes = (New-UnderstreetQuestRoom -Id "witness_boxes" -Name "Witness Boxes" -Description "A narrow gallery of shuttered witness boxes hangs below the petition hall. Each booth faces a blank wall instead of a magistrate, built for testimony that could be recorded, edited, and buried before daylight." -Exits @{ north = "petition_gallery"; east = "servant_sluice" })
+        servant_sluice = (New-UnderstreetQuestRoom -Id "servant_sluice" -Name "Servant Sluice" -Description "A laundry sluice crosses the hidden route, carrying clean linen above and dirty water below. Footprints show servants use this place to avoid noble eyes, and conspirators use it to avoid servants." -Exits @{ west = "petition_gallery"; east = "charter_archive"; south = "witness_boxes" } -CanShortRest $true)
         charter_archive = (New-UnderstreetQuestRoom -Id "charter_archive" -Name "Charter Archive" -Description "The archive smells of wax, dust, and purchased law. Shell charters, debt transfers, and dock exemptions sit in tidy rows, turning river crime into respectable civic language." -Exits @{ west = "servant_sluice"; east = "war_room" })
-        war_room = (New-UnderstreetQuestRoom -Id "war_room" -Name "Private War Room" -Description "A map of the city covers the table. Pins mark docks, inns, guard routes, and Lady Veyra's office. This is not defense planning. It is ownership drawn in thread and knife-scratches." -Exits @{ west = "charter_archive"; east = "hidden_court" } -EncounterFactory "Get-CivicVaultKnightEnemy" -EncounterTitle "Private War Room" -EncounterIntro "An oath-black knight closes the war-room door and raises a city-forged blade with no city mercy in it.")
+        war_room = (New-UnderstreetQuestRoom -Id "war_room" -Name "Private War Room" -Description "A map of the city covers the table. Pins mark docks, inns, guard routes, and Lady Veyra's office. This is not defense planning. It is ownership drawn in thread and knife-scratches." -Exits @{ west = "charter_archive"; east = "hidden_court"; north = "oath_gallery" } -EncounterFactory "Get-CivicVaultKnightEnemy" -EncounterTitle "Private War Room" -EncounterIntro "An oath-black knight closes the war-room door and raises a city-forged blade with no city mercy in it.")
+        oath_gallery = (New-UnderstreetQuestRoom -Id "oath_gallery" -Name "Oath Gallery" -Description "Retired guard oaths are framed along the wall, each one signed by a captain who later vanished, resigned, or learned to obey quieter orders. A cracked reliquary case still holds a few city-stamped emergency stores." -Exits @{ south = "war_room" })
         hidden_court = (New-UnderstreetQuestRoom -Id "hidden_court" -Name "Hidden Court" -Description "The final chamber is a court in miniature: judge's bench, council seal, private gallows hook, and a ledger of decisions that never reached public law. Lord Varric Halewick waits beneath his own crest, wearing civic authority like armor." -Exits @{ west = "war_room" } -EncounterFactory "Get-CivicVaultLordEnemy" -EncounterTitle "Hidden Court" -EncounterIntro "Lord Varric Halewick smiles like a man offended by interruption, then draws the blade that signed Lady Veyra's death contract." -BossRoom $true)
     }
 
@@ -294,6 +296,15 @@ function Get-CivicVaultRooms {
     $rooms["mirror_cells"].SearchDC = 13
     $rooms["mirror_cells"].SearchRewardFlag = "CivicVaultArchiveKey"
     $rooms["mirror_cells"].SearchRewardText = "{hero} recovers the black-sealed archive key."
+
+    $rooms["witness_boxes"].SearchHintText = "One shuttered booth has a slit cut low enough for a frightened witness to pass notes through."
+    $rooms["witness_boxes"].SearchPromptText = "Search the witness boxes for edited testimony, hidden notes, or anything the clerks missed."
+    $rooms["witness_boxes"].SearchSuccessText = "{hero} finds a packet of altered testimony and a witness-name ledger hidden behind a warped booth panel."
+    $rooms["witness_boxes"].SearchFailureText = "{hero} finds only fragments, but even the fragments show testimony was trimmed before it reached public court."
+    $rooms["witness_boxes"].SearchDC = 12
+    $rooms["witness_boxes"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 10)
+    $rooms["witness_boxes"].SearchRewardFlag = "CivicVaultWitnessLedgerFound"
+    $rooms["witness_boxes"].SearchRewardText = "Lore: the witness ledger proves the hidden court edited testimony before public magistrates ever saw it."
 
     $rooms["charter_archive"].SearchHintText = "A high shelf of sealed charters has fresher dust around it than the rest."
     $rooms["charter_archive"].SearchPromptText = "Search the fresh shelf marks and sealed charter rows for the real owner behind the dock shell companies."
@@ -321,6 +332,15 @@ function Get-CivicVaultRooms {
     $rooms["war_room"].HiddenLoot += (New-CurrencyItem -Denomination "SP" -Amount 20)
     $rooms["war_room"].SearchRewardFlag = "VeyraContractOrderFound"
     $rooms["war_room"].SearchRewardText = "Lore: the war map ties Lady Veyra's contract to the Civic Keep's private command rooms."
+
+    $rooms["oath_gallery"].SearchHintText = "The cracked reliquary case has been opened recently, and one oath frame hides fresh folded dispatch paper."
+    $rooms["oath_gallery"].SearchPromptText = "Search the old oath frames and reliquary case for orders or emergency stores."
+    $rooms["oath_gallery"].SearchSuccessText = "{hero} finds a folded dispatch ordering loyal guards away from the Civic Keep route, plus a sealed battle tonic in the reliquary case."
+    $rooms["oath_gallery"].SearchFailureText = "{hero} misses the cleanest dispatch, but the broken reliquary still gives up a battle tonic and enough oath marks to show guards were moved on purpose."
+    $rooms["oath_gallery"].SearchDC = 13
+    $rooms["oath_gallery"].HiddenLoot += (New-ConsumableItem -Name "Battle Tonic" -Value 180 -HealAmount 18 -SlotCost 1)
+    $rooms["oath_gallery"].SearchRewardFlag = "CivicVaultGuardOrdersFound"
+    $rooms["oath_gallery"].SearchRewardText = "Lore: the guard orders prove Halewick cleared loyal watch routes before the hidden court closed ranks."
 
     return $rooms
 }

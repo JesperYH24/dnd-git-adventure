@@ -1227,9 +1227,14 @@ function Test-CivicVaultUnlocksAfterDocksHigherPatronTrail {
 function Test-CivicVaultIncludesDungeonRoomsRestAndLoot {
     $rooms = Get-CivicVaultRooms
 
-    Assert-True -Condition ($rooms.Count -ge 8) -Message "The Civic Vault should be a real dungeon-sized room layout."
+    Assert-True -Condition ($rooms.Count -ge 10) -Message "The Civic Vault should be a real dungeon-sized room layout with optional side rooms."
     Assert-Equal -Actual $rooms["hidden_culvert"].Exits["east"] -Expected "seal_lift" -Message "The Civic Vault should start from a secret culvert entrance."
+    Assert-Equal -Actual $rooms["petition_gallery"].Exits["south"] -Expected "witness_boxes" -Message "The Civic Vault should include a witness-box side path from the petition hub."
+    Assert-Equal -Actual $rooms["witness_boxes"].Exits["east"] -Expected "servant_sluice" -Message "The witness boxes should create a small alternate route back toward the final lane."
+    Assert-Equal -Actual $rooms["war_room"].Exits["north"] -Expected "oath_gallery" -Message "The Civic Vault should include a late optional side room before the boss."
     Assert-True -Condition $rooms["ledger_refuge"].CanShortRest -Message "The Civic Vault should include a defensible short-rest room."
+    Assert-True -Condition ($rooms["witness_boxes"].SearchRewardFlag -eq "CivicVaultWitnessLedgerFound" -and $rooms["witness_boxes"].HiddenLoot.Count -gt 0) -Message "The witness boxes should provide optional evidence and loot."
+    Assert-True -Condition ($rooms["oath_gallery"].SearchRewardFlag -eq "CivicVaultGuardOrdersFound" -and $rooms["oath_gallery"].HiddenLoot.Count -gt 0) -Message "The oath gallery should provide optional late-dungeon evidence and supplies."
     Assert-True -Condition ($rooms["charter_archive"].LockedCacheLoot.Count -ge 2) -Message "The Civic Vault archive should include locked progression loot."
     Assert-Equal -Actual $rooms["hidden_court"].BossRoom -Expected $true -Message "The Civic Vault should end in a boss chamber."
 }
