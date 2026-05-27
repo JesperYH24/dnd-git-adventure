@@ -151,6 +151,7 @@ Docks Tier 1:
 - completing `2` strong Docks Tier 1 quests opens the next Docks tier
 - if Docks Tier 1 results are weak, `3` total completed Tier 1 quests can still open the next tier
 - after major Docks and High Ledger beats, the town menu now surfaces a short next-step reminder so the player knows whether to visit Auntie Brindle, meet Mira Kest, expose the charter scribe, rest for a level-up, or press toward the Civic Vault
+- Auntie Brindle is intended to become the monster-part magic crafter after the monster zone produces enough strange components; the town `Arcane Curios` shop now previews expensive finished magic, while Auntie should eventually make stranger, component-driven versions from delivered oddities
 
 When `Black Contract on the Tide` is complete, Docks opens as a visitable town district. When enough Tier 1 work is strong, or when the fallback total is complete, the organization tier opens.
 

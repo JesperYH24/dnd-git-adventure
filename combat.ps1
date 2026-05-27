@@ -541,7 +541,8 @@ function Invoke-HeroAttack {
     $weapon = Get-HeroWeaponProfile -Hero $Hero
     $targetArmorClass = [int]$Monster.armorClass
     $faerieFireAdvantage = Consume-BardFaerieFireAdvantage -Monster $Monster
-    $totalAdvantage = ($Advantage -or $faerieFireAdvantage)
+    $magicAdvantage = Try-ConsumeHeroMagicItemCombatEffect -Hero $Hero -Effect "HeroAttackAdvantage"
+    $totalAdvantage = ($Advantage -or $faerieFireAdvantage -or $magicAdvantage.Success)
     $rollResult = Roll-D20Attack -Advantage $totalAdvantage
     $heroRoll = $rollResult.Roll
     $attackTotal = $heroRoll + $weapon.TotalAttackBonus + $AttackBonusModifier
@@ -559,6 +560,11 @@ function Invoke-HeroAttack {
 
     if ($faerieFireAdvantage) {
         Write-Action "Faerie Fire: the marked target grants advantage on this attack." "Yellow"
+    }
+
+    if ($magicAdvantage.Success) {
+        $magicText = if ([string]::IsNullOrWhiteSpace($magicAdvantage.FlavorText)) { "$($magicAdvantage.Item.Name) flashes once and grants advantage on this attack." } else { $magicAdvantage.FlavorText }
+        Write-Action "$($magicAdvantage.Item.Name): $magicText" "Yellow"
     }
 
     Write-Action "$($Hero.Name) attacks with $($weapon.Name): $rollText, total $attackTotal$bonusText vs AC $targetArmorClass" "Cyan"
@@ -633,8 +639,9 @@ function Invoke-MonsterAttack {
     )
 
     $mockeryDisadvantage = Consume-BardViciousMockeryDisadvantage -Monster $Monster
+    $magicDisadvantage = Try-ConsumeHeroMagicItemCombatEffect -Hero $Hero -Effect "MonsterAttackDisadvantage"
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
-    $rollResult = Roll-D20Attack -Advantage $Advantage -Disadvantage $mockeryDisadvantage
+    $rollResult = Roll-D20Attack -Advantage $Advantage -Disadvantage ($mockeryDisadvantage -or $magicDisadvantage.Success)
     $attackRoll = $rollResult.Roll
     $attackTotal = $attackRoll + [int]$Monster.attackBonus - $AttackPenaltyModifier + $AttackBonusModifier
     $rollText = Format-D20AttackRollText -RollResult $rollResult
@@ -652,6 +659,11 @@ function Invoke-MonsterAttack {
 
     if ($AttackBonusModifier -gt 0) {
         $bonusText = " (+$AttackBonusModifier attack bonus)"
+    }
+
+    if ($magicDisadvantage.Success) {
+        $magicText = if ([string]::IsNullOrWhiteSpace($magicDisadvantage.FlavorText)) { "$($magicDisadvantage.Item.Name) bends the first hostile strike into disadvantage." } else { $magicDisadvantage.FlavorText }
+        Write-Action "$($magicDisadvantage.Item.Name): $magicText" "Yellow"
     }
 
     Write-Action "$($Monster.definite) attacks: $rollText, total $attackTotal$penaltyText$bonusText vs AC $heroArmorClass$blockText" "DarkCyan"
@@ -2182,6 +2194,8 @@ function Start-CombatLoop {
     $heroFocusAttackBonus = 0
     $heroRecklessExposure = $false
     $heroRiposteAvailable = ($Hero.Class -eq "Fighter")
+
+    Reset-HeroMagicItemCombatCharges -Hero $Hero
 
     if ($null -ne $Hero -and $Hero.Class -eq "Bard") {
         if ($null -eq $Hero.PSObject.Properties["ViciousMockeryUsesThisCombat"]) {

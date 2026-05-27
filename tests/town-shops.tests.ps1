@@ -88,6 +88,78 @@ function Test-FighterPatronStandingUnlocksHeraldicSurcoat {
     Assert-Equal -Actual $surcoat.Name -Expected "Heraldic Surcoat" -Message "The heraldic surcoat offer should create the expected utility item."
 }
 
+function Test-ArcaneCuriosStockExpensiveMagicItems {
+    $game = Initialize-Game
+    $offers = @(Get-ArcaneCurioOffers -Game $game)
+    $ring = New-TownItemFromOfferId -OfferId "arcane_warding_ring"
+    $belt = New-TownItemFromOfferId -OfferId "arcane_ogre_knuckle_belt"
+    $charm = New-TownItemFromOfferId -OfferId "arcane_foxglass_charm"
+    $brooch = New-TownItemFromOfferId -OfferId "arcane_gravesalt_brooch"
+
+    Assert-True -Condition ($offers.Id -contains "arcane_warding_ring") -Message "The arcane curio shop should preview a magic AC item."
+    Assert-True -Condition ($offers.Id -contains "arcane_ogre_knuckle_belt") -Message "The arcane curio shop should preview a magic stat item."
+    Assert-True -Condition ($offers.Id -contains "arcane_foxglass_charm") -Message "The arcane curio shop should preview a once-per-combat advantage item."
+    Assert-True -Condition ($offers.Id -contains "arcane_gravesalt_brooch") -Message "The arcane curio shop should preview a once-per-combat defensive item."
+    Assert-True -Condition (($offers | Measure-Object PriceCopper -Minimum).Minimum -ge 1800) -Message "Town magic items should be brutally expensive previews, not normal early upgrades."
+    Assert-Equal -Actual $ring.ArmorClassBonus -Expected 1 -Message "The Warding Ring should carry an AC bonus."
+    Assert-Equal -Actual $belt.AbilityBonusAbility -Expected "STR" -Message "The Ogre-Knuckle Belt should carry a STR bonus."
+    Assert-Equal -Actual $charm.MagicCombatEffect -Expected "HeroAttackAdvantage" -Message "The Foxglass Charm should grant one attack advantage charge."
+    Assert-Equal -Actual $brooch.MagicCombatEffect -Expected "MonsterAttackDisadvantage" -Message "The Grave-Salt Brooch should grant one defensive charge."
+}
+
+function Test-EquippedMagicItemsAffectHeroStatsAndArmorClass {
+    $game = Initialize-Game
+    $hero = $game.Hero
+    $baseStrength = Get-HeroAbilityScore -Hero $hero -Ability "STR"
+    $baseArmorClass = Get-HeroArmorClass -Hero $hero
+    $ring = New-TownItemFromOfferId -OfferId "arcane_warding_ring"
+    $belt = New-TownItemFromOfferId -OfferId "arcane_ogre_knuckle_belt"
+
+    $hero.Inventory += $ring
+    $hero.Inventory += $belt
+    Set-EquippedItem -Hero $hero -Item $ring | Out-Null
+    Set-EquippedItem -Hero $hero -Item $belt | Out-Null
+
+    Assert-Equal -Actual (Get-HeroArmorClass -Hero $hero) -Expected ($baseArmorClass + 1) -Message "Equipping the Warding Ring should raise AC by 1."
+    Assert-Equal -Actual (Get-HeroAbilityScore -Hero $hero -Ability "STR") -Expected ($baseStrength + 1) -Message "Equipping the Ogre-Knuckle Belt should raise STR by 1."
+    Assert-True -Condition ((Format-InventoryItemLine -Item $ring) -like "*magic*" -and (Format-InventoryItemLine -Item $ring) -like "*equipped*") -Message "Magic utility items should display their magic and equipped state."
+}
+
+function Test-MagicCombatChargesRefreshAndConsumeOnce {
+    $game = Initialize-Game
+    $hero = $game.Hero
+    $charm = New-TownItemFromOfferId -OfferId "arcane_foxglass_charm"
+
+    $hero.Inventory += $charm
+    Set-EquippedItem -Hero $hero -Item $charm | Out-Null
+    Reset-HeroMagicItemCombatCharges -Hero $hero
+
+    $firstUse = Try-ConsumeHeroMagicItemCombatEffect -Hero $hero -Effect "HeroAttackAdvantage"
+    $secondUse = Try-ConsumeHeroMagicItemCombatEffect -Hero $hero -Effect "HeroAttackAdvantage"
+
+    Assert-Equal -Actual $firstUse.Success -Expected $true -Message "A charged magic combat item should fire once after reset."
+    Assert-Equal -Actual $secondUse.Success -Expected $false -Message "A once-per-combat magic item should not fire twice in the same combat."
+
+    Reset-HeroMagicItemCombatCharges -Hero $hero
+    $afterReset = Try-ConsumeHeroMagicItemCombatEffect -Hero $hero -Effect "HeroAttackAdvantage"
+
+    Assert-Equal -Actual $afterReset.Success -Expected $true -Message "A new combat should refresh the magic item's charge."
+}
+
+function Test-HeroCanBuyArcaneCurioWhenRichEnough {
+    $game = Initialize-Game
+    $hero = $game.Hero
+    $hero.CurrencyCopper = 2500
+    $offer = Get-ArcaneCurioOffers -Game $game | Where-Object { $_.Id -eq "arcane_warding_ring" } | Select-Object -First 1
+
+    $result = Try-BuyTownOffer -Game $game -Hero $hero -Offer $offer
+
+    Assert-True -Condition $result.Success -Message "A wealthy hero should be able to buy from Arcane Curios."
+    Assert-True -Condition ([bool]($hero.Inventory | Where-Object { $_.Name -eq "Warding Ring" })) -Message "The bought magic item should enter inventory."
+    Assert-Equal -Actual (Get-TownBuyerLabel -BuyerType "ArcaneCurios") -Expected "Gnome Curio Broker" -Message "The magic shop should have its own buyer label."
+    Assert-True -Condition ((Get-TownBuyerIntroText -BuyerType "ArcaneCurios" -Game $game) -like "*Pibbik Nackle*" -and (Get-TownBuyerIntroText -BuyerType "ArcaneCurios" -Game $game) -like "*new items*") -Message "The magic shop should be owned by an eccentric gnome who talks about buying new stock."
+}
+
 function Test-TutorialLootHasUsefulButModestSaleValue {
     $skeletonLoot = Get-MonsterLoot -Monster @{ name = "skeleton" }
     $goblinLoot = Get-MonsterLoot -Monster @{ name = "goblin" }
@@ -236,6 +308,10 @@ Test-DedicatedBuyerMatchesSpecialistForOwnGoods
 Test-OffSpecialtyBuyersPayLess
 Test-NewSpecialtyShopsStockRealClassGear
 Test-FighterPatronStandingUnlocksHeraldicSurcoat
+Test-ArcaneCuriosStockExpensiveMagicItems
+Test-EquippedMagicItemsAffectHeroStatsAndArmorClass
+Test-MagicCombatChargesRefreshAndConsumeOnce
+Test-HeroCanBuyArcaneCurioWhenRichEnough
 Test-TutorialLootHasUsefulButModestSaleValue
 Test-DocksideOdditiesPaysWellForJunk
 Test-StableStocksPackAnimalsAndRidingHorse

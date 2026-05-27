@@ -782,6 +782,19 @@ function Get-TownShopIntroText {
                 -BardText "Glass vials glimmer behind the counter as the apothecary speaks softly about calm hands, clear breath, steady nerves, and keeping a performer on his feet after a hard night. Gariand's road-worn kit earns a measured glance, but less judgment than practical advice." `
                 -FighterText "Glass vials glimmer behind the counter as the apothecary speaks about bruises, clean stitching, and steady hands. Lubert Stryer's mail earns the practical look usually saved for people expected to stand upright after impact.")
         }
+        "Arcane Curios" {
+            if ($isNight) {
+                return (Get-ClassAwareTownText -Hero $Hero `
+                    -BarbarianText "Pibbik Nackle's arcane curio room feels too quiet for Borzig's taste until the little gnome pops up behind the counter, goggles flashing, and announces that he is buying new wonders any day now if the city stops being boring." `
+                    -BardText "Pibbik Nackle's arcane curio room is all locked glass, soft ward-light, and prices delivered like punchlines for richer audiences. The little gnome keeps promising Gariand that the next shipment will make the current stock look embarrassingly ordinary." `
+                    -FighterText "Pibbik Nackle's arcane curio room keeps its wonders measured, catalogued, and guarded. The little gnome salutes Lubert Stryer with a receipt spike and insists he is negotiating for new items worthy of disciplined hands.")
+            }
+
+            return (Get-ClassAwareTownText -Hero $Hero `
+                -BarbarianText "Pibbik Nackle sells things that do not behave like normal gear: a ring that leans away from blades, a belt that remembers giant strength, charms that twist the first beat of a fight. Between prices, the tiny gnome keeps asking whether Borzig has seen any monster parts that still hum." `
+                -BardText "Pibbik Nackle sells beautiful little cheats against fate: rings, charms, brooches, and bright lies with receipts. The tiny gnome talks almost as fast as Gariand can listen, especially about the new items he swears he is buying before the week is out." `
+                -FighterText "Pibbik Nackle sells controlled impossibilities: warding rings, disciplined charms, and small battlefield exceptions with enormous prices. The tiny gnome keeps a list of future acquisitions and asks Lubert Stryer whether knights prefer items that glow, hum, or look respectable in court.")
+        }
         "Instrument Shop" {
             if ($isNight) {
                 return (Get-ClassAwareTownText -Hero $Hero `
@@ -2217,6 +2230,9 @@ function Open-TownShopAction {
         "Apothecary" {
             Show-TownShop -Title "Apothecary" -IntroText (Get-TownShopIntroText -Shop "Apothecary" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ApothecaryOffers -Game $Game) -BuyerType "Apothecary"
         }
+        "ArcaneCurios" {
+            Show-TownShop -Title "Arcane Curios" -IntroText (Get-TownShopIntroText -Shop "Arcane Curios" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-ArcaneCurioOffers -Game $Game) -BuyerType "ArcaneCurios"
+        }
         "InstrumentShop" {
             Show-TownShop -Title "Instrument Shop" -IntroText (Get-TownShopIntroText -Shop "Instrument Shop" -Hero $Game.Hero -Game $Game) -Game $Game -Hero $Game.Hero -Offers (Get-InstrumentShopOffers -Game $Game) -BuyerType "InstrumentShop"
         }
@@ -2272,7 +2288,8 @@ function Start-TownShopsMenu {
         Write-ColorLine $(if ($isNight) { "4. Visit the quiet instrument shop" } else { "4. Visit the instrument shop" }) "White"
         Write-ColorLine $(if ($isNight) { "5. Visit the armorer's hall (closed)" } else { "5. Visit the armorer" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Armorer") { "White" } else { "DarkGray" })
         Write-ColorLine $(if ($isNight) { "6. Visit the stable yard (closed)" } else { "6. Visit the stable yard" }) $(if (Test-TownActionAvailableAtCurrentTime -Game $Game -Action "Stable") { "White" } else { "DarkGray" })
-        Write-ColorLine $(if ($isNight) { "7. Find a late buyer" } else { "7. Find a buyer" }) "White"
+        Write-ColorLine "7. Visit arcane curios" "White"
+        Write-ColorLine $(if ($isNight) { "8. Find a late buyer" } else { "8. Find a buyer" }) "White"
         Write-ColorLine "S. Status" "White"
         Write-ColorLine "0. Back to town" "DarkGray"
         Write-ColorLine ""
@@ -2286,7 +2303,8 @@ function Start-TownShopsMenu {
             "4" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "InstrumentShop" }
             "5" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Armorer" }
             "6" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Stable" }
-            "7" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Sell" }
+            "7" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "ArcaneCurios" }
+            "8" { Open-TownShopAction -Game $Game -HeroHP $HeroHP -Action "Sell" }
             "S" { Show-AdventureStatus -Game $Game -HeroHP $HeroHP.Value }
             "0" { return }
             default {

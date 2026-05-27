@@ -209,6 +209,17 @@ function Get-ApothecaryOffers {
     return $offers
 }
 
+function Get-ArcaneCurioOffers {
+    param($Game = $null)
+
+    return @(
+        (New-TownOffer -Id "arcane_warding_ring" -Name "Warding Ring" -Category "Magic" -Description "A silver ring that hums when steel comes too close. Magic utility, AC +1 while equipped." -PriceCopper 2400)
+        (New-TownOffer -Id "arcane_ogre_knuckle_belt" -Name "Ogre-Knuckle Belt" -Category "Magic" -Description "A scarred belt clasped with a fossilized knuckle. Magic utility, STR +1 while equipped." -PriceCopper 2600)
+        (New-TownOffer -Id "arcane_foxglass_charm" -Name "Foxglass Charm" -Category "Magic" -Description "A sly amber lens that catches one perfect opening. Magic utility, advantage on the first hero attack each combat." -PriceCopper 1800)
+        (New-TownOffer -Id "arcane_gravesalt_brooch" -Name "Grave-Salt Brooch" -Category "Magic" -Description "A cold brooch filled with pale warding salt. Magic utility, the first enemy attack each combat has disadvantage." -PriceCopper 2100)
+    )
+}
+
 function New-StableOffer {
     param(
         [string]$Id,
@@ -474,6 +485,10 @@ function New-TownItemFromOfferId {
         "apothecary_greater_healing_potion" { return (New-ConsumableItem -Name "Greater Healing Potion" -Value 180 -HealAmount 12 -SlotCost 1) }
         "apothecary_haste_potion" { return (New-ConsumableItem -Name "Potion of Haste" -Value 300 -HealAmount 0 -BuffType "Haste" -BuffName "Potion of Haste" -InitiativeAdvantage $true -SlotCost 1) }
         "apothecary_battle_tonic" { return (New-ConsumableItem -Name "Battle Tonic" -Value 420 -HealAmount 18 -SlotCost 1) }
+        "arcane_warding_ring" { return (New-MagicUtilityItem -Name "Warding Ring" -Value 2400 -Description "A silver ring that hums when steel comes too close." -ArmorClassBonus 1 -MagicSlot "Ring" -SlotCost 1) }
+        "arcane_ogre_knuckle_belt" { return (New-MagicUtilityItem -Name "Ogre-Knuckle Belt" -Value 2600 -Description "A scarred belt clasped with a fossilized knuckle." -AbilityBonusAbility "STR" -AbilityBonus 1 -MagicSlot "Belt" -SlotCost 1) }
+        "arcane_foxglass_charm" { return (New-MagicUtilityItem -Name "Foxglass Charm" -Value 1800 -Description "A sly amber lens that catches one perfect opening." -CombatEffect "HeroAttackAdvantage" -CombatUsesPerCombat 1 -CombatFlavorText "The amber lens catches the enemy half a heartbeat early, turning the strike into advantage." -MagicSlot "Charm" -SlotCost 1) }
+        "arcane_gravesalt_brooch" { return (New-MagicUtilityItem -Name "Grave-Salt Brooch" -Value 2100 -Description "A cold brooch filled with pale warding salt." -CombatEffect "MonsterAttackDisadvantage" -CombatUsesPerCombat 1 -CombatFlavorText "The pale salt chills the attack line, dragging the enemy's first strike into disadvantage." -MagicSlot "Brooch" -SlotCost 1) }
         default { return $null }
     }
 }
@@ -488,6 +503,7 @@ function Get-TownBuyerLabel {
         "Smithy" { return "Smith" }
         "Armorer" { return "Armorer" }
         "Apothecary" { return "Apothecary" }
+        "ArcaneCurios" { return "Gnome Curio Broker" }
         "DocksideOddities" { return "Rag-and-Bone Collector" }
         default { return "Trader" }
     }
@@ -527,6 +543,10 @@ function Get-TownBuyerIntroText {
             if ($isNight) { return "The apothecary handles late trade like triage, studying bottles and sealed mixtures with tired care while clearly wishing fewer customers needed remedies after dark." }
             return "The apothecary studies bottles, herbs, and sealed mixtures with care, but shows little enthusiasm for bloody steel. Cave loot that smells of damp stone and old blood clearly is not a favorite."
         }
+        "ArcaneCurios" {
+            if ($isNight) { return "Pibbik Nackle, a tiny gnome in magnifying goggles, opens only one cabinet after dark and keeps muttering that the next shipment will be stranger, brighter, and absolutely not cursed in any legally meaningful sense." }
+            return "Pibbik Nackle, the tiny gnome behind Arcane Curios, keeps the real stock behind glass and brass thread. He talks quickly about rings, charms, unpaid invoices, and the marvelous new items he is definitely about to buy as soon as someone sensible sells him something impossible."
+        }
         "DocksideOddities" {
             if ($isNight) { return "Auntie Brindle's little shop glows behind blue bottle-lamps, every shelf packed with cracked horns, shed scales, bent spoons, old buttons, and things she insists still remember who threw them away." }
             return "Auntie Brindle peers over a hill of sorted rubbish with bright, delighted eyes. 'Nothing is junk, dear. Only a thing whose story was interrupted. Show me what the sensible folk were foolish enough to abandon.'"
@@ -565,6 +585,11 @@ function Get-SaleAffinityMultiplier {
         "Apothecary" {
             if ($Item.Type -eq "Consumable") { return 0.5 }
             return 0.3
+        }
+        "ArcaneCurios" {
+            if ($Item.Type -eq "Utility" -and $null -ne $Item.PSObject.Properties["MagicItem"] -and [bool]$Item.MagicItem) { return 0.55 }
+            if ($Item.Type -eq "Junk") { return 0.5 }
+            return 0.25
         }
         "DocksideOddities" {
             if ($Item.Type -eq "Junk") { return 0.85 }

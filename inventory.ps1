@@ -40,12 +40,29 @@ function Format-InventoryItemLine {
         $tags += "inspiration +$($Item.InspirationBonus)"
     }
 
+    if ($Item.Type -eq "Utility" -and $null -ne $Item.PSObject.Properties["MagicItem"] -and [bool]$Item.MagicItem) {
+        $tags += "magic"
+
+        if ($null -ne $Item.PSObject.Properties["ArmorClassBonus"] -and [int]$Item.ArmorClassBonus -gt 0) {
+            $tags += "AC +$($Item.ArmorClassBonus)"
+        }
+
+        if ($null -ne $Item.PSObject.Properties["AbilityBonus"] -and [int]$Item.AbilityBonus -gt 0) {
+            $tags += "$($Item.AbilityBonusAbility) +$($Item.AbilityBonus)"
+        }
+
+        if ($null -ne $Item.PSObject.Properties["MagicCombatEffect"] -and -not [string]::IsNullOrWhiteSpace([string]$Item.MagicCombatEffect)) {
+            $tags += "1/combat"
+        }
+    }
+
     $slotCost = Get-ItemSlotCost -Item $Item
     $slotLabel = if ($slotCost -eq 1) { "slot" } else { "slots" }
 
     $tags += "$slotCost $slotLabel"
 
-    if ($Item.Equipped -and $Item.Type -in @("Weapon", "Armor", "Shield")) {
+    if ($Item.Equipped -and ($Item.Type -in @("Weapon", "Armor", "Shield") -or
+        ($Item.Type -eq "Utility" -and $null -ne $Item.PSObject.Properties["MagicItem"] -and [bool]$Item.MagicItem))) {
         $tags += "equipped"
     }
 
@@ -466,7 +483,8 @@ function Open-InventoryMenu {
             Write-ColorLine "U. Use" "White"
         }
 
-        if ($selectedItem.Type -eq "Weapon" -or $selectedItem.Type -eq "Armor") {
+        if ($selectedItem.Type -in @("Weapon", "Armor", "Shield") -or
+            ($selectedItem.Type -eq "Utility" -and $null -ne $selectedItem.PSObject.Properties["MagicItem"] -and [bool]$selectedItem.MagicItem)) {
             Write-ColorLine "E. Equip" "White"
         }
 

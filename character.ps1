@@ -16,13 +16,14 @@ function Get-HeroAbilityScore {
         [string]$Ability
     )
 
-    $property = $Hero.PSObject.Properties[$Ability]
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+    $property = $Hero.PSObject.Properties[$normalizedAbility]
 
     if ($null -eq $property) {
         return 10
     }
 
-    return [int]$property.Value
+    return [int]$property.Value + (Get-HeroEquippedMagicAbilityBonus -Hero $Hero -Ability $normalizedAbility)
 }
 
 function Get-HeroAbilityModifier {
@@ -37,6 +38,40 @@ function Get-HeroAbilityModifier {
 
 function Get-HeroAbilityNames {
     return @("STR", "DEX", "CON", "INT", "WIS", "CHA")
+}
+
+function Get-HeroEquippedMagicAbilityBonus {
+    param(
+        $Hero,
+        [string]$Ability
+    )
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["Inventory"]) {
+        return 0
+    }
+
+    $normalizedAbility = Normalize-HeroAbilityName -Ability $Ability
+    $bonus = 0
+
+    foreach ($item in @($Hero.Inventory)) {
+        if ($null -eq $item.PSObject.Properties["Equipped"] -or -not [bool]$item.Equipped) {
+            continue
+        }
+
+        if ($null -eq $item.PSObject.Properties["MagicItem"] -or -not [bool]$item.MagicItem) {
+            continue
+        }
+
+        if ($null -eq $item.PSObject.Properties["AbilityBonusAbility"] -or $null -eq $item.PSObject.Properties["AbilityBonus"]) {
+            continue
+        }
+
+        if ((Normalize-HeroAbilityName -Ability ([string]$item.AbilityBonusAbility)) -eq $normalizedAbility) {
+            $bonus += [int]$item.AbilityBonus
+        }
+    }
+
+    return $bonus
 }
 
 function Normalize-HeroAbilityName {
@@ -1088,6 +1123,7 @@ function Get-HeroArmorClass {
     param($Hero)
 
     $armorBonus = 0
+    $magicArmorBonus = 0
     $dexterityModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "DEX"
     $hasEquippedArmor = $false
 
@@ -1109,6 +1145,10 @@ function Get-HeroArmorClass {
         elseif ($item.Type -eq "Shield" -and $item.Equipped -and $null -ne $item.ArmorBonus) {
             $armorBonus += [int]$item.ArmorBonus
         }
+        elseif ($item.Type -eq "Utility" -and $item.Equipped -and $null -ne $item.PSObject.Properties["ArmorClassBonus"]) {
+            $magicArmorBonus += [int]$item.ArmorClassBonus
+            $armorBonus += [int]$item.ArmorClassBonus
+        }
     }
 
     if (Test-HeroFightingStyleDefenseActive -Hero $Hero -HasEquippedArmor $hasEquippedArmor) {
@@ -1117,10 +1157,65 @@ function Get-HeroArmorClass {
 
     if ($Hero.Class -eq "Barbarian" -and -not $hasEquippedArmor) {
         $constitutionModifier = Get-HeroAbilityModifier -Hero $Hero -Ability "CON"
-        return $Hero.BaseArmorClass + $dexterityModifier + $constitutionModifier
+        return $Hero.BaseArmorClass + $dexterityModifier + $constitutionModifier + $magicArmorBonus
     }
 
     return $Hero.BaseArmorClass + $armorBonus
+}
+
+function Reset-HeroMagicItemCombatCharges {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["Inventory"]) {
+        return
+    }
+
+    foreach ($item in @($Hero.Inventory)) {
+        if ($null -eq $item.PSObject.Properties["MagicCombatUsesPerCombat"]) {
+            continue
+        }
+
+        if ($null -eq $item.PSObject.Properties["MagicCombatUsesRemaining"]) {
+            $item | Add-Member -NotePropertyName MagicCombatUsesRemaining -NotePropertyValue 0
+        }
+
+        $item.MagicCombatUsesRemaining = [int]$item.MagicCombatUsesPerCombat
+    }
+}
+
+function Try-ConsumeHeroMagicItemCombatEffect {
+    param(
+        $Hero,
+        [string]$Effect
+    )
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["Inventory"]) {
+        return [PSCustomObject]@{ Success = $false; Item = $null; FlavorText = "" }
+    }
+
+    foreach ($item in @($Hero.Inventory)) {
+        if ($null -eq $item.PSObject.Properties["Equipped"] -or -not [bool]$item.Equipped) {
+            continue
+        }
+
+        if ($null -eq $item.PSObject.Properties["MagicCombatEffect"] -or [string]$item.MagicCombatEffect -ne $Effect) {
+            continue
+        }
+
+        if ($null -eq $item.PSObject.Properties["MagicCombatUsesRemaining"] -or [int]$item.MagicCombatUsesRemaining -le 0) {
+            continue
+        }
+
+        $item.MagicCombatUsesRemaining = [Math]::Max(0, [int]$item.MagicCombatUsesRemaining - 1)
+
+        return [PSCustomObject]@{
+            Success = $true
+            Item = $item
+            FlavorText = if ($null -ne $item.PSObject.Properties["MagicCombatFlavorText"]) { [string]$item.MagicCombatFlavorText } else { "" }
+        }
+    }
+
+    return [PSCustomObject]@{ Success = $false; Item = $null; FlavorText = "" }
 }
 
 function Get-HeroUnarmoredDefenseStatus {
@@ -2486,6 +2581,25 @@ function Set-EquippedItem {
         foreach ($inventoryItem in $Hero.Inventory) {
             if ($inventoryItem.Type -eq "Shield") {
                 $inventoryItem.Equipped = $false
+            }
+        }
+
+        $Item.Equipped = $true
+        return [PSCustomObject]@{
+            Success = $true
+            Message = ""
+        }
+    }
+
+    if ($Item.Type -eq "Utility" -and $null -ne $Item.PSObject.Properties["MagicItem"] -and [bool]$Item.MagicItem) {
+        if ($null -ne $Item.PSObject.Properties["MagicSlot"] -and -not [string]::IsNullOrWhiteSpace([string]$Item.MagicSlot)) {
+            foreach ($inventoryItem in $Hero.Inventory) {
+                if ($inventoryItem.Type -eq "Utility" -and
+                    $null -ne $inventoryItem.PSObject.Properties["MagicItem"] -and [bool]$inventoryItem.MagicItem -and
+                    $null -ne $inventoryItem.PSObject.Properties["MagicSlot"] -and
+                    [string]$inventoryItem.MagicSlot -eq [string]$Item.MagicSlot) {
+                    $inventoryItem.Equipped = $false
+                }
             }
         }
 

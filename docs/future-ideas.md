@@ -32,6 +32,7 @@
 - more city districts and stronger NPC quest lines
 - additional caves or wilderness zones after the city-understreet arc
 - more shop inventory, armor progression, and trader variety
+- turn Auntie Brindle's post-monster-zone oddity buying into a monster-part magic crafting path, using delivered creature proof and oddities to create stranger AC/stat/advantage/disadvantage items than the expensive finished stock at `Arcane Curios`
 - let the smithy offer branching weapon upgrades, such as a more accurate forged path versus a heavier, more brutal damage-focused path
 - tune Fighter's first mounted jousting pass with richer opponents, heraldic rewards, better failure consequences, and more distance-before-clash choices
 - deeper inn events, shady city routes, and economic info payoffs

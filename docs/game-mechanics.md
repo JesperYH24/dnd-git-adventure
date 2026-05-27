@@ -127,6 +127,7 @@ Current camp levels:
 - `Fighting Style: Defense` adds `+1 AC` while armor is equipped
 - `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
 - smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
+- `Arcane Curios` previews high-price magic gear before monster-part crafting: persistent utility items can raise AC or ability scores, and combat-charge charms can grant one automatic advantage/disadvantage trigger per combat
 - `Lantern Rest` and `Silver Kettle` now recognize Fighter differently, feeding shield/mail discounts, tourney patron attention, and upper-table introductions
 - patron standing can unlock the `Heraldic Surcoat` at the armorer as a presentation-focused tourney item
 - guard and patron quest acceptance text now frames Fighter as disciplined, reliable, and knight-aspirant rather than generic hired muscle
@@ -167,6 +168,7 @@ Current camp levels:
 - Fighter can visit the tourney ground from `Work & Trouble` to build early knight-facing arena standing
 - market, smithy, and armorer close at night
 - apothecary, instrument shop, inn, streets, quest log, and buyer flow remain available
+- arcane curios remain available as a brutally expensive magic-item preview rather than the main magic economy
 - the daytime stable yard sells pack animals and riding horses; pack animals prepare the future monster-zone haul loop instead of using normal inventory slots
 - manual `Wait for nightfall` transition
 - long rests advance to the next day and reset daily limits

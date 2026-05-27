@@ -148,6 +148,37 @@ function New-UtilityItem {
     }
 }
 
+function New-MagicUtilityItem {
+    param(
+        [string]$Name,
+        [int]$Value,
+        [string]$Description = "",
+        [int]$ArmorClassBonus = 0,
+        [string]$AbilityBonusAbility = "",
+        [int]$AbilityBonus = 0,
+        [string]$CombatEffect = "",
+        [int]$CombatUsesPerCombat = 0,
+        [string]$CombatFlavorText = "",
+        [string]$MagicSlot = "",
+        [int]$SlotCost = 1,
+        [bool]$Equipped = $false
+    )
+
+    $item = New-UtilityItem -Name $Name -Value $Value -SlotCost $SlotCost -Equipped $Equipped
+    $item | Add-Member -NotePropertyName MagicItem -NotePropertyValue $true
+    $item | Add-Member -NotePropertyName Description -NotePropertyValue $Description
+    $item | Add-Member -NotePropertyName ArmorClassBonus -NotePropertyValue $ArmorClassBonus
+    $item | Add-Member -NotePropertyName AbilityBonusAbility -NotePropertyValue $AbilityBonusAbility
+    $item | Add-Member -NotePropertyName AbilityBonus -NotePropertyValue $AbilityBonus
+    $item | Add-Member -NotePropertyName MagicCombatEffect -NotePropertyValue $CombatEffect
+    $item | Add-Member -NotePropertyName MagicCombatUsesPerCombat -NotePropertyValue $CombatUsesPerCombat
+    $item | Add-Member -NotePropertyName MagicCombatUsesRemaining -NotePropertyValue 0
+    $item | Add-Member -NotePropertyName MagicCombatFlavorText -NotePropertyValue $CombatFlavorText
+    $item | Add-Member -NotePropertyName MagicSlot -NotePropertyValue $MagicSlot
+
+    return $item
+}
+
 function Get-ItemSlotCost {
     param($Item)
 
