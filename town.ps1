@@ -180,6 +180,21 @@ function Get-TownNextStepReminderText {
     }
 
     if ([bool]$Game.Town.StoryQuestDoneToday) {
+        $guardDone = [bool](Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed
+        $patronDone = [bool](Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed
+
+        if ($guardDone -and -not $patronDone) {
+            return "Next step: Rest for the night; tomorrow, visit the Quest Giver to finish the opening investigation pair."
+        }
+
+        if ($patronDone -and -not $guardDone) {
+            return "Next step: Rest for the night; tomorrow, visit the Guard Station to finish the opening investigation pair."
+        }
+
+        if ($guardDone -and $patronDone -and -not [bool]$Game.Town.ChapterTwoComplete) {
+            return "Next step: Rest for the night; tomorrow, Work & Trouble will show the deeper city leads."
+        }
+
         return "Next step: Rest for the night before taking another real story lead."
     }
 
@@ -241,10 +256,18 @@ function Get-TownOpeningFlowReminderText {
     }
 
     if ($guardDone -and -not $patronDone) {
+        if ([bool]$Game.Town.StoryQuestDoneToday) {
+            return "Opening case note: the Guard Station lead is done. Rest at an inn, then visit the Quest Giver for the other half of the first investigation pair."
+        }
+
         return "Opening case: the Guard Station lead is done. Visit the Quest Giver next to complete the other half of the first investigation pair."
     }
 
     if ($patronDone -and -not $guardDone) {
+        if ([bool]$Game.Town.StoryQuestDoneToday) {
+            return "Opening case note: the Quest Giver lead is done. Rest at an inn, then visit the Guard Station for the other half of the first investigation pair."
+        }
+
         return "Opening case: the Quest Giver lead is done. Visit the Guard Station next to complete the other half of the first investigation pair."
     }
 
@@ -258,12 +281,24 @@ function Get-TownWorkMenuGuidanceText {
         return ""
     }
 
-    if ([bool]$Game.Town.StoryQuestDoneToday) {
-        return "Daily rhythm: the main story has moved today. Use day jobs, shops, streets, or rest at an inn before taking another story lead."
-    }
-
     $guardDone = [bool](Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed
     $patronDone = [bool](Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed
+
+    if ([bool]$Game.Town.StoryQuestDoneToday) {
+        if ($guardDone -and -not $patronDone) {
+            return "Daily rhythm: the main story has moved today. Rest at an inn; tomorrow the Quest Giver has the other required opening lead."
+        }
+
+        if ($patronDone -and -not $guardDone) {
+            return "Daily rhythm: the main story has moved today. Rest at an inn; tomorrow the Guard Station has the other required opening lead."
+        }
+
+        if ($guardDone -and $patronDone -and -not [bool]$Game.Town.ChapterTwoComplete) {
+            return "Daily rhythm: the opening case is paired. Rest at an inn; tomorrow deeper Work & Trouble leads can surface."
+        }
+
+        return "Daily rhythm: the main story has moved today. Use day jobs, shops, streets, or rest at an inn before taking another story lead."
+    }
 
     if (-not $guardDone -and -not $patronDone) {
         return "Recommended story start: Guard Station and Quest Giver are the two opening investigation leads. Quest Board work is useful money, but not required for the first story gate."
@@ -303,6 +338,46 @@ function Get-TownQuestSourceRoleHintText {
             return ""
         }
     }
+}
+
+function Get-TownWorkMenuOptionLabel {
+    param(
+        $Game,
+        [bool]$IsNight
+    )
+
+    if ($null -eq $Game -or $null -eq $Game.Town) {
+        if ($IsNight) {
+            return "Work & Trouble, plus night coin"
+        }
+
+        return "Work & Trouble, plus day jobs"
+    }
+
+    $guardDone = [bool](Find-TownQuest -Game $Game -QuestId "guard_night_watch").Completed
+    $patronDone = [bool](Find-TownQuest -Game $Game -QuestId "patron_storehouse_rats").Completed
+
+    if (-not [bool]$Game.Town.StoryQuestDoneToday -and -not $guardDone -and -not $patronDone) {
+        return "Work & Trouble (recommended start)"
+    }
+
+    if ([bool]$Game.Town.StoryQuestDoneToday) {
+        if ($IsNight) {
+            return "Work & Trouble (story waits until rest)"
+        }
+
+        return "Work & Trouble (story moved today)"
+    }
+
+    if ($guardDone -xor $patronDone) {
+        return "Work & Trouble (remaining opening lead)"
+    }
+
+    if ($IsNight) {
+        return "Work & Trouble, plus night coin"
+    }
+
+    return "Work & Trouble, plus day jobs"
 }
 
 function Get-TownRelationshipHintText {
@@ -2216,8 +2291,8 @@ function Start-QuestHubMenu {
     $showIntro = $true
 
     while ($true) {
-        Write-SectionTitle -Text "Seek Work" -Color "Yellow"
-        Write-TownTimeTracker -Game $Game -Area "Seek Work" -HeroHP $HeroHP.Value
+        Write-SectionTitle -Text "Work & Trouble" -Color "Yellow"
+        Write-TownTimeTracker -Game $Game -Area "Work & Trouble" -HeroHP $HeroHP.Value
         if ($showIntro) {
             Write-TownLocationIntro `
                 -Game $Game `
@@ -2662,7 +2737,7 @@ function Start-TownMenu {
         }
         Write-ColorLine $(if ($isNight) { "1. Walk the lantern-lit streets" } else { "1. Walk the streets" }) "White"
         Write-ColorLine "2. Shops & services" "White"
-        Write-ColorLine $(if ($isNight) { "3. Work, trouble, and night coin" } else { "3. Work, trouble, and day jobs" }) "White"
+        Write-ColorLine "3. $(Get-TownWorkMenuOptionLabel -Game $Game -IsNight $isNight)" "White"
         Write-ColorLine $(if ($null -ne $Game.Town.ActiveInn) { "4. Go to your inn" } else { "4. Find lodging" }) "White"
         Write-ColorLine "5. Hero, inventory, and quest log" "White"
         if (Test-DocksDistrictOpenToTown -Game $Game) {

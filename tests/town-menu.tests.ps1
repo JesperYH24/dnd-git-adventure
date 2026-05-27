@@ -363,14 +363,34 @@ function Test-TownOpeningFlowReminderGuidesFirstStoryPair {
     Assert-Equal -Actual $afterPair -Expected "" -Message "The opening reminder should clear once both opening story leads are complete."
 }
 
+function Test-TownOpeningFlowReminderHandlesDailyStoryLock {
+    $game = Initialize-Game
+    (Find-TownQuest -Game $game -QuestId "guard_night_watch").Completed = $true
+    $game.Town.StoryQuestDoneToday = $true
+
+    $openingReminder = Get-TownOpeningFlowReminderText -Game $game
+    $workGuidance = Get-TownWorkMenuGuidanceText -Game $game
+    $nextStep = Get-TownNextStepReminderText -Game $game
+
+    Assert-True -Condition ($openingReminder -like "*Rest at an inn*" -and $openingReminder -like "*Quest Giver*") -Message "The opening reminder should tell players to rest before chasing the remaining opener."
+    Assert-True -Condition ($workGuidance -like "*Daily rhythm*" -and $workGuidance -like "*tomorrow*Quest Giver*") -Message "The work menu should explain why the remaining opener waits until tomorrow."
+    Assert-True -Condition ($nextStep -like "*Rest for the night*" -and $nextStep -like "*Quest Giver*") -Message "The town next-step reminder should name the remaining opening source after rest."
+}
+
 function Test-TownWorkMenuGuidanceExplainsEarlySourceRoles {
     $game = Initialize-Game
     $initial = Get-TownWorkMenuGuidanceText -Game $game
     $boardRole = Get-TownQuestSourceRoleHintText -Source "Quest Board" -Game $game
     $guardRole = Get-TownQuestSourceRoleHintText -Source "Guard Station" -Game $game
     $patronRole = Get-TownQuestSourceRoleHintText -Source "Quest Giver" -Game $game
+    $firstLabel = Get-TownWorkMenuOptionLabel -Game $game -IsNight $false
+
+    (Find-TownQuest -Game $game -QuestId "guard_night_watch").Completed = $true
+    $remainingLabel = Get-TownWorkMenuOptionLabel -Game $game -IsNight $false
 
     Assert-True -Condition ($initial -like "*Recommended story start*" -and $initial -like "*Guard Station*" -and $initial -like "*Quest Giver*") -Message "The work menu should explicitly recommend the two opening story sources."
+    Assert-True -Condition ($firstLabel -like "*Work & Trouble*" -and $firstLabel -like "*recommended start*") -Message "The town menu should make Work & Trouble the obvious first story entry point."
+    Assert-True -Condition ($remainingLabel -like "*remaining opening lead*") -Message "After one opener, the town menu should keep the remaining lead visible."
     Assert-True -Condition ($boardRole -like "*day jobs*" -and $boardRole -like "*not the required first story pair*") -Message "The board source hint should frame board work as optional coin/practice."
     Assert-True -Condition ($guardRole -like "*main investigation*" -and $guardRole -like "*watch*") -Message "The guard source hint should identify its story role."
     Assert-True -Condition ($patronRole -like "*main investigation*" -and $patronRole -like "*ledger*") -Message "The quest-giver source hint should identify its story role."
@@ -558,6 +578,7 @@ Test-PostCivicVaultTownTextReactsToHalewickEscape
 Test-PostCivicVaultAftermathReminderClearsAfterWallRumors
 Test-TownNextStepReminderPrioritizesLevelUpRest
 Test-TownOpeningFlowReminderGuidesFirstStoryPair
+Test-TownOpeningFlowReminderHandlesDailyStoryLock
 Test-TownWorkMenuGuidanceExplainsEarlySourceRoles
 Test-TownNextStepReminderTracksDocksStoryBeats
 Test-TownNextStepReminderYieldsToMonsterZone
