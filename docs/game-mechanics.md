@@ -99,9 +99,13 @@ Current camp levels:
 ## Barbarian mechanics
 
 - `Rage` as a bonus action with limited uses per long rest
+- rage uses scale for the current level range: `2` at levels 1-2, `3` at levels 3-5, and `4` at level 6
 - rage adds weapon damage and reduces incoming weapon damage
 - `Reckless Attack` gives the barbarian advantage and also gives the next enemy attack against him advantage
 - `Danger Sense` surfaces as monster-zone awareness and now also appears in dungeon-style rooms as instinctive hazard text for Barbarian level 2+, especially around ambushes, traps, strange stillness, and rooms built to catch the obvious path
+- `Extra Attack` unlocks at Barbarian level 5, giving two weapon attacks when taking the Attack action
+- `Fast Movement` unlocks at Barbarian level 5, raising combat movement to `40 ft` when not wearing movement-restricting armor
+- Berserker `Mindless Rage` unlocks at Barbarian level 6, blocking charmed and frightened condition checks while rage is active
 - `Unarmored Defense` uses `10 + DEX modifier + CON modifier` while unarmored
 - status output shows rage uses, active rage state, and reckless exposure
 

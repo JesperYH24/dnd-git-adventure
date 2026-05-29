@@ -1444,7 +1444,7 @@ function Start-LevelSixGateDefenseEvent {
         $monsterOffBalance = $false
         $encounterFled = $false
         $heroDroppedWeapon = if ($null -ne $Game.PSObject.Properties["HeroDroppedWeapon"]) { [bool]$Game.HeroDroppedWeapon } else { $false }
-        $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 90
+        $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet (Get-HeroCombatSpeedFeet -Hero $Game.Hero) -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 90
 
         Write-SectionTitle -Text $wave.Title -Color "DarkRed"
         Write-Scene $wave.AllyLine
@@ -2445,7 +2445,7 @@ function Start-MonsterZoneEncounter {
     $heroDroppedWeapon = if ($null -ne $Game.PSObject.Properties["HeroDroppedWeapon"]) { [bool]$Game.HeroDroppedWeapon } else { $false }
     $heroStarts = $false
     $monsterStarts = $false
-    $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
+    $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet (Get-HeroCombatSpeedFeet -Hero $Game.Hero) -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
     $weather = Get-MonsterZoneWeatherState -Game $Game
     $terrain = Get-MonsterZoneCurrentTerrain -Game $Game
 

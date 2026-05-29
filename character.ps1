@@ -238,6 +238,9 @@ function Test-HeroFeatureUnlocked {
                 "DangerSense" { return $level -ge 2 }
                 "Frenzy" { return $level -ge 3 }
                 "AbilityScoreIncrease" { return $level -ge 4 }
+                "ExtraAttack" { return $level -ge 5 }
+                "FastMovement" { return $level -ge 5 }
+                "MindlessRage" { return $level -ge 6 }
                 default { return $false }
             }
         }
@@ -288,6 +291,66 @@ function Get-HeroNextLevelXPThreshold {
     param($Hero)
 
     return Get-XPThresholdForLevel -Level ($Hero.Level + 1)
+}
+
+function Get-HeroMaxRages {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return 0
+    }
+
+    $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
+
+    if ($level -ge 6) { return 4 }
+    if ($level -ge 3) { return 3 }
+    return 2
+}
+
+function Test-HeroFastMovementActive {
+    param($Hero)
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "FastMovement")) {
+        return $false
+    }
+
+    # The local armor model does not yet tag heavy armor directly; no-Dex armor is
+    # treated as movement-restricting for this Barbarian feature.
+    $armor = Get-EquippedArmor -Hero $Hero
+    return ($null -eq $armor -or [bool]$armor.AddsDexModifier)
+}
+
+function Get-HeroCombatSpeedFeet {
+    param($Hero)
+
+    $speed = 30
+
+    if (Test-HeroFastMovementActive -Hero $Hero) {
+        $speed += 10
+    }
+
+    return $speed
+}
+
+function Test-HeroConditionImmune {
+    param(
+        $Hero,
+        [string]$Condition
+    )
+
+    if ($null -eq $Hero -or [string]::IsNullOrWhiteSpace($Condition)) {
+        return $false
+    }
+
+    $normalized = $Condition.Trim().ToLowerInvariant()
+
+    if ($normalized -in @("charmed", "frightened") -and
+        (Test-HeroFeatureUnlocked -Hero $Hero -Feature "MindlessRage") -and
+        (Test-HeroRageActive -Hero $Hero)) {
+        return $true
+    }
+
+    return $false
 }
 
 function Get-ShadowSanctumGoldRewardGP {
@@ -1987,12 +2050,20 @@ function Initialize-HeroBarbarianResources {
         return
     }
 
+    $maxRages = Get-HeroMaxRages -Hero $Hero
+
     if ($null -eq $Hero.PSObject.Properties["MaxRages"]) {
-        $Hero | Add-Member -NotePropertyName MaxRages -NotePropertyValue 2
+        $Hero | Add-Member -NotePropertyName MaxRages -NotePropertyValue $maxRages
+    }
+    else {
+        $Hero.MaxRages = $maxRages
     }
 
     if ($null -eq $Hero.PSObject.Properties["CurrentRages"]) {
         $Hero | Add-Member -NotePropertyName CurrentRages -NotePropertyValue ([int]$Hero.MaxRages)
+    }
+    elseif ([int]$Hero.CurrentRages -gt [int]$Hero.MaxRages) {
+        $Hero.CurrentRages = [int]$Hero.MaxRages
     }
 
     if ($null -eq $Hero.PSObject.Properties["RageActive"]) {

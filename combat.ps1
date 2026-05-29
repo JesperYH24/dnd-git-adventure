@@ -657,6 +657,50 @@ function Invoke-HeroAttack {
     Write-ColorLine ""
 }
 
+function Invoke-HeroAttackAction {
+    param(
+        $Hero,
+        $Monster,
+        [ref]$MonsterHP,
+        [int]$AttackBonusModifier = 0,
+        [bool]$Advantage = $false,
+        $HeroHP = $null,
+        $HeroTurnEnded = $null
+    )
+
+    Invoke-HeroAttack `
+        -Hero $Hero `
+        -Monster $Monster `
+        -MonsterHP $MonsterHP `
+        -AttackBonusModifier $AttackBonusModifier `
+        -Advantage $Advantage `
+        -HeroHP $HeroHP `
+        -HeroTurnEnded $HeroTurnEnded
+
+    if ($MonsterHP.Value -le 0) {
+        return 1
+    }
+
+    if ($null -ne $HeroTurnEnded -and $HeroTurnEnded.Value) {
+        return 1
+    }
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "ExtraAttack")) {
+        return 1
+    }
+
+    Write-Action "Extra Attack: $($Hero.Name) follows through with a second weapon attack." "Yellow"
+    Invoke-HeroAttack `
+        -Hero $Hero `
+        -Monster $Monster `
+        -MonsterHP $MonsterHP `
+        -Advantage $Advantage `
+        -HeroHP $HeroHP `
+        -HeroTurnEnded $HeroTurnEnded
+
+    return 2
+}
+
 function Invoke-MonsterAttack {
     param(
         $Hero,
@@ -2196,7 +2240,7 @@ function Resolve-HeroCombatTurn {
         if ($choice -eq "A") {
             Resolve-HeroRecklessAttackChoice -Hero $Hero -HeroAttackAdvantage ([ref]$turnHeroAttackAdvantage) -HeroRecklessExposure $HeroRecklessExposure
             Write-ColorLine ""
-            Invoke-HeroAttack -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded)
+            Invoke-HeroAttackAction -Hero $Hero -Monster $Monster -MonsterHP $MonsterHP -AttackBonusModifier ($HeroFocusAttackBonus.Value + $turnHeroAttackBonus) -Advantage $turnHeroAttackAdvantage -HeroHP $HeroHP -HeroTurnEnded ([ref]$turnHeroEnded) | Out-Null
             $HeroFocusAttackBonus.Value = 0
             $actionSpent = $true
 

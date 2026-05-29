@@ -1127,6 +1127,65 @@ function Test-BarbarianFrenzyUnlocksAtLevelThree {
     Assert-Equal -Actual $monsterHP -Expected 10 -Message "Frenzy should make one rage-boosted weapon attack."
 }
 
+function Test-BarbarianRageUsesScaleAtLevelsThreeAndSix {
+    $hero = Get-Hero
+
+    Assert-Equal -Actual (Get-HeroMaxRages -Hero $hero) -Expected 2 -Message "Level 1 Barbarian should have two rage uses."
+
+    $hero.Level = 3
+    Initialize-HeroBarbarianResources -Hero $hero
+    Restore-HeroRages -Hero $hero
+
+    Assert-Equal -Actual $hero.MaxRages -Expected 3 -Message "Level 3 Barbarian should have three rage uses."
+    Assert-Equal -Actual $hero.CurrentRages -Expected 3 -Message "Long rest should restore the level 3 rage maximum."
+
+    $hero.Level = 6
+    Initialize-HeroBarbarianResources -Hero $hero
+    Restore-HeroRages -Hero $hero
+
+    Assert-Equal -Actual $hero.MaxRages -Expected 4 -Message "Level 6 Barbarian should have four rage uses."
+    Assert-Equal -Actual $hero.CurrentRages -Expected 4 -Message "Long rest should restore the level 6 rage maximum."
+}
+
+function Test-BarbarianExtraAttackUnlocksAtLevelFive {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 12 }
+        return 6
+    }
+
+    $hero = Get-Hero
+    $hero.Level = 5
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    $attacks = Invoke-HeroAttackAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $attacks -Expected 2 -Message "Level 5 Barbarian Attack action should make two weapon attacks."
+    Assert-Equal -Actual $monsterHP -Expected 4 -Message "Two level 5 Barbarian hits should apply damage twice."
+}
+
+function Test-BarbarianFastMovementAddsSpeedAtLevelFive {
+    $hero = Get-Hero
+    $hero.Level = 5
+
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $hero -Feature "FastMovement") -Expected $true -Message "Fast Movement should unlock at Barbarian level 5."
+    Assert-Equal -Actual (Get-HeroCombatSpeedFeet -Hero $hero) -Expected 40 -Message "Fast Movement should raise Barbarian combat speed to 40 ft."
+}
+
+function Test-BarbarianMindlessRageRequiresActiveRage {
+    $hero = Get-Hero
+    $hero.Level = 6
+
+    Assert-Equal -Actual (Test-HeroConditionImmune -Hero $hero -Condition "Charmed") -Expected $false -Message "Mindless Rage should require active rage."
+    Start-HeroRage -Hero $hero | Out-Null
+    Assert-Equal -Actual (Test-HeroConditionImmune -Hero $hero -Condition "Charmed") -Expected $true -Message "Mindless Rage should block charm while raging."
+    Assert-Equal -Actual (Test-HeroConditionImmune -Hero $hero -Condition "Frightened") -Expected $true -Message "Mindless Rage should block fright while raging."
+}
+
 function Test-RecklessExposureGivesMonsterAdvantage {
     Set-TestOutputStubs
 
@@ -1269,6 +1328,10 @@ Test-LevelOneBardCannotUseCuttingWords
 Test-FighterActionSurgeUnlocksAtLevelTwo
 Test-FighterImprovedCriticalAtLevelThree
 Test-BarbarianFrenzyUnlocksAtLevelThree
+Test-BarbarianRageUsesScaleAtLevelsThreeAndSix
+Test-BarbarianExtraAttackUnlocksAtLevelFive
+Test-BarbarianFastMovementAddsSpeedAtLevelFive
+Test-BarbarianMindlessRageRequiresActiveRage
 Test-RecklessExposureGivesMonsterAdvantage
 Test-BarbarianLongRestRestoresRages
 Test-MonsterInitiativeMakesMonsterActFirstInCombatLoop
