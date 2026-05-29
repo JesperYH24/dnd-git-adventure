@@ -631,6 +631,44 @@ function Test-MonsterZoneCampActionReportsRecoveryAndRiskBand {
     Assert-True -Condition ($camp.Message -like "*Night risk: Moderate (40%)*" -and $camp.Message -like "*Recovery: +* HP*") -Message "Camp message should include both risk band and recovery."
 }
 
+function Test-MonsterZoneLegacyCampLevelStillReads {
+    $game = Initialize-Game
+    $key = Get-MonsterZonePositionKey -X 0 -Y 0
+    $game.Town.MonsterZone.Camps[$key] = 2
+
+    Assert-Equal -Actual (Get-MonsterZoneCurrentCampLevel -Game $game) -Expected 2 -Message "Older saves that stored camp level as a number should still read correctly."
+}
+
+function Test-MonsterZoneCampCanSurviveDaysAway {
+    $game = Initialize-Game
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+    Set-MonsterZoneCurrentCampLevel -Game $game -Level 2
+    Advance-TownToNextDay -Game $game | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+
+    $condition = Resolve-MonsterZoneCampCondition -Game $game -ConditionRoll 100
+
+    Assert-Equal -Actual $condition.Changed -Expected $false -Message "A strong condition roll should let an established camp survive time away."
+    Assert-Equal -Actual (Get-MonsterZoneCurrentCampLevel -Game $game) -Expected 2 -Message "Surviving camps should keep their level."
+}
+
+function Test-MonsterZoneCampCanDegradeAfterBadDaysAway {
+    $game = Initialize-Game
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+    Set-MonsterZoneCurrentCampLevel -Game $game -Level 2
+    Advance-TownToNextDay -Game $game | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    Advance-TownToNextDay -Game $game | Out-Null
+    Set-MonsterZoneWeather -Game $game -WeatherId "ash_haze" | Out-Null
+
+    $condition = Resolve-MonsterZoneCampCondition -Game $game -ConditionRoll 1
+
+    Assert-Equal -Actual $condition.Changed -Expected $true -Message "Bad weather, time away, and a low roll should damage an unattended camp."
+    Assert-True -Condition ($condition.NewLevel -lt $condition.OldLevel) -Message "Damaged camps should lose at least one level."
+    Assert-True -Condition ($condition.Message -like "*day*away*" -and $condition.Message -like "*now*") -Message "Camp condition text should explain the change to the player."
+}
+
 function Test-MonsterZoneCampRiskBandsUseWeatherAndCamp {
     $game = Initialize-Game
     Set-MonsterZoneWeather -Game $game -WeatherId "ash_haze" | Out-Null
@@ -700,6 +738,9 @@ Test-MonsterZoneFieldLeadActionDoesNotFarmXp
 Test-MonsterZoneFieldLeadActionOnlyForLandmarks
 Test-MonsterZoneRiskSummaryWarnsAboutLowHpAndHaul
 Test-MonsterZoneCampActionReportsRecoveryAndRiskBand
+Test-MonsterZoneLegacyCampLevelStillReads
+Test-MonsterZoneCampCanSurviveDaysAway
+Test-MonsterZoneCampCanDegradeAfterBadDaysAway
 Test-MonsterZoneCampRiskBandsUseWeatherAndCamp
 Test-CampImprovementLowersNightRisk
 

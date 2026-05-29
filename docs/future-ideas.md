@@ -116,9 +116,9 @@ Class flavor for these skills:
 Camp/rest loop:
 
 - sleeping under open sky should be fast but risky
-- making a basic camp should cost time and lower night encounter risk
-- improving a camp should cost more time or materials and lower risk further
-- returning to an existing camp should be possible if the player reaches the same landmark or tracked position
+- making a basic camp lowers night encounter risk
+- improving a camp lowers risk further
+- returning to an existing camp is now possible if the player reaches the same landmark or tracked position; days away, dangerous local ground, and bad weather can degrade the unattended camp
 - both open-sky sleep and camp sleep can grant a long rest, but camp quality should affect safety, pack animal protection, and night interruption chance
 
 Possible camp levels:

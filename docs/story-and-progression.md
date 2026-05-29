@@ -236,6 +236,7 @@ Current first-pass implementation:
 - the `60 ft` observation choice gives creature-specific tells about movement, attack style, senses, whether the threat seems beastlike, organized, trained, poisonous, or abomination-like
 - monster-zone combat now tracks abstract distance: `5 ft` melee, `30 ft` normal movement, dash as an action, and monster attempts to close open ground before attacking
 - the player can sleep under open sky for a risky long rest or spend time building/improving a camp for safer nights; the rest restores HP, but the camp result reports the weather-adjusted night risk and whether the rest was interrupted
+- built camps persist at their monster-zone position when the hero leaves for town, but returning after days away can reveal weather or monster damage that degrades the camp instead of always forcing a rebuild from scratch
 - the zone menu shows a compact risk/recovery line so low HP, full oddity hauls, unreported proof, poor camp safety, and safer scouting windows are easier to read before choosing the next action
 - pack animals from the stable yard let the hero haul more monster oddities back to town
 - monster oddities are tracked separately from normal inventory, and Docks buyers now cash out carried hauls through Auntie Brindle; draconic salvage also gives Mira Kest and Lady Veyra's office a ledger-facing clue back into the wall pressure

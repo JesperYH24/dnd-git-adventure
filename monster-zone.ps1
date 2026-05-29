@@ -824,6 +824,8 @@ function Move-MonsterZoneToLandmark {
     $Game.Town.MonsterZone.CurrentX = [int]$Landmark.X
     $Game.Town.MonsterZone.CurrentY = [int]$Landmark.Y
     $Game.Town.MonsterZone.Visits = [int]$Game.Town.MonsterZone.Visits + 1
+    $weather = Get-MonsterZoneWeatherState -Game $Game
+    $campCondition = Resolve-MonsterZoneCampCondition -Game $Game -Weather $weather
 
     return [PSCustomObject]@{
         Success = $true
@@ -831,6 +833,7 @@ function Move-MonsterZoneToLandmark {
         X = [int]$Landmark.X
         Y = [int]$Landmark.Y
         Landmark = $Landmark
+        CampCondition = $campCondition
     }
 }
 
@@ -896,6 +899,7 @@ function Move-MonsterZonePosition {
     $Game.Town.MonsterZone.CurrentY = $newY
     $Game.Town.MonsterZone.Visits = [int]$Game.Town.MonsterZone.Visits + 1
     $weather = Get-MonsterZoneWeatherState -Game $Game
+    $campCondition = Resolve-MonsterZoneCampCondition -Game $Game -Weather $weather
     $weatherText = if ($null -ne $weather -and -not [string]::IsNullOrWhiteSpace([string]$weather.TravelText)) { " $($weather.TravelText)" } else { "" }
 
     return [PSCustomObject]@{
@@ -905,6 +909,7 @@ function Move-MonsterZonePosition {
         X = $newX
         Y = $newY
         Landmark = Get-MonsterZoneLandmarkAtPosition -X $newX -Y $newY
+        CampCondition = $campCondition
     }
 }
 
@@ -1933,10 +1938,85 @@ function Get-MonsterZoneCurrentCampLevel {
     $key = Get-MonsterZonePositionKey -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
 
     if ($Game.Town.MonsterZone.Camps.ContainsKey($key)) {
-        return [int]$Game.Town.MonsterZone.Camps[$key]
+        $camp = $Game.Town.MonsterZone.Camps[$key]
+
+        if ($camp -is [System.Collections.IDictionary]) {
+            if ($camp.Contains("Level")) {
+                return [int]$camp["Level"]
+            }
+
+            return 0
+        }
+
+        if ($null -ne $camp.PSObject.Properties["Level"]) {
+            return [int]$camp.Level
+        }
+
+        return [int]$camp
     }
 
     return 0
+}
+
+function Get-MonsterZoneCampRecord {
+    param(
+        $Game,
+        [int]$X = [int]::MinValue,
+        [int]$Y = [int]::MinValue,
+        [bool]$Create = $false
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    if ($X -eq [int]::MinValue) {
+        $X = [int]$Game.Town.MonsterZone.CurrentX
+    }
+
+    if ($Y -eq [int]::MinValue) {
+        $Y = [int]$Game.Town.MonsterZone.CurrentY
+    }
+
+    $key = Get-MonsterZonePositionKey -X $X -Y $Y
+    $day = Get-TownDayNumber -Game $Game
+
+    if (-not $Game.Town.MonsterZone.Camps.ContainsKey($key)) {
+        if (-not $Create) {
+            return $null
+        }
+
+        $Game.Town.MonsterZone.Camps[$key] = @{
+            Level = 0
+            LastVisitedDay = $day
+            LastConditionDay = $day
+            LastWeatherId = ""
+        }
+    }
+
+    $camp = $Game.Town.MonsterZone.Camps[$key]
+
+    if ($camp -isnot [System.Collections.IDictionary]) {
+        $legacyLevel = if ($null -ne $camp.PSObject.Properties["Level"]) { [int]$camp.Level } else { [int]$camp }
+        $camp = @{
+            Level = [Math]::Max(0, [Math]::Min(3, $legacyLevel))
+            LastVisitedDay = $day
+            LastConditionDay = $day
+            LastWeatherId = ""
+        }
+        $Game.Town.MonsterZone.Camps[$key] = $camp
+    }
+
+    foreach ($entry in @(
+        @{ Key = "Level"; Value = 0 },
+        @{ Key = "LastVisitedDay"; Value = $day },
+        @{ Key = "LastConditionDay"; Value = [int]$camp["LastVisitedDay"] },
+        @{ Key = "LastWeatherId"; Value = "" }
+    )) {
+        if (-not $camp.Contains($entry.Key) -or $null -eq $camp[$entry.Key]) {
+            $camp[$entry.Key] = $entry.Value
+        }
+    }
+
+    return $camp
 }
 
 function Set-MonsterZoneCurrentCampLevel {
@@ -1947,7 +2027,117 @@ function Set-MonsterZoneCurrentCampLevel {
 
     Initialize-MonsterZoneState -Game $Game
     $key = Get-MonsterZonePositionKey -X ([int]$Game.Town.MonsterZone.CurrentX) -Y ([int]$Game.Town.MonsterZone.CurrentY)
-    $Game.Town.MonsterZone.Camps[$key] = [Math]::Max(0, [Math]::Min(3, $Level))
+    $weather = Get-MonsterZoneWeatherState -Game $Game
+    $day = Get-TownDayNumber -Game $Game
+    $camp = Get-MonsterZoneCampRecord -Game $Game -Create $true
+    $camp["Level"] = [Math]::Max(0, [Math]::Min(3, $Level))
+    $camp["LastVisitedDay"] = $day
+    $camp["LastConditionDay"] = $day
+    $camp["LastWeatherId"] = if ($null -ne $weather) { [string]$weather.Id } else { "" }
+    $Game.Town.MonsterZone.Camps[$key] = $camp
+}
+
+function Resolve-MonsterZoneCampCondition {
+    param(
+        $Game,
+        [int]$ConditionRoll = 0,
+        $Weather = $null
+    )
+
+    Initialize-MonsterZoneState -Game $Game
+
+    $camp = Get-MonsterZoneCampRecord -Game $Game
+    if ($null -eq $camp -or [int]$camp["Level"] -le 0) {
+        return [PSCustomObject]@{
+            Changed = $false
+            Message = ""
+            DaysAway = 0
+            OldLevel = 0
+            NewLevel = 0
+            Risk = 0
+            Roll = $ConditionRoll
+        }
+    }
+
+    $day = Get-TownDayNumber -Game $Game
+    $lastVisitedDay = [int]$camp["LastVisitedDay"]
+    $lastConditionDay = [int]$camp["LastConditionDay"]
+
+    if ($lastConditionDay -ge $day) {
+        return [PSCustomObject]@{
+            Changed = $false
+            Message = ""
+            DaysAway = 0
+            OldLevel = [int]$camp["Level"]
+            NewLevel = [int]$camp["Level"]
+            Risk = 0
+            Roll = $ConditionRoll
+        }
+    }
+
+    $daysAway = [Math]::Max(0, $day - $lastVisitedDay)
+    if ($daysAway -le 0) {
+        $camp["LastConditionDay"] = $day
+        return [PSCustomObject]@{
+            Changed = $false
+            Message = ""
+            DaysAway = 0
+            OldLevel = [int]$camp["Level"]
+            NewLevel = [int]$camp["Level"]
+            Risk = 0
+            Roll = $ConditionRoll
+        }
+    }
+
+    if ($null -eq $Weather) {
+        $Weather = Get-MonsterZoneWeatherState -Game $Game
+    }
+
+    if ($ConditionRoll -le 0) {
+        $ConditionRoll = Roll-Dice -Sides 100
+    }
+
+    $x = [int]$Game.Town.MonsterZone.CurrentX
+    $y = [int]$Game.Town.MonsterZone.CurrentY
+    $landmark = Get-MonsterZoneLandmarkAtPosition -X $x -Y $y
+    $danger = if ($null -ne $landmark -and $null -ne $landmark.DangerLevel) { [int]$landmark.DangerLevel } else { 1 }
+    $weatherRisk = if ($null -ne $Weather -and $null -ne $Weather.CampRiskModifier) { [int]$Weather.CampRiskModifier } else { 0 }
+    $oldLevel = [int]$camp["Level"]
+    $risk = [Math]::Max(5, [Math]::Min(85, ($daysAway * 12) + ($danger * 6) + $weatherRisk - ($oldLevel * 14)))
+    $loss = 0
+
+    if ($ConditionRoll -le $risk) {
+        $loss = 1
+
+        if ($daysAway -ge 3 -and $ConditionRoll -le [Math]::Floor($risk / 2)) {
+            $loss = 2
+        }
+    }
+
+    $newLevel = [Math]::Max(0, $oldLevel - $loss)
+    $camp["Level"] = $newLevel
+    $camp["LastVisitedDay"] = $day
+    $camp["LastConditionDay"] = $day
+    $camp["LastWeatherId"] = if ($null -ne $Weather) { [string]$Weather.Id } else { "" }
+
+    $message = ""
+    if ($newLevel -lt $oldLevel) {
+        $oldName = Get-MonsterZoneCampLevelName -Level $oldLevel
+        $newName = Get-MonsterZoneCampLevelName -Level $newLevel
+        $reason = if ($loss -ge 2) { "weather and monster sign have torn through it badly" } else { "weather and passing monsters have worked at it" }
+        $dayWord = if ($daysAway -eq 1) { "day" } else { "days" }
+        $message = "$($Game.Hero.Name) finds the old $oldName still here, but $reason after $daysAway $dayWord away. It is now $newName."
+    }
+
+    return [PSCustomObject]@{
+        Changed = ($newLevel -lt $oldLevel)
+        Message = $message
+        DaysAway = $daysAway
+        OldLevel = $oldLevel
+        NewLevel = $newLevel
+        Risk = $risk
+        Roll = $ConditionRoll
+    }
 }
 
 function Get-MonsterZoneCampNightRisk {
@@ -2258,6 +2448,12 @@ function Start-MonsterZoneMenu {
 
     Initialize-MonsterZoneState -Game $Game
     Write-MonsterZoneProgressionMessages -Game $Game | Out-Null
+    $entryWeather = Get-MonsterZoneWeatherState -Game $Game
+    $entryCampCondition = Resolve-MonsterZoneCampCondition -Game $Game -Weather $entryWeather
+    if ($entryCampCondition.Changed -and -not [string]::IsNullOrWhiteSpace([string]$entryCampCondition.Message)) {
+        Write-Scene $entryCampCondition.Message
+        Write-ColorLine ""
+    }
 
     while ($true) {
         Write-SectionTitle -Text "Beyond the Wall" -Color "Yellow"
@@ -2302,6 +2498,10 @@ function Start-MonsterZoneMenu {
                 Write-Scene $move.Message
 
                 if ($move.Success) {
+                    if ($null -ne $move.CampCondition -and $move.CampCondition.Changed -and -not [string]::IsNullOrWhiteSpace([string]$move.CampCondition.Message)) {
+                        Write-Scene $move.CampCondition.Message
+                    }
+
                     $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $move.Landmark
                     Write-Scene $discovery.Text
                     if ($discovery.Discovered) {
@@ -2368,6 +2568,10 @@ function Start-MonsterZoneMenu {
                     Write-Scene $directTravel.Message
 
                     if ($directTravel.Success) {
+                        if ($null -ne $directTravel.CampCondition -and $directTravel.CampCondition.Changed -and -not [string]::IsNullOrWhiteSpace([string]$directTravel.CampCondition.Message)) {
+                            Write-Scene $directTravel.CampCondition.Message
+                        }
+
                         $discovery = Discover-MonsterZoneLandmark -Game $Game -Landmark $directTravel.Landmark
                         Write-Scene $discovery.Text
                     }

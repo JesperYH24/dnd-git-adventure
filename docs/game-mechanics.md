@@ -68,6 +68,7 @@
 - melee attacks require melee range; Bard combat spells can use the current `60 ft` range layer, while ranged weapons are intentionally deferred until the monster-zone objective and contract loop is stronger
 - the zone supports soft boundaries near the edge of the city's patrol reach rather than a detailed hard map
 - camping is a meaningful rest choice: open-sky sleep restores the hero but carries higher night risk, while building or improving camp lowers the chance of a dangerous interruption
+- camps persist by monster-zone position instead of being torn down when the hero returns to town; on later return, days away, local danger, and weather can degrade the old camp by one or more levels, with hidden and fortified camps resisting that pressure better
 - the monster-zone menu now surfaces a compact risk/recovery readout that combines current HP, oddity haul, camp safety, weather-adjusted night risk, and a short return-or-keep-scouting recommendation
 - stable-yard pack animals feed monster salvage capacity, especially for oddities requested by Docks buyers
 - monster oddities are tracked separately from normal inventory so the monster-zone economy does not inflate tutorial loot; carried oddity hauls can now be delivered in the Docks to Auntie Brindle for coin, and draconic salvage leaves a Veyra/Mira ledger note
