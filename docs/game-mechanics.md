@@ -229,6 +229,8 @@ Docks is intentionally more linear at first than the main town hub.
 - nighttime fighting ring
 - once-per-day tournament access
 - matchup-style brawl rounds with simultaneous choices
+- fight cards carry the hero's brawl HP from bout to bout, so a three-round night is real attrition instead of three full-heal duels
+- ring punch exchanges mix narrative beats with visible attack and damage rolls so the player can follow the math under the drama
 - rivalries and record tracking against named opponents
 - `RingReputation` as a public-name track separate from `RingWinsTotal`
 - ring reputation titles, currently ranging from `Unproven` to `Ring Legend`

@@ -1885,6 +1885,60 @@ function Grant-RingTraining {
     }
 }
 
+function Set-HeroRingBrawlHP {
+    param(
+        $Hero,
+        [int]$HP
+    )
+
+    if ($null -eq $Hero) {
+        return
+    }
+
+    $clampedHP = [Math]::Max(0, [Math]::Min([int]$Hero.HP, $HP))
+
+    if ($null -eq $Hero.PSObject.Properties["RingBrawlHP"]) {
+        $Hero | Add-Member -NotePropertyName RingBrawlHP -NotePropertyValue $clampedHP
+    }
+    else {
+        $Hero.RingBrawlHP = $clampedHP
+    }
+}
+
+function Get-HeroRingBrawlHP {
+    param($Hero)
+
+    if ($null -eq $Hero) {
+        return 0
+    }
+
+    if ($null -ne $Hero.PSObject.Properties["RingBrawlHP"]) {
+        return [Math]::Max(0, [Math]::Min([int]$Hero.HP, [int]$Hero.RingBrawlHP))
+    }
+
+    return [int]$Hero.HP
+}
+
+function Clear-HeroRingBrawlHP {
+    param($Hero)
+
+    if ($null -eq $Hero -or $null -eq $Hero.PSObject.Properties["RingBrawlHP"]) {
+        return
+    }
+
+    $Hero.PSObject.Properties.Remove("RingBrawlHP")
+}
+
+function Clear-HeroRingForbiddenBarbarianState {
+    param($Hero)
+
+    if ($null -eq $Hero -or $Hero.Class -ne "Barbarian") {
+        return
+    }
+
+    Stop-HeroRage -Hero $Hero
+}
+
 function Invoke-HeroBrawlAttack {
     param(
         $Hero,
@@ -1897,6 +1951,7 @@ function Invoke-HeroBrawlAttack {
         $HeroTurnEnded = $null
     )
 
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
     $profile = Get-HeroUnarmedProfile -Hero $Hero
     $roll = Roll-Dice -Sides 20
     $total = $roll + $profile.TotalAttackBonus + $AttackBonusModifier
@@ -1912,12 +1967,14 @@ function Invoke-HeroBrawlAttack {
     }
 
     Write-Action "$($Hero.Name) steps in with a hard punch." "Cyan"
+    Write-Action "Attack roll: d20 $roll + $($profile.TotalAttackBonus)$bonusText = $total vs AC $targetArmorClass." "DarkGray"
 
     if ($roll -eq 20) {
         $extraRoll = Roll-WeaponDamage -WeaponProfile $profile
         $damage = [Math]::Max(1, $profile.DamageMax + $extraRoll + $profile.DamageBonus)
         $OpponentHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
+        Write-Action "Damage roll: max d$($profile.DamageDiceSides) $($profile.DamageMax) + d$($profile.DamageDiceSides) $extraRoll + $($profile.DamageBonus) = $damage." "DarkGray"
         Write-Action "$($Hero.Name) lands a brutal hook that rocks $($Opponent.Definite)." "Yellow"
     }
     elseif ($roll -eq 1) {
@@ -1927,6 +1984,7 @@ function Invoke-HeroBrawlAttack {
         $damageRoll = Roll-WeaponDamage -WeaponProfile $profile
         $damage = [Math]::Max(1, $damageRoll + $profile.DamageBonus)
         $OpponentHP.Value -= $damage
+        Write-Action "Damage roll: d$($profile.DamageDiceSides) $damageRoll + $($profile.DamageBonus) = $damage." "DarkGray"
         Write-Action "$($Hero.Name) lands cleanly and drives $($Opponent.Definite) back." "Yellow"
     }
     else {
@@ -1950,6 +2008,7 @@ function Invoke-OpponentBrawlAttack {
         [string]$TargetAction = "Punch"
     )
 
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
     # Ring bouts use the hero's current defensive gear baseline, with Block temporarily raising it.
     $heroArmorClass = (Get-HeroArmorClass -Hero $Hero) + $BlockArmorBonus
     $roll = Roll-Dice -Sides 20
@@ -1965,12 +2024,14 @@ function Invoke-OpponentBrawlAttack {
     }
 
     Write-Action "$($Opponent.Definite) surges forward behind a swinging punch." "DarkCyan"
+    Write-Action "Attack roll: d20 $roll + $($Opponent.AttackBonus)$blockText = $total vs AC $heroArmorClass." "DarkGray"
 
     if ($roll -eq 20) {
         $secondDamage = Roll-Dice -Sides $Opponent.DamageDiceSides
         $damage = $Opponent.DamageDiceSides + $secondDamage + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
         Write-Action "CRITICAL HIT!" "Red"
+        Write-Action "Damage roll: max d$($Opponent.DamageDiceSides) $($Opponent.DamageDiceSides) + d$($Opponent.DamageDiceSides) $secondDamage + $($Opponent.DamageBonus) = $damage." "DarkGray"
         Write-Action "$($Opponent.Definite) crashes through $($Hero.Name)'s guard with a huge hit." "Yellow"
     }
     elseif ($roll -eq 1) {
@@ -1980,6 +2041,7 @@ function Invoke-OpponentBrawlAttack {
         $damageRoll = Roll-Dice -Sides $Opponent.DamageDiceSides
         $damage = $damageRoll + $Opponent.DamageBonus
         $HeroHP.Value -= $damage
+        Write-Action "Damage roll: d$($Opponent.DamageDiceSides) $damageRoll + $($Opponent.DamageBonus) = $damage." "DarkGray"
         Write-Action "$($Opponent.Definite) clips $($Hero.Name) with a solid shot." "Yellow"
     }
     else {
@@ -2001,6 +2063,7 @@ function Resolve-OpponentBrawlGrapple {
         [ref]$HeroOffBalance
     )
 
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
     $heroAbility = Get-HeroBrawlAbility -Hero $Hero
     $heroModifier = Get-HeroAbilityModifier -Hero $Hero -Ability $heroAbility
     $trainingBonus = 0
@@ -2101,6 +2164,7 @@ function Resolve-BrawlGrappleContest {
         [string]$OpponentActionLabel = "Grapple"
     )
 
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
     $heroAbility = Get-HeroBrawlAbility -Hero $Hero
     $heroModifier = 0
     $trainingBonus = 0
@@ -2184,6 +2248,7 @@ function Resolve-BrawlGrappleAttempt {
         [string]$DefenderAction = "Recover"
     )
 
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
     $heroProfile = Get-HeroUnarmedProfile -Hero $Hero
     $heroGrappleBonus = Get-HeroAbilityModifier -Hero $Hero -Ability (Get-HeroBrawlAbility -Hero $Hero)
 
@@ -2305,7 +2370,8 @@ function Start-BrawlLoop {
         [bool]$TrackRivalry = $false
     )
 
-    $heroBrawlHP = $Hero.HP
+    Clear-HeroRingForbiddenBarbarianState -Hero $Hero
+    $heroBrawlHP = Get-HeroRingBrawlHP -Hero $Hero
     $opponentHP = $Opponent.HP
     $heroFocusAttackBonus = 0
     $opponentFocusAttackBonus = 0
@@ -2313,6 +2379,7 @@ function Start-BrawlLoop {
     $opponentOffBalance = $false
     $heroActionCounts = @{ P = 0; G = 0; B = 0; F = 0 }
     $rounds = 0
+    $tracksRingBrawlHP = ($null -ne $Hero.PSObject.Properties["RingBrawlHP"])
 
     Write-SectionTitle -Text $Title -Color "Yellow"
     Write-Scene (Get-RingOpponentIntro -Hero $Hero -Opponent $Opponent)
@@ -2331,6 +2398,9 @@ function Start-BrawlLoop {
 
         if ($choice -eq "C") {
             Write-Scene "$($Hero.Name) raises a hand and backs out before the beating gets worse."
+            if ($tracksRingBrawlHP) {
+                Set-HeroRingBrawlHP -Hero $Hero -HP $heroBrawlHP
+            }
             return $false
         }
 
@@ -2482,6 +2552,9 @@ function Start-BrawlLoop {
                 }
             }
 
+            if ($tracksRingBrawlHP) {
+                Set-HeroRingBrawlHP -Hero $Hero -HP $heroBrawlHP
+            }
             return $true
         }
 
@@ -2501,10 +2574,16 @@ function Start-BrawlLoop {
                 }
             }
 
+            if ($tracksRingBrawlHP) {
+                Set-HeroRingBrawlHP -Hero $Hero -HP $heroBrawlHP
+            }
             return $false
         }
     }
 
+    if ($tracksRingBrawlHP) {
+        Set-HeroRingBrawlHP -Hero $Hero -HP $heroBrawlHP
+    }
     return $false
 }
 
@@ -2659,17 +2738,29 @@ function Start-FightingRing {
         $previewOpponents
     }
 
-    foreach ($opponent in $ringOpponents) {
-        $roundTitle = if ($championNightReady) { "Champion Night: Title Bout" } else { "Ring Round $($wins + 1)" }
-        $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title $roundTitle -TrackRivalry $true
+    Set-HeroRingBrawlHP -Hero $Game.Hero -HP $Game.Hero.HP
 
-        if (-not $wonBout) {
-            break
+    try {
+        foreach ($opponent in $ringOpponents) {
+            $roundTitle = if ($championNightReady) { "Champion Night: Title Bout" } else { "Ring Round $($wins + 1)" }
+            $wonBout = Start-BrawlLoop -Hero $Game.Hero -Opponent $opponent -Title $roundTitle -TrackRivalry $true
+
+            if (-not $wonBout) {
+                break
+            }
+
+            $wins += 1
+            Write-Scene "The crowd roars as $($Game.Hero.Name) survives another round."
+
+            if ($wins -lt $ringOpponents.Count) {
+                Write-Scene "$($Game.Hero.Name) has only a breath at the rail before the next opponent. Ring HP carries forward: $(Get-HeroRingBrawlHP -Hero $Game.Hero)/$($Game.Hero.HP)."
+            }
+
+            Write-ColorLine ""
         }
-
-        $wins += 1
-        Write-Scene "The crowd roars as $($Game.Hero.Name) survives another round."
-        Write-ColorLine ""
+    }
+    finally {
+        Clear-HeroRingBrawlHP -Hero $Game.Hero
     }
 
     if ($championNightReady -and $wins -gt 0) {

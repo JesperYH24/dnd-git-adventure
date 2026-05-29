@@ -741,6 +741,107 @@ function Test-OffBalanceFallsBackToSimpleActions {
     Assert-Equal -Actual (Get-OffBalanceBrawlAction -Action "B") -Expected "B" -Message "Off-balance fighters should still be able to block."
 }
 
+function Test-RingClearsBarbarianRageAndRecklessState {
+    $hero = Get-Hero
+    $hero.Level = 2
+    Start-HeroRage -Hero $hero | Out-Null
+    $hero.RecklessAttackExposed = $true
+
+    Clear-HeroRingForbiddenBarbarianState -Hero $hero
+
+    Assert-Equal -Actual $hero.RageActive -Expected $false -Message "The ring should clear active Rage before unarmed bouts."
+    Assert-Equal -Actual $hero.RecklessAttackExposed -Expected $false -Message "The ring should clear Reckless Attack exposure before unarmed bouts."
+}
+
+function Test-RingBrawlIgnoresBarbarianRageDamageAndResistance {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    $hero.Level = 2
+    Start-HeroRage -Hero $hero | Out-Null
+    $opponent = [PSCustomObject]@{
+        Name = "Test Bruiser"
+        Definite = "Test Bruiser"
+        ArmorClass = 12
+        HP = 20
+        AttackBonus = 2
+        DamageDiceSides = 4
+        DamageBonus = 2
+        GrappleBonus = 2
+    }
+    $opponentHP = $opponent.HP
+    $heroHP = $hero.HP
+
+    $script:Rolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:Rolls.Enqueue(12)
+    $script:Rolls.Enqueue(4)
+    $script:Rolls.Enqueue(12)
+    $script:Rolls.Enqueue(4)
+
+    Set-TestRollStub {
+        param([int]$Sides)
+        return $script:Rolls.Dequeue()
+    }
+
+    Invoke-HeroBrawlAttack -Hero $hero -Opponent $opponent -OpponentHP ([ref]$opponentHP)
+    Assert-Equal -Actual $hero.RageActive -Expected $false -Message "Hero ring punches should immediately clear active Rage."
+
+    Start-HeroRage -Hero $hero | Out-Null
+    Invoke-OpponentBrawlAttack -Hero $hero -Opponent $opponent -HeroHP ([ref]$heroHP)
+
+    Assert-Equal -Actual $opponentHP -Expected 14 -Message "Ring punches should use bare-hand damage only, not Barbarian rage damage."
+    Assert-Equal -Actual $heroHP -Expected ($hero.HP - 6) -Message "Ring damage should not be halved by Barbarian rage resistance."
+    Assert-Equal -Actual $hero.RageActive -Expected $false -Message "Ring brawl helpers should leave Rage inactive."
+
+    $global:RollDiceOverride = $null
+}
+
+function Test-RingBrawlHPCarriesBetweenCardRounds {
+    Set-TestOutputStubs
+
+    $hero = Get-Hero
+    Set-HeroRingBrawlHP -Hero $hero -HP 10
+    $opponent = [PSCustomObject]@{
+        Name = "Test Bruiser"
+        Definite = "Test Bruiser"
+        ArmorClass = 14
+        HP = 20
+        AttackBonus = 2
+        DamageDiceSides = 4
+        DamageBonus = 0
+        GrappleBonus = 2
+        GrappleChance = 0
+        FocusChance = 0
+        BlockChance = 0
+        Intro = "A test bruiser waits in the sand."
+    }
+    $script:RingChoices = [System.Collections.Generic.Queue[string]]::new()
+    $script:RingChoices.Enqueue("F")
+    $script:RingChoices.Enqueue("C")
+    $script:Rolls = [System.Collections.Generic.Queue[int]]::new()
+    $script:Rolls.Enqueue(100)
+    $script:Rolls.Enqueue(15)
+    $script:Rolls.Enqueue(3)
+
+    function global:Read-Host {
+        param([string]$Prompt)
+        return $script:RingChoices.Dequeue()
+    }
+
+    Set-TestRollStub {
+        param([int]$Sides)
+        return $script:Rolls.Dequeue()
+    }
+
+    Start-BrawlLoop -Hero $hero -Opponent $opponent -Title "Test Brawl" | Out-Null
+
+    Assert-Equal -Actual (Get-HeroRingBrawlHP -Hero $hero) -Expected 7 -Message "Ring brawl HP should keep damage after a bout instead of resetting to full HP."
+
+    Clear-HeroRingBrawlHP -Hero $hero
+    Remove-Item Function:\global:Read-Host -ErrorAction SilentlyContinue
+    $global:RollDiceOverride = $null
+}
+
 function Test-FightingRingOptionOneStartsTournament {
     $game = Initialize-Game
     Set-TownTimeOfDay -Game $game -TimeOfDay "Night"
@@ -950,6 +1051,9 @@ Test-PunchVsGrappleUsesPunchBonus
 Test-BlockedGrappleDoesNotReverseIntoCounterGrapple
 Test-GrappleDamageUsesRolledDamage
 Test-OffBalanceFallsBackToSimpleActions
+Test-RingClearsBarbarianRageAndRecklessState
+Test-RingBrawlIgnoresBarbarianRageDamageAndResistance
+Test-RingBrawlHPCarriesBetweenCardRounds
 Test-FightingRingOptionOneStartsTournament
 Test-RingWagerPayoutHandlesCrowdBet
 Test-RingWagerPayoutHandlesDoubleOrNothingFailure
