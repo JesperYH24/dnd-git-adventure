@@ -288,6 +288,10 @@ function Test-HeroFeatureUnlocked {
                 "LoreBonusProficiencies" { return $level -ge 3 }
                 "Expertise" { return $level -ge 3 }
                 "AbilityScoreIncrease" { return Test-HeroAbilityScoreIncreaseLevel -Hero $Hero -Level $level }
+                "BardicInspirationD8" { return $level -ge 5 }
+                "FontOfInspiration" { return $level -ge 5 }
+                "Countercharm" { return $level -ge 6 }
+                "AdditionalMagicalSecrets" { return $level -ge 6 }
                 default { return $false }
             }
         }
@@ -374,6 +378,21 @@ function Test-HeroConditionImmune {
     }
 
     return $false
+}
+
+function Test-HeroConditionSaveAdvantage {
+    param(
+        $Hero,
+        [string]$Condition
+    )
+
+    if ($null -eq $Hero -or [string]::IsNullOrWhiteSpace($Condition)) {
+        return $false
+    }
+
+    $normalized = $Condition.Trim().ToLowerInvariant()
+
+    return ($normalized -in @("charmed", "frightened") -and (Test-HeroFeatureUnlocked -Hero $Hero -Feature "Countercharm"))
 }
 
 function Get-ShadowSanctumGoldRewardGP {
@@ -1555,52 +1574,87 @@ function Get-HeroSpellcastingProgression {
         return [PSCustomObject]@{
             CantripsKnown = 0
             SpellsKnown = 0
-            MaxSpellSlots = @{ Level1 = 0; Level2 = 0 }
+            MaxSpellSlots = @{ Level1 = 0; Level2 = 0; Level3 = 0 }
         }
     }
 
     $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
 
-    if ($level -ge 4) {
-        return [PSCustomObject]@{
-            CantripsKnown = 3
-            SpellsKnown = 7
-            MaxSpellSlots = @{ Level1 = 4; Level2 = 3 }
+    switch ($level) {
+        { $_ -ge 6 } {
+            return [PSCustomObject]@{
+                CantripsKnown = 3
+                SpellsKnown = 9
+                MaxSpellSlots = @{ Level1 = 4; Level2 = 3; Level3 = 3 }
+            }
         }
-    }
-
-    if ($level -ge 3) {
-        return [PSCustomObject]@{
-            CantripsKnown = 2
-            SpellsKnown = 6
-            MaxSpellSlots = @{ Level1 = 4; Level2 = 2 }
+        5 {
+            return [PSCustomObject]@{
+                CantripsKnown = 3
+                SpellsKnown = 8
+                MaxSpellSlots = @{ Level1 = 4; Level2 = 3; Level3 = 2 }
+            }
         }
-    }
-
-    if ($level -ge 2) {
-        return [PSCustomObject]@{
-            CantripsKnown = 2
-            SpellsKnown = 5
-            MaxSpellSlots = @{ Level1 = 3; Level2 = 0 }
+        4 {
+            return [PSCustomObject]@{
+                CantripsKnown = 3
+                SpellsKnown = 7
+                MaxSpellSlots = @{ Level1 = 4; Level2 = 3; Level3 = 0 }
+            }
         }
-    }
-
-    return [PSCustomObject]@{
-        CantripsKnown = 2
-        SpellsKnown = 4
-        MaxSpellSlots = @{ Level1 = 2; Level2 = 0 }
+        3 {
+            return [PSCustomObject]@{
+                CantripsKnown = 2
+                SpellsKnown = 6
+                MaxSpellSlots = @{ Level1 = 4; Level2 = 2; Level3 = 0 }
+            }
+        }
+        2 {
+            return [PSCustomObject]@{
+                CantripsKnown = 2
+                SpellsKnown = 5
+                MaxSpellSlots = @{ Level1 = 3; Level2 = 0; Level3 = 0 }
+            }
+        }
+        default {
+            return [PSCustomObject]@{
+                CantripsKnown = 2
+                SpellsKnown = 4
+                MaxSpellSlots = @{ Level1 = 2; Level2 = 0; Level3 = 0 }
+            }
+        }
     }
 }
 
 function New-HeroSpellSlotTable {
     param(
         [int]$Level1 = 0,
-        [int]$Level2 = 0
+        [int]$Level2 = 0,
+        [int]$Level3 = 0
     )
 
     return @{
         Level1 = [Math]::Max(0, $Level1)
         Level2 = [Math]::Max(0, $Level2)
+        Level3 = [Math]::Max(0, $Level3)
+    }
+}
+
+function New-HeroSpellDefinition {
+    param(
+        [string]$Name,
+        [string]$Kind,
+        [int]$SpellLevel,
+        [int]$UnlockLevel,
+        [bool]$Implemented = $true
+    )
+
+    return [PSCustomObject]@{
+        Name = $Name
+        Kind = $Kind
+        SpellLevel = $SpellLevel
+        UnlockLevel = $UnlockLevel
+        Implemented = $Implemented
     }
 }
 
@@ -1616,32 +1670,33 @@ function Get-HeroKnownSpells {
     $level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
 
     $cantrips = @(
-        [PSCustomObject]@{ Name = "Vicious Mockery"; Kind = "Cantrip"; SpellLevel = 0 },
-        [PSCustomObject]@{ Name = "Minor Illusion"; Kind = "Cantrip"; SpellLevel = 0 },
-        [PSCustomObject]@{ Name = "Friends"; Kind = "Cantrip"; SpellLevel = 0 }
+        (New-HeroSpellDefinition -Name "Vicious Mockery" -Kind "Cantrip" -SpellLevel 0 -UnlockLevel 1),
+        (New-HeroSpellDefinition -Name "Minor Illusion" -Kind "Cantrip" -SpellLevel 0 -UnlockLevel 1 -Implemented $false),
+        (New-HeroSpellDefinition -Name "Friends" -Kind "Cantrip" -SpellLevel 0 -UnlockLevel 4 -Implemented $false)
     )
 
-    $spells = @(
-        [PSCustomObject]@{ Name = "Healing Word"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Dissonant Whispers"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Faerie Fire"; Kind = "Spell"; SpellLevel = 1 },
-        [PSCustomObject]@{ Name = "Charm Person"; Kind = "Spell"; SpellLevel = 1 }
+    $spellCatalog = @(
+        (New-HeroSpellDefinition -Name "Healing Word" -Kind "Spell" -SpellLevel 1 -UnlockLevel 1),
+        (New-HeroSpellDefinition -Name "Dissonant Whispers" -Kind "Spell" -SpellLevel 1 -UnlockLevel 1),
+        (New-HeroSpellDefinition -Name "Faerie Fire" -Kind "Spell" -SpellLevel 1 -UnlockLevel 1),
+        (New-HeroSpellDefinition -Name "Charm Person" -Kind "Spell" -SpellLevel 1 -UnlockLevel 1),
+        (New-HeroSpellDefinition -Name "Heroism" -Kind "Spell" -SpellLevel 1 -UnlockLevel 2 -Implemented $false),
+        (New-HeroSpellDefinition -Name "Suggestion" -Kind "Spell" -SpellLevel 2 -UnlockLevel 3),
+        (New-HeroSpellDefinition -Name "Invisibility" -Kind "Spell" -SpellLevel 2 -UnlockLevel 3),
+        (New-HeroSpellDefinition -Name "Enhance Ability" -Kind "Spell" -SpellLevel 2 -UnlockLevel 4),
+        (New-HeroSpellDefinition -Name "Hypnotic Pattern" -Kind "Spell" -SpellLevel 3 -UnlockLevel 5 -Implemented $false),
+        (New-HeroSpellDefinition -Name "Dispel Magic" -Kind "Spell" -SpellLevel 3 -UnlockLevel 6 -Implemented $false)
     )
 
-    if ($level -eq 2) {
-        $spells += [PSCustomObject]@{ Name = "Heroism"; Kind = "Spell"; SpellLevel = 1 }
-    }
+    $knownCantrips = @($cantrips | Where-Object { [int]$_.UnlockLevel -le $level } | Select-Object -First $cantripCount)
+    $knownSpells = @(
+        $spellCatalog |
+            Where-Object { [int]$_.UnlockLevel -le $level } |
+            Sort-Object @{ Expression = { if ([bool]$_.Implemented) { 0 } else { 1 } } }, UnlockLevel, SpellLevel, Name |
+            Select-Object -First ([int]$progression.SpellsKnown)
+    )
 
-    if ($level -ge 3) {
-        $spells += [PSCustomObject]@{ Name = "Suggestion"; Kind = "Spell"; SpellLevel = 2 }
-        $spells += [PSCustomObject]@{ Name = "Invisibility"; Kind = "Spell"; SpellLevel = 2 }
-    }
-
-    if ($level -ge 4) {
-        $spells += [PSCustomObject]@{ Name = "Enhance Ability"; Kind = "Spell"; SpellLevel = 2 }
-    }
-
-    return @($cantrips | Select-Object -First $cantripCount) + @($spells | Select-Object -First ([int]$progression.SpellsKnown))
+    return @($knownCantrips) + @($knownSpells)
 }
 
 function Initialize-HeroSpellcasting {
@@ -1674,7 +1729,7 @@ function Initialize-HeroSpellcasting {
         $Hero.KnownSpells = @(Get-HeroKnownSpells -Hero $Hero)
     }
 
-    $maxSlots = New-HeroSpellSlotTable -Level1 ([int]$progression.MaxSpellSlots.Level1) -Level2 ([int]$progression.MaxSpellSlots.Level2)
+    $maxSlots = New-HeroSpellSlotTable -Level1 ([int]$progression.MaxSpellSlots.Level1) -Level2 ([int]$progression.MaxSpellSlots.Level2) -Level3 ([int]$progression.MaxSpellSlots.Level3)
 
     if ($null -eq $Hero.PSObject.Properties["MaxSpellSlots"]) {
         $Hero | Add-Member -NotePropertyName MaxSpellSlots -NotePropertyValue $maxSlots
@@ -1684,10 +1739,10 @@ function Initialize-HeroSpellcasting {
     }
 
     if ($null -eq $Hero.PSObject.Properties["CurrentSpellSlots"] -or $null -eq $Hero.CurrentSpellSlots) {
-        $Hero | Add-Member -NotePropertyName CurrentSpellSlots -NotePropertyValue (New-HeroSpellSlotTable -Level1 $maxSlots.Level1 -Level2 $maxSlots.Level2) -Force
+        $Hero | Add-Member -NotePropertyName CurrentSpellSlots -NotePropertyValue (New-HeroSpellSlotTable -Level1 $maxSlots.Level1 -Level2 $maxSlots.Level2 -Level3 $maxSlots.Level3) -Force
     }
     else {
-        foreach ($key in @("Level1", "Level2")) {
+        foreach ($key in @("Level1", "Level2", "Level3")) {
             if (-not $Hero.CurrentSpellSlots.ContainsKey($key)) {
                 $Hero.CurrentSpellSlots[$key] = [int]$maxSlots[$key]
             }
@@ -1713,7 +1768,7 @@ function Restore-HeroSpellSlots {
     }
 
     Initialize-HeroSpellcasting -Hero $Hero | Out-Null
-    $Hero.CurrentSpellSlots = New-HeroSpellSlotTable -Level1 ([int]$Hero.MaxSpellSlots.Level1) -Level2 ([int]$Hero.MaxSpellSlots.Level2)
+    $Hero.CurrentSpellSlots = New-HeroSpellSlotTable -Level1 ([int]$Hero.MaxSpellSlots.Level1) -Level2 ([int]$Hero.MaxSpellSlots.Level2) -Level3 ([int]$Hero.MaxSpellSlots.Level3)
 
     return [PSCustomObject]@{
         Success = $true
@@ -1778,6 +1833,14 @@ function Test-HeroCanCastSpell {
             CanCast = $false
             Spell = $null
             Message = "$($Hero.Name) does not know $SpellName."
+        }
+    }
+
+    if ($null -ne $spell.PSObject.Properties["Implemented"] -and -not [bool]$spell.Implemented) {
+        return [PSCustomObject]@{
+            CanCast = $false
+            Spell = $spell
+            Message = "$($spell.Name) is known but not yet available in the current playable rules."
         }
     }
 
@@ -1963,6 +2026,20 @@ function Get-HeroBardicInspirationMaxDice {
     return [Math]::Max(1, $levelBonus + $charismaBonus)
 }
 
+function Get-HeroBardicInspirationDieSides {
+    param($Hero)
+
+    if (-not (Test-HeroFeatureUnlocked -Hero $Hero -Feature "BardicInspiration")) {
+        return 0
+    }
+
+    if (Test-HeroFeatureUnlocked -Hero $Hero -Feature "BardicInspirationD8") {
+        return 8
+    }
+
+    return 6
+}
+
 function Get-HeroSongOfRestBonus {
     param($Hero)
 
@@ -2011,7 +2088,7 @@ function Get-HeroBardicInspirationStatus {
     return [PSCustomObject]@{
         CurrentDice = if ($null -ne $Hero.PSObject.Properties["CurrentBardicInspirationDice"]) { [int]$Hero.CurrentBardicInspirationDice } else { 0 }
         MaxDice = Get-HeroBardicInspirationMaxDice -Hero $Hero
-        DieSides = if ($null -ne $Hero.PSObject.Properties["BardicInspirationDieSides"]) { [int]$Hero.BardicInspirationDieSides } else { 6 }
+        DieSides = Get-HeroBardicInspirationDieSides -Hero $Hero
         Instrument = $instrument
         InstrumentBonus = if ($null -ne $instrument) { [int]$instrument.InspirationBonus } else { 0 }
     }
@@ -2048,6 +2125,7 @@ function Prepare-HeroBardicInspiration {
     }
 
     $Hero.CurrentBardicInspirationDice = $maxDice
+    $Hero.BardicInspirationDieSides = Get-HeroBardicInspirationDieSides -Hero $Hero
 
     return [PSCustomObject]@{
         Success = $true

@@ -113,9 +113,12 @@ Current camp levels:
 
 - `Bardic Inspiration` prepared before danger with an instrument
 - inspiration dice equal to half Bard level plus positive `CHA` modifier, minimum 1
+- Bardic Inspiration die size is `d6` at levels 1-4 and improves to `d8` at level 5
 - long rests no longer auto-prepare bardic inspiration; the bard must still ready the pool with an instrument, while short rests can rebuild prepared inspiration during a dungeon push
+- `Font of Inspiration` is now tracked at level 5; the local rest loop already refreshes prepared Bardic Inspiration on short rest
 - inspiration dice used after `Attack`, `Block`, or `Focus`
 - dedicated `Bonus Action` menu inside combat rounds
+- Bard spellcasting progression now includes level 3 slots at Bard levels 5-6; known but not-yet-playable spells are explicitly marked so they do not appear as castable options by accident
 - `Vicious Mockery` uses a `WIS` save and can target enemies up to `60 ft` away when monster-zone distance is active; after repeated uses in the same combat, its flavor text collapses into shorter repeat lines so long fights stay readable
 - `Dissonant Whispers` and `Faerie Fire` also use `60 ft` combat range, so the Bard can use spell control from near/far monster-zone openings before melee weapons matter
 - `Healing Word` targets the hero and is not blocked by enemy distance
@@ -124,6 +127,8 @@ Current camp levels:
 - `Invisibility` can be cast from quest preparation, monster-zone exploration, or calm dungeon rooms as soon as Bard level 3 unlocks level 2 slots, spends a level 2 slot, and grants `+10` to `Stealth` checks and monster-zone stealth approach rolls while active; in Understreet-style dungeon encounters it can also be spent to bypass a non-boss room without loot or to open combat with the hero acting first and the enemy off balance, while creatures with blindsight can counter that invisibility bonus in the monster zone
 - `Enhance Ability` can be cast at Bard level 4 before non-combat quest checks, spends a level 2 slot, focuses the check's ability, and grants advantage on matching ability checks while active
 - `Cutting Words` works as a reaction and spends bardic inspiration
+- `Countercharm` is tracked at level 6 and exposes an advantage hook against charm/fear saves
+- College of Lore `Additional Magical Secrets` is tracked at level 6, with actual extra spell choices deferred until level 6 spell content gets a dedicated pass
 - prepared bardic inspiration recovers on short rest, not automatically on an inn long rest
 - `Footwork` replaces basic block and gives the bard's positive `DEX` modifier plus proficiency bonus as AC against the next attack
 - visible `Spell Save DC`

@@ -71,6 +71,16 @@ function Test-BardSpellcastingProgressionScalesByLevel {
     Assert-Equal -Actual $hero.CantripsKnown -Expected 3 -Message "A level 4 bard should know a third cantrip."
     Assert-Equal -Actual $hero.SpellsKnown -Expected 7 -Message "A level 4 bard should know seven slotted spells."
     Assert-Equal -Actual $hero.CurrentSpellSlots.Level2 -Expected 3 -Message "A level 4 bard should restore three level 2 slots."
+
+    $hero.Level = 5
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Assert-Equal -Actual $hero.SpellsKnown -Expected 8 -Message "A level 5 bard should know eight slotted spells."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level3 -Expected 2 -Message "A level 5 bard should unlock two level 3 spell slots."
+
+    $hero.Level = 6
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+    Assert-Equal -Actual $hero.SpellsKnown -Expected 9 -Message "A level 6 bard should know nine slotted spells."
+    Assert-Equal -Actual $hero.CurrentSpellSlots.Level3 -Expected 3 -Message "A level 6 bard should restore three level 3 spell slots."
 }
 
 function Test-BardLevelTwoSpellsStayLevelGated {
@@ -97,6 +107,38 @@ function Test-BardLevelTwoSpellsStayLevelGated {
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Invisibility").CanCast -Expected $true -Message "Invisibility should become castable at bard level 4."
     Assert-Equal -Actual (Test-HeroCanCastSpell -Hero $hero -SpellName "Enhance Ability").CanCast -Expected $true -Message "Enhance Ability should become castable at bard level 4."
     Assert-Equal -Actual (@($hero.KnownSpells | Where-Object { [int]$_.SpellLevel -eq 2 }).Count) -Expected 3 -Message "A level 4 bard should know three level 2 utility/control spells in this pass."
+}
+
+function Test-BardUnimplementedKnownSpellsAreNotCastable {
+    $hero = Get-Hero -Class "Bard"
+    $hero.Level = 2
+    Restore-HeroSpellSlots -Hero $hero | Out-Null
+
+    $heroism = $hero.KnownSpells | Where-Object { $_.Name -eq "Heroism" } | Select-Object -First 1
+    $heroismCast = Test-HeroCanCastSpell -Hero $hero -SpellName "Heroism"
+
+    Assert-True -Condition ($null -ne $heroism) -Message "Heroism should still count as the bard's level 2 spell-known expansion."
+    Assert-Equal -Actual $heroism.Implemented -Expected $false -Message "Heroism should be marked as known but not yet playable."
+    Assert-Equal -Actual $heroismCast.CanCast -Expected $false -Message "Unimplemented known spells should not be castable."
+    Assert-True -Condition ($heroismCast.Message -like "*not yet available*") -Message "Unimplemented spell feedback should be explicit."
+}
+
+function Test-BardLevelFiveAndSixFeatureUnlocks {
+    $hero = Get-Hero -Class "Bard"
+
+    $hero.Level = 5
+    Prepare-HeroBardicInspiration -Hero $hero | Out-Null
+
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $hero -Feature "BardicInspirationD8") -Expected $true -Message "Bardic Inspiration should improve to d8 at Bard level 5."
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $hero -Feature "FontOfInspiration") -Expected $true -Message "Font of Inspiration should unlock at Bard level 5."
+    Assert-Equal -Actual $hero.BardicInspirationDieSides -Expected 8 -Message "Prepared Bardic Inspiration should use d8 at level 5."
+
+    $hero.Level = 6
+
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $hero -Feature "Countercharm") -Expected $true -Message "Countercharm should unlock at Bard level 6."
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $hero -Feature "AdditionalMagicalSecrets") -Expected $true -Message "Lore Bard Additional Magical Secrets should unlock at Bard level 6."
+    Assert-Equal -Actual (Test-HeroConditionSaveAdvantage -Hero $hero -Condition "Charmed") -Expected $true -Message "Countercharm should flag advantage against charm saves."
+    Assert-Equal -Actual (Test-HeroConditionSaveAdvantage -Hero $hero -Condition "Frightened") -Expected $true -Message "Countercharm should flag advantage against fear saves."
 }
 
 function Test-LevelThreeBardCanUseInvisibilityInCalmDungeonRooms {
@@ -338,6 +380,8 @@ function Test-NonBardDoesNotGetSpellcastingStatus {
 Test-BardStartsWithSpellcastingState
 Test-BardSpellcastingProgressionScalesByLevel
 Test-BardLevelTwoSpellsStayLevelGated
+Test-BardUnimplementedKnownSpellsAreNotCastable
+Test-BardLevelFiveAndSixFeatureUnlocks
 Test-LevelThreeBardCanUseInvisibilityInCalmDungeonRooms
 Test-BardCantripsDoNotSpendSpellSlots
 Test-BardSlottedSpellsSpendAndRestoreSlots

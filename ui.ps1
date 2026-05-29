@@ -661,12 +661,12 @@ function Get-TownHeroResourceHudText {
         $parts += "DC $($snapshot.SpellSaveDC)"
 
         if ($null -ne $snapshot.Spellcasting) {
-            if ([int]$snapshot.Spellcasting.MaxSpellSlots.Level1 -gt 0) {
-                $parts += "L1 $($snapshot.Spellcasting.CurrentSpellSlots.Level1)/$($snapshot.Spellcasting.MaxSpellSlots.Level1)"
-            }
+            foreach ($slotLevel in 1..3) {
+                $slotKey = "Level$slotLevel"
 
-            if ([int]$snapshot.Spellcasting.MaxSpellSlots.Level2 -gt 0) {
-                $parts += "L2 $($snapshot.Spellcasting.CurrentSpellSlots.Level2)/$($snapshot.Spellcasting.MaxSpellSlots.Level2)"
+                if ($snapshot.Spellcasting.MaxSpellSlots.ContainsKey($slotKey) -and [int]$snapshot.Spellcasting.MaxSpellSlots[$slotKey] -gt 0) {
+                    $parts += "L$slotLevel $($snapshot.Spellcasting.CurrentSpellSlots[$slotKey])/$($snapshot.Spellcasting.MaxSpellSlots[$slotKey])"
+                }
             }
         }
 

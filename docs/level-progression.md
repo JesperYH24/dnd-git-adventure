@@ -60,19 +60,23 @@ Gariand is the soft-power hero: performance, knowledge, timing, insults, favors,
 | Level | Target Feature | Current Status | Notes |
 |---:|---|---|---|
 | 1 | Bardic Inspiration | Implemented | Prepared with an instrument. Dice scale from CHA in this game and can support attack/defense/focus moments. |
-| 1 | Spellcasting | Partial | Spell slots, known-spell progression, free cantrips, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, `Enhance Ability`, and control-focused `Vicious Mockery` are implemented. Broader exploration spell use is still future work. |
+| 1 | Spellcasting | Partial | Spell slots and known-spell progression now run through level 6. Playable spells are `Vicious Mockery`, `Healing Word`, `Dissonant Whispers`, `Faerie Fire`, `Charm Person`, first-pass `Suggestion`, `Invisibility`, and `Enhance Ability`; known but not-yet-playable spells are explicitly marked in code. |
 | 2 | Jack of All Trades | Implemented | Adds half proficiency to non-proficient ability checks. |
 | 2 | Song of Rest | Implemented | Adds `1d6` extra healing to Bard short rests. |
 | 3 | College of Lore: Bonus Proficiencies | Implemented | Adds Lore-flavored `Lore`, plus 5e-backed `History`, `Investigation`, and `Insight` proficiencies at level 3. |
 | 3 | College of Lore: Cutting Words | Implemented | Level-gated reaction that spends Bardic Inspiration to reduce incoming attack pressure. |
 | 3 | Expertise | Implemented | Fixed first pass: doubles proficiency for `Performance` and `Perception` at level 3. |
 | 4 | Ability Score Increase | Implemented | Level 4 ASI supports `+2` or split `+1/+1`, capped at 20. Default class focus is `CHA`. |
+| 5 | Bardic Inspiration d8 | Implemented | Prepared Bardic Inspiration now uses a d8 at Bard level 5. |
+| 5 | Font of Inspiration | Implemented | The feature is now explicit in progression; this game already refreshes prepared Bardic Inspiration on short rest through the Bard rest loop. |
+| 6 | Countercharm | Implemented | Provides a rules hook for advantage against charmed/frightened saves. |
+| 6 | College of Lore: Additional Magical Secrets | Tracked | Unlocked as a feature flag for level 6, with actual extra spell choices still deferred. |
 | Custom | Footwork | Implemented | Replaces basic block language and scales AC defense from positive `DEX` modifier plus proficiency bonus. |
 
 Bard follow-ups:
 
 - decide whether Expertise should become player-chosen later instead of fixed to `Performance` and `Perception`
-- pause further Bard spell expansion until other level 4 systems catch up
+- decide which Additional Magical Secrets spells become actually playable at level 6
 - make monster-zone class text lean into strange sounds, folklore, performance misdirection, and reading behavior instead of raw weapon dominance
 
 ### Bard Spell Slots Implementation Plan
@@ -81,12 +85,14 @@ The Bard should keep feeling like a control, tempo, and problem-solving class in
 
 Target Bard spell progression through the current class-feature pass:
 
-| Bard Level | Cantrips Known | Spells Known | Level 1 Slots | Level 2 Slots |
-|---:|---:|---:|---:|---:|
-| 1 | 2 | 4 | 2 | 0 |
-| 2 | 2 | 5 | 3 | 0 |
-| 3 | 2 | 6 | 4 | 2 |
-| 4 | 3 | 7 | 4 | 3 |
+| Bard Level | Cantrips Known | Spells Known | Level 1 Slots | Level 2 Slots | Level 3 Slots |
+|---:|---:|---:|---:|---:|---:|
+| 1 | 2 | 4 | 2 | 0 | 0 |
+| 2 | 2 | 5 | 3 | 0 | 0 |
+| 3 | 2 | 6 | 4 | 2 | 0 |
+| 4 | 3 | 7 | 4 | 3 | 0 |
+| 5 | 3 | 8 | 4 | 3 | 2 |
+| 6 | 3 | 9 | 4 | 3 | 3 |
 
 Suggested first spell list:
 
@@ -98,9 +104,12 @@ Suggested first spell list:
 | Level 1 spell | `Dissonant Whispers` | Offensive control. Psychic damage plus forced disruption/flee flavor, spends a level 1 slot. |
 | Level 1 spell | `Faerie Fire` | Accuracy/control support. Helps Bard solve fights through setup rather than raw damage. |
 | Level 1 spell | `Charm Person` | Social spell with quest and town use. |
+| Level 1 spell | `Heroism` | Known-spell progression placeholder at level 2; explicitly not castable until a playable buff design exists. |
 | Level 2 spell | `Suggestion` | Social/control spell for level 3+. |
 | Level 2 spell | `Invisibility` | Exploration and danger-avoidance spell available as soon as level 3 unlocks level 2 slots; it now also gives Understreet-style dungeon encounter leverage before monster-zone play. |
 | Level 2 spell | `Enhance Ability` | Level 4 broader skill support: spends a level 2 slot and gives advantage on the chosen ability checks while active. |
+| Level 3 spell | `Hypnotic Pattern` | Level 5 known-spell placeholder; not yet castable. |
+| Level 3 spell | `Dispel Magic` | Level 6 known-spell placeholder; not yet castable. |
 
 Implementation order:
 

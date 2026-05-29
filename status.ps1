@@ -185,7 +185,21 @@ function Write-HeroStatusDetails {
         Write-ColorLine "Bardic Inspiration: $($Snapshot.BardicInspiration.CurrentDice)/$($Snapshot.BardicInspiration.MaxDice) d$($Snapshot.BardicInspiration.DieSides) | Spell Save DC: $($Snapshot.SpellSaveDC) | Instrument: $instrumentText" "DarkYellow"
 
         if ($null -ne $Snapshot.Spellcasting) {
-            Write-ColorLine "Spell Slots: L1 $($Snapshot.Spellcasting.CurrentSpellSlots.Level1)/$($Snapshot.Spellcasting.MaxSpellSlots.Level1) | L2 $($Snapshot.Spellcasting.CurrentSpellSlots.Level2)/$($Snapshot.Spellcasting.MaxSpellSlots.Level2) | Known: $($Snapshot.Spellcasting.CantripsKnown) cantrips, $($Snapshot.Spellcasting.SpellsKnown) spells" "DarkYellow"
+            $slotParts = @()
+
+            foreach ($slotLevel in 1..3) {
+                $slotKey = "Level$slotLevel"
+
+                if ($Snapshot.Spellcasting.MaxSpellSlots.ContainsKey($slotKey) -and [int]$Snapshot.Spellcasting.MaxSpellSlots[$slotKey] -gt 0) {
+                    $slotParts += "L$slotLevel $($Snapshot.Spellcasting.CurrentSpellSlots[$slotKey])/$($Snapshot.Spellcasting.MaxSpellSlots[$slotKey])"
+                }
+            }
+
+            if ($slotParts.Count -eq 0) {
+                $slotParts += "none"
+            }
+
+            Write-ColorLine "Spell Slots: $($slotParts -join ' | ') | Known: $($Snapshot.Spellcasting.CantripsKnown) cantrips, $($Snapshot.Spellcasting.SpellsKnown) spells" "DarkYellow"
         }
 
         if (-not [string]::IsNullOrWhiteSpace($Snapshot.PerformanceStatus)) {
