@@ -66,7 +66,19 @@ Use a hidden coordinate-style zone rather than a visible dungeon map:
 - each direction moves the hero to a persistent abstract position
 - landmarks have fixed positions, so repeatedly traveling west from the same route can find the same landmark again
 - the player should see prose, landmarks, and directional choices rather than coordinates
-- landmarks should track first visit, repeat visit, discoveries, route familiarity across different days, direct-travel unlocks, future hooks, and danger level
+- landmarks should track first visit, repeat visit, discoveries, route familiarity across different days, direct-travel unlocks, future hooks, danger level, and terrain profile
+
+Current terrain profiles:
+
+- `Open Scrub`
+- `Old Road Shrine`
+- `Ruined Stone`
+- `Burned Orchard`
+- `Dry Creek Bed`
+- `Rough Cairn Ground`
+- `Ash Hollow`
+- `Abandoned Worksite`
+- `Ancient Stones`
 
 Possible landmarks:
 

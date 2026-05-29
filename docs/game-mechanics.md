@@ -54,6 +54,8 @@
 - the menu also shows a compact monster-zone progression line, so the player can see level 6 proof requirements, XP-to-level after cap unlock, or gate-defense completion without opening documentation
 - travel is tracked through hidden positions and persistent landmarks, so repeated directions can lead back to known places
 - landmarks now track route familiarity by different visit days; repeat visits on later days make the place easier to find, and at `3` familiarity the hero can travel there directly from the outer gate
+- landmarks now carry explicit terrain profiles: `Open Scrub`, `Old Road Shrine`, `Ruined Stone`, `Burned Orchard`, `Dry Creek Bed`, `Rough Cairn Ground`, `Ash Hollow`, `Abandoned Worksite`, and `Ancient Stones`
+- terrain affects encounter chance, camp decay pressure, and wilderness awareness modifiers for Perception/Stealth, so open ground, ruins, dry creek tracks, ash hollows, and stone sites now play differently instead of only reading differently
 - monster-zone class reads now cover search, long-range observation, weather, field leads, camp choices, proof handling, and oddity hauling: Barbarian reads body/ground/instinct, Bard reads rhythm/story/social value, and Fighter reads patrol logic/sightlines/civic evidence
 - new wilderness skills: `Perception` and `Stealth`
 - before wilderness combat begins, hero and monster awareness is resolved with opposed discovery checks:

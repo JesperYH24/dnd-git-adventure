@@ -222,6 +222,51 @@ function Test-MonsterZoneWeatherModifiesAwareness {
     Assert-Equal -Actual ($fog.CreatureStealthTotal - $clear.CreatureStealthTotal) -Expected 2 -Message "Cold fog should help creature stealth."
 }
 
+function Test-MonsterZoneLandmarksHaveTerrainProfiles {
+    $landmarks = @(Get-MonsterZoneLandmarks)
+
+    foreach ($landmark in $landmarks) {
+        $terrain = Get-MonsterZoneTerrainAtPosition -Landmark $landmark
+        Assert-True -Condition (-not [string]::IsNullOrWhiteSpace([string]$landmark.TerrainId)) -Message "$($landmark.Name) should declare a terrain id."
+        Assert-True -Condition (-not [string]::IsNullOrWhiteSpace([string]$terrain.Name)) -Message "$($landmark.Name) terrain id should resolve to a profile."
+    }
+}
+
+function Test-MonsterZoneTerrainModifiesAwareness {
+    $hero = Get-Hero -Class "Fighter"
+    $creature = Get-MonsterZoneCreatures | Where-Object { $_.id -eq "kobold_wall_scout" } | Select-Object -First 1
+    $openScrub = Get-MonsterZoneTerrainProfile -TerrainId "open_scrub"
+    $dryCreek = Get-MonsterZoneTerrainProfile -TerrainId "dry_creek"
+
+    $open = Resolve-WildernessAwareness -Hero $hero -Creature $creature -Terrain $openScrub -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+    $creek = Resolve-WildernessAwareness -Hero $hero -Creature $creature -Terrain $dryCreek -HeroPerceptionRoll 10 -HeroStealthRoll 10 -CreaturePerceptionRoll 10 -CreatureStealthRoll 10
+
+    Assert-Equal -Actual $creek.TerrainId -Expected "dry_creek" -Message "Awareness result should record the terrain profile."
+    Assert-Equal -Actual ($creek.HeroPerceptionTotal - $open.HeroPerceptionTotal) -Expected 1 -Message "Dry creek should be better for reading tracks than open scrub."
+    Assert-Equal -Actual $creek.TerrainHeroStealthModifier -Expected -1 -Message "Dry creek should expose stealth movement across pale stone."
+}
+
+function Test-MonsterZoneTerrainAffectsCampDecayRisk {
+    $game = Initialize-Game
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+    Set-MonsterZoneCurrentCampLevel -Game $game -Level 2
+    Advance-TownToNextDay -Game $game | Out-Null
+
+    $open = Resolve-MonsterZoneCampCondition -Game $game -ConditionRoll 100
+
+    $game = Initialize-Game
+    Set-MonsterZoneWeather -Game $game -WeatherId "clear" | Out-Null
+    $game.Town.MonsterZone.CurrentX = 2
+    $game.Town.MonsterZone.CurrentY = 1
+    Set-MonsterZoneCurrentCampLevel -Game $game -Level 2
+    Advance-TownToNextDay -Game $game | Out-Null
+
+    $ash = Resolve-MonsterZoneCampCondition -Game $game -ConditionRoll 100
+
+    Assert-True -Condition ($ash.Risk -gt $open.Risk) -Message "Ash hollow terrain should make unattended camps more likely to degrade than open scrub."
+    Assert-Equal -Actual $ash.Terrain.Id -Expected "ash_hollow" -Message "Camp condition should report the terrain that affected decay."
+}
+
 function Test-MonsterZoneWeatherChangesCampRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -712,6 +757,9 @@ Test-MonsterZoneCreaturesHaveObservationFlavor
 Test-MonsterZoneCreaturePoolScalesWithLevelCap
 Test-MonsterZoneWeatherPersistsForCurrentDay
 Test-MonsterZoneWeatherModifiesAwareness
+Test-MonsterZoneLandmarksHaveTerrainProfiles
+Test-MonsterZoneTerrainModifiesAwareness
+Test-MonsterZoneTerrainAffectsCampDecayRisk
 Test-MonsterZoneWeatherChangesCampRisk
 Test-MonsterZoneAddsMoreCreatureTypes
 Test-MonsterZoneClassReadsAreDistinct

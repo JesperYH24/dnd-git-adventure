@@ -229,6 +229,8 @@ Current first-pass implementation:
 - there is no visible room map, but landmarks are fixed and tracked so repeated direction choices can rediscover the same places
 - landmarks remember visits across different days; familiar routes become easier to find and eventually unlock direct travel from the outer gate once the hero knows them well enough
 - the zone contains fixed landmarks such as old shrines, watchtower ruins, burned sites, dry creek beds, camps, and boundary stones that can become future story hooks
+- those landmarks now resolve to explicit terrain profiles such as open scrub, road shrine ground, ruined stone, burned orchard lanes, dry creek beds, rough cairn ground, ash hollow, abandoned worksite, and ancient stones
+- terrain is visible in the monster-zone menu and can change encounter pressure, camp decay, and Perception/Stealth awareness totals
 - the zone edge is a soft boundary where the hero is warned about leaving the patrol radius or pushing into danger beyond the current chapter
 - `Perception` and `Stealth` decide who notices whom before initiative
 - monsters and beasts have their own perception and stealth values

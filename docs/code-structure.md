@@ -385,6 +385,7 @@ Ansvar:
 - outer-wall monster zone after post-Civic-Vault wall rumors
 - hidden wilderness positions and persistent landmarks
 - landmark memory in `LandmarkMemory`, where different-day visits increase route familiarity and unlock direct travel from the gate
+- terrain profiles for monster-zone positions, with visible terrain names plus encounter, camp-decay, and awareness modifiers
 - one-time monster-zone milestone XP in `MilestoneXP` for discoveries, route unlocks, creature proof, Dorr reports, and monster contracts
 - level 4-to-6 progression checks that open cap 5 from wall rumors and cap 6 from enough landmarks, creature proof, reports, and routes/contracts
 - level 6 scripted gate-defense event with three waves, allied opening pressure, healer recovery, and completion flags

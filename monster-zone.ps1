@@ -331,6 +331,58 @@ function Get-MonsterZonePositionKey {
     return "$X,$Y"
 }
 
+function New-MonsterZoneTerrainProfile {
+    param(
+        [string]$Id,
+        [string]$Name,
+        [string]$Description,
+        [int]$EncounterChanceModifier = 0,
+        [int]$CampDecayModifier = 0,
+        [int]$HeroPerceptionModifier = 0,
+        [int]$HeroStealthModifier = 0,
+        [int]$CreaturePerceptionModifier = 0,
+        [int]$CreatureStealthModifier = 0
+    )
+
+    return [PSCustomObject]@{
+        Id = $Id
+        Name = $Name
+        Description = $Description
+        EncounterChanceModifier = $EncounterChanceModifier
+        CampDecayModifier = $CampDecayModifier
+        HeroPerceptionModifier = $HeroPerceptionModifier
+        HeroStealthModifier = $HeroStealthModifier
+        CreaturePerceptionModifier = $CreaturePerceptionModifier
+        CreatureStealthModifier = $CreatureStealthModifier
+    }
+}
+
+function Get-MonsterZoneTerrainProfiles {
+    return @(
+        (New-MonsterZoneTerrainProfile -Id "open_scrub" -Name "Open Scrub" -Description "Low grass and broken road-stone leave long sightlines but few places to hide." -EncounterChanceModifier 0 -CampDecayModifier 0 -HeroPerceptionModifier 1 -HeroStealthModifier -1 -CreaturePerceptionModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "road_shrine" -Name "Old Road Shrine" -Description "A thin road line, shrine stones, and patrol marks make the ground easier to read." -EncounterChanceModifier -5 -CampDecayModifier -5 -HeroPerceptionModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "ruined_stone" -Name "Ruined Stone" -Description "Collapsed masonry and broken sightlines create cover, echoes, and sudden corners." -EncounterChanceModifier 5 -CampDecayModifier 5 -HeroStealthModifier 1 -CreatureStealthModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "burned_orchard" -Name "Burned Orchard" -Description "Rows of black fruit trees break movement into lanes and make every shadow look placed." -EncounterChanceModifier 5 -CampDecayModifier 5 -HeroPerceptionModifier -1 -HeroStealthModifier 1 -CreatureStealthModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "dry_creek" -Name "Dry Creek Bed" -Description "Pale stone, old water cuts, and collected tracks make this ground excellent for reading movement." -EncounterChanceModifier 5 -CampDecayModifier 0 -HeroPerceptionModifier 2 -HeroStealthModifier -1 -CreaturePerceptionModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "rough_cairn" -Name "Rough Cairn Ground" -Description "Uneven hunter stones and scrubby rises make footing awkward and camps harder to keep hidden." -EncounterChanceModifier 5 -CampDecayModifier 10 -HeroPerceptionModifier 1 -HeroStealthModifier -1 -CreaturePerceptionModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "ash_hollow" -Name "Ash Hollow" -Description "Black grit, hot stone, and shallow ground traps carry stronger draconic pressure." -EncounterChanceModifier 10 -CampDecayModifier 10 -HeroPerceptionModifier -1 -CreatureStealthModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "survey_worksite" -Name "Abandoned Worksite" -Description "Survey stakes, torn canvas, and half-made lines give a careful traveler useful anchors." -EncounterChanceModifier 0 -CampDecayModifier -5 -HeroPerceptionModifier 1 -HeroStealthModifier 1)
+        (New-MonsterZoneTerrainProfile -Id "ancient_stones" -Name "Ancient Stones" -Description "Cracked boundary stones and old rune lines make the terrain feel older than the city wall." -EncounterChanceModifier 10 -CampDecayModifier 5 -HeroPerceptionModifier -1 -CreatureStealthModifier 1)
+    )
+}
+
+function Get-MonsterZoneTerrainProfile {
+    param([string]$TerrainId)
+
+    $profile = Get-MonsterZoneTerrainProfiles | Where-Object { $_.Id -eq $TerrainId } | Select-Object -First 1
+
+    if ($null -ne $profile) {
+        return $profile
+    }
+
+    return (Get-MonsterZoneTerrainProfiles | Where-Object { $_.Id -eq "open_scrub" } | Select-Object -First 1)
+}
+
 function Get-MonsterZoneLandmarks {
     return @(
         [PSCustomObject]@{
@@ -338,6 +390,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Old Mile Shrine"
             X = 0
             Y = 1
+            TerrainId = "road_shrine"
             FirstVisitText = "A waist-high shrine leans beside the old road, its saint's face scraped nearly smooth by weather. Someone has tied fresh blue thread around the base since the wall rumors began."
             RepeatVisitText = "The Old Mile Shrine still leans into the wind. The blue thread has picked up road dust, but no one has dared remove it."
             DangerLevel = 1
@@ -347,6 +400,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Collapsed Watchtower"
             X = 1
             Y = 1
+            TerrainId = "ruined_stone"
             FirstVisitText = "A watchtower lies folded into its own foundation. Claw marks scar stones that should have been too high for any ordinary beast."
             RepeatVisitText = "The Collapsed Watchtower gives a clean view back to the city wall and an uglier view of how far the patrol lights do not reach."
             DangerLevel = 2
@@ -356,6 +410,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Burned Orchard"
             X = -1
             Y = 0
+            TerrainId = "burned_orchard"
             FirstVisitText = "Black fruit trees stand in stiff rows, burned without spreading flame to the grass between them. The pattern feels chosen."
             RepeatVisitText = "The Burned Orchard remains too orderly, its rows of dead trees pointing toward the city like accusing fingers."
             DangerLevel = 2
@@ -365,6 +420,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Dry Creek Bed"
             X = 0
             Y = 2
+            TerrainId = "dry_creek"
             FirstVisitText = "A dry creek bed cuts pale stone through the grass. Tracks collect here: paws, boots, split hooves, and one dragging line too wide to name yet."
             RepeatVisitText = "The Dry Creek Bed still gathers tracks like a ledger gathers debts. New marks cross old ones every time the wind drops."
             DangerLevel = 2
@@ -374,6 +430,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Hunter's Cairn"
             X = -2
             Y = 1
+            TerrainId = "rough_cairn"
             FirstVisitText = "A cairn of flat stones marks where hunters used to leave thanks before entering the scrubland. Several stones are overturned, but not scattered."
             RepeatVisitText = "The Hunter's Cairn waits in the scrub. The overturned stones have not moved, which somehow makes them worse."
             DangerLevel = 2
@@ -383,6 +440,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Blackened Scale Hollow"
             X = 2
             Y = 1
+            TerrainId = "ash_hollow"
             FirstVisitText = "A shallow hollow smells of iron, ash, and wet hide. Black flakes cling to the soil like shed scale."
             RepeatVisitText = "The Blackened Scale Hollow has not lost its smell. The soil still looks touched by something hot from beneath the skin."
             DangerLevel = 3
@@ -392,6 +450,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Abandoned Survey Camp"
             X = 1
             Y = 2
+            TerrainId = "survey_worksite"
             FirstVisitText = "Survey stakes and a torn canvas lean around a cold fire pit. The map board is gone, but the pins were pulled in a hurry."
             RepeatVisitText = "The Abandoned Survey Camp flaps quietly in the wind. It still feels like someone meant to come back and then learned better."
             DangerLevel = 2
@@ -401,6 +460,7 @@ function Get-MonsterZoneLandmarks {
             Name = "Ancient Boundary Stones"
             X = -1
             Y = 2
+            TerrainId = "ancient_stones"
             FirstVisitText = "Old boundary stones rise from the grass in a broken line. Their runes are older than the city charter, and several have been freshly cracked."
             RepeatVisitText = "The Ancient Boundary Stones keep their broken line. Whatever cracked them did not bother finishing the work."
             DangerLevel = 3
@@ -656,6 +716,43 @@ function Get-MonsterZoneLandmarkAtPosition {
     )
 
     return (Get-MonsterZoneLandmarks | Where-Object { [int]$_.X -eq $X -and [int]$_.Y -eq $Y } | Select-Object -First 1)
+}
+
+function Get-MonsterZoneTerrainAtPosition {
+    param(
+        $Game = $null,
+        [int]$X = [int]::MinValue,
+        [int]$Y = [int]::MinValue,
+        $Landmark = $null
+    )
+
+    if ($null -ne $Game) {
+        Initialize-MonsterZoneState -Game $Game
+
+        if ($X -eq [int]::MinValue) {
+            $X = [int]$Game.Town.MonsterZone.CurrentX
+        }
+
+        if ($Y -eq [int]::MinValue) {
+            $Y = [int]$Game.Town.MonsterZone.CurrentY
+        }
+    }
+
+    if ($null -eq $Landmark -and $X -ne [int]::MinValue -and $Y -ne [int]::MinValue) {
+        $Landmark = Get-MonsterZoneLandmarkAtPosition -X $X -Y $Y
+    }
+
+    if ($null -ne $Landmark -and -not [string]::IsNullOrWhiteSpace([string]$Landmark.TerrainId)) {
+        return (Get-MonsterZoneTerrainProfile -TerrainId ([string]$Landmark.TerrainId))
+    }
+
+    return (Get-MonsterZoneTerrainProfile -TerrainId "open_scrub")
+}
+
+function Get-MonsterZoneCurrentTerrain {
+    param($Game)
+
+    return (Get-MonsterZoneTerrainAtPosition -Game $Game)
 }
 
 function Get-MonsterZoneDirectTravelThreshold {
@@ -1552,6 +1649,7 @@ function Resolve-WildernessAwareness {
         $Hero,
         $Creature,
         $Weather = $null,
+        $Terrain = $null,
         [int]$HeroPerceptionRoll = 0,
         [int]$HeroStealthRoll = 0,
         [int]$CreaturePerceptionRoll = 0,
@@ -1575,10 +1673,14 @@ function Resolve-WildernessAwareness {
     $weatherHeroStealthModifier = if ($null -ne $Weather -and $null -ne $Weather.HeroStealthModifier) { [int]$Weather.HeroStealthModifier } else { 0 }
     $weatherCreaturePerceptionModifier = if ($null -ne $Weather -and $null -ne $Weather.CreaturePerceptionModifier) { [int]$Weather.CreaturePerceptionModifier } else { 0 }
     $weatherCreatureStealthModifier = if ($null -ne $Weather -and $null -ne $Weather.CreatureStealthModifier) { [int]$Weather.CreatureStealthModifier } else { 0 }
-    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus + $weatherHeroPerceptionModifier
-    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier - $counteredInvisibilityBonus + $weatherHeroStealthModifier
-    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus + $creatureSenseBonus + $weatherCreaturePerceptionModifier
-    $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus + $weatherCreatureStealthModifier
+    $terrainHeroPerceptionModifier = if ($null -ne $Terrain -and $null -ne $Terrain.HeroPerceptionModifier) { [int]$Terrain.HeroPerceptionModifier } else { 0 }
+    $terrainHeroStealthModifier = if ($null -ne $Terrain -and $null -ne $Terrain.HeroStealthModifier) { [int]$Terrain.HeroStealthModifier } else { 0 }
+    $terrainCreaturePerceptionModifier = if ($null -ne $Terrain -and $null -ne $Terrain.CreaturePerceptionModifier) { [int]$Terrain.CreaturePerceptionModifier } else { 0 }
+    $terrainCreatureStealthModifier = if ($null -ne $Terrain -and $null -ne $Terrain.CreatureStealthModifier) { [int]$Terrain.CreatureStealthModifier } else { 0 }
+    $heroPerceptionTotal = $HeroPerceptionRoll + [int]$heroPerception.TotalModifier + $dangerSenseBonus + $weatherHeroPerceptionModifier + $terrainHeroPerceptionModifier
+    $heroStealthTotal = $HeroStealthRoll + [int]$heroStealth.TotalModifier - $counteredInvisibilityBonus + $weatherHeroStealthModifier + $terrainHeroStealthModifier
+    $creaturePerceptionTotal = $CreaturePerceptionRoll + $creaturePerceptionBonus + $creatureSenseBonus + $weatherCreaturePerceptionModifier + $terrainCreaturePerceptionModifier
+    $creatureStealthTotal = $CreatureStealthRoll + $creatureStealthBonus + $weatherCreatureStealthModifier + $terrainCreatureStealthModifier
     $heroDetects = $heroPerceptionTotal -ge $creatureStealthTotal
     $creatureDetects = $creaturePerceptionTotal -ge $heroStealthTotal
 
@@ -1613,6 +1715,11 @@ function Resolve-WildernessAwareness {
         WeatherHeroStealthModifier = $weatherHeroStealthModifier
         WeatherCreaturePerceptionModifier = $weatherCreaturePerceptionModifier
         WeatherCreatureStealthModifier = $weatherCreatureStealthModifier
+        TerrainId = if ($null -ne $Terrain) { [string]$Terrain.Id } else { "" }
+        TerrainHeroPerceptionModifier = $terrainHeroPerceptionModifier
+        TerrainHeroStealthModifier = $terrainHeroStealthModifier
+        TerrainCreaturePerceptionModifier = $terrainCreaturePerceptionModifier
+        TerrainCreatureStealthModifier = $terrainCreatureStealthModifier
         InvisibilityCountered = $invisibilityCountered
     }
 }
@@ -2100,10 +2207,12 @@ function Resolve-MonsterZoneCampCondition {
     $x = [int]$Game.Town.MonsterZone.CurrentX
     $y = [int]$Game.Town.MonsterZone.CurrentY
     $landmark = Get-MonsterZoneLandmarkAtPosition -X $x -Y $y
+    $terrain = Get-MonsterZoneTerrainAtPosition -Game $Game -X $x -Y $y -Landmark $landmark
     $danger = if ($null -ne $landmark -and $null -ne $landmark.DangerLevel) { [int]$landmark.DangerLevel } else { 1 }
     $weatherRisk = if ($null -ne $Weather -and $null -ne $Weather.CampRiskModifier) { [int]$Weather.CampRiskModifier } else { 0 }
+    $terrainRisk = if ($null -ne $terrain -and $null -ne $terrain.CampDecayModifier) { [int]$terrain.CampDecayModifier } else { 0 }
     $oldLevel = [int]$camp["Level"]
-    $risk = [Math]::Max(5, [Math]::Min(85, ($daysAway * 12) + ($danger * 6) + $weatherRisk - ($oldLevel * 14)))
+    $risk = [Math]::Max(5, [Math]::Min(85, ($daysAway * 12) + ($danger * 6) + $weatherRisk + $terrainRisk - ($oldLevel * 14)))
     $loss = 0
 
     if ($ConditionRoll -le $risk) {
@@ -2137,6 +2246,7 @@ function Resolve-MonsterZoneCampCondition {
         NewLevel = $newLevel
         Risk = $risk
         Roll = $ConditionRoll
+        Terrain = $terrain
     }
 }
 
@@ -2324,13 +2434,15 @@ function Start-MonsterZoneEncounter {
     $monsterStarts = $false
     $distanceState = New-EncounterDistanceState -DistanceFeet 30 -HeroSpeedFeet 30 -MonsterSpeedFeet 30 -MeleeRangeFeet 5 -MaxDistanceFeet 120
     $weather = Get-MonsterZoneWeatherState -Game $Game
+    $terrain = Get-MonsterZoneCurrentTerrain -Game $Game
 
     Write-SectionTitle -Text "Wilderness Encounter" -Color "Red"
     Write-Scene $creature.introText
     Write-Scene "Weather: $($weather.Name). $($weather.Description)"
+    Write-Scene "Terrain: $($terrain.Name). $($terrain.Description)"
     Write-MonsterZoneClassRead -Hero $Game.Hero -Weather $weather -Context "Weather"
 
-    $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature -Weather $weather
+    $awareness = Resolve-WildernessAwareness -Hero $Game.Hero -Creature $creature -Weather $weather -Terrain $terrain
     Write-Scene "$($Game.Hero.Name)'s Perception total $($awareness.HeroPerceptionTotal) contests $($creature.definite)'s Stealth total $($awareness.CreatureStealthTotal)."
     Write-Scene "$($creature.definite)'s Perception total $($awareness.CreaturePerceptionTotal) contests $($Game.Hero.Name)'s Stealth total $($awareness.HeroStealthTotal)."
     if ($awareness.CreatureSenseBonus -gt 0) {
@@ -2459,9 +2571,11 @@ function Start-MonsterZoneMenu {
         Write-SectionTitle -Text "Beyond the Wall" -Color "Yellow"
         Write-TownTimeTracker -Game $Game -Area "Monster Zone" -HeroHP $HeroHP.Value
         $weather = Get-MonsterZoneWeatherState -Game $Game
+        $terrain = Get-MonsterZoneCurrentTerrain -Game $Game
         Write-Scene "Past the outer gate, the road loosens into scrubland, old markers, ruined work sites, and too much quiet. The city is still visible, but it no longer feels close."
-        Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Weather: $($weather.Name) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
+        Write-EmphasisLine -Text "Location: $(Get-MonsterZoneLocationText -Game $Game) | Terrain: $($terrain.Name) | Weather: $($weather.Name) | Camp: $(Get-MonsterZoneCampLevelName -Level (Get-MonsterZoneCurrentCampLevel -Game $Game)) | Oddities: $(@($Game.Town.MonsterZone.Oddities).Count)/$(Get-MonsterZoneOddityCapacity -Game $Game)" -Color "Yellow"
         Write-EmphasisLine -Text (Get-MonsterZoneRiskSummaryText -Game $Game -HeroHP $HeroHP.Value) -Color "DarkYellow"
+        Write-Scene $terrain.Description
         Write-Scene $weather.Description
         Write-MonsterZoneProgressionStatus -Game $Game
         Write-MonsterZoneObjectiveStatus -Game $Game
@@ -2512,7 +2626,9 @@ function Start-MonsterZoneMenu {
                     $danger = if ($null -ne $move.Landmark) { [int]$move.Landmark.DangerLevel } else { 1 }
                     $familiarity = if ($null -ne $move.Landmark) { Get-MonsterZoneLandmarkFamiliarity -Game $Game -LandmarkId ([string]$move.Landmark.Id) } else { 0 }
                     $weatherEncounterModifier = if ($null -ne $weather -and $null -ne $weather.EncounterChanceModifier) { [int]$weather.EncounterChanceModifier } else { 0 }
-                    $encounterChance = [Math]::Max(10, (20 + ($danger * 10)) - ([Math]::Max(0, $familiarity - 1) * 5) + $weatherEncounterModifier)
+                    $terrainAfterMove = Get-MonsterZoneTerrainAtPosition -Game $Game -Landmark $move.Landmark
+                    $terrainEncounterModifier = if ($null -ne $terrainAfterMove -and $null -ne $terrainAfterMove.EncounterChanceModifier) { [int]$terrainAfterMove.EncounterChanceModifier } else { 0 }
+                    $encounterChance = [Math]::Max(10, (20 + ($danger * 10)) - ([Math]::Max(0, $familiarity - 1) * 5) + $weatherEncounterModifier + $terrainEncounterModifier)
 
                     if ($encounterRoll -le $encounterChance) {
                         $encounterResult = Start-MonsterZoneEncounter -Game $Game -HeroHP $HeroHP
