@@ -1168,6 +1168,28 @@ function Test-BarbarianExtraAttackUnlocksAtLevelFive {
     Assert-Equal -Actual $monsterHP -Expected 4 -Message "Two level 5 Barbarian hits should apply damage twice."
 }
 
+function Test-FighterExtraAttackUnlocksAtLevelFive {
+    Set-TestOutputStubs
+
+    Set-TestRollStub {
+        param([int]$Sides = 20)
+
+        if ($Sides -eq 20) { return 12 }
+        if ($Sides -eq 6) { return 4 }
+        return 1
+    }
+
+    $hero = Get-Hero -Class "Fighter"
+    $hero.Level = 5
+    $monster = New-TestMonster
+    $monsterHP = $monster.hp
+
+    $attacks = Invoke-HeroAttackAction -Hero $hero -Monster $monster -MonsterHP ([ref]$monsterHP)
+
+    Assert-Equal -Actual $attacks -Expected 2 -Message "Level 5 Fighter Attack action should make two weapon attacks."
+    Assert-Equal -Actual $monsterHP -Expected 8 -Message "Two level 5 Fighter shortsword hits should apply damage twice."
+}
+
 function Test-BarbarianFastMovementAddsSpeedAtLevelFive {
     $hero = Get-Hero
     $hero.Level = 5
@@ -1330,6 +1352,7 @@ Test-FighterImprovedCriticalAtLevelThree
 Test-BarbarianFrenzyUnlocksAtLevelThree
 Test-BarbarianRageUsesScaleAtLevelsThreeAndSix
 Test-BarbarianExtraAttackUnlocksAtLevelFive
+Test-FighterExtraAttackUnlocksAtLevelFive
 Test-BarbarianFastMovementAddsSpeedAtLevelFive
 Test-BarbarianMindlessRageRequiresActiveRage
 Test-RecklessExposureGivesMonsterAdvantage

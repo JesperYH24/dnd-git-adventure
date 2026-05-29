@@ -44,10 +44,12 @@ Lubert Stryer is the knight-aspirant: defense, discipline, civic trust, and form
 | 2 | Action Surge | Implemented | Once per rest. Appears in the combat turn menu after the Fighter has spent an action and restores one action that turn. |
 | 3 | Champion: Improved Critical | Implemented | Weapon attacks crit on natural `19-20`. |
 | 4 | Ability Score Increase | Implemented | Level 4 ASI supports `+2` or split `+1/+1`, capped at 20. Default class focus is `CON`. |
+| 5 | Extra Attack | Implemented | Attack action makes two weapon attacks. |
+| 6 | Ability Score Increase | Implemented | Fighter gets the extra level 6 ASI; Barbarian and Bard do not receive a second ASI before level 6. |
 
 Fighter follow-ups:
 
-- tune the first mounted jousting pass beside ASI, stable-owned horse, and splint/plate requirements
+- keep tuning mounted jousting beyond the first pass, stable-owned horse, and splint/plate requirements
 - keep tuning combat text around Fighter timing and shield-line discipline; `Action Surge` and Champion `Improved Critical` now have first-pass class-specific narration
 - make monster-zone class text lean into patrol logic, shield discipline, wall defense, and reading organized threats
 

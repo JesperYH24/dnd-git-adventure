@@ -67,6 +67,34 @@ function Test-FighterSecondWindHealsAndRestores {
     $global:RollDiceOverride = $null
 }
 
+function Test-FighterLevelProgressionUnlocksLevelFiveAndSixFeatures {
+    $levelFive = Get-Hero -Class "Fighter"
+    $levelFive.Level = 5
+    $levelFiveCon = $levelFive.CON
+    $levelFiveAsi = Resolve-HeroAbilityScoreIncrease -Hero $levelFive -Level 5 -Mode "CON+2"
+
+    Assert-Equal -Actual (Test-HeroFeatureUnlocked -Hero $levelFive -Feature "ExtraAttack") -Expected $true -Message "Fighter should unlock Extra Attack at level 5."
+    Assert-Equal -Actual $levelFiveAsi -Expected $null -Message "Fighter should not receive an ASI at level 5."
+    Assert-Equal -Actual $levelFive.CON -Expected $levelFiveCon -Message "Level 5 should not change Fighter ability scores."
+
+    $levelSix = Get-Hero -Class "Fighter"
+    $levelSix.Level = 6
+    $levelSixCon = $levelSix.CON
+    $levelSixAsi = Resolve-HeroAbilityScoreIncrease -Hero $levelSix -Level 6 -Mode "CON+2"
+
+    Assert-Equal -Actual (Test-HeroAbilityScoreIncreaseLevel -Hero $levelSix -Level 6) -Expected $true -Message "Fighter should have its second ASI at level 6."
+    Assert-True -Condition ($null -ne $levelSixAsi) -Message "Fighter level 6 ASI should return an applied increase."
+    Assert-Equal -Actual $levelSix.CON -Expected ($levelSixCon + 2) -Message "Fighter level 6 ASI should improve the chosen ability."
+
+    $barbarian = Get-Hero -Class "Barbarian"
+    $barbarian.Level = 6
+    Assert-Equal -Actual (Test-HeroAbilityScoreIncreaseLevel -Hero $barbarian -Level 6) -Expected $false -Message "Barbarian should not receive a level 6 ASI."
+
+    $bard = Get-Hero -Class "Bard"
+    $bard.Level = 6
+    Assert-Equal -Actual (Test-HeroAbilityScoreIncreaseLevel -Hero $bard -Level 6) -Expected $false -Message "Bard should not receive a level 6 ASI."
+}
+
 function Test-FighterShopOffersPointTowardKnightProgression {
     $game = Initialize-Game -Class "Fighter"
     $smithyOffers = @(Get-SmithyOffers -Game $game)
@@ -370,6 +398,7 @@ Test-FighterUsesConAsPrimaryProgressionStat
 Test-ShieldUsesSeparateEquipSlot
 Test-FighterDefenseRequiresArmor
 Test-FighterSecondWindHealsAndRestores
+Test-FighterLevelProgressionUnlocksLevelFiveAndSixFeatures
 Test-FighterShopOffersPointTowardKnightProgression
 Test-FighterJoustingArenaPreviewAndSquireSpar
 Test-FighterTourneyPatronAttentionUnlocks

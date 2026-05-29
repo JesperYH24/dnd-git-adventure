@@ -217,6 +217,28 @@ function Get-HeroProficiencyBonus {
     return [Math]::Floor((($level - 1) / 4)) + 2
 }
 
+function Test-HeroAbilityScoreIncreaseLevel {
+    param(
+        $Hero,
+        [int]$Level = 0
+    )
+
+    if ($null -eq $Hero) {
+        return $false
+    }
+
+    if ($Level -le 0) {
+        $Level = if ($null -ne $Hero.PSObject.Properties["Level"]) { [int]$Hero.Level } else { 1 }
+    }
+
+    switch ($Hero.Class) {
+        "Fighter" { return $Level -in @(4, 6) }
+        "Barbarian" { return $Level -eq 4 }
+        "Bard" { return $Level -eq 4 }
+        default { return $false }
+    }
+}
+
 function Test-HeroFeatureUnlocked {
     param(
         $Hero,
@@ -237,7 +259,7 @@ function Test-HeroFeatureUnlocked {
                 "RecklessAttack" { return $level -ge 2 }
                 "DangerSense" { return $level -ge 2 }
                 "Frenzy" { return $level -ge 3 }
-                "AbilityScoreIncrease" { return $level -ge 4 }
+                "AbilityScoreIncrease" { return Test-HeroAbilityScoreIncreaseLevel -Hero $Hero -Level $level }
                 "ExtraAttack" { return $level -ge 5 }
                 "FastMovement" { return $level -ge 5 }
                 "MindlessRage" { return $level -ge 6 }
@@ -250,7 +272,8 @@ function Test-HeroFeatureUnlocked {
                 "SecondWind" { return $level -ge 1 }
                 "ActionSurge" { return $level -ge 2 }
                 "ImprovedCritical" { return $level -ge 3 }
-                "AbilityScoreIncrease" { return $level -ge 4 }
+                "AbilityScoreIncrease" { return Test-HeroAbilityScoreIncreaseLevel -Hero $Hero -Level $level }
+                "ExtraAttack" { return $level -ge 5 }
                 default { return $false }
             }
         }
@@ -264,7 +287,7 @@ function Test-HeroFeatureUnlocked {
                 "CuttingWords" { return $level -ge 3 }
                 "LoreBonusProficiencies" { return $level -ge 3 }
                 "Expertise" { return $level -ge 3 }
-                "AbilityScoreIncrease" { return $level -ge 4 }
+                "AbilityScoreIncrease" { return Test-HeroAbilityScoreIncreaseLevel -Hero $Hero -Level $level }
                 default { return $false }
             }
         }
@@ -843,7 +866,7 @@ function Resolve-HeroAbilityScoreIncrease {
         [string]$Mode = ""
     )
 
-    if (($Level % 4) -ne 0) {
+    if (-not (Test-HeroAbilityScoreIncreaseLevel -Hero $Hero -Level $Level)) {
         return $null
     }
 

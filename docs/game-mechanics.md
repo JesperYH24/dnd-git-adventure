@@ -136,6 +136,8 @@ Current camp levels:
 - `Fighting Style: Defense` adds `+1 AC` while armor is equipped
 - `Second Wind` is a Fighter bonus action that heals `1d10 + Fighter level` and restores on rest
 - `Action Surge` and Champion `Improved Critical` now surface Fighter-specific combat narration, framing extra actions and 19-20 criticals as stance, shield-line discipline, timing, and trained precision rather than generic fury
+- level 5 `Extra Attack` lets Fighter make two weapon attacks with the Attack action
+- Fighter receives Ability Score Increases at levels 4 and 6; other current classes only receive the level 4 ASI before monster zone
 - smithy and armorer progression can point Fighter toward `Knightly Longsword`, `Heater Shield`, `Squire Mail`, and later `Splint Armor` or `Plate Armor`
 - town shops now include more practical preparation items before monster zone: `Traveler's Pack` carrying support, `Guard Spear`, `Buckler`, and `Ironroot Salve`
 - `Arcane Curios` previews high-price magic gear before monster-part crafting: persistent utility items can raise AC or ability scores (`STR`, `DEX`, `WIS`), and combat-charge charms can grant one automatic advantage/disadvantage trigger per combat
