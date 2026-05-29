@@ -80,6 +80,13 @@ Current terrain profiles:
 - `Abandoned Worksite`
 - `Ancient Stones`
 
+Current terrain-gated creature examples:
+
+- `marsh_venom_adder` is specific to `Dry Creek Bed`
+- `ash_horn_drakelet` favors `Ash Hollow`, `Burned Orchard`, and `Ancient Stones`
+- `hollow_scale_wyrmling` is level 6 terrain pressure for `Ash Hollow` and `Ancient Stones`
+- `gate_sunder_brute` is level 6 pressure around `Ruined Stone`, `Old Road Shrine`, and `Ancient Stones`
+
 Possible landmarks:
 
 - `Old Mile Shrine`

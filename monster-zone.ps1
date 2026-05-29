@@ -1242,7 +1242,8 @@ function New-MonsterZoneCreature {
         [string]$ThreatTier = "Outer Wall",
         [string[]]$SenseTraits = @(),
         [int]$SenseBonus = 0,
-        [bool]$CountersInvisibility = $false
+        [bool]$CountersInvisibility = $false,
+        [string[]]$TerrainIds = @()
     )
 
     return @{
@@ -1270,6 +1271,7 @@ function New-MonsterZoneCreature {
         senseTraits = @($SenseTraits)
         senseBonus = $SenseBonus
         countersInvisibility = $CountersInvisibility
+        terrainIds = @($TerrainIds)
         oddityName = $OddityName
         oddityValue = $OddityValue
         introText = $IntroText
@@ -1278,36 +1280,47 @@ function New-MonsterZoneCreature {
 
 function Get-MonsterZoneCreatures {
     return @(
-        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Hearing and Smell") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 1)
-        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true)
-        (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure")
-        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "glass_carrion_crow" -Name "glass carrion crow" -Article "A" -Definite "The Glass Carrion Crow" -HP 12 -XP 95 -ArmorClass 14 -AttackBonus 4 -InitiativeBonus 4 -DamageDiceSides 4 -DamageBonus 1 -PerceptionBonus 5 -StealthBonus 3 -OddityName "Glassy Crow Eye" -OddityValue 60 -IntroText "A crow with shard-bright eyes picks at something in the grass, then goes perfectly still as if it has been waiting for a signal." -MinLevelCap 5 -ThreatTier "Level 4-5 scout pressure" -SenseTraits @("Keen Sight") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "marsh_venom_adder" -Name "marsh venom adder" -Article "A" -Definite "The Marsh Venom Adder" -HP 16 -XP 130 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 5 -OddityName "Intact Venom Sac" -OddityValue 85 -IntroText "A dark adder slides through grass damp enough to remember marshland, fangs flashing green-black when it tastes the air." -MinLevelCap 5 -ThreatTier "Level 4-5 ambush pressure")
-        (New-MonsterZoneCreature -Id "iron_root_stag" -Name "iron-root stag" -Article "An" -Definite "The Iron-Root Stag" -HP 28 -XP 155 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 1 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Iron-Root Antler Splinter" -OddityValue 100 -IntroText "An antlered shape steps from the scrub, roots and old wire tangled through its crown like the land has grown angry around bone." -MinLevelCap 5 -ThreatTier "Level 4-5 route-blocker pressure" -SenseTraits @("Keen Hearing") -SenseBonus 1)
-        (New-MonsterZoneCreature -Id "ash_horn_drakelet" -Name "ash-horn drakelet" -Article "An" -Definite "The Ash-Horn Drakelet" -HP 32 -XP 240 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Ash-Horn Spur" -OddityValue 145 -IntroText "A low drake-shape drags itself over broken ground, horn nubs smoking as if the skull beneath them remembers fire." -MinLevelCap 5 -ThreatTier "Level 5 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "hollow_scale_wyrmling" -Name "hollow-scale wyrmling" -Article "A" -Definite "The Hollow-Scale Wyrmling" -HP 36 -XP 280 -ArmorClass 15 -AttackBonus 5 -InitiativeBonus 3 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 4 -StealthBonus 2 -OddityName "Hollow Black Scale" -OddityValue 175 -IntroText "A small dragon-shaped thing pulls itself over the stones, scales black at the edges and pale in the seams like something unfinished but already cruel." -MinLevelCap 6 -ThreatTier "Level 6 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2)
-        (New-MonsterZoneCreature -Id "gate_sunder_brute" -Name "gate-sunder brute" -Article "A" -Definite "The Gate-Sunder Brute" -HP 46 -XP 390 -ArmorClass 13 -AttackBonus 6 -InitiativeBonus -1 -DamageDiceSides 10 -DamageBonus 4 -PerceptionBonus 2 -StealthBonus -1 -OddityName "Cracked Gate-Bone" -OddityValue 210 -IntroText "A huge crooked figure lumbers through the dust carrying a gate hinge like a club, its arms marked by black scale scars that have split and healed badly." -MinLevelCap 6 -ThreatTier "Level 6 gate-breaker threat" -SenseTraits @("Blood Scent") -SenseBonus 1)
+        (New-MonsterZoneCreature -Id "wall_wolf" -Name "wall-prowling wolf" -Article "A" -Definite "The Wall-Prowling Wolf" -HP 18 -XP 90 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 2 -DamageDiceSides 6 -DamageBonus 1 -PerceptionBonus 3 -StealthBonus 3 -OddityName "Smoke-Tainted Pelt" -OddityValue 45 -IntroText "A lean wolf moves low through the grass, its coat darkened by old smoke and its attention fixed too close to the city wall." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Hearing and Smell") -SenseBonus 2 -TerrainIds @("open_scrub", "road_shrine", "burned_orchard", "rough_cairn"))
+        (New-MonsterZoneCreature -Id "razor_boar" -Name "razor-tusk boar" -Article "A" -Definite "The Razor-Tusk Boar" -HP 22 -XP 100 -ArmorClass 12 -AttackBonus 3 -InitiativeBonus 0 -DamageDiceSides 8 -DamageBonus 1 -PerceptionBonus 1 -StealthBonus 0 -OddityName "Razor Boar Tusk" -OddityValue 55 -IntroText "A boar shoulders through the brush, tusks chipped against stone and wet earth flying from its hooves." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 1 -TerrainIds @("burned_orchard", "rough_cairn", "dry_creek"))
+        (New-MonsterZoneCreature -Id "grave_hungry_thing" -Name "grave-hungry thing" -Article "A" -Definite "The Grave-Hungry Thing" -HP 20 -XP 120 -ArmorClass 11 -AttackBonus 2 -InitiativeBonus 1 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 2 -OddityName "Pale Grave Claw" -OddityValue 70 -IntroText "Something pale and joint-wrong crawls from behind a stone, smelling of old graves and fresh appetite." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Blindsight") -SenseBonus 3 -CountersInvisibility $true -TerrainIds @("ruined_stone", "ancient_stones"))
+        (New-MonsterZoneCreature -Id "kobold_wall_scout" -Name "kobold wall scout" -Article "A" -Definite "The Kobold Wall Scout" -HP 14 -XP 110 -ArmorClass 13 -AttackBonus 3 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 0 -PerceptionBonus 2 -StealthBonus 4 -OddityName "Black-Wax Scout Token" -OddityValue 65 -IntroText "A small scaled scout freezes near a patrol marker, one claw wrapped around a black-waxed token." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -TerrainIds @("road_shrine", "survey_worksite", "ruined_stone"))
+        (New-MonsterZoneCreature -Id "scale_touched_mastiff" -Name "scale-touched mastiff" -Article "A" -Definite "The Scale-Touched Mastiff" -HP 24 -XP 140 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 2 -PerceptionBonus 4 -StealthBonus 1 -OddityName "Black Scale Shard" -OddityValue 90 -IntroText "A mastiff built like a guard dog stalks into view, black scale plates showing through its hide where fur should be." -MinLevelCap 5 -ThreatTier "Level 4-5 wall pressure" -SenseTraits @("Keen Smell") -SenseBonus 2 -TerrainIds @("road_shrine", "open_scrub", "survey_worksite"))
+        (New-MonsterZoneCreature -Id "glass_carrion_crow" -Name "glass carrion crow" -Article "A" -Definite "The Glass Carrion Crow" -HP 12 -XP 95 -ArmorClass 14 -AttackBonus 4 -InitiativeBonus 4 -DamageDiceSides 4 -DamageBonus 1 -PerceptionBonus 5 -StealthBonus 3 -OddityName "Glassy Crow Eye" -OddityValue 60 -IntroText "A crow with shard-bright eyes picks at something in the grass, then goes perfectly still as if it has been waiting for a signal." -MinLevelCap 5 -ThreatTier "Level 4-5 scout pressure" -SenseTraits @("Keen Sight") -SenseBonus 2 -TerrainIds @("open_scrub", "dry_creek", "ruined_stone", "survey_worksite"))
+        (New-MonsterZoneCreature -Id "marsh_venom_adder" -Name "marsh venom adder" -Article "A" -Definite "The Marsh Venom Adder" -HP 16 -XP 130 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 3 -DamageDiceSides 6 -DamageBonus 2 -PerceptionBonus 2 -StealthBonus 5 -OddityName "Intact Venom Sac" -OddityValue 85 -IntroText "A dark adder slides through grass damp enough to remember marshland, fangs flashing green-black when it tastes the air." -MinLevelCap 5 -ThreatTier "Level 4-5 ambush pressure" -TerrainIds @("dry_creek"))
+        (New-MonsterZoneCreature -Id "iron_root_stag" -Name "iron-root stag" -Article "An" -Definite "The Iron-Root Stag" -HP 28 -XP 155 -ArmorClass 13 -AttackBonus 4 -InitiativeBonus 1 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Iron-Root Antler Splinter" -OddityValue 100 -IntroText "An antlered shape steps from the scrub, roots and old wire tangled through its crown like the land has grown angry around bone." -MinLevelCap 5 -ThreatTier "Level 4-5 route-blocker pressure" -SenseTraits @("Keen Hearing") -SenseBonus 1 -TerrainIds @("burned_orchard", "ancient_stones", "rough_cairn"))
+        (New-MonsterZoneCreature -Id "ash_horn_drakelet" -Name "ash-horn drakelet" -Article "An" -Definite "The Ash-Horn Drakelet" -HP 32 -XP 240 -ArmorClass 14 -AttackBonus 5 -InitiativeBonus 2 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 3 -StealthBonus 1 -OddityName "Ash-Horn Spur" -OddityValue 145 -IntroText "A low drake-shape drags itself over broken ground, horn nubs smoking as if the skull beneath them remembers fire." -MinLevelCap 5 -ThreatTier "Level 5 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2 -TerrainIds @("ash_hollow", "burned_orchard", "ancient_stones"))
+        (New-MonsterZoneCreature -Id "hollow_scale_wyrmling" -Name "hollow-scale wyrmling" -Article "A" -Definite "The Hollow-Scale Wyrmling" -HP 36 -XP 280 -ArmorClass 15 -AttackBonus 5 -InitiativeBonus 3 -DamageDiceSides 8 -DamageBonus 3 -PerceptionBonus 4 -StealthBonus 2 -OddityName "Hollow Black Scale" -OddityValue 175 -IntroText "A small dragon-shaped thing pulls itself over the stones, scales black at the edges and pale in the seams like something unfinished but already cruel." -MinLevelCap 6 -ThreatTier "Level 6 draconic pressure" -SenseTraits @("Heat Scent") -SenseBonus 2 -TerrainIds @("ash_hollow", "ancient_stones"))
+        (New-MonsterZoneCreature -Id "gate_sunder_brute" -Name "gate-sunder brute" -Article "A" -Definite "The Gate-Sunder Brute" -HP 46 -XP 390 -ArmorClass 13 -AttackBonus 6 -InitiativeBonus -1 -DamageDiceSides 10 -DamageBonus 4 -PerceptionBonus 2 -StealthBonus -1 -OddityName "Cracked Gate-Bone" -OddityValue 210 -IntroText "A huge crooked figure lumbers through the dust carrying a gate hinge like a club, its arms marked by black scale scars that have split and healed badly." -MinLevelCap 6 -ThreatTier "Level 6 gate-breaker threat" -SenseTraits @("Blood Scent") -SenseBonus 1 -TerrainIds @("ruined_stone", "road_shrine", "ancient_stones"))
     )
 }
 
 function Get-MonsterZoneAvailableCreatures {
-    param($Game)
+    param(
+        $Game,
+        $Terrain = $null,
+        [string]$TerrainId = ""
+    )
 
     $levelCap = if ($null -ne $Game -and $null -ne $Game.Hero -and $null -ne $Game.Hero.LevelCap) { [int]$Game.Hero.LevelCap } else { 5 }
+    if ([string]::IsNullOrWhiteSpace($TerrainId) -and $null -ne $Terrain) {
+        $TerrainId = [string]$Terrain.Id
+    }
+
     return @(Get-MonsterZoneCreatures | Where-Object {
         $minLevelCap = if ($null -ne $_.minLevelCap) { [int]$_.minLevelCap } else { 5 }
-        $minLevelCap -le $levelCap
+        $terrainIds = @($_.terrainIds)
+        $matchesTerrain = ([string]::IsNullOrWhiteSpace($TerrainId) -or $terrainIds.Count -le 0 -or $terrainIds -contains $TerrainId)
+        $minLevelCap -le $levelCap -and $matchesTerrain
     })
 }
 
 function Get-RandomMonsterZoneCreature {
     param($Game)
 
-    $available = @(Get-MonsterZoneAvailableCreatures -Game $Game)
+    $terrain = Get-MonsterZoneCurrentTerrain -Game $Game
+    $available = @(Get-MonsterZoneAvailableCreatures -Game $Game -Terrain $terrain)
     if ($available.Count -le 0) {
-        $available = @(Get-MonsterZoneCreatures | Where-Object { [int]$_.minLevelCap -le 5 })
+        $available = @(Get-MonsterZoneAvailableCreatures -Game $Game)
     }
 
     return ($available | Get-Random)

@@ -84,7 +84,8 @@
 - Dorr's monster board previews wall-bounty coin for unreported proof; reporting pays that bounty once and unlocks a first Wall Watch supply favor for basic healing and starter hauling support
 - Dorr does not instantly produce the monster: booking a contract sends a capture crew out for a few days, after which the captured creature can be fought in the ring
 - current monster-zone creature set mixes beast-like threats and stranger monsters: `wall_wolf`, `razor_boar`, `grave_hungry_thing`, `kobold_wall_scout`, `scale_touched_mastiff`, `glass_carrion_crow`, `marsh_venom_adder`, `iron_root_stag`, the level 5 draconic-pressure `ash_horn_drakelet`, the level 6 `hollow_scale_wyrmling`, and the level 6 `gate_sunder_brute`
-- random monster-zone encounters now filter by hero level cap, keeping the gate-breaker threat out of the pool until level 6 progression has opened
+- random monster-zone encounters now filter by both hero level cap and current terrain, so creatures such as the `marsh_venom_adder`, `ash_horn_drakelet`, `hollow_scale_wyrmling`, and `gate_sunder_brute` only appear in terrain that fits them
+- terrain pools keep broad threats in several places while reserving sharper creatures for specific ground: adder in `Dry Creek Bed`, draconic threats in `Ash Hollow`/`Ancient Stones`, scouts around road/worksite/ruins, and gate-breakers around road/ruin/ancient-stone pressure
 - all three current classes have `Perception` proficiency, so the Bard is not automatically worse in the wilderness awareness phase; Fighter is currently slightly weaker at raw `Stealth` because of lower `DEX`, and armor stealth penalties are not implemented yet
 - creature flavor differs mechanically through HP, AC, attack, `PerceptionBonus`, `StealthBonus`, and senses; keen senses add extra Perception, while blindsight can counter the Invisibility stealth bonus
 

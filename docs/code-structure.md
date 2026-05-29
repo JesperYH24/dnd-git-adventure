@@ -393,7 +393,7 @@ Ansvar:
 - soft zone edge near the city's patrol reach
 - `Perception`/`Stealth` awareness checks before wilderness combat
 - first-pass abstract encounter distance for monster-zone fights: `5 ft` melee, `30 ft` movement, action-based dash, and monster closing behavior
-- level-cap-filtered encounter pool, including higher `ash_horn_drakelet` and `gate_sunder_brute` threats for the level 5-6 stretch
+- level-cap- and terrain-filtered encounter pool, including higher `ash_horn_drakelet` and `gate_sunder_brute` threats for the level 5-6 stretch
 - creature-specific 60 ft observation text that hints at movement, attack style, senses, and unnatural threat level
 - class-flavored wilderness reads for search, 60 ft observation, weather, field leads, camp, proof, and oddity hauling
 - camp building, camp safety levels, weather-adjusted night-risk bands, and menu risk summaries for HP, haul, proof, and recovery advice

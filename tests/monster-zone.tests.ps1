@@ -267,6 +267,31 @@ function Test-MonsterZoneTerrainAffectsCampDecayRisk {
     Assert-Equal -Actual $ash.Terrain.Id -Expected "ash_hollow" -Message "Camp condition should report the terrain that affected decay."
 }
 
+function Test-MonsterZoneCreaturePoolsCanFilterByTerrain {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+
+    $dryCreek = @(Get-MonsterZoneAvailableCreatures -Game $game -TerrainId "dry_creek")
+    $ashHollow = @(Get-MonsterZoneAvailableCreatures -Game $game -TerrainId "ash_hollow")
+
+    Assert-True -Condition ($dryCreek.id -contains "marsh_venom_adder") -Message "Dry creek terrain should be able to produce the marsh venom adder."
+    Assert-True -Condition ($dryCreek.id -notcontains "ash_horn_drakelet") -Message "Dry creek terrain should not produce the ash-horn drakelet."
+    Assert-True -Condition ($ashHollow.id -contains "ash_horn_drakelet") -Message "Ash hollow terrain should be able to produce the ash-horn drakelet."
+    Assert-True -Condition ($ashHollow.id -notcontains "marsh_venom_adder") -Message "Ash hollow terrain should not produce the marsh venom adder."
+}
+
+function Test-MonsterZoneTerrainCreaturePoolsStillRespectLevelCap {
+    $game = Initialize-Game
+    $game.Hero.LevelCap = 5
+
+    $levelFiveAncient = @(Get-MonsterZoneAvailableCreatures -Game $game -TerrainId "ancient_stones")
+    $game.Hero.LevelCap = 6
+    $levelSixAncient = @(Get-MonsterZoneAvailableCreatures -Game $game -TerrainId "ancient_stones")
+
+    Assert-True -Condition ($levelFiveAncient.id -notcontains "hollow_scale_wyrmling") -Message "Terrain filtering should not bypass level cap gating."
+    Assert-True -Condition ($levelSixAncient.id -contains "hollow_scale_wyrmling") -Message "Level 6 ancient stones should be able to produce the hollow-scale wyrmling."
+}
+
 function Test-MonsterZoneWeatherChangesCampRisk {
     $game = Initialize-Game
     $heroHP = $game.Hero.HP
@@ -760,6 +785,8 @@ Test-MonsterZoneWeatherModifiesAwareness
 Test-MonsterZoneLandmarksHaveTerrainProfiles
 Test-MonsterZoneTerrainModifiesAwareness
 Test-MonsterZoneTerrainAffectsCampDecayRisk
+Test-MonsterZoneCreaturePoolsCanFilterByTerrain
+Test-MonsterZoneTerrainCreaturePoolsStillRespectLevelCap
 Test-MonsterZoneWeatherChangesCampRisk
 Test-MonsterZoneAddsMoreCreatureTypes
 Test-MonsterZoneClassReadsAreDistinct
